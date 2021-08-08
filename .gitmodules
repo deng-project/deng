@@ -7,3 +7,6 @@
 [submodule "modules/glad"]
 	path = modules/glad
 	url = https://github.com/inugami-dev64/glad
+[submodule "modules/nekowin"]
+	path = modules/nekowin
+	url = https://github.com/inugami-dev64/nekowin

@@ -98,11 +98,11 @@ layout(location = 3) out vec3 out_normal;
 
 void main() {
     // Check how the position should be transformed
-    if(asset_data.ignore_transform == 1)
-        gl_Position = ubo.view * vec4(in_pos.x, -in_pos.y, in_pos.z, 1.0f);
+    /*if(asset_data.ignore_transform == 1)*/
+        /*gl_Position = ubo.view * vec4(in_pos.x, -in_pos.y, in_pos.z, 1.0f);*/
 
-    else gl_Position = ubo.transform * vec4(in_pos.x, -in_pos.y, in_pos.z, 1.0f);
-    /*gl_Position = vec4(in_pos.x, in_pos.y, in_pos.z, 1.0f);*/
+    /*else gl_Position = ubo.transform * vec4(in_pos.x, -in_pos.y, in_pos.z, 1.0f);*/
+    gl_Position = ubo.transform * vec4(in_pos.x, -in_pos.y, in_pos.z, 1.0f);
 
     // Set all the output variables
     out_tex = in_tex_pos;

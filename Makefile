@@ -10,6 +10,7 @@ endif
 
 ifeq ($(config),debug_win32)
   imgui_config = debug_win32
+  nwin_config = debug_win32
   dengbox_config = debug_win32
   imgui_sandbox_config = debug_win32
   opengl_sandbox_config = debug_win32
@@ -19,6 +20,7 @@ ifeq ($(config),debug_win32)
 endif
 ifeq ($(config),debug_linux)
   imgui_config = debug_linux
+  nwin_config = debug_linux
   dengbox_config = debug_linux
   imgui_sandbox_config = debug_linux
   opengl_sandbox_config = debug_linux
@@ -28,6 +30,7 @@ ifeq ($(config),debug_linux)
 endif
 ifeq ($(config),release_win32)
   imgui_config = release_win32
+  nwin_config = release_win32
   dengbox_config = release_win32
   imgui_sandbox_config = release_win32
   opengl_sandbox_config = release_win32
@@ -37,6 +40,7 @@ ifeq ($(config),release_win32)
 endif
 ifeq ($(config),release_linux)
   imgui_config = release_linux
+  nwin_config = release_linux
   dengbox_config = release_linux
   imgui_sandbox_config = release_linux
   opengl_sandbox_config = release_linux
@@ -45,7 +49,7 @@ ifeq ($(config),release_linux)
   dengsc_config = release_linux
 endif
 
-PROJECTS := imgui dengbox imgui_sandbox opengl_sandbox deng dam dengsc
+PROJECTS := imgui nwin dengbox imgui_sandbox opengl_sandbox deng dam dengsc
 
 .PHONY: all clean help $(PROJECTS) 
 
@@ -55,6 +59,12 @@ imgui:
 ifneq (,$(imgui_config))
 	@echo "==== Building imgui ($(imgui_config)) ===="
 	@${MAKE} --no-print-directory -C . -f imgui.make config=$(imgui_config)
+endif
+
+nwin:
+ifneq (,$(nwin_config))
+	@echo "==== Building nwin ($(nwin_config)) ===="
+	@${MAKE} --no-print-directory -C . -f nwin.make config=$(nwin_config)
 endif
 
 dengbox: deng
@@ -75,7 +85,7 @@ ifneq (,$(opengl_sandbox_config))
 	@${MAKE} --no-print-directory -C . -f opengl_sandbox.make config=$(opengl_sandbox_config)
 endif
 
-deng: imgui
+deng: imgui nwin
 ifneq (,$(deng_config))
 	@echo "==== Building deng ($(deng_config)) ===="
 	@${MAKE} --no-print-directory -C . -f deng.make config=$(deng_config)
@@ -95,6 +105,7 @@ endif
 
 clean:
 	@${MAKE} --no-print-directory -C . -f imgui.make clean
+	@${MAKE} --no-print-directory -C . -f nwin.make clean
 	@${MAKE} --no-print-directory -C . -f dengbox.make clean
 	@${MAKE} --no-print-directory -C . -f imgui_sandbox.make clean
 	@${MAKE} --no-print-directory -C . -f opengl_sandbox.make clean
@@ -115,6 +126,7 @@ help:
 	@echo "   all (default)"
 	@echo "   clean"
 	@echo "   imgui"
+	@echo "   nwin"
 	@echo "   dengbox"
 	@echo "   imgui_sandbox"
 	@echo "   opengl_sandbox"

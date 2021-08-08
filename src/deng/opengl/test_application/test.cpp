@@ -175,7 +175,7 @@ void err_check(const std::string &func_name) {
 
 
 void run(deng::Window &win) {
-    while(deng_IsRunning()) {
+    while(neko_IsRunning()) {
         win.update();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
