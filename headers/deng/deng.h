@@ -10,6 +10,7 @@
 // STL includes, that are necessary for some DENG components
 #include <vector>
 #include <memory>
+#include <string>
 #include <queue>
 #include <chrono>
 #include <array>

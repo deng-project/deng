@@ -28,7 +28,6 @@
     #include <math/deng_math.h>
     #include <deng/window.h>
 
-    #include <utils/font.h>
     #include <deng/registry/registry.h>
     #include <deng/lighting/light_man.h>
     #include <deng/cam3d.h>

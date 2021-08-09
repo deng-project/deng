@@ -86,7 +86,7 @@
 #define INVALID_ASSET(asset, uuid)          throw std::runtime_error(std::string("Invalid asset: ") + asset + ", " + uuid)
 #define UNDEFINED_ASSET_MODE(asset, uuid)   throw std::runtime_error(std::string("Unknown asset mode for asset: ") + asset + ", " + uuid)
 #define RUN_ERR(method, x)                  throw std::runtime_error(std::string(method) + ": " + std::string(x))
-#define DENG_ASSERT(msg, cond)              (!cond ? throw std::runtime_error(std::string(__FILE__) + std::string(", ") + std::to_string(__LINE__) + std::string(": ") + std::string(msg)) : NULL)
+#define DENG_ASSERT(msg, cond)              if(!cond) throw std::runtime_error(std::string(__FILE__) + std::string(", ") + std::to_string(__LINE__) + std::string(": ") + std::string(msg))
 
 
 // Vulkan related

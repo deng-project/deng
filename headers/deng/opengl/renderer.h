@@ -13,6 +13,7 @@
     #include <chrono>
     #include <array>
     #include <memory>
+    #include <string>
     #include <glad/glad.h>
     #include <vulkan/vulkan.h>
 

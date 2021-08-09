@@ -20,9 +20,7 @@ namespace deng {
             m_cfg_vars = cfg;
             
             // Load all OpenGL functions
-            #ifdef __linux__
-                int status = gladLoadGL();
-            #endif
+            int status = neko_LoadGL();
             DENG_ASSERT("Failed to load OpenGL functions", status);
 
             // Load all shaders into OpenGL

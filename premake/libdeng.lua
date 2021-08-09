@@ -30,13 +30,16 @@ function libdeng.build()
             "src/utils/*.cpp"
         }
 
-        removefiles { "src/deng/opengl/test_application/test.cpp" }
+        removefiles { 
+            "src/deng/opengl/test_application/test.cpp",
+            "src/utils/font.cpp",
+            "headers/utils/font.h"
+        }
+        removefiles {  }
 
         -- Link all Windows specific dependencies
         filter "platforms:Win32"
-            removefiles { "src/deng/surface/x11_surface.c" }
             links {
-                "freetype",
                 "imgui",
                 "nwin",
                 "vulkan-1",
@@ -46,9 +49,7 @@ function libdeng.build()
 
         -- Link all GNU/Linux specific dependencies
         filter "platforms:Linux"
-            removefiles { "src/deng/surface/win32_surface.c" }
             links {
-                "freetype",
                 "imgui",
                 "nwin",
                 "vulkan",

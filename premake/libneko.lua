@@ -18,7 +18,7 @@ function libneko.build()
         }
 
         filter "platforms:Win32"
-            removefiles { "src/x11_window.c" }
+            removefiles { "modules/nekowin/src/x11_window.c" }
             defines { "_CRT_SECURE_NO_WARNINGS" }
             links {
                 "vulkan-1",

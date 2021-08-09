@@ -29,7 +29,6 @@
 
     #include <deng/registry/registry.h>
     #include <deng/window.h>
-    #include <utils/font.h>
     #include <deng/cam3d.h>
     #include <deng/renderer/renderer.h>
 

@@ -11,6 +11,8 @@
 #ifdef __GL_BUFFERS_CPP
     #include <vector>
     #include <chrono>
+    #include <string>
+    #include <array>
     #include <memory>
     #include <glad/glad.h>
     #include <vulkan/vulkan.h>

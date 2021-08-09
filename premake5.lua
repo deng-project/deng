@@ -19,10 +19,6 @@ workspace "deng"
     targetdir "build"
 	pic "On"
 
-    -- Add freetype include directories when using linux
-    filter "platforms:Linux"
-        includedirs { "/usr/include/freetype2", "/usr/include/freetype2/freetype" }
-
 	-- Ignore safety warnings that MSVC gives
 	filter "platforms:Win32"
 		defines { "_CRT_SECURE_NO_WARNINGS" }
@@ -92,12 +88,9 @@ function vksdkoptcheck()
     if os.istarget("windows") and _OPTIONS["vk-sdk-path"] then
         libdirs { _OPTIONS["vk-sdk-path"] .. "\\Lib" }
         includedirs{ _OPTIONS["vk-sdk-path"] .. "\\Include" }
-    elseif not os.istarget("windows") and _OPTIONS["vk-sdk-path"] then
-        print("Vulkan SDK path should only be specified for Windows builds")
-        os.exit()
-    elseif os.istarget("windows") and not _OPTIONS["vk-sdk-path"] then
-        print("Please specify Vulkan SDK path with vk-sdk-path flag")
-        os.exit()
+    elseif os.istarget("windows") then
+        libdirs { "C:/VulkanSDK/*/Lib" }
+        includedirs { "C:/VulkanSDK/*/Include" }
     end
 end
 

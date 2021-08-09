@@ -11,6 +11,8 @@
     #include <chrono>
     #include <memory>
     #include <vector>
+	#include <string>
+	#include <array>
     #include <vulkan/vulkan.h>
     #include <common/base_types.h>
     #include <common/hashmap.h>
