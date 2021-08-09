@@ -16,7 +16,6 @@ workspace "deng"
 
 	architecture "x86_64"
     defines { "ImDrawIdx=unsigned int" }
-    targetdir "build"
 	pic "On"
 
 	-- Ignore safety warnings that MSVC gives
@@ -27,10 +26,12 @@ workspace "deng"
     filter "configurations:Debug"
         symbols "On"
         optimize "Debug"
+        targetdir "build/debug"
 
     filter "configurations:Release"
         symbols "Off"
         optimize "Speed"
+        targetdir "build/release"
     filter {}
 
 --!!! Add new options to use !!!--
