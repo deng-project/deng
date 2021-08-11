@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: window.h - nekowin library abstraction class header for DENG
 /// author: Karl-Mihkel Ott
@@ -18,10 +18,12 @@
 #endif
 
 #define NOMINMAX
+#define deng_LoadGL             neko_LoadGL
 #define deng_InitWindowAPI      neko_InitAPI
 #define deng_DeInitWindowAPI    neko_DeInitAPI
 #define deng_IsRunning          neko_IsRunning
 #define deng_CreateInputMask    neko_CreateInputMask
+
 #include <nwin.h>
 
 

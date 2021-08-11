@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 2D and 3D game engine
+/// DENG: dynamic engine - small but powerful 2D and 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: window.cpp - nekowin library abstraction class implementation for DENG
 /// author: Karl-Mihkel Ott

@@ -1,4 +1,4 @@
-/// NEKO: dynamic engine - powerful 2D and 3D game engine
+/// NEKO: dynamic engine - small but powerful 2D and 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: ev_base.h - 3D camera base event class header
 /// author: Karl-Mihkel Ott

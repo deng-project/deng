@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: cross_api.h - meta header for easily including cross api renderer functionality
 /// author: Karl-Mihkel Ott

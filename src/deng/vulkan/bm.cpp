@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: bm.h - Vulkan resource manager parent class implemenatation for resource management and handling buffer 
 ///              related operations

@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: runtime_updater.h - Vulkan runtime buffer data update handler class implementation
 /// author: Karl-Mihkel Ott

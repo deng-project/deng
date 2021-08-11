@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: ui_manager.cpp - abstracted UI management class implementation
 /// author: Karl-Mihkel Ott

@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: ubm.h - Vulkan uniform buffer manager parent class header
 /// author: Karl-Mihkel Ott

@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: cam3d.h - class header for handling multiple 3D camera modes
 /// author: Karl-Mihkel Ott

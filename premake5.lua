@@ -19,14 +19,15 @@ workspace "deng"
 	pic "On"
 
 	-- Ignore safety warnings that MSVC gives
-	filter "platforms:Win32"
-		defines { "_CRT_SECURE_NO_WARNINGS" }
+	--filter "platforms:Win32"
+		--defines { "_CRT_SECURE_NO_WARNINGS" }
 
     -- Enable debug symbols if specified
     filter "configurations:Debug"
         symbols "On"
         optimize "Debug"
         targetdir "build/debug"
+        defines { "__DEBUG" }
 
     filter "configurations:Release"
         symbols "Off"
@@ -120,8 +121,11 @@ function buildcfg()
     if not _OPTIONS["sandbox-mode"] then
         _OPTIONS["sandbox-mode"] = "none"
     elseif _OPTIONS["sandbox-mode"] ~= "none" then
-        local sandbox_data = require("premake/sandbox_data")
-        sandbox_data.dataset();
+        postbuildcommands {
+            "{COPYDIR} assets %{cfg.targetdir}/assets",
+            "{COPYDIR} shaders %{cfg.targetdir}/shaders",
+            "{COPYDIR} textures %{cfg.targetdir}/textures",
+        }
     end
 
     -- Sandbox application build configuration

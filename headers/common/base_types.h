@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: base_types.h - DENG base type definitions
 /// author: Karl-Mihkel Ott
@@ -137,13 +137,13 @@ typedef enum deng_MovementEvent {
 /// Pipeline type specifier 
 typedef enum deng_PipelineType {
     DENG_PIPELINE_TYPE_UNKNOWN                  = -1,
-    DENG_PIPELINE_TYPE_UNMAPPED_3D              = 0,
-    DENG_PIPELINE_TYPE_TEXTURE_MAPPED_3D        = 1,
-    DENG_PIPELINE_TYPE_UNMAPPED_2D              = 2,
-    DENG_PIPELINE_TYPE_TEXTURE_MAPPED_2D        = 3,
-    DENG_PIPELINE_TYPE_UI                       = 4,
-    DENG_PIPELINE_TYPE_FIRST                    = DENG_PIPELINE_TYPE_UNKNOWN,
-    DENG_PIPELINE_TYPE_LAST                     = DENG_PIPELINE_TYPE_UI
+    DENG_PIPELINE_TYPE_UNMAPPED_3D              =  0,
+    DENG_PIPELINE_TYPE_TEXTURE_MAPPED_3D        =  1,
+    DENG_PIPELINE_TYPE_UNMAPPED_2D              =  2,
+    DENG_PIPELINE_TYPE_TEXTURE_MAPPED_2D        =  3,
+    DENG_PIPELINE_TYPE_UI                       =  4,
+    DENG_PIPELINE_TYPE_FIRST                    =  DENG_PIPELINE_TYPE_UNKNOWN,
+    DENG_PIPELINE_TYPE_LAST                     =  DENG_PIPELINE_TYPE_UI
 } deng_PipelineType;
 
 

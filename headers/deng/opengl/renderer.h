@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: renderer.h - OpenGL renderer class header
 /// author: Karl-Mihkel Ott
@@ -14,7 +14,6 @@
     #include <array>
     #include <memory>
     #include <string>
-    #include <glad/glad.h>
     #include <vulkan/vulkan.h>
 
     #include <common/base_types.h>
@@ -56,8 +55,8 @@ namespace deng {
             std::unique_ptr<__gl_BufferManager> m_buf_manager;
             
         private:
-            /// OpenGL error checking function
-            static void glErrorCheck(const std::string &func_name);
+            /// OpenGL error checking function (used globally across OpenGL classes)
+            static void lglErrorCheck(const std::string &func_name, const std::string &file, const deng_ui32_t line);
 
         public:
             __gl_Renderer(__gl_ConfigVars &cfg, deng::__GlobalRegistry &reg, std::vector<deng_Id> &assets,

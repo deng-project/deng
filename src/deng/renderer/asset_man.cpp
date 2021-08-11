@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: asset_man.cpp - asset manager parent class implementation for main renderer
 /// author: Karl-Mihkel Ott

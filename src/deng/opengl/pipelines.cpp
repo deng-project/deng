@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: pipelines.cpp - OpenGL pipeline handler class implementation
 /// author: Karl-Mihkel Ott
@@ -11,11 +11,14 @@
 namespace deng {
     namespace opengl {
 
-        __gl_Pipelines::__gl_Pipelines(void (*gl_error_check)(const std::string &func_name)) :
-            glErrorCheck(gl_error_check)
+        __gl_Pipelines::__gl_Pipelines(void (*lgl_error_check)(const std::string& func_name, const std::string& file, const deng_ui32_t line)) :
+            lglErrorCheck(lgl_error_check)
         {
             // For each pipeline type create a set of shader objects
+            __compileShadersToProgram(UM3D_I);
             __compileShadersToProgram(TM3D_I);
+            __compileShadersToProgram(UM2D_I);
+            __compileShadersToProgram(TM2D_I);
             __prepareUniformBindings();
         }
 
@@ -25,17 +28,19 @@ namespace deng {
 
             shaders.first = glCreateShader(GL_VERTEX_SHADER);
             shaders.second = glCreateShader(GL_FRAGMENT_SHADER);
-            glErrorCheck("glCreateShader");
+            glErrorCheck("glCreateShader", __FILE__, __LINE__);
 
             // Load shader sources
             char *vert = __loadShaderFromFile(__shader_src_files[index][0]);
             char *frag = __loadShaderFromFile(__shader_src_files[index][1]);
+
             deng_i32_t len;
             len = strlen(vert);
             glShaderSource(shaders.first, 1, &vert, &len);
+            glErrorCheck("glShaderSource", __FILE__, __LINE__);
             len = strlen(frag);
             glShaderSource(shaders.second, 1, &frag, &len);
-            glErrorCheck("glShaderSource");
+            glErrorCheck("glShaderSource", __FILE__, __LINE__);
             
             /// Attempt to compile shaders
             glCompileShader(shaders.first);
@@ -48,18 +53,22 @@ namespace deng {
 
             // Create new shader programs for each pipeline type
             m_programs[index] = glCreateProgram();
+            glErrorCheck("glCreateProgram", __FILE__, __LINE__);
             glAttachShader(m_programs[index], shaders.first);
+            glErrorCheck("glAttachShader", __FILE__, __LINE__);
             glAttachShader(m_programs[index], shaders.second);
-            glErrorCheck("glAttachShader");
+            glErrorCheck("glAttachShader", __FILE__, __LINE__);
+
             glLinkProgram(m_programs[index]);
-            glErrorCheck("glLinkProgram");
+            glErrorCheck("glLinkProgram", __FILE__, __LINE__);
 
             __checkLinkingStatus(m_programs[index], static_cast<deng_ui32_t>(index));
 
             // Delete all shader objects
             glDeleteShader(shaders.first);
+            glErrorCheck("glDeleteShader", __FILE__, __LINE__);
             glDeleteShader(shaders.second);
-            glErrorCheck("glDeleteShader");
+            glErrorCheck("glDeleteShader", __FILE__, __LINE__);
         }
 
 
@@ -68,37 +77,57 @@ namespace deng {
             // 2D unmapped assets
             deng_ui32_t index;
             index = glGetUniformBlockIndex(m_programs[UM2D_I], "UniformData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[UM2D_I], index, 0);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[UM2D_I], "ColorData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[UM2D_I], index, 1);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             // 2D texture mapped assets
             index = glGetUniformBlockIndex(m_programs[TM2D_I], "UniformData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[TM2D_I], index, 0);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[TM2D_I], "ColorData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[TM2D_I], index, 1);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             // 3D unmapped assets
-            index = glGetUniformBlockIndex(m_programs[UM3D_I], "UniformData");
+            index = glGetUniformBlockIndex(m_programs[UM3D_I], "UboTransform");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[UM3D_I], index, 0);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
-            index = glGetUniformBlockIndex(m_programs[UM3D_I], "ColorData");
+            index = glGetUniformBlockIndex(m_programs[UM3D_I], "AssetData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[UM3D_I], index, 1);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[UM3D_I], "LightData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[UM3D_I], index, 2);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             // 3D texture mapped assets
-            index = glGetUniformBlockIndex(m_programs[TM3D_I], "UniformData");
+            index = glGetUniformBlockIndex(m_programs[TM3D_I], "UboTransform");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[TM3D_I], index, 0);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
-            index = glGetUniformBlockIndex(m_programs[TM3D_I], "ColorData");
+            index = glGetUniformBlockIndex(m_programs[TM3D_I], "AssetData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[TM3D_I], index, 1);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[TM3D_I], "LightData");
+            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
             glUniformBlockBinding(m_programs[TM3D_I], index, 2);
+            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
         }
 
 
@@ -113,7 +142,7 @@ namespace deng {
             fseek(file, 0, SEEK_SET);
 
             // Allocate memory for shader buffer
-            char *buf = (char*) calloc(buf_size, sizeof(char));
+            char *buf = (char*) calloc(buf_size + 1, sizeof(char));
             size_t res = fread(buf, sizeof(char), buf_size, file);
             DENG_ASSERT((std::string("Failed to read from file ") + std::string(file_name)).c_str(), res);
 
@@ -190,15 +219,13 @@ namespace deng {
                 glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, tex));
                 glEnableVertexAttribArray(2);
                 glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, norm));
-
-                LOG("Enabled VM3D attributes");
                 break;
 
             default:
                 break;
             }
 
-            glErrorCheck("glBindVertexArray");
+            glErrorCheck("glBindVertexArray", __FILE__, __LINE__);
         }
 
 

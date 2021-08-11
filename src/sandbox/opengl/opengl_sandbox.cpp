@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: opengl_sandbox.cpp - OpenGL test application implementation
 /// author: Karl-Mihkel Ott
@@ -34,6 +34,9 @@ namespace deng {
         m_cfg.p_win = &m_win;
         
         m_rend = std::make_unique<opengl::__gl_Renderer>(m_cfg, m_reg, m_assets, m_textures);
+
+        das_RewriteAssetLogs();
+        das_RewriteTextureLogs();
 
         // Load asset and texture files
         RegType reg_tex = {};

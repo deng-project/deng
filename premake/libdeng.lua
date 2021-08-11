@@ -60,8 +60,6 @@ function libdeng.build()
                 "dl"
             }
 
-        filter "configurations:Debug"
-            defines { "__DEBUG" }
         filter {}
 end
 

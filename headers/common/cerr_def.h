@@ -75,6 +75,9 @@
 #define LOG(msg, ...)           printf("LOG: %s\n", __VA_ARGS__)
 #define WARNME(msg, ...)        printf("WARNING: %s\n", __VA_ARGS__)
 
+// Assertion macro
+#define DENG_ASSERT(val, msg) if(!val) fprintf(stderr, "Assertion failed in file %s:%u\n%s\n", __FILE__, __LINE__, msg), abort()
+
 // Wavefront OBJ parsing errors
 #ifdef __WAVEFRONT_OBJ_C
     #define __WV_PARSE_ERROR(line, msg)         fprintf(stderr, "Wavefront OBJ file parsing error on line %ld, %s\n", line, msg), \

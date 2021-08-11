@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: buffers.h - OpenGL buffer manager class header
 /// author: Karl-Mihkel Ott
@@ -14,12 +14,11 @@
     #include <string>
     #include <array>
     #include <memory>
-    #include <glad/glad.h>
     #include <vulkan/vulkan.h>
     #include <common/base_types.h>
     #include <common/common.h>
     #include <common/hashmap.h>
-    #include <common/err_def.h>
+	#include <common/err_def.h>
     #include <data/assets.h>
 
     #include <math/deng_math.h>
@@ -44,11 +43,11 @@ namespace deng {
 
             std::shared_ptr<__gl_Pipelines> m_pipelines;
             __gl_Resources m_resources;
-            void (*glErrorCheck)(const std::string &func_name);
+            void (*lglErrorCheck)(const std::string &func_name, const std::string &file, const deng_ui32_t line);
 
         public:
             __gl_BufferManager(std::vector<deng_Id> &assets, std::shared_ptr<__gl_Pipelines> sloader, 
-                __GlobalRegistry &reg, void (*gl_error_check) (const std::string &func_name));
+                __GlobalRegistry &reg, void (*gl_error_check) (const std::string &func_name, const std::string &file, const deng_ui32_t line));
 
             /// Check if buffer reallocation is needed for assets and gui elements
             deng_bool_t reallocCheck();

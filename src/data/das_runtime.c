@@ -286,8 +286,6 @@ void das_MergeTM3DIndexBuffers(das_Asset *p_asset) {
         void *idx = NULL;
         if(!(idx = findValue(&map, &v, sizeof(das_GL3DVertex)))) {
             vert[n] = v;
-            printf("%f/%f/%f %f/%f %f/%f/%f\n", vert[n].pos.vert_x, vert[n].pos.vert_y, vert[n].pos.vert_z,
-                vert[n].tex.tex_x, vert[n].tex.tex_y, vert[n].norm.nor_x, vert[n].norm.nor_y, vert[n].norm.nor_z);
             idxs[i] = n;
             pushToHashmap(&map, vert + n, sizeof(das_GL3DVertex), (void*) n);
             n++;

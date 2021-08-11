@@ -1,4 +1,4 @@
-/// NEKO: dynamic engine - powerful 2D and 3D game engine
+/// NEKO: dynamic engine - small but powerful 2D and 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: fpp_cam_ev.h - first person camera event class header
 /// author: Karl-Mihkel Ott

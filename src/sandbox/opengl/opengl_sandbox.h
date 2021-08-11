@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: imgui_sandbox.h - ImGui feature test application header
 /// author: Karl-Mihkel Ott
@@ -17,7 +17,7 @@
     #include <common/base_types.h>
     #include <common/hashmap.h>
     #include <data/assets.h>
-    #include <data/das_reader.h>
+    #include <data/das_loader.h>
     #include <data/tex_loader.h>
 
     #include <math/deng_math.h>

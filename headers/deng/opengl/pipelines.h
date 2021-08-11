@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: pipelines.h - OpenGL pipeline manager class header
 /// author: Karl-Mihkel Ott
@@ -15,10 +15,11 @@
     #include <cstring>
     #include <array>
 
-    #include <glad/glad.h>
     #include <common/base_types.h>
     #include <common/err_def.h>
     #include <data/assets.h>
+	#include <math/deng_math.h>
+	#include <deng/window.h>
      
     #include <math/deng_math.h>
     #include <deng/cross_api/shader_def.h>
@@ -30,7 +31,7 @@ namespace deng {
         class __gl_Pipelines {
         private:
             std::array<deng_ui32_t, PIPELINE_C> m_programs;
-            void (*glErrorCheck)(const std::string &func_name);
+            void (*lglErrorCheck)(const std::string &func_name, const std::string &file, const deng_ui32_t line);
 
         private:
             /// Load shader data from file to a buffer
@@ -53,7 +54,7 @@ namespace deng {
             void __prepareUniformBindings();
 
         public:
-            __gl_Pipelines(void (*gl_error_check)(const std::string &func_name));
+            __gl_Pipelines(void (*gl_error_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line));
 
             const deng_ui32_t getShaderProgram(const deng_ui32_t pipeline_id);
 

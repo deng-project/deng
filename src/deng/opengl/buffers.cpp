@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: buffers.h - OpenGL buffer manager class implementation
 /// author: Karl-Mihkel Ott
@@ -10,41 +10,37 @@
 namespace deng {
     namespace opengl {
 
-        __gl_BufferManager::__gl_BufferManager (
-            std::vector<deng_Id> &assets, 
-            std::shared_ptr<__gl_Pipelines> pipelines, 
-            __GlobalRegistry &reg,
-            void (*gl_error_check)(const std::string &func_name)
+        __gl_BufferManager::__gl_BufferManager(
+            std::vector<deng_Id>& assets,
+            std::shared_ptr<__gl_Pipelines> pipelines,
+            __GlobalRegistry& reg,
+            void (*lgl_error_check)(const std::string& func_name, const std::string& file, const deng_ui32_t line)
         ) :
-            __gl_UniformManager(reg, assets, m_resources), m_assets(assets), m_reg(reg), m_pipelines(pipelines),
-            glErrorCheck(gl_error_check)
+            __gl_UniformManager(reg, assets, m_resources, lgl_error_check), m_assets(assets), m_reg(reg), m_pipelines(pipelines), lglErrorCheck(lgl_error_check)
         {
-            // Generate new buffers for vertices, indices and uniform data
-            glGenBuffers(1, &m_resources.vert_buffer);
-            glErrorCheck("glGenBuffers");
-            glBindBuffer(GL_ARRAY_BUFFER, m_resources.vert_buffer);
-            glErrorCheck("glBindBuffer");
-
-            glGenBuffers(1, &m_resources.idx_buffer);
-            glErrorCheck("glGenBuffers");
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_resources.idx_buffer);
-            glErrorCheck("glBindBuffer");
-
-            glGenBuffers(1, &m_resources.ubo_buffer);
-            glErrorCheck("glGenBuffers");
-            glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
-            glErrorCheck("glBindBuffer");
-
-            LOG("vert, idx, ubo buffer values: " + std::to_string(m_resources.vert_buffer) + " " + std::to_string(m_resources.idx_buffer) + " " +
-                std::to_string(m_resources.ubo_buffer));
-            glErrorCheck("glGenBuffers");
-
-            // Bind all buffers accordingly
-
+            // Generate and bind new vertex array handles
             glGenVertexArrays(1, &m_resources.vert_array);
-            glErrorCheck("glGenVertexArrays");
+            glErrorCheck("glGenVertexArrays", __FILE__, __LINE__);
             glBindVertexArray(m_resources.vert_array);
-            glErrorCheck("glBindVertexArray");
+            glErrorCheck("glBindVertexArray", __FILE__, __LINE__);
+
+            // Generate new buffers
+            GLuint buffers[3];
+            glGenBuffers(3, buffers);
+            glErrorCheck("glGenBuffers", __FILE__, __LINE__);
+            m_resources.vert_buffer = buffers[0];
+            m_resources.idx_buffer = buffers[1];
+            m_resources.ubo_buffer = buffers[2];
+
+            // Bind all buffers handles with their corresponding buffer types
+            glBindBuffer(GL_ARRAY_BUFFER, m_resources.vert_buffer);
+            glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_resources.idx_buffer);
+            glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+
+            glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
+            glErrorCheck("glBindBuffer", __FILE__, __LINE__);
 
             // Find all asset offsets
             __OffsetFinder::getSectionInfo().asset_size = 0;
@@ -62,17 +58,16 @@ namespace deng {
         void __gl_BufferManager::allocateBufferMemory() {
             // Allocate memory for vertex buffer
             glBufferData(GL_ARRAY_BUFFER, __OffsetFinder::getSectionInfo().asset_cap + 
-                __OffsetFinder::getSectionInfo().ui_cap, NULL, GL_DYNAMIC_DRAW);
-            LOG("initialising asset vertex buffer with capacity of " + std::to_string(__OffsetFinder::getSectionInfo().asset_cap));
+                __OffsetFinder::getSectionInfo().ui_cap, NULL, GL_STATIC_DRAW);
+            glErrorCheck("glBufferData", __FILE__, __LINE__);
 
             // Allocate memory for indices buffer
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, __OffsetFinder::getSectionInfo().indices_cap, NULL, GL_DYNAMIC_DRAW);
-            LOG("initialising indices buffer with capacity of " + std::to_string(__OffsetFinder::getSectionInfo().indices_cap));
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, __OffsetFinder::getSectionInfo().indices_cap, NULL, GL_STATIC_DRAW);
+            glErrorCheck("glBufferData", __FILE__, __LINE__);
 
             // Allocate memory for uniform buffers
-            glBufferData(GL_UNIFORM_BUFFER, __OffsetFinder::getSectionInfo().ui_cap, NULL, GL_DYNAMIC_DRAW);
-
-            glErrorCheck("glBufferData");
+            glBufferData(GL_UNIFORM_BUFFER, __OffsetFinder::getSectionInfo().ubo_asset_cap * __OffsetFinder::getSectionInfo().ubo_cap, NULL, GL_STATIC_DRAW);
+            glErrorCheck("glBufferData", __FILE__, __LINE__);
         }
 
 
@@ -113,40 +108,35 @@ namespace deng {
                 case DAS_ASSET_MODE_2D_UNMAPPED:
                     glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v2d.mer.n * 
                         sizeof(das_GL2DVertexUnmapped), reg_asset.asset.vertices.v2d.mer.uvert);
+					glErrorCheck("glBufferSubData", __FILE__, __LINE__);
                     break;
 
                 case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
                     glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v2d.mer.n * 
                         sizeof(das_GL2DVertex), reg_asset.asset.vertices.v2d.mer.vert);
+					glErrorCheck("glBufferSubData", __FILE__, __LINE__);
                     break;
 
                 case DAS_ASSET_MODE_3D_UNMAPPED:
                     glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v3d.mer.n * 
                         sizeof(das_GL3DVertexUnmapped), reg_asset.asset.vertices.v3d.mer.uvert);
+					glErrorCheck("glBufferSubData", __FILE__, __LINE__);
                     break;
 
                 case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
                     LOG("Copying " + std::to_string(reg_asset.asset.vertices.v3d.mer.n) + " vertices to the buffer");
                     glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v3d.mer.n * 
                         sizeof(das_GL3DVertex), reg_asset.asset.vertices.v3d.mer.vert);
+					glErrorCheck("glBufferSubData", __FILE__, __LINE__);
                     break;
 
                 default:
                     break;
                 }
 
-                // LOG all indices to FILE
-                cm_OpenLogger("ind.log");
-                for(deng_ui64_t i = 0; i < reg_asset.asset.indices.n; i++) {
-                    char buf[128] = { 0 };
-                    sprintf(buf, "%u", reg_asset.asset.indices.gl[i]);
-                    cm_LogWrite(buf);
-                }
-                cm_CloseLogger();
-
                 glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, reg_asset.asset.offsets.ind_offset, 
                     reg_asset.asset.indices.n * sizeof(deng_idx_t), reg_asset.asset.indices.gl);
-                glErrorCheck("glBufferSubData");
+                glErrorCheck("glBufferSubData", __FILE__, __LINE__);
             }
         }
 
@@ -165,11 +155,12 @@ namespace deng {
                 // Vertices
                 glBufferSubData(GL_ARRAY_BUFFER, m_p_imgui_data->cmd_data[i].voffset, m_p_imgui_data->cmd_data[i].vert_c * sizeof(ImDrawVert),
                     m_p_imgui_data->cmd_data[i].verts);
+                glErrorCheck("glBufferSubData", __FILE__, __LINE__);
 
                 // Indices
                 glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, m_p_imgui_data->cmd_data[i].ioffset, m_p_imgui_data->cmd_data[i].ind_c *
                     sizeof(ImDrawIdx), m_p_imgui_data->cmd_data[i].ind);
-                glErrorCheck("glBufferSubData");
+                glErrorCheck("glBufferSubData", __FILE__, __LINE__);
             }
         }
 

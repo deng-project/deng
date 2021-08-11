@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: ubm.h - OpenGL uniform buffer manager parent class header
 /// author: Karl-Mihkel Ott
@@ -14,9 +14,9 @@
     #include <array>
     #include <chrono>
     #include <vulkan/vulkan.h>
-    #include <glad/glad.h>
 
     #include <common/base_types.h>
+	#include <common/err_def.h>
     #include <common/hashmap.h>
     #include <data/assets.h>
     #include <math/deng_math.h>
@@ -39,6 +39,7 @@ namespace deng {
         private:
             __GlobalRegistry &m_reg;
             __gl_Resources &m_resources;
+            void (*lglErrorCheck)(const std::string& func_name, const std::string &file, const deng_ui32_t line);
 
         protected:
             /// Reserve a uniform data memory location for OpenGL asset
@@ -46,7 +47,7 @@ namespace deng {
 
 
         public:
-            __gl_UniformManager(__GlobalRegistry &reg, std::vector<deng_Id> &assets, __gl_Resources &res);
+            __gl_UniformManager(__GlobalRegistry &reg, std::vector<deng_Id> &assets, __gl_Resources &res, void (*lgl_err_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line));
             
 
             /// Update uniform transformation data for the frame according to 

@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: rend_infos.h - Vulkan renderer initialiser helper data structures
 /// author: Karl-Mihkel Ott

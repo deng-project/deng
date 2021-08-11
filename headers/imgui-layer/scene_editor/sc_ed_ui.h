@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: sc_ed_ui.h - Scene editor ui element handler class
 /// author: Karl-Mihkel Ott

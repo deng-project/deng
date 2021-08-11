@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: ubm.cpp - OpenGL uniform buffer manager parent class implementation
 /// author: Karl-Mihkel Ott
@@ -10,11 +10,17 @@
 namespace deng {
     namespace opengl {
 
-        __gl_UniformManager::__gl_UniformManager(__GlobalRegistry &reg, std::vector<deng_Id> &assets, __gl_Resources &res) 
-            : __OffsetFinder(assets, reg), m_reg(reg), m_resources(res) {
+        __gl_UniformManager::__gl_UniformManager(__GlobalRegistry &reg, std::vector<deng_Id> &assets, __gl_Resources &res, void (*lgl_err_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line)) 
+            : __OffsetFinder(assets, reg), m_reg(reg), m_resources(res), lglErrorCheck(lgl_err_check) {
             glGenBuffers(1, &m_resources.ubo_buffer);
+
+            LOG("new ubo_buffer value: " + std::to_string(m_resources.ubo_buffer));
+
             glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
+            glErrorCheck("glBindBuffer", __FILE__,__LINE__);
+            
             glBufferData(GL_UNIFORM_BUFFER, __OffsetFinder::getSectionInfo().ui_cap, NULL, GL_DYNAMIC_DRAW);  
+            glErrorCheck("glBufferData", __FILE__,__LINE__);
         }
 
 
@@ -45,6 +51,7 @@ namespace deng {
 
                 // Reallocate uniform buffers
                 glBufferData(GL_UNIFORM_BUFFER, __OffsetFinder::getSectionInfo().ui_cap, NULL, GL_DYNAMIC_DRAW);
+                glErrorCheck("glBufferData", __FILE__, __LINE__);
             }
         }
 

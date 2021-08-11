@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: common.h - DENG common C language functionality header
 /// author: Karl-Mihkel Ott
@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-/// Universal macro for getting the size of an array
 #define C_ARR_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#define ZERO_MEM(buf)   memset(buf, 0, sizeof(buf));
 
 
 /// Calculate the remaining number needed to ceil given number x to have zero reminder when dividing with divider div
@@ -75,10 +75,8 @@ extern "C" {
 /***********************************************/
 
 
-/*
- * Find the total line count from beg to rlen
- * rlen must be less than the amount of memory under beg
- */
+/// Find the total line count from beg to rlen
+/// rlen must be less than the amount of memory under beg
 deng_ui32_t cm_FindLineCount(char *str, size_t rlen);
 
 
@@ -178,16 +176,6 @@ deng_ui16_t cm_RandI16();
 deng_ui8_t cm_RandI8();
 
 
-/// Convert regular ASCII string into wide UTF-16 string
-/// This method allocates memory on heap, manual cleanup is necessary
-wchar_t *cm_ToWideString(char *str);
-
-
-/// Convert wide string into regular string
-/// This functions reads first 8 least significant bits of the wide string
-char *cm_ToRegularString(wchar_t *wstr);
-
-
 /// Find all instances of sub_str from str and put their character positions into postions array
 /// This function uses heap allocation on dereferenced p_ind argument. That memory has to be freed afterwards
 void cm_FindAllSubstrings (
@@ -222,7 +210,8 @@ void cm_FormatTimeFromEpoch (
 
 
 // Log writer functions
-void cm_OpenLogger(const char* file_name);
+void cm_OpenLogger(const char* file_name, const deng_bool_t overwrite);
+const char *cm_GetLogFile();
 void cm_LogWrite(const char *content);
 void cm_CloseLogger();
 

@@ -1,4 +1,4 @@
-/// DENG: dynamic engine - powerful 3D game engine
+/// DENG: dynamic engine - small but powerful 3D game engine
 /// licence: Apache, see LICENCE file
 /// file: renderer.h - OpenGL renderer class implementation
 /// author: Karl-Mihkel Ott
@@ -20,59 +20,61 @@ namespace deng {
             m_cfg_vars = cfg;
             
             // Load all OpenGL functions
-            int status = neko_LoadGL();
+            int status = deng_LoadGL();
             DENG_ASSERT("Failed to load OpenGL functions", status);
-
-            // Load all shaders into OpenGL
-            m_pipelines = std::make_shared<__gl_Pipelines>(glErrorCheck);
-            m_buf_manager = std::make_unique<__gl_BufferManager>(m_assets, m_pipelines, m_reg, __gl_Renderer::glErrorCheck);
 
             // Enable some OpenGL features
             glEnable(GL_PROGRAM_POINT_SIZE);
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_STENCIL_TEST);
-            __gl_Renderer::glErrorCheck("glEnable");
 
-            glDepthFunc(GL_LESS);
-            __gl_Renderer::glErrorCheck("glDepthFunc");
-
-            // Set texture parameters
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            __gl_Renderer::glErrorCheck("glTexParameteri");
+            glErrorCheck("glTexParameteri", __FILE__,__LINE__);
+
+            // Load all shaders into OpenGL
+            m_pipelines = std::make_shared<__gl_Pipelines>(__gl_Pipelines(lglErrorCheck));
+            m_buf_manager = std::make_unique<__gl_BufferManager>(__gl_BufferManager(m_assets, m_pipelines, m_reg, lglErrorCheck));
+
+            glErrorCheck("glEnable", __FILE__, __LINE__);
+
+            glDepthFunc(GL_LESS);
+            glErrorCheck("glDepthFunc", __FILE__, __LINE__);
+
+            // Set texture parameters
         }
 
 
         /// OpenGL error checking function
-        void __gl_Renderer::glErrorCheck(const std::string &func_name) {
+        void __gl_Renderer::lglErrorCheck(const std::string &func_name, const std::string &file, const deng_ui32_t line ) {
             GLenum error;
             while((error = glGetError()) != GL_NO_ERROR) {
                 switch(error) {
                 case GL_INVALID_ENUM:
-                    std::cerr << func_name << "(): GL_INVALID_ENUM " << std::endl;
+                    std::cerr << func_name << "(); " << file << ", " << line << ": GL_INVALID_ENUM " << std::endl;
                     break;
 
                 case GL_INVALID_VALUE:
-                    std::cerr << func_name << "(): GL_INVALID_VALUE " << std::endl;
+                    std::cerr << func_name << "(); " << file << ", " << line << " GL_INVALID_VALUE " << std::endl;
                     break;
 
                 case GL_INVALID_OPERATION:
-                    std::cerr << func_name << "(): GL_INVALID_OPERATION " << std::endl;
+                    std::cerr << func_name << "(); " << file << ", " << line << " GL_INVALID_OPERATION " << std::endl;
                     break;
 
                 case GL_STACK_OVERFLOW:
-                    std::cerr << func_name << "(): GL_STACK_OVERFLOW " << std::endl;
+                    std::cerr << func_name << "(); " << file << ", " << line << " GL_STACK_OVERFLOW " << std::endl;
                     break;
 
                 case GL_STACK_UNDERFLOW:
-                    std::cerr << func_name << "(): GL_STACK_UNDERFLOW " << std::endl;
+                    std::cerr << func_name << "(); " << file << ", " << line << " GL_STACK_UNDERFLOW " << std::endl;
                     break;
 
                 case GL_OUT_OF_MEMORY:
-                    std::cerr << func_name << "(): GL_OUT_OF_MEMORY " << std::endl;
+                    std::cerr << func_name << "(); " << file << ", " << line << " GL_OUT_OF_MEMORY " << std::endl;
                     break;
 
                 default:
@@ -112,17 +114,20 @@ namespace deng {
             reg_tex.tex.gl_id = reg_gl_tex.gl_tex.uuid;
 
             glGenTextures(1, &reg_gl_tex.gl_tex.gl_id);
-            __gl_Renderer::glErrorCheck("glGenTextures");
+            glErrorCheck("glGenTextures", __FILE__,__LINE__);
 
             glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
-            __gl_Renderer::glErrorCheck("glBindTexture");
+            glErrorCheck("glBindTexture", __FILE__,__LINE__);
+
+            GLint max_t;
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_t);
 
             // Copy image data into texture object
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_BGRA, reg_tex.tex.pixel_data.width, reg_tex.tex.pixel_data.height,
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(reg_tex.tex.pixel_data.width), static_cast<GLsizei>(reg_tex.tex.pixel_data.height),
                 0, GL_RGBA, GL_UNSIGNED_BYTE, reg_tex.tex.pixel_data.pixel_data);
-            __gl_Renderer::glErrorCheck("glTexImage2D");
+            glErrorCheck("glTexImage2D", __FILE__,__LINE__);
             glGenerateMipmap(GL_TEXTURE_2D);
-            __gl_Renderer::glErrorCheck("glGenerateMipmap");
+            glErrorCheck("glGenerateMipmap", __FILE__,__LINE__);
 
             // Push the OpenGL texture to registry
             m_reg.push(reg_gl_tex.gl_tex.uuid, DENG_SUPPORTED_REG_TYPE_GL_TEXTURE, reg_gl_tex);
@@ -132,20 +137,42 @@ namespace deng {
         /// Main frame updating function
         void __gl_Renderer::makeFrame() {
             glViewport(0, 0, m_cfg_vars.p_win->getSize().first, m_cfg_vars.p_win->getSize().second);
-            __gl_Renderer::glErrorCheck("glViewport");
+            glErrorCheck("glViewport", __FILE__,__LINE__);
             glClearColor(m_cfg_vars.background.first, m_cfg_vars.background.second, m_cfg_vars.background.third,
                 m_cfg_vars.background.fourth);
-            __gl_Renderer::glErrorCheck("glClearColor");
+            glErrorCheck("glClearColor", __FILE__,__LINE__);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            __gl_Renderer::glErrorCheck("glClear");
+            glErrorCheck("glClear", __FILE__,__LINE__);
             
+			glBindVertexArray(m_buf_manager->getResources().vert_array);
+			glErrorCheck("glBindVertexArray", __FILE__,__LINE__);
 
             // For each asset draw it to the screen
-            LOG("Asset count " + std::to_string(m_assets.size()));
             for(deng_ui64_t i = 0; i < m_assets.size(); i++) {
-                glBindVertexArray(m_buf_manager->getResources().vert_array);
-                __gl_Renderer::glErrorCheck("glBindVertexArray");
                 RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+
+                // Determine which shader program to use for given draw call
+                switch (reg_asset.asset.asset_mode) {
+                case DAS_ASSET_MODE_2D_UNMAPPED:
+                    glUseProgram(m_pipelines->getShaderProgram(UM2D_I));
+                    break;
+
+                case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
+                    glUseProgram(m_pipelines->getShaderProgram(TM2D_I));
+                    break;
+                
+                case DAS_ASSET_MODE_3D_UNMAPPED:
+                    glUseProgram(m_pipelines->getShaderProgram(UM3D_I));
+                    break;
+
+                case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
+                    glUseProgram(m_pipelines->getShaderProgram(TM3D_I));
+                    break;
+
+                default:
+                    break;
+                }
+                glErrorCheck("glUseProgram", __FILE__, __LINE__);
 
                 // Draw asset by its elements to the screen
                 m_pipelines->setAssetVertAttributes(reg_asset.asset);
@@ -156,13 +183,11 @@ namespace deng {
                   reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED) && !reg_asset.asset.force_unmap) {
                    RegType &reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
                    RegType &reg_gl_tex = m_reg.retrieve(reg_tex.tex.gl_id, DENG_SUPPORTED_REG_TYPE_GL_TEXTURE, NULL);
-                   //glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
+                   glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
                 }
 
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buf_manager->getResources().idx_buffer);
-                __gl_Renderer::glErrorCheck("glBindBuffer");
-                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*) reg_asset.asset.offsets.ind_offset);
-                __gl_Renderer::glErrorCheck("glDrawElements");
+                glDrawElements(GL_TRIANGLES, reg_asset.asset.indices.n, GL_UNSIGNED_INT, (void*) reg_asset.asset.offsets.ind_offset);
+                glErrorCheck("glDrawElements", __FILE__,__LINE__);
                 m_pipelines->disableAssetVertAttributes(reg_asset.asset);
             }
         }
