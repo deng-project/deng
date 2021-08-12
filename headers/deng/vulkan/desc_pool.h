@@ -110,7 +110,7 @@ namespace deng {
         private:
             // Needed for descriptor pool reallocations
             std::vector<deng_Id> &m_assets;
-            deng::__GlobalRegistry &m_reg;
+            deng::Registry &m_reg;
 
             // Unmapped 2D asset pool
             VkDescriptorPool m_vu2d_pool = {};
@@ -148,7 +148,7 @@ namespace deng {
 
         protected:
             __vk_DescriptorPoolCreator(std::vector<deng_Id> &assets, 
-                __GlobalRegistry &reg) : m_assets(assets), m_reg(reg) {}
+                Registry &reg) : m_assets(assets), m_reg(reg) {}
 
             /// Create a new descriptor pool based on the pipeline type
             void mkDescPool(VkDevice device, deng_ui32_t cap, deng_PipelineType mode);

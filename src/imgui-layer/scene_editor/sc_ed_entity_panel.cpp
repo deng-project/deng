@@ -97,13 +97,13 @@ namespace dengEditor {
     }
 
 
-    void SceneEditor3DEntityPanel::__mkEntityPanelAssetList(const std::vector<deng_Id> &assets, deng::__GlobalRegistry &reg) {
+    void SceneEditor3DEntityPanel::__mkEntityPanelAssetList(const std::vector<deng_Id> &assets, deng::Registry &reg) {
         if(ImGui::BeginTable("Loaded assets", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY | 
            ImGuiTableFlags_ScrollX, ImVec2{400.0f, 300.0f})) {
 
             // For each asset retrieve its information and create a table row entry
             for(size_t i = 0; i < assets.size(); i++) {
-                deng::RegType reg_asset = reg.retrieve(assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                deng::RegData reg_asset = reg.retrieve(assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
                 ImGui::TableNextRow();
                 if(reg_asset.asset.name)
                     ImGui::Text("%s", reg_asset.asset.name);
@@ -115,13 +115,13 @@ namespace dengEditor {
     }
 
 
-    void SceneEditor3DEntityPanel::__mkEntityPanelTextureList(const std::vector<deng_Id> &textures, deng::__GlobalRegistry &reg) {
+    void SceneEditor3DEntityPanel::__mkEntityPanelTextureList(const std::vector<deng_Id> &textures, deng::Registry &reg) {
         if(ImGui::BeginTable("Loaded textures", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY |
            ImGuiTableFlags_ScrollX, ImVec2(400.0f, 300.0f))) {
             
             // For each texture instance retrieve its information and create a table row entry
             for(size_t i = 0; i < textures.size(); i++) {
-                deng::RegType reg_tex = reg.retrieve(textures[i], DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+                deng::RegData reg_tex = reg.retrieve(textures[i], DENG_REGISTRY_TYPE_TEXTURE, NULL);
                 ImGui::TableNextRow();
                 if(reg_tex.tex.name)
                     ImGui::Text("%s", reg_tex.tex.name);

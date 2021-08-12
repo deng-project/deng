@@ -88,5 +88,5 @@ namespace deng {
 
     const std::vector<deng_Id> &Renderer::getAssets() { return m_assets; }
     const std::vector<deng_Id> &Renderer::getTextures() { return m_textures; }
-    __GlobalRegistry &Renderer::getRegistry() { return m_reg; }
+    Registry &Renderer::getRegistry() { return m_reg; }
 } 

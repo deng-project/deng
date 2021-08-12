@@ -48,7 +48,7 @@ namespace deng {
             deng_Id m_missing_tex_uuid;
             __vk_BufferData &m_bd;
             deng::BufferSectionInfo &m_buf_sec;
-            deng::__GlobalRegistry &m_reg;
+            deng::Registry &m_reg;
 
         private:
             /// Create missing texture in case any texture mapped asset
@@ -107,7 +107,7 @@ namespace deng {
 
         public:
             __vk_TextureManager(VkDevice device, VkPhysicalDevice gpu, VkCommandPool cmd_pool,
-                VkQueue g_queue, std::vector<deng_Id> &textures, deng::__GlobalRegistry &reg,
+                VkQueue g_queue, std::vector<deng_Id> &textures, deng::Registry &reg,
                 __vk_BufferData &bd, deng::BufferSectionInfo &buf_sec);
 
 

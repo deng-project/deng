@@ -39,7 +39,7 @@ namespace deng {
         private:
             std::vector<deng_Id> &m_assets;
             __ImGuiData *m_p_imgui_data = NULL;
-            __GlobalRegistry &m_reg;
+            Registry &m_reg;
 
             std::shared_ptr<__gl_Pipelines> m_pipelines;
             __gl_Resources m_resources;
@@ -47,7 +47,7 @@ namespace deng {
 
         public:
             __gl_BufferManager(std::vector<deng_Id> &assets, std::shared_ptr<__gl_Pipelines> sloader, 
-                __GlobalRegistry &reg, void (*gl_error_check) (const std::string &func_name, const std::string &file, const deng_ui32_t line));
+                Registry &reg, void (*gl_error_check) (const std::string &func_name, const std::string &file, const deng_ui32_t line));
 
             /// Check if buffer reallocation is needed for assets and gui elements
             deng_bool_t reallocCheck();

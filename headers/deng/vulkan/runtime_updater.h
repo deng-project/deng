@@ -59,7 +59,7 @@ namespace deng {
             __vk_DrawCaller &m_dc;
             __vk_ResourceManager &m_rm;
             __vk_DescriptorSetsCreator &m_desc_c;
-            __GlobalRegistry &m_reg;
+            Registry &m_reg;
             std::vector<deng_Id> &m_assets;
             std::vector<deng_Id> &m_tex;
 
@@ -76,7 +76,7 @@ namespace deng {
                 __vk_DrawCaller &dc,
                 __vk_ResourceManager &rm,
                 __vk_DescriptorSetsCreator &desc_c,
-                __GlobalRegistry &reg,
+                Registry &reg,
                 std::vector<deng_Id> &assets, 
                 std::vector<deng_Id> &tex
             );

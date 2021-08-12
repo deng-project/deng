@@ -43,7 +43,7 @@ namespace deng {
         Window m_win;
         Camera3D m_cam;
         opengl::__gl_ConfigVars m_cfg = {};
-        __GlobalRegistry m_reg;
+        Registry m_reg;
         std::vector<deng_Id> m_assets;
         std::vector<deng_Id> m_textures;
         std::unique_ptr<opengl::__gl_Renderer> m_rend;

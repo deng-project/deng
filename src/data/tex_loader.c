@@ -160,6 +160,7 @@ void _das_RewriteTextureLogs() {
 
 /// Load texture bitmap data into das_Texture instance
 void das_LoadTexture(das_Texture *texture, const char *file_name) {
+    strcpy(texture->src, file_name);
     texture->uuid = uuid_Generate();
     das_ImageFormat format = __das_DetectImageFormat(file_name);
 

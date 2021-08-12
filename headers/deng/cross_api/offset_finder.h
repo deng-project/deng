@@ -91,7 +91,7 @@ namespace deng {
     class __OffsetFinder {
     private:
         std::vector<deng_Id> &m_assets;
-        __GlobalRegistry &m_reg;
+        Registry &m_reg;
         __ImGuiData *m_p_imgui_data = NULL;
         BufferSectionInfo m_buf_sec_info;
 
@@ -117,7 +117,7 @@ namespace deng {
         deng_ui64_t __findMaxAssetSize(const dengMath::vec2<deng_ui32_t> &bounds);
 
     public:
-        __OffsetFinder(std::vector<deng_Id> &assets, __GlobalRegistry &reg);
+        __OffsetFinder(std::vector<deng_Id> &assets, Registry &reg);
 
 
         /// Check if the current capacity is enough for assets and if it isn't resize the capacity and return true

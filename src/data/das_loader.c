@@ -78,6 +78,7 @@ void das_LoadAsset (
 ) {
     asset->asset_mode = dst_mode;
     asset->tex_uuid = (char*) tex_uuid;
+    strcpy(asset->src, file_name);
     asset->diffuse = DAS_DEFAULT_DIFFUSE_COLOR;
     asset->ambient = DAS_DEFAULT_AMBIENT_COLOR;
     asset->specular = DAS_DEFAULT_SPECULAR_COLOR;

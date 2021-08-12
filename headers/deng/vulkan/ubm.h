@@ -47,7 +47,7 @@ namespace deng {
             std::vector<deng_Id> &m_assets;
             const deng_ui64_t m_min_align;
             deng_ui64_t m_global_ubo_chunk_size;
-            deng::__GlobalRegistry &m_reg;
+            deng::Registry &m_reg;
             __vk_BufferData &m_buffer_data;
 
         private:
@@ -69,7 +69,7 @@ namespace deng {
 
         public:
             __vk_UniformBufferManager(std::vector<deng_Id> &assets,
-                const deng_ui64_t min_align, deng::__GlobalRegistry &reg,
+                const deng_ui64_t min_align, deng::Registry &reg,
                 __vk_BufferData &buf_data);
 
 

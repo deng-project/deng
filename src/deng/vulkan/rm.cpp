@@ -22,7 +22,7 @@ namespace deng {
             VkCommandPool cmd_pool,
             VkQueue g_queue,
             const std::vector<VkImageView> &sc_img_views,
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             std::vector<deng_Id> &assets,
             std::vector<deng_Id> &textures,
             VkFormat sc_color_format,

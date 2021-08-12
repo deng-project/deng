@@ -10,7 +10,7 @@
 namespace deng {
 
     __DataUpdater::__DataUpdater (
-        __GlobalRegistry &reg, 
+        Registry &reg, 
         std::unique_ptr<vulkan::__vk_Renderer> &vk_rend,
         std::unique_ptr<vulkan::__vk_ConfigVars> &vk_cfg
     ) : __AssetManager(vk_rend, vk_cfg), m_vk_rend(vk_rend), m_vk_cfg(vk_cfg) {}

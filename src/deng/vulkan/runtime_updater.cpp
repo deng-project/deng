@@ -17,7 +17,7 @@ namespace deng {
             __vk_DrawCaller &dc,
             __vk_ResourceManager &rm,
             __vk_DescriptorSetsCreator &desc_c,
-            __GlobalRegistry &reg,
+            Registry &reg,
             std::vector<deng_Id> &assets, 
             std::vector<deng_Id> &tex
         ) : m_ic(ic), m_scc(scc), m_dc(dc), m_rm(rm), m_desc_c(desc_c), m_reg(reg), 
@@ -71,8 +71,8 @@ namespace deng {
             // For each asset between bounds, check its descriptor set status
             for(deng_ui32_t i = bounds.first; i < bounds.second; i++) {
                 // Retrieve base and Vulkan assets
-                RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
-                RegType &reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id, DENG_SUPPORTED_REG_TYPE_VK_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
+                RegData &reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id, DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                 // Check if descriptor sets have been previously allocated
                 if(reg_vk_asset.vk_asset.is_desc) {

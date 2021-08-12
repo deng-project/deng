@@ -42,7 +42,7 @@ namespace Sandbox {
     private:
         deng::Window m_win;
         deng::Camera3D m_cam;
-        deng::__GlobalRegistry m_reg;
+        deng::Registry m_reg;
         dengMath::Transformer3D m_transformer;
         deng::LightManager m_light_man;
         std::unique_ptr<deng::Renderer> m_rend;

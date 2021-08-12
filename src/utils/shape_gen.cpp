@@ -197,8 +197,6 @@ namespace dengUtils {
 
         // Generate new uuid and set the name and tex_uuid as NULL
         out_asset.uuid = uuid_Generate();
-        out_asset.name = NULL;
-        out_asset.tex_uuid = NULL;
 
         // Set the color and 2D hierarchy level
         out_asset.vertices.v2d.mul.hier = hier;
@@ -242,13 +240,11 @@ namespace dengUtils {
         std::vector<deng_ui32_t> &indices,
         deng_ui32_t hier
     ) {
-        das_Asset out_asset;
+        das_Asset out_asset = {};
         out_asset.asset_mode = DAS_ASSET_MODE_2D_TEXTURE_MAPPED;
 
         // Set uuid, tex_uuid and name of the asset
         out_asset.uuid = uuid_Generate();
-        out_asset.name = NULL;
-        out_asset.tex_uuid = NULL;
 
         // Allocate memory for texture coordinates
         out_asset.vertices.v2d.mul.tex = (das_ObjTextureData*) calloc (

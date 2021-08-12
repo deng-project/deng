@@ -83,7 +83,7 @@ namespace deng {
         void setUIDataPtr(__ImGuiData *p_data);
         const std::vector<deng_Id> &getAssets();
         const std::vector<deng_Id> &getTextures();
-        deng::__GlobalRegistry &getRegistry();
+        deng::Registry &getRegistry();
     };
 }
 

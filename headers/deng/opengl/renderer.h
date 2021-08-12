@@ -44,7 +44,7 @@ namespace deng {
         class __gl_Renderer {
         private:
             __gl_ConfigVars m_cfg_vars;
-            deng::__GlobalRegistry &m_reg;
+            deng::Registry &m_reg;
             std::vector<deng_Id> &m_assets;
             std::vector<deng_Id> &m_textures;
 
@@ -57,9 +57,10 @@ namespace deng {
         private:
             /// OpenGL error checking function (used globally across OpenGL classes)
             static void lglErrorCheck(const std::string &func_name, const std::string &file, const deng_ui32_t line);
+            const GLenum __textureToUnit(const __gl_Texture &tex);
 
         public:
-            __gl_Renderer(__gl_ConfigVars &cfg, deng::__GlobalRegistry &reg, std::vector<deng_Id> &assets,
+            __gl_Renderer(__gl_ConfigVars &cfg, deng::Registry &reg, std::vector<deng_Id> &assets,
                 std::vector<deng_Id> &textures);
 
 

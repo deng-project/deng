@@ -48,7 +48,7 @@ namespace deng {
         void __initCheck(const std::string &func_name);
 
     public:
-        __DataUpdater(__GlobalRegistry &reg, std::unique_ptr<vulkan::__vk_Renderer> &vk_rend, std::unique_ptr<vulkan::__vk_ConfigVars> &vk_cfg);
+        __DataUpdater(Registry &reg, std::unique_ptr<vulkan::__vk_Renderer> &vk_rend, std::unique_ptr<vulkan::__vk_ConfigVars> &vk_cfg);
 
         /// Overwrite asset vertices to main buffer.
         /// Note that this method expects that vertices count hasn't changed,

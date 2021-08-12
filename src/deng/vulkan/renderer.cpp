@@ -16,7 +16,7 @@ namespace deng {
 
         __vk_Renderer::__vk_Renderer (
             __vk_ConfigVars &cnf,
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             std::vector<deng_Id> &assets, 
             std::vector<deng_Id> &textures
         ) : __vk_RendererInitialiser(*cnf.p_win, cnf, reg, assets, textures), 
@@ -78,11 +78,11 @@ namespace deng {
             LOG("Cleanup texture count: " + std::to_string(m_textures.size()));
             for(size_t i = 0; i < m_textures.size(); i++) {
                 // Retrieve base and Vulkan textures
-                RegType &reg_tex = __vk_RendererInitialiser::m_reg.retrieve(
-                    m_textures[i], DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+                RegData &reg_tex = __vk_RendererInitialiser::m_reg.retrieve(
+                    m_textures[i], DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
-                RegType &reg_vk_tex = __vk_RendererInitialiser::m_reg.retrieve(
-                    reg_tex.tex.vk_id, DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, NULL);
+                RegData &reg_vk_tex = __vk_RendererInitialiser::m_reg.retrieve(
+                    reg_tex.tex.vk_id, DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
 
                 // Check if image has been buffered and if it then has destroy all of its Vulkan related data
                 if(reg_vk_tex.vk_tex.is_buffered) {
@@ -109,14 +109,14 @@ namespace deng {
         void __vk_Renderer::__cleanAssets() {
             LOG("Asset count: " + std::to_string(__vk_RendererInitialiser::m_assets.size()));
             for(size_t i = 0; i < __vk_RendererInitialiser::m_assets.size(); i++) {
-                RegType &reg_vk_asset = __vk_RendererInitialiser::m_reg.retrieve (
-                    __vk_RendererInitialiser::m_assets[i], DENG_SUPPORTED_REG_TYPE_VK_ASSET, NULL);
+                RegData &reg_vk_asset = __vk_RendererInitialiser::m_reg.retrieve (
+                    __vk_RendererInitialiser::m_assets[i], DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                 // Check if asset has descriptor sets allocated and if it does then destroy them
                 if(reg_vk_asset.vk_asset.is_desc) {
                     // Retrieve the base asset
-                    RegType &reg_asset = __vk_RendererInitialiser::m_reg.retrieve (
-                        reg_vk_asset.vk_asset.base_id, DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                    RegData &reg_asset = __vk_RendererInitialiser::m_reg.retrieve (
+                        reg_vk_asset.vk_asset.base_id, DENG_REGISTRY_TYPE_ASSET, NULL);
 
                     // Free descriptor sets
                     vkFreeDescriptorSets(__vk_RendererInitialiser::getIC().getDev(), __vk_RendererInitialiser::getDescC().getDescPool(assetModeToPipelineType(reg_asset.asset.asset_mode)),
@@ -283,11 +283,11 @@ namespace deng {
         /// Prepare assets for rendering with Vulkan
         void __vk_Renderer::prepareAsset(deng_Id id) {
             // Retrive base  asset
-            RegType &reg_asset = __vk_RendererInitialiser::m_reg.retrieve(id, 
-                DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = __vk_RendererInitialiser::m_reg.retrieve(id, 
+                DENG_REGISTRY_TYPE_ASSET, NULL);
 
             // Create new Vulkan specific asset instance
-            RegType reg_vk_asset = {};
+            RegData reg_vk_asset = {};
             reg_vk_asset.vk_asset.base_id = reg_asset.asset.uuid;
             reg_vk_asset.vk_asset.tex_uuid = reg_asset.asset.tex_uuid;
             reg_vk_asset.vk_asset.uuid = uuid_Generate();
@@ -295,7 +295,7 @@ namespace deng {
             reg_asset.asset.vk_id = reg_vk_asset.vk_asset.uuid;
 
             // Push the Vulkan asset entry into registry
-            __vk_RendererInitialiser::m_reg.push(reg_vk_asset.vk_asset.uuid, DENG_SUPPORTED_REG_TYPE_VK_ASSET, 
+            __vk_RendererInitialiser::m_reg.push(reg_vk_asset.vk_asset.uuid, DENG_REGISTRY_TYPE_VK_ASSET, 
                 reg_vk_asset);
         }
 
@@ -304,15 +304,15 @@ namespace deng {
         void __vk_Renderer::prepareTexture(deng_Id id) {
             LOG("Prep id: " + std::string(id));
             // For each texture between bounds, create Vulkan specific texture instance
-            RegType reg_vk_tex;
+            RegData reg_vk_tex;
             reg_vk_tex.vk_tex.base_id = id;
             reg_vk_tex.vk_tex.uuid = uuid_Generate();
             reg_vk_tex.vk_tex.is_buffered = false;
 
-            __vk_RendererInitialiser::m_reg.push(reg_vk_tex.vk_tex.uuid, DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, reg_vk_tex);
+            __vk_RendererInitialiser::m_reg.push(reg_vk_tex.vk_tex.uuid, DENG_REGISTRY_TYPE_VK_TEXTURE, reg_vk_tex);
 
             // Retrieve base texture and give it Vulkan texture uuid
-            RegType &reg_tex = __vk_RendererInitialiser::m_reg.retrieve(reg_vk_tex.vk_asset.base_id, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+            RegData &reg_tex = __vk_RendererInitialiser::m_reg.retrieve(reg_vk_tex.vk_asset.base_id, DENG_REGISTRY_TYPE_TEXTURE, NULL);
             reg_tex.tex.vk_id = reg_vk_tex.vk_tex.uuid;
 
             LOG("uuid: " + std::string(reg_tex.tex.uuid));

@@ -23,6 +23,13 @@
      
     #include <math/deng_math.h>
     #include <deng/cross_api/shader_def.h>
+
+	#ifdef __DEBUG
+		#define db_PipelineMsg(pindex, msg)   __gl_Pipelines::_db_PipelineMsg(pindex, msg)
+	#else
+		#define db_PipelineMsg(pindex, msg)
+	#endif
+
 #endif
 
 namespace deng {
@@ -34,6 +41,9 @@ namespace deng {
             void (*lglErrorCheck)(const std::string &func_name, const std::string &file, const deng_ui32_t line);
 
         private:
+            /// Write debug message about certain pipeline
+            static void _db_PipelineMsg(const deng_ui32_t pipeline_id, const std::string &msg);
+
             /// Load shader data from file to a buffer
             char *__loadShaderFromFile(const char *file_name);
 

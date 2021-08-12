@@ -92,7 +92,7 @@ namespace deng {
             void __makeFrame();
 
         public:
-            __vk_Renderer(__vk_ConfigVars &cnf, deng::__GlobalRegistry &reg,
+            __vk_Renderer(__vk_ConfigVars &cnf, deng::Registry &reg,
                 std::vector<deng_Id> &assets, std::vector<deng_Id> &textures);
 
 

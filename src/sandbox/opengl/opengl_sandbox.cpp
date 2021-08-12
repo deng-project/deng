@@ -10,7 +10,7 @@
 namespace deng {
 
     OpenGLApplication::OpenGLApplication() : 
-        m_win(1280, 720, DENG_WINDOW_HINT_API_OPENGL, "OpenGL sample"),
+        m_win(1280, 720, DENG_WINDOW_HINT_API_OPENGL | DENG_WINDOW_HINT_FIXED_SIZE, "OpenGL sample"),
         m_cam(DENG_CAMERA_TYPE_EDITOR, dengMath::Conversion::degToRad(65.0), dengMath::vec2<deng_vec_t>{0.1f, -25.0f}, 
             dengMath::vec3<deng_vec_t>{0.7f, 0.7f, 0.7f}, dengMath::vec2<deng_f64_t>{0.3, 0.3}, false, &m_win) {
 
@@ -39,16 +39,16 @@ namespace deng {
         das_RewriteTextureLogs();
 
         // Load asset and texture files
-        RegType reg_tex = {};
+        RegData reg_tex = {};
         das_LoadTexture(&reg_tex.tex, "textures/viking_room.tga");
 
-        RegType reg_asset = {};
+        RegData reg_asset = {};
         das_LoadAsset(&reg_asset.asset, DAS_ASSET_MODE_UNDEFINED, das_ObjColorData{0.2f, 0.7f, 0.0f, 1.0f}, false, 
             reg_tex.tex.uuid, "assets/viking.das");
         reg_asset.asset.force_unmap = false;
 
-        m_reg.push(reg_asset.asset.uuid, DENG_SUPPORTED_REG_TYPE_ASSET, reg_asset);
-        m_reg.push(reg_tex.tex.uuid, DENG_SUPPORTED_REG_TYPE_TEXTURE, reg_tex);
+        m_reg.push(reg_asset.asset.uuid, DENG_REGISTRY_TYPE_ASSET, reg_asset);
+        m_reg.push(reg_tex.tex.uuid, DENG_REGISTRY_TYPE_TEXTURE, reg_tex);
         m_assets.push_back(reg_asset.asset.uuid);
         m_textures.push_back(reg_tex.tex.uuid);
 

@@ -82,6 +82,7 @@ namespace deng {
             deng_Id base_id;
             deng_Id uuid;
             deng_gl_t gl_id;
+            deng_gl_t unit_nr;
         };
     }
 }

@@ -48,20 +48,20 @@ typedef char* deng_Id;
 
 
 /// Registry type bitmasks
-typedef enum deng_SupportedRegType {
-    DENG_SUPPORTED_REG_TYPE_ASSET       = 0x00,
-    DENG_SUPPORTED_REG_TYPE_VK_ASSET    = 0x01,
-    DENG_SUPPORTED_REG_TYPE_TEXTURE     = 0x04,
-    DENG_SUPPORTED_REG_TYPE_VK_TEXTURE  = 0x08,
-    DENG_SUPPORTED_REG_TYPE_GL_TEXTURE  = 0x10,
-    DENG_SUPPORTED_REG_TYPE_PT_LIGHT    = 0x20,
-    DENG_SUPPORTED_REG_TYPE_SUN_LIGHT   = 0x40,
-    DENG_SUPPORTED_REG_TYPE_DIR_LIGHT   = 0x80,
+typedef enum deng_RegistryType {
+    DENG_REGISTRY_TYPE_ASSET       = 0x00,
+    DENG_REGISTRY_TYPE_VK_ASSET    = 0x01,
+    DENG_REGISTRY_TYPE_TEXTURE     = 0x04,
+    DENG_REGISTRY_TYPE_VK_TEXTURE  = 0x08,
+    DENG_REGISTRY_TYPE_GL_TEXTURE  = 0x10,
+    DENG_REGISTRY_TYPE_PT_LIGHT    = 0x20,
+    DENG_REGISTRY_TYPE_SUN_LIGHT   = 0x40,
+    DENG_REGISTRY_TYPE_DIR_LIGHT   = 0x80,
 
-    DENG_SUPPORTED_REG_TYPE_FIRST       = DENG_SUPPORTED_REG_TYPE_ASSET,
-    DENG_SUPPORTED_REG_TYPE_LAST        = DENG_SUPPORTED_REG_TYPE_DIR_LIGHT
-} deng_SupportedRegTypes;
-typedef deng_ui32_t deng_SupportedRegTypeBitMask;
+    DENG_REGISTRY_TYPE_FIRST       = DENG_REGISTRY_TYPE_ASSET,
+    DENG_REGISTRY_TYPE_LAST        = DENG_REGISTRY_TYPE_DIR_LIGHT
+} deng_RegistryTypes;
+typedef deng_ui32_t deng_RegistryTypeBitMask;
 
 
 /// Uniform flags mainly reserved for future use

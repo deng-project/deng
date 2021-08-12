@@ -26,7 +26,35 @@ namespace deng {
         void __gl_Pipelines::__compileShadersToProgram(const deng_ui32_t index) {
             dengMath::vec2<deng_gl_t> shaders = {};
 
+            // Shader file info console logging for debugging mode
+			#ifdef __DEBUG
+				switch (index) {
+                case UM2D_I:
+                    LOG("Compiling shaders for unmapped 2D asset pipeline");
+                    break;
+
+                case TM2D_I:
+                    LOG("Compiling shaders for texture mapped 2D asset pipeline");
+                    break;
+
+                case UM3D_I:
+                    LOG("Compiling shaders for unmapped 3D asset pipeline");
+                    break;
+
+                case TM3D_I:
+                    LOG("Compiling shaders for texture mapped 3D asset pipeline");
+                    break;
+                default:
+                    goto NO_DBG;
+                }
+
+				LOG("Shader source files: " + std::string(__shader_src_files[index][0]) + ", " + std::string(__shader_src_files[index][1]));
+
+			NO_DBG:
+			#endif
+
             shaders.first = glCreateShader(GL_VERTEX_SHADER);
+            glErrorCheck("glCreateShader", __FILE__, __LINE__);
             shaders.second = glCreateShader(GL_FRAGMENT_SHADER);
             glErrorCheck("glCreateShader", __FILE__, __LINE__);
 
@@ -38,6 +66,7 @@ namespace deng {
             len = strlen(vert);
             glShaderSource(shaders.first, 1, &vert, &len);
             glErrorCheck("glShaderSource", __FILE__, __LINE__);
+
             len = strlen(frag);
             glShaderSource(shaders.second, 1, &frag, &len);
             glErrorCheck("glShaderSource", __FILE__, __LINE__);
@@ -78,56 +107,99 @@ namespace deng {
             deng_ui32_t index;
             index = glGetUniformBlockIndex(m_programs[UM2D_I], "UniformData");
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            db_PipelineMsg(UM2D_I, "Uniform index for block UniformData is " + std::to_string(index));
+
             glUniformBlockBinding(m_programs[UM2D_I], index, 0);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[UM2D_I], "ColorData");
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            db_PipelineMsg(UM2D_I, "Uniform index for block ColorData is " + std::to_string(index));
+
             glUniformBlockBinding(m_programs[UM2D_I], index, 1);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             // 2D texture mapped assets
             index = glGetUniformBlockIndex(m_programs[TM2D_I], "UniformData");
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            db_PipelineMsg(TM2D_I, "Uniform index for block UniformData is " + std::to_string(index));
+
             glUniformBlockBinding(m_programs[TM2D_I], index, 0);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[TM2D_I], "ColorData");
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            db_PipelineMsg(TM2D_I, "Uniform index for block ColorData is " + std::to_string(index));
+
             glUniformBlockBinding(m_programs[TM2D_I], index, 1);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             // 3D unmapped assets
             index = glGetUniformBlockIndex(m_programs[UM3D_I], "UboTransform");
+            db_PipelineMsg(UM3D_I, "Uniform index for block UboTransform is " + std::to_string(index));
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+
             glUniformBlockBinding(m_programs[UM3D_I], index, 0);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[UM3D_I], "AssetData");
+            db_PipelineMsg(UM3D_I, "Uniform index for block AssetData is " + std::to_string(index));
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+
             glUniformBlockBinding(m_programs[UM3D_I], index, 1);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             index = glGetUniformBlockIndex(m_programs[UM3D_I], "LightData");
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            db_PipelineMsg(UM3D_I, "Uniform index for block LightData is " + std::to_string(index));
+
             glUniformBlockBinding(m_programs[UM3D_I], index, 2);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
             // 3D texture mapped assets
             index = glGetUniformBlockIndex(m_programs[TM3D_I], "UboTransform");
             glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            db_PipelineMsg(TM3D_I, "Uniform index for block UboTransform is " + std::to_string(index));
+
             glUniformBlockBinding(m_programs[TM3D_I], index, 0);
             glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
 
-            index = glGetUniformBlockIndex(m_programs[TM3D_I], "AssetData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            glUniformBlockBinding(m_programs[TM3D_I], index, 1);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
+            // index = glGetUniformBlockIndex(m_programs[TM3D_I], "LightData");
+            // glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            // db_PipelineMsg(TM3D_I, "Uniform index for block LightData is " + std::to_string(index));
 
-            index = glGetUniformBlockIndex(m_programs[TM3D_I], "LightData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            glUniformBlockBinding(m_programs[TM3D_I], index, 2);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
+            // glUniformBlockBinding(m_programs[TM3D_I], index, 2);
+            // glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
+
+            // index = glGetUniformBlockIndex(m_programs[TM3D_I], "AssetData");
+            // glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            // db_PipelineMsg(TM3D_I, "Uniform index for block AssetData is " + std::to_string(index));
+
+            // glUniformBlockBinding(m_programs[TM3D_I], index, 1);
+            // glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
+        }
+
+		/// Write debug message about certain pipeline
+        void __gl_Pipelines::_db_PipelineMsg(const deng_ui32_t pipeline_id, const std::string& msg) {
+            switch (pipeline_id) {
+            case UM2D_I:
+                LOG("UM2D_I: " + msg);
+                break;
+
+            case TM2D_I:
+                LOG("TM2D_I: " + msg);
+                break;
+
+            case UM3D_I:
+                LOG("UM3D_I: " + msg);
+                break;
+
+            case TM3D_I:
+                LOG("TM3D_I: " + msg);
+                break;
+            
+            default: return;
+            }
         }
 
 

@@ -13,7 +13,7 @@ namespace deng {
 
         __gl_Renderer::__gl_Renderer (
             __gl_ConfigVars &cfg,
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             std::vector<deng_Id> &assets,
             std::vector<deng_Id> &textures
         ) : m_reg(reg), m_assets(assets), m_textures(textures) {
@@ -25,11 +25,14 @@ namespace deng {
 
             // Enable some OpenGL features
             glEnable(GL_PROGRAM_POINT_SIZE);
+            glErrorCheck("glEnable", __FILE__, __LINE__);
             glEnable(GL_DEPTH_TEST);
+            glErrorCheck("glEnable", __FILE__, __LINE__);
             glEnable(GL_STENCIL_TEST);
+            glErrorCheck("glEnable", __FILE__, __LINE__);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+            // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -39,12 +42,8 @@ namespace deng {
             m_pipelines = std::make_shared<__gl_Pipelines>(__gl_Pipelines(lglErrorCheck));
             m_buf_manager = std::make_unique<__gl_BufferManager>(__gl_BufferManager(m_assets, m_pipelines, m_reg, lglErrorCheck));
 
-            glErrorCheck("glEnable", __FILE__, __LINE__);
-
             glDepthFunc(GL_LESS);
             glErrorCheck("glDepthFunc", __FILE__, __LINE__);
-
-            // Set texture parameters
         }
 
 
@@ -84,6 +83,10 @@ namespace deng {
             }
         }
 
+        const GLenum __gl_Renderer::__textureToUnit(const __gl_Texture &tex) {
+            return GL_TEXTURE0 + (GLenum) tex.unit_nr;
+        }
+
 
         void __gl_Renderer::setLighting(std::array<deng_Id, __DENG_MAX_LIGHT_SRC_COUNT> &light_srcs) {
             m_buf_manager->updateUboLighting(light_srcs);
@@ -93,7 +96,7 @@ namespace deng {
         void __gl_Renderer::prepareAssets(const dengMath::vec2<deng_ui32_t> &bounds) {
             // For each asset between bounds, merge index buffers
             for(deng_ui32_t i = bounds.first; i < bounds.second; i++) {
-                RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
                 das_MergeIndexBuffers(&reg_asset.asset);
                 reg_asset.asset.is_opengl = true;
             }
@@ -106,21 +109,34 @@ namespace deng {
 
         /// Prepare texture for OpenGL usage
         void __gl_Renderer::prepareTexture(const deng_Id id) {
-            RegType &reg_tex = m_reg.retrieve(id, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+            RegData &reg_tex = m_reg.retrieve(id, DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
-            RegType reg_gl_tex = {};
+            RegData reg_gl_tex = {};
             reg_gl_tex.gl_tex.base_id = id;
+            reg_gl_tex.gl_tex.unit_nr = static_cast<deng_gl_t>(m_reg.getItemsByType(DENG_REGISTRY_TYPE_GL_TEXTURE).size());
+
+            // Check if the unit_nr does not exceed GL_MAX_TEXTURE_IMAGE_UNITS
+            GLint max_units;
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_units);
+            DENG_ASSERT("Current texture image index exceeds GL_MAX_TEXTURE_IMAGE_UNITS limit", max_units < (GLint) reg_gl_tex.gl_tex.unit_nr);
+
+            // Console logging
+            LOG("Preparing OpenGL texture with unit nr of " + std::to_string(reg_gl_tex.gl_tex.unit_nr));
+            LOG("Maximum number of texture units is " + std::to_string(max_units));
+
             reg_gl_tex.gl_tex.uuid = uuid_Generate();
             reg_tex.tex.gl_id = reg_gl_tex.gl_tex.uuid;
-
-            glGenTextures(1, &reg_gl_tex.gl_tex.gl_id);
-            glErrorCheck("glGenTextures", __FILE__,__LINE__);
 
             glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
             glErrorCheck("glBindTexture", __FILE__,__LINE__);
 
+            glGenTextures(1, &reg_gl_tex.gl_tex.gl_id);
+            glErrorCheck("glGenTextures", __FILE__,__LINE__);
+
             GLint max_t;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_t);
+            DENG_ASSERT("Texture width for texture " + std::string(reg_tex.tex.src) + " exceeds GL_MAX_TEXTURE_SIZE limit (" + std::to_string(max_t) + ")", max_t < reg_tex.tex.pixel_data.width);
+            DENG_ASSERT("Texture height for texture " + std::string(reg_tex.tex.src) + " exceeds GL_MAX_TEXTURE_SIZE limit (" + std::to_string(max_t) + ")", max_t < reg_tex.tex.pixel_data.height);
 
             // Copy image data into texture object
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(reg_tex.tex.pixel_data.width), static_cast<GLsizei>(reg_tex.tex.pixel_data.height),
@@ -130,7 +146,7 @@ namespace deng {
             glErrorCheck("glGenerateMipmap", __FILE__,__LINE__);
 
             // Push the OpenGL texture to registry
-            m_reg.push(reg_gl_tex.gl_tex.uuid, DENG_SUPPORTED_REG_TYPE_GL_TEXTURE, reg_gl_tex);
+            m_reg.push(reg_gl_tex.gl_tex.uuid, DENG_REGISTRY_TYPE_GL_TEXTURE, reg_gl_tex);
         }
 
 
@@ -149,7 +165,7 @@ namespace deng {
 
             // For each asset draw it to the screen
             for(deng_ui64_t i = 0; i < m_assets.size(); i++) {
-                RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
 
                 // Determine which shader program to use for given draw call
                 switch (reg_asset.asset.asset_mode) {
@@ -181,9 +197,11 @@ namespace deng {
                 // Check if texture must be bound
                 if((reg_asset.asset.asset_mode == DAS_ASSET_MODE_3D_TEXTURE_MAPPED || 
                   reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED) && !reg_asset.asset.force_unmap) {
-                   RegType &reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
-                   RegType &reg_gl_tex = m_reg.retrieve(reg_tex.tex.gl_id, DENG_SUPPORTED_REG_TYPE_GL_TEXTURE, NULL);
+                   RegData &reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid, DENG_REGISTRY_TYPE_TEXTURE, NULL);
+                   RegData &reg_gl_tex = m_reg.retrieve(reg_tex.tex.gl_id, DENG_REGISTRY_TYPE_GL_TEXTURE, NULL);
+                   // glActiveTexture(__textureToUnit(reg_gl_tex.gl_tex));
                    glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
+                   glErrorCheck("glBindTexture", __FILE__, __LINE__);
                 }
 
                 glDrawElements(GL_TRIANGLES, reg_asset.asset.indices.n, GL_UNSIGNED_INT, (void*) reg_asset.asset.offsets.ind_offset);

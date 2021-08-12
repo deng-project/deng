@@ -17,7 +17,7 @@ namespace deng {
             VkPhysicalDevice gpu,
             const VkPhysicalDeviceLimits &gpu_limits,
             std::vector<deng_Id> &assets,
-            deng::__GlobalRegistry &reg
+            deng::Registry &reg
         ) : __vk_UniformBufferManager(assets, gpu_limits.minUniformBufferOffsetAlignment,
                 reg, m_buffer_data), __OffsetFinder(assets, reg),
             m_assets(assets), m_gpu_limits(gpu_limits), m_reg(reg)
@@ -50,8 +50,8 @@ namespace deng {
             // For each given asset populate staging buffer with asset data
             for(size_t i = bounds.first; i < bounds.second; i++) {
                 // Retrieve base and Vulkan specific asset instances
-                RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
-                RegType &reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id, DENG_SUPPORTED_REG_TYPE_VK_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
+                RegData &reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id, DENG_REGISTRY_TYPE_VK_ASSET, NULL);
                 
                 // Adjust offsets to staging buffer
                 reg_asset.asset.offsets.pos_offset -= cpy_offset;
@@ -138,7 +138,7 @@ namespace deng {
             if(!no_offset_calc) {
                 __OffsetFinder::getSectionInfo().asset_size = 0;
                 for(size_t i = 0; i < m_assets.size(); i++) {
-                    RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                    RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
                     
                     // Find buffer offsets for the asset
                     __findAssetOffsets(reg_asset.asset);

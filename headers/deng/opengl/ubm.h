@@ -37,7 +37,7 @@ namespace deng {
 
         class __gl_UniformManager : protected __OffsetFinder {
         private:
-            __GlobalRegistry &m_reg;
+            Registry &m_reg;
             __gl_Resources &m_resources;
             void (*lglErrorCheck)(const std::string& func_name, const std::string &file, const deng_ui32_t line);
 
@@ -47,7 +47,7 @@ namespace deng {
 
 
         public:
-            __gl_UniformManager(__GlobalRegistry &reg, std::vector<deng_Id> &assets, __gl_Resources &res, void (*lgl_err_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line));
+            __gl_UniformManager(Registry &reg, std::vector<deng_Id> &assets, __gl_Resources &res, void (*lgl_err_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line));
             
 
             /// Update uniform transformation data for the frame according to 

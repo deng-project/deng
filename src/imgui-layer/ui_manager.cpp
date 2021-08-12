@@ -18,7 +18,7 @@ namespace deng {
         imgui_atlas.uuid = uuid_Generate();
         m_imgui_atlas = imgui_atlas.uuid;
         m_gui_data.tex_id = imgui_atlas.uuid;
-        imgui_atlas.name = (char*) "#ImGui_atlas";
+        strcpy(imgui_atlas.src, "ImGui_atlas.deng");
     
         // Temporary width and height variables
         deng_i32_t width, height;

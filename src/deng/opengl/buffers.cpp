@@ -13,7 +13,7 @@ namespace deng {
         __gl_BufferManager::__gl_BufferManager(
             std::vector<deng_Id>& assets,
             std::shared_ptr<__gl_Pipelines> pipelines,
-            __GlobalRegistry& reg,
+            Registry& reg,
             void (*lgl_error_check)(const std::string& func_name, const std::string& file, const deng_ui32_t line)
         ) :
             __gl_UniformManager(reg, assets, m_resources, lgl_error_check), m_assets(assets), m_reg(reg), m_pipelines(pipelines), lglErrorCheck(lgl_error_check)
@@ -45,7 +45,7 @@ namespace deng {
             // Find all asset offsets
             __OffsetFinder::getSectionInfo().asset_size = 0;
             for(deng_ui64_t i = 0; i < m_assets.size(); i++) {
-                RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
                 __OffsetFinder::__findAssetOffsets(reg_asset.asset);
             }
 
@@ -94,14 +94,14 @@ namespace deng {
                 __OffsetFinder::getSectionInfo().asset_size = 0;
                 __OffsetFinder::getSectionInfo().indices_size = 0;
                 for(deng_ui64_t i = 0; i < m_assets.size(); i++) {
-                    RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                    RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
                     __OffsetFinder::__findAssetOffsets(reg_asset.asset);
                 }
             }
  
             // For each asset copy its data over to the buffers
             for(deng_ui32_t i = bounds.first; i < bounds.second; i++) {
-                RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
 
                 // Check the asset type and bind data accordingly
                 switch(reg_asset.asset.asset_mode) {

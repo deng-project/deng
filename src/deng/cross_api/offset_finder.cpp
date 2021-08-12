@@ -70,7 +70,7 @@
 
 namespace deng {
 
-    __OffsetFinder::__OffsetFinder(std::vector<deng_Id> &assets, __GlobalRegistry &reg) : 
+    __OffsetFinder::__OffsetFinder(std::vector<deng_Id> &assets, Registry &reg) : 
         m_assets(assets), m_reg(reg), m_buf_sec_info() {}
 
 
@@ -255,7 +255,7 @@ namespace deng {
         m_buf_sec_info.indices_size = 0;
         for(size_t i = 0; i < m_assets.size(); i++) {
             // Retrieve the asset from registry
-            RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
             __findAssetOffsets(reg_asset.asset);
         }
 
@@ -276,7 +276,7 @@ namespace deng {
         // For each asset in bounds check the size and find the largest one
         for(size_t i = bounds.first; i < bounds.second; i++) {
             // Retrieve assets from the registry
-            RegType &reg_asset = m_reg.retrieve(m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
 
             // Check how much memory the asset consumes by checking their mode, which
             // they used to allocate memory for the vertex buffer

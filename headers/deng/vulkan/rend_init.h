@@ -80,7 +80,7 @@ namespace deng {
             std::unique_ptr<__vk_DrawCaller> m_dc;
 
         protected:
-            __GlobalRegistry &m_reg;
+            Registry &m_reg;
             std::vector<deng_Id> &m_assets;
             std::vector<deng_Id> &m_textures;
 
@@ -88,7 +88,7 @@ namespace deng {
             __vk_RendererInitialiser (
                 deng::Window &win, 
                 const __vk_ConfigVars &conf,
-                deng::__GlobalRegistry &reg,
+                deng::Registry &reg,
                 std::vector<deng_Id> &assets,
                 std::vector<deng_Id> &textures
             );

@@ -87,8 +87,8 @@ namespace dengEditor {
     private:
         /// Upper elements
         void __mkEntityPanelMenuBar();
-        void __mkEntityPanelAssetList(const std::vector<deng_Id> &assets, deng::__GlobalRegistry &reg);
-        void __mkEntityPanelTextureList(const std::vector<deng_Id> &textures, deng::__GlobalRegistry &reg);
+        void __mkEntityPanelAssetList(const std::vector<deng_Id> &assets, deng::Registry &reg);
+        void __mkEntityPanelTextureList(const std::vector<deng_Id> &textures, deng::Registry &reg);
 
         /// Entity panel headers
         void __mkLightingHeader();

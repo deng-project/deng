@@ -66,7 +66,7 @@
 
 namespace deng {
         
-    LightManager::LightManager(__GlobalRegistry &reg) : m_reg(reg) {
+    LightManager::LightManager(Registry &reg) : m_reg(reg) {
         // Reserve some memory for light sources in order to avoid reallocations
         m_pt_srcs.reserve(__DENG_MAX_LIGHT_SRC_COUNT);
         m_sun_srcs.reserve(__DENG_MAX_LIGHT_SRC_COUNT); 
@@ -80,13 +80,13 @@ namespace deng {
         const dengMath::vec3<deng_vec_t> &pos
     ) {
         // Construct a new registry entry
-        RegType lsrc = {};
+        RegData lsrc = {};
         lsrc.pt_light.uuid = uuid_Generate();
         lsrc.pt_light.intensity = intensity;
         lsrc.pt_light.pos = pos;
         
         // Push the registry entry to registry
-        m_reg.push(lsrc.pt_light.uuid, DENG_SUPPORTED_REG_TYPE_PT_LIGHT,
+        m_reg.push(lsrc.pt_light.uuid, DENG_REGISTRY_TYPE_PT_LIGHT,
             lsrc);
 
         m_src_c++;
@@ -102,14 +102,14 @@ namespace deng {
         deng_vec_t intensity
     ) {
         // Construct a new registry entry
-        RegType lsrc = {};
+        RegData lsrc = {};
         lsrc.sun_light.uuid = uuid_Generate();
         lsrc.sun_light.sky_height = sky_height;
         lsrc.sun_light.angle = angle;
         lsrc.sun_light.intensity = intensity;
 
         // Push the registry entry to registry
-        m_reg.push(lsrc.sun_light.uuid, DENG_SUPPORTED_REG_TYPE_SUN_LIGHT,
+        m_reg.push(lsrc.sun_light.uuid, DENG_REGISTRY_TYPE_SUN_LIGHT,
             lsrc);
 
         m_src_c++;
@@ -127,7 +127,7 @@ namespace deng {
         const dengMath::vec3<deng_vec_t> &pos
     ) {
         // Construct a new registry entry
-        RegType lsrc = {};
+        RegData lsrc = {};
         lsrc.dir_light.uuid = uuid_Generate();
         lsrc.dir_light.intensity = intensity;
         lsrc.dir_light.radius = radius;
@@ -135,7 +135,7 @@ namespace deng {
         lsrc.dir_light.pos = pos;
 
         // Push the registry entry to registry
-        m_reg.push(lsrc.dir_light.uuid, DENG_SUPPORTED_REG_TYPE_DIR_LIGHT,
+        m_reg.push(lsrc.dir_light.uuid, DENG_REGISTRY_TYPE_DIR_LIGHT,
             lsrc);
 
         m_src_c++;
@@ -149,22 +149,22 @@ namespace deng {
     /// If the specified light source type is sun light then change sky height only
     void LightManager::movSrc(deng_Id id, const dengMath::vec3<deng_vec_t> &delta) {
         // Retrieve the light source with its type
-        deng_SupportedRegType type = {};
-        RegType &reg_src = m_reg.retrieve(id, DENG_SUPPORTED_REG_TYPE_PT_LIGHT |
-            DENG_SUPPORTED_REG_TYPE_SUN_LIGHT | DENG_SUPPORTED_REG_TYPE_DIR_LIGHT,
+        deng_RegistryType type = {};
+        RegData &reg_src = m_reg.retrieve(id, DENG_REGISTRY_TYPE_PT_LIGHT |
+            DENG_REGISTRY_TYPE_SUN_LIGHT | DENG_REGISTRY_TYPE_DIR_LIGHT,
             &type);
 
         // Check the recieved type
         switch(type) {
-        case DENG_SUPPORTED_REG_TYPE_PT_LIGHT:
+        case DENG_REGISTRY_TYPE_PT_LIGHT:
             reg_src.pt_light.pos += delta;
             break;
 
-        case DENG_SUPPORTED_REG_TYPE_SUN_LIGHT:
+        case DENG_REGISTRY_TYPE_SUN_LIGHT:
             reg_src.sun_light.sky_height += delta.second;
             break;
 
-        case DENG_SUPPORTED_REG_TYPE_DIR_LIGHT:
+        case DENG_REGISTRY_TYPE_DIR_LIGHT:
             reg_src.pt_light.pos += delta;
             break;
 
@@ -179,8 +179,8 @@ namespace deng {
     /// throws a runtime error
     void LightManager::dirLightSrcRotate(deng_Id id, const dengMath::vec2<deng_vec_t> &rot) {
         // Retrieve light source from registry
-        RegType &reg_src = m_reg.retrieve(id, 
-            DENG_SUPPORTED_REG_TYPE_DIR_LIGHT, NULL);
+        RegData &reg_src = m_reg.retrieve(id, 
+            DENG_REGISTRY_TYPE_DIR_LIGHT, NULL);
 
         // Create u axis rotation matrices
         dengMath::mat3<deng_vec_t> rot_u = dengMath::mat3<deng_vec_t> {

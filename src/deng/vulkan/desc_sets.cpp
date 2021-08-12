@@ -74,7 +74,7 @@ namespace deng {
             VkDevice device, 
             VkExtent2D extent, 
             VkRenderPass renderpass, 
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             std::vector<deng_Id> &assets,
             std::vector<deng_Id> &textures,
             VkSampleCountFlagBits sample_c
@@ -101,12 +101,12 @@ namespace deng {
             // Count new added assets by their type
             for(size_t i = asset_bounds.first; i < asset_bounds.second; i++) {
                 // Retrieve base asset
-                RegType &reg_asset = m_reg.retrieve(
-                    m_assets[i], DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(
+                    m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
 
                 // Retrieve vulkan asset
-                RegType &reg_vk_asset = m_reg.retrieve (
-                    reg_asset.asset.vk_id, DENG_SUPPORTED_REG_TYPE_VK_ASSET, NULL);
+                RegData &reg_vk_asset = m_reg.retrieve (
+                    reg_asset.asset.vk_id, DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                 // Increment asset count accordingly
                 switch(reg_asset.asset.asset_mode) {
@@ -143,11 +143,11 @@ namespace deng {
 
             // Create new descriptor sets for all assets that are between given bounds
             for(size_t i = asset_bounds.first; i < asset_bounds.second; i++) {
-                RegType &reg_asset = m_reg.retrieve(m_assets[i],
-                    DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(m_assets[i],
+                    DENG_REGISTRY_TYPE_ASSET, NULL);
 
-                RegType &reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id,
-                    DENG_SUPPORTED_REG_TYPE_VK_ASSET, NULL);
+                RegData &reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id,
+                    DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                 // Create texture mapped descriptor sets
                 if(reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED ||
@@ -186,12 +186,12 @@ namespace deng {
             // For each affected asset create new descriptor sets
             for(size_t i = 0; i < destroyed_assets.size(); i++) {
                 // Retrieve the Vulkan asset
-                RegType &reg_vk_asset = m_reg.retrieve(destroyed_assets[i],
-                    DENG_SUPPORTED_REG_TYPE_VK_ASSET, NULL);
+                RegData &reg_vk_asset = m_reg.retrieve(destroyed_assets[i],
+                    DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                 // Retrieve the base asset
-                RegType &reg_asset = m_reg.retrieve(reg_vk_asset.vk_asset.base_id,
-                    DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+                RegData &reg_asset = m_reg.retrieve(reg_vk_asset.vk_asset.base_id,
+                    DENG_REGISTRY_TYPE_ASSET, NULL);
 
                 // Choose the descriptor set allocation method according to the asset mode
                 switch(reg_asset.asset.asset_mode) {
@@ -411,8 +411,8 @@ namespace deng {
             set_layouts.resize(__max_frame_c);
 
             // Retrieve the base asset from registry
-            RegType &reg_asset = m_reg.retrieve(asset.base_id, 
-                DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = m_reg.retrieve(asset.base_id, 
+                DENG_REGISTRY_TYPE_ASSET, NULL);
 
             // Allocate memory for descriptor sets
             asset.desc_c = __max_frame_c;
@@ -464,29 +464,29 @@ namespace deng {
             set_layouts.resize(__max_frame_c);
 
             // Retrieve the base asset
-            RegType &reg_asset = m_reg.retrieve(asset.base_id,
-                DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = m_reg.retrieve(asset.base_id,
+                DENG_REGISTRY_TYPE_ASSET, NULL);
 
             // Texture entry pointer that is going to have an appropriate value according to the given texture id
-            RegType *p_reg_vk_tex = NULL;
+            RegData *p_reg_vk_tex = NULL;
 
             // Retrieve the asset texture if it exists, otherwise retrieve missing texture texture
             if(reg_asset.asset.tex_uuid) {
                 // Retrieve the base texture and then retrieve Vulkan texture
-                RegType reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid,
-                    DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+                RegData reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid,
+                    DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
                 p_reg_vk_tex = m_reg.retrievePtr(reg_tex.tex.vk_id, 
-                    DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, NULL);
+                    DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
             }
 
             else {
                 // Retrieve the base texture and then retrieve Vulkan texture
-                RegType reg_tex = m_reg.retrieve(missing_tex_uuid,
-                    DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+                RegData reg_tex = m_reg.retrieve(missing_tex_uuid,
+                    DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
                 p_reg_vk_tex = m_reg.retrievePtr(reg_tex.tex.vk_id, 
-                    DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, NULL);
+                    DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
             }
 
 
@@ -540,8 +540,8 @@ namespace deng {
             deng_Id texture_atlas
         ) {
             // Retrieve the ui texture atlas' Vulkan instance
-            RegType reg_tex = m_reg.retrieve(texture_atlas, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
-            RegType reg_vk_tex = m_reg.retrieve(reg_tex.tex.vk_id, DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, NULL);
+            RegData reg_tex = m_reg.retrieve(texture_atlas, DENG_REGISTRY_TYPE_TEXTURE, NULL);
+            RegData reg_vk_tex = m_reg.retrieve(reg_tex.tex.vk_id, DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
 
             // Set up image info structure for binding texture sampler
             VkDescriptorImageInfo desc_imageinfo = {};

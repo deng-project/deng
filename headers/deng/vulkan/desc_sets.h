@@ -113,7 +113,7 @@ namespace deng {
             deng_ui64_t m_3d_unmapped_asset_c = 0;
             deng_ui64_t m_3d_mapped_asset_c = 0;
 
-            deng::__GlobalRegistry &m_reg;
+            deng::Registry &m_reg;
             std::vector<VkDescriptorSet> m_ui_desc_sets;
 
         private:
@@ -162,7 +162,7 @@ namespace deng {
                 VkDevice device,
                 VkExtent2D ext,
                 VkRenderPass renderpass, 
-                deng::__GlobalRegistry &reg,
+                deng::Registry &reg,
                 std::vector<deng_Id> &assets,
                 std::vector<deng_Id> &textures,
                 VkSampleCountFlagBits sample_c

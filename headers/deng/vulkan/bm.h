@@ -46,7 +46,7 @@ namespace deng {
             const VkPhysicalDeviceLimits &m_gpu_limits;
             __ImGuiData *m_p_imgui_data = NULL;
             deng_ui64_t m_ubo_chunk_size;
-            deng::__GlobalRegistry &m_reg;
+            deng::Registry &m_reg;
 
         protected:
             __vk_BufferData m_buffer_data;
@@ -58,7 +58,7 @@ namespace deng {
 
         protected:
             __vk_BufferManager(VkDevice device, VkPhysicalDevice gpu, const VkPhysicalDeviceLimits &gpu_limits, 
-                std::vector<deng_Id> &assets, deng::__GlobalRegistry &reg);
+                std::vector<deng_Id> &assets, deng::Registry &reg);
 
         public:
             /// Check if buffer reallocation is needed for assets and gui elements

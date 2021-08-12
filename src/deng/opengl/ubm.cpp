@@ -10,7 +10,7 @@
 namespace deng {
     namespace opengl {
 
-        __gl_UniformManager::__gl_UniformManager(__GlobalRegistry &reg, std::vector<deng_Id> &assets, __gl_Resources &res, void (*lgl_err_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line)) 
+        __gl_UniformManager::__gl_UniformManager(Registry &reg, std::vector<deng_Id> &assets, __gl_Resources &res, void (*lgl_err_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line)) 
             : __OffsetFinder(assets, reg), m_reg(reg), m_resources(res), lglErrorCheck(lgl_err_check) {
             glGenBuffers(1, &m_resources.ubo_buffer);
 
@@ -108,15 +108,15 @@ namespace deng {
                 // Quit if no light source id is specified
                 if(!light_srcs[i]) break;
 
-                deng_SupportedRegType rtype = {};
-                deng_SupportedRegTypeBitMask mask_type = DENG_SUPPORTED_REG_TYPE_PT_LIGHT | DENG_SUPPORTED_REG_TYPE_SUN_LIGHT | 
-                    DENG_SUPPORTED_REG_TYPE_DIR_LIGHT;
+                deng_RegistryType rtype = {};
+                deng_RegistryTypeBitMask mask_type = DENG_REGISTRY_TYPE_PT_LIGHT | DENG_REGISTRY_TYPE_SUN_LIGHT | 
+                    DENG_REGISTRY_TYPE_DIR_LIGHT;
 
                 // Retrieve the current light source from the registry
-                RegType &reg_light = m_reg.retrieve(light_srcs[i], mask_type, &rtype);
+                RegData &reg_light = m_reg.retrieve(light_srcs[i], mask_type, &rtype);
 
                 switch(rtype) {
-                case DENG_SUPPORTED_REG_TYPE_PT_LIGHT:
+                case DENG_REGISTRY_TYPE_PT_LIGHT:
                     ubo.light_srcs[i].intensity = reg_light.pt_light.intensity;
                     ubo.light_srcs[i].pos = reg_light.pt_light.pos;
                     ubo.light_src_c++;

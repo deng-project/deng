@@ -13,7 +13,7 @@ namespace deng {
         __vk_UniformBufferManager::__vk_UniformBufferManager (
             std::vector<deng_Id> &assets,
             const deng_ui64_t min_align, 
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             __vk_BufferData &buf_data
         ) : m_assets(assets), m_min_align(min_align), m_reg(reg),
             m_buffer_data(buf_data) {}
@@ -117,8 +117,8 @@ namespace deng {
             deng::BufferSectionInfo &buf_sec
         ) {
             // Retrieve the base asset and set its ubo offset
-            RegType &reg_asset = m_reg.retrieve(asset.base_id, 
-                DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = m_reg.retrieve(asset.base_id, 
+                DENG_REGISTRY_TYPE_ASSET, NULL);
             reg_asset.asset.offsets.ubo_offset = buf_sec.ubo_asset_size;
 
             // Increase the used size by required margin 
@@ -170,8 +170,8 @@ namespace deng {
             __vk_Asset &asset
         ) {
             // Retrieve base asset from the registry
-            RegType &reg_asset = m_reg.retrieve(asset.base_id, 
-                DENG_SUPPORTED_REG_TYPE_ASSET, NULL);
+            RegData &reg_asset = m_reg.retrieve(asset.base_id, 
+                DENG_REGISTRY_TYPE_ASSET, NULL);
 
             // Check the asset type and copy appopriate data structure to buffer accordingly
             if(reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_UNMAPPED || 
@@ -223,15 +223,15 @@ namespace deng {
                 // Quit if no light sources were found
                 if(!light_srcs[i]) break;
 
-                deng_SupportedRegType type = {};
+                deng_RegistryType type = {};
                 // Retrieve the current light source
-                RegType &reg_light = m_reg.retrieve(light_srcs[i],
-                    DENG_SUPPORTED_REG_TYPE_PT_LIGHT | DENG_SUPPORTED_REG_TYPE_SUN_LIGHT |
-                    DENG_SUPPORTED_REG_TYPE_DIR_LIGHT, &type);
+                RegData &reg_light = m_reg.retrieve(light_srcs[i],
+                    DENG_REGISTRY_TYPE_PT_LIGHT | DENG_REGISTRY_TYPE_SUN_LIGHT |
+                    DENG_REGISTRY_TYPE_DIR_LIGHT, &type);
 
                 // Check the current light source type and copy its data to ubo struct
                 switch(type) {
-                case DENG_SUPPORTED_REG_TYPE_PT_LIGHT:
+                case DENG_REGISTRY_TYPE_PT_LIGHT:
                     ubo.light_srcs[i].intensity = reg_light.pt_light.intensity;
                     ubo.light_srcs[i].pos = reg_light.pt_light.pos;
                     ubo.light_src_c++;

@@ -54,7 +54,7 @@ namespace deng {
 
     protected:
         deng_WindowHint m_win_hints = 0;
-        __GlobalRegistry m_reg;
+        Registry m_reg;
         std::vector<deng_Id> m_assets;
         std::vector<deng_Id> m_textures;
         

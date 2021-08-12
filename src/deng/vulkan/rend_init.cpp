@@ -14,7 +14,7 @@ namespace deng {
         __vk_RendererInitialiser::__vk_RendererInitialiser (
             deng::Window &win, 
             const __vk_ConfigVars &conf,
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             std::vector<deng_Id> &assets,
             std::vector<deng_Id> &textures
         ) : m_reg(reg), m_assets(assets), m_textures(textures) {

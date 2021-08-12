@@ -15,7 +15,7 @@ namespace deng {
             VkCommandPool cmd_pool,
             VkQueue g_queue,
             std::vector<deng_Id> &textures,
-            deng::__GlobalRegistry &reg,
+            deng::Registry &reg,
             __vk_BufferData &bd,
             deng::BufferSectionInfo &buf_sec
         ) : m_textures(textures), m_bd(bd), m_buf_sec(buf_sec), m_reg(reg)
@@ -33,8 +33,8 @@ namespace deng {
             VkCommandPool cmd_pool,
             VkQueue g_queue
         ) {
-            deng::RegType missing_base_tex = { { 0 } };
-            missing_base_tex.tex.name = (char*) "missing_base_tex";
+            deng::RegData missing_base_tex = { { 0 } };
+            strcpy(missing_base_tex.tex.src, "missing_tex.deng");
             missing_base_tex.tex.uuid = uuid_Generate();
             missing_base_tex.tex.pixel_data.width = DENG_DEF_TEX_WIDTH;
             missing_base_tex.tex.pixel_data.height = DENG_DEF_TEX_HEIGHT;
@@ -43,7 +43,7 @@ namespace deng {
             memset(missing_base_tex.tex.pixel_data.pixel_data, 255, DENG_DEF_TEX_SIZE);
 
             // Make Vulkan texture
-            deng::RegType missing_vk_tex = { { 0 } };
+            deng::RegData missing_vk_tex = { { 0 } };
             missing_vk_tex.vk_tex.base_id = missing_base_tex.tex.uuid;
             missing_vk_tex.vk_tex.uuid = uuid_Generate();
             missing_base_tex.tex.vk_id = missing_vk_tex.vk_tex.uuid;
@@ -52,13 +52,13 @@ namespace deng {
             
             // Push the texture uuid to registry
             m_reg.push(missing_base_tex.tex.uuid, 
-                DENG_SUPPORTED_REG_TYPE_TEXTURE, missing_base_tex);
+                DENG_REGISTRY_TYPE_TEXTURE, missing_base_tex);
 
             // Create new image samplers and image views
             __newVkTexture(device, gpu, cmd_pool, g_queue, 1, false, false, true, missing_vk_tex.vk_tex);
             m_textures.push_back(m_missing_tex_uuid);
 
-            m_reg.push(missing_vk_tex.vk_tex.uuid, DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, missing_vk_tex);
+            m_reg.push(missing_vk_tex.vk_tex.uuid, DENG_REGISTRY_TYPE_VK_TEXTURE, missing_vk_tex);
         }
 
 
@@ -235,8 +235,8 @@ namespace deng {
 
             // Iterate through every texture instance and destroy its VkImage and VkImageView instances
             for(size_t i = 0; i < m_textures.size(); i++) {
-                RegType &reg_vk_tex = m_reg.retrieve(m_textures[i], 
-                    DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, NULL);
+                RegData &reg_vk_tex = m_reg.retrieve(m_textures[i], 
+                    DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
 
                 if(reg_vk_tex.vk_tex.is_buffered) {
                     vkDestroyImageView(device, reg_vk_tex.vk_tex.image_view, NULL);
@@ -250,9 +250,9 @@ namespace deng {
 
             // Create new VkImages and VkImageViews for all textures that were deallocated
             while(!realloc_queue.empty()) {
-                RegType &reg_vk_tex = m_reg.retrieve (
+                RegData &reg_vk_tex = m_reg.retrieve (
                     realloc_queue.front(), 
-                    DENG_SUPPORTED_REG_TYPE_VK_TEXTURE,
+                    DENG_REGISTRY_TYPE_VK_TEXTURE,
                     NULL
                 );
 
@@ -274,8 +274,8 @@ namespace deng {
             deng_ui32_t mip_levels,
             __vk_Texture &tex
         ) {
-            RegType &reg_tex = m_reg.retrieve(tex.base_id, 
-                DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+            RegData &reg_tex = m_reg.retrieve(tex.base_id, 
+                DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
             // Check if linear filtering is enabled and if mipmapping should be enabled
             if(is_lf) {
@@ -322,7 +322,7 @@ namespace deng {
             __vk_Texture &tex
         ) {
             LOG("Updating texture with base id: " + std::string(tex.base_id));
-            RegType &reg_tex = m_reg.retrieve(tex.base_id, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+            RegData &reg_tex = m_reg.retrieve(tex.base_id, DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
             // Create the staging buffer
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu,
@@ -363,8 +363,8 @@ namespace deng {
             __vk_Texture &tex
         ) {
             // Retrieve the base texture uuid from registry
-            deng::RegType &base_tex = m_reg.retrieve(tex.base_id, 
-                DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+            deng::RegData &base_tex = m_reg.retrieve(tex.base_id, 
+                DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
             // Create new VkImage instance
             VkMemoryRequirements mem_req = __vk_ImageCreator::makeImage (
@@ -387,7 +387,7 @@ namespace deng {
             }
 
             // Retrieve the base image from the registry
-            RegType &reg_tex = m_reg.retrieve(tex.base_id, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
+            RegData &reg_tex = m_reg.retrieve(tex.base_id, DENG_REGISTRY_TYPE_TEXTURE, NULL);
 
             // Check if the image memory location should be appended to the end of image memory area
             reg_tex.tex.pixel_data.memory_offset = m_buf_sec.img_size;
@@ -427,8 +427,8 @@ namespace deng {
             VkQueue g_queue
         ) {
             // Retrieve Vulkan and base textures from the registry
-            RegType &tex_reg = m_reg.retrieve(id, DENG_SUPPORTED_REG_TYPE_TEXTURE, NULL);
-            RegType &vk_tex_reg = m_reg.retrieve(tex_reg.tex.vk_id, DENG_SUPPORTED_REG_TYPE_VK_TEXTURE, NULL);
+            RegData &tex_reg = m_reg.retrieve(id, DENG_REGISTRY_TYPE_TEXTURE, NULL);
+            RegData &vk_tex_reg = m_reg.retrieve(tex_reg.tex.vk_id, DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
             
             // Find mipmapping levels
             deng_ui32_t mip_levels = __findMipLevels(is_lf, tex_reg.tex.pixel_data.width, tex_reg.tex.pixel_data.height);

@@ -96,10 +96,10 @@ namespace deng {
         std::vector<deng_Id> m_dir_srcs;
 
         deng_ui32_t m_src_c = 0;
-        __GlobalRegistry &m_reg;
+        Registry &m_reg;
 
     public:
-        LightManager(__GlobalRegistry &reg);
+        LightManager(Registry &reg);
 
         /// Create a new point light source
         deng_Id newPtLightSrc(deng_vec_t intensity, 
