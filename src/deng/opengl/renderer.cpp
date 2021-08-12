@@ -135,8 +135,8 @@ namespace deng {
 
             GLint max_t;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_t);
-            DENG_ASSERT("Texture width for texture " + std::string(reg_tex.tex.src) + " exceeds GL_MAX_TEXTURE_SIZE limit (" + std::to_string(max_t) + ")", max_t < reg_tex.tex.pixel_data.width);
-            DENG_ASSERT("Texture height for texture " + std::string(reg_tex.tex.src) + " exceeds GL_MAX_TEXTURE_SIZE limit (" + std::to_string(max_t) + ")", max_t < reg_tex.tex.pixel_data.height);
+            DENG_ASSERT("Texture width for texture " + std::string(reg_tex.tex.src) + " exceeds GL_MAX_TEXTURE_SIZE limit (" + std::to_string(max_t) + ")", max_t > reg_tex.tex.pixel_data.width);
+            DENG_ASSERT("Texture height for texture " + std::string(reg_tex.tex.src) + " exceeds GL_MAX_TEXTURE_SIZE limit (" + std::to_string(max_t) + ")", max_t > reg_tex.tex.pixel_data.height);
 
             // Copy image data into texture object
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(reg_tex.tex.pixel_data.width), static_cast<GLsizei>(reg_tex.tex.pixel_data.height),
@@ -199,7 +199,10 @@ namespace deng {
                   reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED) && !reg_asset.asset.force_unmap) {
                    RegData &reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid, DENG_REGISTRY_TYPE_TEXTURE, NULL);
                    RegData &reg_gl_tex = m_reg.retrieve(reg_tex.tex.gl_id, DENG_REGISTRY_TYPE_GL_TEXTURE, NULL);
-                   // glActiveTexture(__textureToUnit(reg_gl_tex.gl_tex));
+
+                   // Console logging
+                   LOG("Activating texture unit nr " + std::to_string(reg_gl_tex.gl_tex.unit_nr));
+                   glActiveTexture(__textureToUnit(reg_gl_tex.gl_tex));
                    glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
                    glErrorCheck("glBindTexture", __FILE__, __LINE__);
                 }
