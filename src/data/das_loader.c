@@ -83,6 +83,7 @@ void das_LoadAsset (
     asset->ambient = DAS_DEFAULT_AMBIENT_COLOR;
     asset->specular = DAS_DEFAULT_SPECULAR_COLOR;
     asset->is_shown = true;
+    asset->ignore_transform = false;
     asset->force_unmap = false;
 
     // Write all file contents into a buffer

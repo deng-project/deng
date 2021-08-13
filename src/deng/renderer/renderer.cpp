@@ -29,7 +29,7 @@ namespace deng {
             m_vk_vars->background = m_env_color,
             m_vk_vars->p_cam = &main_cam;
             m_vk_vars->p_win = &main_win;
-            m_vk_vars->enable_validation_layers = (m_hints & DENG_RENDERER_HINT_ENABLE_API_DEBUGGING) > 1 ? 1 : m_hints & DENG_RENDERER_HINT_ENABLE_API_DEBUGGING,
+            m_vk_vars->enable_validation_layers = m_hints & DENG_RENDERER_HINT_ENABLE_API_DEBUGGING;
 
             // Create a new renderer instance
             m_vk_rend = std::make_unique<vulkan::__vk_Renderer>(*m_vk_vars.get(), Renderer::m_reg, m_assets, m_textures);
@@ -61,7 +61,7 @@ namespace deng {
 
     /// Begin the rendering loop
     void Renderer::run() {
-        while(neko_IsRunning()) {
+        while(m_p_win->isRunning()) {
             update();
             std::this_thread::sleep_for(std::chrono::microseconds(50));
         }

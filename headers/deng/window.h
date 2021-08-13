@@ -20,7 +20,7 @@
 #define NOMINMAX
 #define deng_LoadGL             neko_LoadGL
 #define deng_InitWindowAPI      neko_InitAPI
-#define deng_DeInitWindowAPI    neko_DeInitAPI
+#define deng_DeinitWindowAPI    neko_DeinitAPI
 #define deng_IsRunning          neko_IsRunning
 #define deng_CreateInputMask    neko_CreateInputMask
 
@@ -57,6 +57,10 @@ namespace deng {
 
         /// Update window and input devices data
         void update();
+
+
+        /// Check if the current window is still active and running
+        const bool isRunning();
 
 
         /// Create new vulkan surface instance

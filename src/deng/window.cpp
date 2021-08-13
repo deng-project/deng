@@ -48,6 +48,11 @@ namespace deng {
     }
 
 
+    const bool Window::isRunning() {
+        return neko_IsRunning(m_surface);
+    }
+
+
     /// Create new vulkan surface instance
     VkResult Window::initVkSurface (
         VkInstance &instance,

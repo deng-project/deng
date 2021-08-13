@@ -80,7 +80,7 @@ namespace deng {
                 ubo.phong_exp = asset.phong_exp;
 
                 // Additional asset shader flags
-                ubo.ignore_transform = static_cast<deng_ui32_t>(asset.is_transformed);
+                ubo.ignore_transform = static_cast<deng_ui32_t>(asset.ignore_transform);
                 ubo.is_unmapped = static_cast<deng_ui32_t>(asset.force_unmap);
 
                 // Asset uniform binding is always 1 and has offset of specified asset ubo_offset
@@ -90,7 +90,7 @@ namespace deng {
             else {
                 __UniformAssetData2D ubo = {};
                 ubo.color = asset.diffuse;
-                ubo.is_transform = asset.is_transformed;
+                ubo.is_transform = asset.ignore_transform;
                 ubo.is_unmapped = asset.force_unmap;
 
                 // Asset uniform binding is always 1 and has offset of specified asset ubo_offset

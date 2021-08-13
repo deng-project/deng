@@ -156,7 +156,9 @@ namespace deng {
         ) {
             __UniformObjectTransform ubo;
             ubo.transform = p_cam->getCameraMat();
+            MAT_LOG(ubo.transform, "Uniform transformation matrix");
             ubo.view = p_cam->getViewMat();
+            MAT_LOG(ubo.view, "Uniform view matrix");
 
             __vk_BufferCreator::cpyToBufferMem(device, sizeof(__UniformObjectTransform),
                 &ubo, m_buffer_data.uniform_buffer_mem, current_image * m_global_ubo_chunk_size);
@@ -180,7 +182,7 @@ namespace deng {
 
                 // Set all properties accordingly
                 ubo.color = reg_asset.asset.diffuse;
-                ubo.is_transform = reg_asset.asset.is_transformed;
+                ubo.is_transform = reg_asset.asset.ignore_transform;
                 ubo.is_unmapped = reg_asset.asset.force_unmap;
 
                 // Copy the constructed uniform data structure to uniform buffer
@@ -199,7 +201,7 @@ namespace deng {
                 ubo.phong_exp = reg_asset.asset.phong_exp;
 
                 // Set additional asset properties
-                ubo.ignore_transform = static_cast<deng_ui32_t>(reg_asset.asset.is_transformed);
+                ubo.ignore_transform = static_cast<deng_ui32_t>(reg_asset.asset.ignore_transform);
                 ubo.is_unmapped = static_cast<deng_ui32_t>(reg_asset.asset.force_unmap);
 
                 // Copy the constructed uniform buffer data to uniform buffer

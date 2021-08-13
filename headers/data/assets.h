@@ -184,14 +184,14 @@ typedef struct das_Asset {
     deng_vec_t phong_exp;       // Phong exponent that is used, with Blinn-Phong shading
     
 
-    das_AssetMode asset_mode;   // Asset mode specifier
-    deng_bool_t is_shown;       // False if asset is ignored from draw calls, otherwise True
-    deng_bool_t is_transformed; // Toggle transformation on and off
-    deng_bool_t is_opengl;      // Flag to determine if the asset is rendered in OpenGL backend renderer 
-    deng_bool_t force_unmap;    // Force the asset not to use texture image and texture mapping
-    das_VertDynamic vertices;   // All asset vertices that will be passed to command buffers
-    das_IndicesDynamic indices; // All asset indices that will be passed to command buffers
-    das_OffsetData offsets;     // Offsets, which are taken into account, when allocating buffer storage
+    das_AssetMode asset_mode;       // Asset mode specifier
+    deng_bool_t is_shown;           // False if asset is ignored from draw calls, otherwise True
+    deng_bool_t ignore_transform;   // Toggle transformation on and off
+    deng_bool_t is_opengl;          // Flag to determine if the asset is rendered in OpenGL backend renderer 
+    deng_bool_t force_unmap;        // Force the asset not to use texture image and texture mapping
+    das_VertDynamic vertices;       // All asset vertices that will be passed to command buffers
+    das_IndicesDynamic indices;     // All asset indices that will be passed to command buffers
+    das_OffsetData offsets;         // Offsets, which are taken into account, when allocating buffer storage
 } das_Asset;
 
 

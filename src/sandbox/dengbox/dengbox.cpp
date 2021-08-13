@@ -134,8 +134,11 @@ namespace Sandbox {
 
 int main(void) {
     deng_InitWindowAPI();
-    Sandbox::DengBox deng_app;
-    deng_app.setup();
-    deng_app.run();
+    {
+        Sandbox::DengBox deng_app;
+        deng_app.setup();
+        deng_app.run();
+    }
+    deng_DeinitWindowAPI();
     return 0;
 }

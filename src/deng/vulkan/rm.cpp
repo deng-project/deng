@@ -136,7 +136,7 @@ namespace deng {
 
         /// __vk_ResourceManager class getters
         __vk_BufferData &__vk_ResourceManager::getBD() { return m_buffer_data; }
-        std::vector<VkFramebuffer> __vk_ResourceManager::getFB() { return m_framebuffers; }
+        std::vector<VkFramebuffer> &__vk_ResourceManager::getFB() { return m_framebuffers; }
         VkImage __vk_ResourceManager::getDepImg() { return m_depth_image; }
         VkDeviceMemory __vk_ResourceManager::getDepImgMem() { return m_depth_image_mem; }
         VkImageView __vk_ResourceManager::getDepImgView() { return m_depth_image_view; }

@@ -31,7 +31,7 @@ namespace dengEditor {
         m_ui_man = std::make_unique<deng::UIManager>(m_rend);
 
         // Main loop
-        while(deng_IsRunning()) {
+        while(m_win.isRunning()) {
             // Start measuring time for FPS counter 
             auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -55,7 +55,9 @@ namespace dengEditor {
 
 
 int main() {
+    deng_InitWindowAPI();
     dengEditor::SceneEditor3D sc(DENG_RENDERER_HINT_MSAA_2, DENG_WINDOW_HINT_API_VULKAN);
     sc.run();
+    deng_DeinitWindowAPI();
     return 0;
 }

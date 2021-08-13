@@ -89,7 +89,7 @@ namespace deng {
         // Getter and setter methods
         public:
             __vk_BufferData &getBD();
-            std::vector<VkFramebuffer> getFB();
+            std::vector<VkFramebuffer> &getFB();
             VkImage getDepImg();
             VkDeviceMemory getDepImgMem();
             VkImageView getDepImgView();

@@ -41,7 +41,7 @@ namespace deng {
     void ImGUIApplication::run() {
         // Initialise the gui manager class instance
         m_ui_man = std::make_unique<UIManager>(m_rend);
-        while(deng_IsRunning()) {
+        while(m_win.isRunning()) {
             // Measure time consumed for renderer current frame
             auto t1 = std::chrono::high_resolution_clock::now();
             m_ui_man->updateIO(m_win);
@@ -83,8 +83,11 @@ namespace deng {
 
 int main() {
     deng_InitWindowAPI();
-    deng::ImGUIApplication app;
-    app.run();
+    {
+        deng::ImGUIApplication app;
+        app.run();
+    }
+    deng_DeinitWindowAPI();
 
     return EXIT_SUCCESS;
 }

@@ -58,8 +58,7 @@ namespace deng {
 
         void __vk_Renderer::__cleanDrawCommands() {
             // Clean framebuffers
-            std::vector<VkFramebuffer> fb;
-            fb = __vk_RendererInitialiser::getResMan().getFB();
+            std::vector<VkFramebuffer> &fb = __vk_RendererInitialiser::getResMan().getFB();
             for(size_t i = 0; i < fb.size(); i++) {
                 vkDestroyFramebuffer(__vk_RendererInitialiser::getIC().getDev(), 
                     fb[i], NULL);
@@ -75,7 +74,6 @@ namespace deng {
 
         
         void __vk_Renderer::__cleanTextures() {
-            LOG("Cleanup texture count: " + std::to_string(m_textures.size()));
             for(size_t i = 0; i < m_textures.size(); i++) {
                 // Retrieve base and Vulkan textures
                 RegData &reg_tex = __vk_RendererInitialiser::m_reg.retrieve(
@@ -295,14 +293,12 @@ namespace deng {
             reg_asset.asset.vk_id = reg_vk_asset.vk_asset.uuid;
 
             // Push the Vulkan asset entry into registry
-            __vk_RendererInitialiser::m_reg.push(reg_vk_asset.vk_asset.uuid, DENG_REGISTRY_TYPE_VK_ASSET, 
-                reg_vk_asset);
+            __vk_RendererInitialiser::m_reg.push(reg_vk_asset.vk_asset.uuid, DENG_REGISTRY_TYPE_VK_ASSET, reg_vk_asset);
         }
 
 
         /// Prepare textures for binding them with assets
         void __vk_Renderer::prepareTexture(deng_Id id) {
-            LOG("Prep id: " + std::string(id));
             // For each texture between bounds, create Vulkan specific texture instance
             RegData reg_vk_tex;
             reg_vk_tex.vk_tex.base_id = id;

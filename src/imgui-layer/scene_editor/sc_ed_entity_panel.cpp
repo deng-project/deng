@@ -105,8 +105,8 @@ namespace dengEditor {
             for(size_t i = 0; i < assets.size(); i++) {
                 deng::RegData reg_asset = reg.retrieve(assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
                 ImGui::TableNextRow();
-                if(reg_asset.asset.name)
-                    ImGui::Text("%s", reg_asset.asset.name);
+                if(reg_asset.asset.src[0] != 0)
+                    ImGui::Text("%s", reg_asset.asset.src);
                 else ImGui::Text("%s", reg_asset.asset.uuid);
             } 
 
@@ -123,8 +123,8 @@ namespace dengEditor {
             for(size_t i = 0; i < textures.size(); i++) {
                 deng::RegData reg_tex = reg.retrieve(textures[i], DENG_REGISTRY_TYPE_TEXTURE, NULL);
                 ImGui::TableNextRow();
-                if(reg_tex.tex.name)
-                    ImGui::Text("%s", reg_tex.tex.name);
+                if(reg_tex.tex.src[0] != 0)
+                    ImGui::Text("%s", reg_tex.tex.src);
                 else ImGui::Text("%s", reg_tex.tex.uuid);
             }
             

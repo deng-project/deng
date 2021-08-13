@@ -13,12 +13,14 @@
 
 #ifdef __DEBUG
     #define LOG(x) std::cout << "LOG: " << x << std::endl
+    #define MAT_LOG(mat, msg) mat.log(msg);
     #define WARNME(x) std::cout << "WARNING: " << x << std::endl
 
     // OpenGL error checking function, that is enabled during debug mode but disabled otherwise
 	#define glErrorCheck(func_name, file, line) lglErrorCheck(func_name, file, line)
 #else
     #define LOG(x)
+    #define MAT_LOG(mat, msg);
     #define WARNME(x)
     #define glErrorCheck(func_name, file, line)
 #endif

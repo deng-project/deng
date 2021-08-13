@@ -349,19 +349,10 @@ namespace deng {
         /// Clean all swap chain related structs 
         void __vk_SwapChainCreator::SCCleanup() {
             size_t index = 0;
-            for(index = 0; index < m_swapchain_images.size(); index++) {
-                vkDestroyImageView (
-                    m_device, 
-                    m_swapchain_image_views[index], 
-                    NULL
-                );
-            }
+            for(index = 0; index < m_swapchain_images.size(); index++)
+                vkDestroyImageView(m_device, m_swapchain_image_views[index], NULL);
 
-            vkDestroySwapchainKHR (
-                m_device, 
-                m_swapchain, 
-                NULL
-            );
+            vkDestroySwapchainKHR(m_device, m_swapchain, NULL);
         }
 
 

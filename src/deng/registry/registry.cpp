@@ -68,9 +68,12 @@ namespace deng {
                     break;
 
                 case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
+                    LOG("Cleaning asset with source " + std::string(m_entries[i].element.asset.src));
                     if(m_entries[i].element.asset.is_opengl)
                         free(m_entries[i].element.asset.vertices.v3d.mer.vert);
                     else {
+                        printf("pn, tn, nn: %lu, %lu, %lu\n", m_entries[i].element.asset.vertices.v3d.mul.pn,
+                            m_entries[i].element.asset.vertices.v3d.mul.tn, m_entries[i].element.asset.vertices.v3d.mul.nn);
                         free(m_entries[i].element.asset.vertices.v3d.mul.pos);
                         free(m_entries[i].element.asset.indices.pos);
 

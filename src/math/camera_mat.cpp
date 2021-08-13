@@ -53,10 +53,10 @@ namespace dengMath {
             break;
         }
         
-        //m_camera_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
-        //m_camera_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
-        //m_camera_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        //m_camera_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_camera_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
+        m_camera_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
+        m_camera_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
+        m_camera_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
     }
 
 

@@ -87,7 +87,7 @@ namespace deng {
 
 
     void OpenGLApplication::run() {
-        while(deng_IsRunning()) {
+        while(m_win.isRunning()) {
             m_win.update();
             m_cam.update();
             m_rend->makeFrame();

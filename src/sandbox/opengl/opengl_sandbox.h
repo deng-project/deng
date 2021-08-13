@@ -15,6 +15,7 @@
 	#include <array>
     #include <vulkan/vulkan.h>
     #include <common/base_types.h>
+    #include <common/err_def.h>
     #include <common/hashmap.h>
     #include <data/assets.h>
     #include <data/das_loader.h>
