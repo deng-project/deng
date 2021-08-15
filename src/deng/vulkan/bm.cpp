@@ -16,10 +16,11 @@ namespace deng {
             VkPhysicalDevice gpu,
             const VkPhysicalDeviceLimits &gpu_limits,
             std::vector<deng_Id> &assets,
-            deng::Registry &reg
+            deng::Registry &reg,
+            void *udata
         ) : __vk_UniformBufferManager(assets, gpu_limits.minUniformBufferOffsetAlignment,
-                reg, m_buffer_data), __OffsetFinder(assets, reg),
-            m_assets(assets), m_gpu_limits(gpu_limits), m_reg(reg)
+                reg, m_buffer_data, udata), __OffsetFinder(assets, reg),
+            m_assets(assets), m_gpu_limits(gpu_limits), m_reg(reg), m_udata(udata)
         {
             // Allocate initial amount of memory for the renderer
             allocateMainBufferMemory(device, gpu);
@@ -37,13 +38,14 @@ namespace deng {
         ) {
             // Create and allocate memory for staging buffer
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu, __OffsetFinder::getSectionInfo().asset_cap, 
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, m_buffer_data.staging_buffer);
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, m_buffer_data.staging_buffer, m_udata);
 
             __vk_BufferCreator::allocateMemory(device, gpu, mem_req.size,
                 m_buffer_data.staging_buffer_memory,  mem_req.memoryTypeBits, 
-                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_udata);
 
             // Bind staging buffer with its memory
+            SET_UDATA("vkBindBufferMemory");
             vkBindBufferMemory(device, m_buffer_data.staging_buffer, m_buffer_data.staging_buffer_memory, 0);
             
             // For each given asset populate staging buffer with asset data
@@ -59,7 +61,7 @@ namespace deng {
                 reg_asset.asset.offsets.ind_offset -= cpy_offset;
 
                 // Populate staging buffer memory with vertices data
-                __AssetCpy asset_cpy = {};
+                __AssetCpy asset_cpy(m_udata);
                 asset_cpy.cpyToBuffer(device, reg_asset.asset, m_buffer_data.staging_buffer_memory);
 
                 // Readjust offsets to main buffer
@@ -89,10 +91,13 @@ namespace deng {
 
             // Check if any reallocation should be done
             if(asset_realloc || ui_realloc) {
+                SET_UDATA("vkWaitForFences");
                 vkWaitForFences(device, static_cast<deng_ui32_t>(fences.size()), fences.data(), VK_TRUE, UINT64_MAX);
 
                 // Destroy previous buffer instance 
+                SET_UDATA("vkFreeMemory");
                 vkFreeMemory(device, m_buffer_data.main_buffer_memory, NULL);
+                SET_UDATA("vkDestroyBuffer");
                 vkDestroyBuffer(device, m_buffer_data.main_buffer, NULL);
                 
                 // Allocate new buffer
@@ -110,13 +115,14 @@ namespace deng {
             // Create a new buffer instance
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu, __OffsetFinder::getSectionInfo().asset_cap + __OffsetFinder::getSectionInfo().ui_cap, 
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-                m_buffer_data.main_buffer);
+                m_buffer_data.main_buffer, m_udata);
 
             // Allocate memory for the buffer instance
             __vk_BufferCreator::allocateMemory(device, gpu, mem_req.size, m_buffer_data.main_buffer_memory, 
-                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_udata);
             
             // Bind the memory with buffer
+            SET_UDATA("vkBindBufferMemory");
             vkBindBufferMemory(device, m_buffer_data.main_buffer, m_buffer_data.main_buffer_memory, 0);
         }
 
@@ -150,10 +156,12 @@ namespace deng {
             // Copy data from staging buffer to main buffer
             __vk_BufferCreator::cpyBufferToBuffer(device, cmd_pool, g_queue, 
                 m_buffer_data.staging_buffer, m_buffer_data.main_buffer, 
-                __OffsetFinder::getSectionInfo().asset_cap, 0, 0);
+                __OffsetFinder::getSectionInfo().asset_cap, 0, 0, m_udata);
 
             // Perform staging buffer cleanup
+            SET_UDATA("vkDestroyBuffer");
             vkDestroyBuffer(device, m_buffer_data.staging_buffer, NULL);
+            SET_UDATA("vkFreeMemory");
             vkFreeMemory(device, m_buffer_data.staging_buffer_memory, NULL);
         }
 
@@ -178,17 +186,19 @@ namespace deng {
 
             // Create staging buffer for UI data
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu, __OffsetFinder::getSectionInfo().ui_size,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, m_buffer_data.staging_buffer);
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, m_buffer_data.staging_buffer, m_udata);
 
             // Allocate memory for staging buffer
             __vk_BufferCreator::allocateMemory(device, gpu, mem_req.size, m_buffer_data.staging_buffer_memory,
-                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_udata);
 
             // Bind the staging buffer with its memory
+            SET_UDATA("vkBindBufferMemory");
             vkBindBufferMemory(device, m_buffer_data.staging_buffer, m_buffer_data.staging_buffer_memory, 0);
 
             // Copy data to staging buffer
             void *data = NULL;
+            SET_UDATA("vkMapMemory");
             vkMapMemory(device, m_buffer_data.staging_buffer_memory, 0, __OffsetFinder::getSectionInfo().ui_size, 0, &data);
                 VkDeviceSize offset = 0;
                 
@@ -203,15 +213,18 @@ namespace deng {
                     offset += m_p_imgui_data->cmd_data[i].ind_c * sizeof(ImDrawIdx);
                 }
 
-                // Unmap buffer memory area
+            // Unmap buffer memory area
+            SET_UDATA("vkUnmapMemory");
             vkUnmapMemory(device, m_buffer_data.staging_buffer_memory);
 
             // Copy staging buffer to the main buffer
             __vk_BufferCreator::cpyBufferToBuffer(device, cmd_pool, g_queue, m_buffer_data.staging_buffer,
-                m_buffer_data.main_buffer, __OffsetFinder::getSectionInfo().ui_size, 0, __OffsetFinder::getSectionInfo().asset_cap);
+                m_buffer_data.main_buffer, __OffsetFinder::getSectionInfo().ui_size, 0, __OffsetFinder::getSectionInfo().asset_cap, m_udata);
 
             // Destroy stagin buffer and free its memory
+            SET_UDATA("vkDestroyBuffer");
             vkDestroyBuffer(device, m_buffer_data.staging_buffer, NULL);
+            SET_UDATA("vkFreeMemory");
             vkFreeMemory(device, m_buffer_data.staging_buffer_memory, NULL);
         }
 

@@ -41,13 +41,15 @@ namespace deng {
             __ImGuiData *m_p_imgui_data = NULL;
             Registry &m_reg;
 
-            std::shared_ptr<__gl_Pipelines> m_pipelines;
-            __gl_Resources m_resources;
-            void (*lglErrorCheck)(const std::string &func_name, const std::string &file, const deng_ui32_t line);
+            std::shared_ptr<__gl_Pipelines> m_pipelines = {};
+            __gl_Resources &m_resources;
+            PFNGLERRORCHECK lglErrorCheck;
+            std::vector<deng_ugl_t> m_programs;
 
         public:
-            __gl_BufferManager(std::vector<deng_Id> &assets, std::shared_ptr<__gl_Pipelines> sloader, 
-                Registry &reg, void (*gl_error_check) (const std::string &func_name, const std::string &file, const deng_ui32_t line));
+            __gl_BufferManager(std::vector<deng_Id> &assets, std::shared_ptr<__gl_Pipelines> pipelines, 
+                Registry &reg, PFNGLERRORCHECK lgl_error_check);
+            ~__gl_BufferManager();
 
             /// Check if buffer reallocation is needed for assets and gui elements
             deng_bool_t reallocCheck();
@@ -64,9 +66,17 @@ namespace deng {
             /// NOTE: The UI element capacity has to be larger than required UI element size (use uiCapCheck() for this)
             void cpyUIDataToBuffer(deng_bool_t no_offset_calc);
 
+
+            /// Enable and set vertex attribute pointers according to the specified asset
+            void bindAssetDataBufferRegion(const das_Asset &asset);
+
+
+            /// Disable vertex attributes for specified asset
+            void unbindAssetDataBufferRegion(const das_Asset &asset);
+
         // Setter and getter methods
         public:
-            __gl_Resources &getResources();
+            __gl_Resources getResources();
             void setUIDataPtr(__ImGuiData *p_gui);
         };
     }

@@ -40,8 +40,8 @@ namespace deng {
     /// camera systems
     class Camera3D {
     private:
-        std::unique_ptr<__FPPCamera> fpp_cam = {};
-        std::unique_ptr<__EditorCamera> ed_cam = {};
+        std::unique_ptr<__FPPCamera> m_fpp_cam = {};
+        std::unique_ptr<__EditorCamera> m_ed_cam = {};
         Window *m_p_win;
         deng_CameraType m_cam_type;
 

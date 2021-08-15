@@ -11,6 +11,8 @@
 #include <assert.h>
 #include <iostream>
 
+// Debugging function type definition
+typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const deng_ui32_t);
 #ifdef __DEBUG
     #define LOG(x) std::cout << "LOG: " << x << std::endl
     #define MAT_LOG(mat, msg) mat.log(msg);
@@ -36,7 +38,7 @@
 #define INVALID_ASSET(asset, uuid)          throw std::runtime_error(std::string("Invalid asset: ") + asset + ", " + uuid)
 #define UNDEFINED_ASSET_MODE(asset, uuid)   throw std::runtime_error(std::string("Unknown asset mode for asset: ") + asset + ", " + uuid)
 #define RUN_ERR(method, x)                  throw std::runtime_error(std::string(method) + ": " + std::string(x))
-#define DENG_ASSERT(msg, cond)              if(!cond) throw std::runtime_error(std::string(__FILE__) + std::string(", ") + std::to_string(__LINE__) + std::string(": ") + std::string(msg))
+#define DENG_ASSERT(msg, cond)              if(!(cond)) throw std::runtime_error(std::string(__FILE__) + std::string(", ") + std::to_string(__LINE__) + std::string(": ") + std::string(msg))
 
 
 // Vulkan related

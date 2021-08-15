@@ -14,6 +14,7 @@
     #include <string>
     #include <cstring>
     #include <array>
+    #include <vector>
 
     #include <common/base_types.h>
     #include <common/err_def.h>
@@ -37,13 +38,10 @@ namespace deng {
 
         class __gl_Pipelines {
         private:
-            std::array<deng_ui32_t, PIPELINE_C> m_programs;
+            std::array<deng_ugl_t, PIPELINE_C> m_programs;
             void (*lglErrorCheck)(const std::string &func_name, const std::string &file, const deng_ui32_t line);
 
         private:
-            /// Write debug message about certain pipeline
-            static void _db_PipelineMsg(const deng_ui32_t pipeline_id, const std::string &msg);
-
             /// Load shader data from file to a buffer
             char *__loadShaderFromFile(const char *file_name);
 
@@ -59,20 +57,13 @@ namespace deng {
             /// Compile shader files at given index to shader programs
             void __compileShadersToProgram(const deng_ui32_t index);
 
-
-            /// Prepare bindings for uniform data
-            void __prepareUniformBindings();
-
         public:
             __gl_Pipelines(void (*gl_error_check)(const std::string &func_name, const std::string &file, const deng_ui32_t line));
 
-            const deng_ui32_t getShaderProgram(const deng_ui32_t pipeline_id);
 
-            /// Set appropriate asset drawing attributes according to the specified asset mode
-            void setAssetVertAttributes(const das_Asset &asset);
-
-            /// Disable vertex attributes for given asset
-            void disableAssetVertAttributes(const das_Asset &asset);
+            /// Getters
+            const deng_ugl_t getShaderProgram(const deng_ui32_t pipeline_id);
+            const std::vector<deng_ugl_t> getShaderPrograms();
         };
     }
 }

@@ -112,36 +112,38 @@ function modcheck()
 
     local libneko = require("premake/libneko");
     libneko.build()
+    if _OPTIONS["sandbox-mode"] then
+        postbuildcommands {
+            "{RMDIR} %{cfg.targetdir}/assets",
+            "{COPYDIR} assets %{cfg.targetdir}/assets",
+            "{RMDIR} %{cfg.targetdir}/shaders",
+            "{COPYDIR} shaders %{cfg.targetdir}/shaders",
+            "{RMDIR} %{cfg.targetdir}/textures",
+            "{COPYDIR} textures %{cfg.targetdir}/textures"
+        }
+    end
 end
 
 
 -- Setup build destinations
 function buildcfg()
-    -- Check if sandbox application should be made and copy files if needed
-    if not _OPTIONS["sandbox-mode"] then
-        _OPTIONS["sandbox-mode"] = "none"
-    elseif _OPTIONS["sandbox-mode"] ~= "none" then
-        postbuildcommands {
-            "{COPYDIR} assets %{cfg.targetdir}/assets",
-            "{COPYDIR} shaders %{cfg.targetdir}/shaders",
-            "{COPYDIR} textures %{cfg.targetdir}/textures",
-        }
-    end
+    if _OPTIONS["sandbox-mode"] then
 
-    -- Sandbox application build configuration
-    if _OPTIONS["sandbox-mode"] == "deng" or _OPTIONS["sandbox-mode"] == "all" then
-        local dengbox = require("premake/dengbox")
-        dengbox.build()
-    end
+        -- Sandbox application build configuration
+        if _OPTIONS["sandbox-mode"] == "deng" or _OPTIONS["sandbox-mode"] == "all" then
+            local dengbox = require("premake/dengbox")
+            dengbox.build()
+        end
 
-    if _OPTIONS["sandbox-mode"] == "imgui" or _OPTIONS["sandbox-mode"] == "all" then
-        local imgui_sandbox = require("premake/imgui_sandbox")
-        imgui_sandbox.build()
-    end
+        if _OPTIONS["sandbox-mode"] == "imgui" or _OPTIONS["sandbox-mode"] == "all" then
+            local imgui_sandbox = require("premake/imgui_sandbox")
+            imgui_sandbox.build()
+        end
 
-    if _OPTIONS["sandbox-mode"] == "opengl" or _OPTIONS["sandbox-mode"] == "all" then
-        local opengl_sandbox = require("premake/opengl_sandbox")
-        opengl_sandbox.build()
+        if _OPTIONS["sandbox-mode"] == "opengl" or _OPTIONS["sandbox-mode"] == "all" then
+            local opengl_sandbox = require("premake/opengl_sandbox")
+            opengl_sandbox.build()
+        end
     end
 
     -- Build DENG runtime library

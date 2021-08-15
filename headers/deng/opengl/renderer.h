@@ -51,8 +51,8 @@ namespace deng {
             deng_ui32_t m_vert_buffer;
 
             // Helper objects
-            std::shared_ptr<__gl_Pipelines> m_pipelines;
-            std::unique_ptr<__gl_BufferManager> m_buf_manager;
+            std::shared_ptr<__gl_Pipelines> m_pipelines = {};
+            std::unique_ptr<__gl_BufferManager> m_buf_manager = {};
             
         private:
             /// OpenGL error checking function (used globally across OpenGL classes)
@@ -62,6 +62,7 @@ namespace deng {
         public:
             __gl_Renderer(__gl_ConfigVars &cfg, deng::Registry &reg, std::vector<deng_Id> &assets,
                 std::vector<deng_Id> &textures);
+            ~__gl_Renderer();
 
 
             /// Update all currently available light sources

@@ -32,6 +32,9 @@
 
     #include <deng/vulkan/ubm.h>
     #include <deng/vulkan/asset_cpy.h>
+    #include <deng/vulkan/sd.h>
+    #include <deng/vulkan/qm.h>
+    #include <deng/vulkan/rend_infos.h>
 
     extern deng_ui32_t __max_frame_c;       
 #endif
@@ -46,6 +49,7 @@ namespace deng {
             __ImGuiData *m_p_imgui_data = NULL;
             deng_ui64_t m_ubo_chunk_size;
             deng::Registry &m_reg;
+            void *m_udata;
 
         protected:
             __vk_BufferData m_buffer_data;
@@ -57,7 +61,7 @@ namespace deng {
 
         protected:
             __vk_BufferManager(VkDevice device, VkPhysicalDevice gpu, const VkPhysicalDeviceLimits &gpu_limits, 
-                std::vector<deng_Id> &assets, deng::Registry &reg);
+                std::vector<deng_Id> &assets, deng::Registry &reg, void *udata);
 
         public:
             /// Check if buffer reallocation is needed for assets and gui elements

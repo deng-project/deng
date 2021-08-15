@@ -72,12 +72,12 @@ namespace deng {
         class __vk_RendererInitialiser {
         private:
             // All renderer initialisers
-            std::unique_ptr<__vk_InstanceCreator> m_ic;
-            std::unique_ptr<__vk_SwapChainCreator> m_scc;
-            std::unique_ptr<__vk_DescriptorSetsCreator> m_desc_c; 
-            std::unique_ptr<__vk_PipelineCreator> m_pl_c;
-            std::unique_ptr<__vk_ResourceManager> m_rm;
-            std::unique_ptr<__vk_DrawCaller> m_dc;
+            std::unique_ptr<__vk_InstanceCreator> m_ic = {};
+            std::unique_ptr<__vk_SwapChainCreator> m_scc = {};
+            std::unique_ptr<__vk_DescriptorSetsCreator> m_desc_c = {}; 
+            std::unique_ptr<__vk_PipelineCreator> m_pl_c = {};
+            std::unique_ptr<__vk_ResourceManager> m_rm = {};
+            std::unique_ptr<__vk_DrawCaller> m_dc = {};
 
         protected:
             Registry &m_reg;

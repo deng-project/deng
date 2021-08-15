@@ -50,9 +50,6 @@ namespace deng {
 
     /// Wrapper method for updating camera events
     void __EditorCamera::update() {
-        updateEv (
-            m_origin,
-            &m_cam_mat
-        );
+        __EditorCameraEv::updateEv(m_origin, &m_cam_mat);
     }
 }

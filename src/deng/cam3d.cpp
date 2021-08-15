@@ -24,13 +24,13 @@ namespace deng {
         // Check for camera instance to create
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_FPP:
-            fpp_cam = std::make_unique<__FPPCamera>(mov_speed, rot_sens, fov, planes.first, planes.second, 
+            m_fpp_cam = std::make_unique<__FPPCamera>(mov_speed, rot_sens, fov, planes.first, planes.second, 
                 ignore_pitch_rot, m_p_win);
             break;
 
         case DENG_CAMERA_TYPE_EDITOR: {
             deng_vec_t zoom_step = __DENG_DEFAULT_ZOOM_STEP * (mov_speed.first + mov_speed.second + mov_speed.third) / 3;
-            ed_cam = std::make_unique<__EditorCamera>(zoom_step, dengMath::vec3<deng_vec_t>{0.0f, 0.0f, 0.0f}, rot_sens, fov,
+            m_ed_cam = std::make_unique<__EditorCamera>(zoom_step, dengMath::vec3<deng_vec_t>{0.0f, 0.0f, 0.0f}, rot_sens, fov,
                 planes.first, planes.second, m_p_win);
             break;
         }   
@@ -46,11 +46,11 @@ namespace deng {
     void Camera3D::setBindings(const Camera3DBindings &bindings) {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_FPP:
-            fpp_cam->setBindings(bindings);
+            m_fpp_cam->setBindings(bindings);
             break;
 
         case DENG_CAMERA_TYPE_EDITOR:
-            ed_cam->setBindings(bindings);
+            m_ed_cam->setBindings(bindings);
             break;
 
         default:
@@ -66,7 +66,7 @@ namespace deng {
         switch(m_cam_type)
         {
         case DENG_CAMERA_TYPE_EDITOR:
-            ed_cam->moveOrigin(delta_mov);
+            m_ed_cam->moveOrigin(delta_mov);
             break;
 
         /// Reserved for future use
@@ -84,20 +84,20 @@ namespace deng {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_FPP:
             if(delta_mov.first)
-                fpp_cam->moveU(delta_mov.first, ignore_pitch);
+                m_fpp_cam->moveU(delta_mov.first, ignore_pitch);
             if(delta_mov.second)
-                fpp_cam->moveV(delta_mov.second, ignore_pitch);
+                m_fpp_cam->moveV(delta_mov.second, ignore_pitch);
             if(delta_mov.third)
-                fpp_cam->moveW(delta_mov.third, ignore_pitch);
+                m_fpp_cam->moveW(delta_mov.third, ignore_pitch);
             break;
 
         case DENG_CAMERA_TYPE_EDITOR:
             if(delta_mov.first)
-                ed_cam->moveU(delta_mov.first, ignore_pitch);
+                m_ed_cam->moveU(delta_mov.first, ignore_pitch);
             if(delta_mov.second)
-                ed_cam->moveV(delta_mov.second, ignore_pitch);
+                m_ed_cam->moveV(delta_mov.second, ignore_pitch);
             if(delta_mov.third)
-                ed_cam->moveW(delta_mov.third, ignore_pitch);
+                m_ed_cam->moveW(delta_mov.third, ignore_pitch);
             break;
 
         default:
@@ -114,20 +114,20 @@ namespace deng {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_FPP:
             if(delta_mov.first)
-                fpp_cam->moveX(delta_mov.first, ignore_pitch);
+                m_fpp_cam->moveX(delta_mov.first, ignore_pitch);
             if(delta_mov.second)
-                fpp_cam->moveY(delta_mov.second, ignore_pitch);
+                m_fpp_cam->moveY(delta_mov.second, ignore_pitch);
             if(delta_mov.third)
-                fpp_cam->moveZ(delta_mov.third, ignore_pitch);
+                m_fpp_cam->moveZ(delta_mov.third, ignore_pitch);
             break;
 
         case DENG_CAMERA_TYPE_EDITOR:
             if(delta_mov.first)
-                ed_cam->moveX(delta_mov.first, ignore_pitch);
+                m_ed_cam->moveX(delta_mov.first, ignore_pitch);
             if(delta_mov.second)
-                ed_cam->moveY(delta_mov.second, ignore_pitch);
+                m_ed_cam->moveY(delta_mov.second, ignore_pitch);
             if(delta_mov.third)
-                ed_cam->moveZ(delta_mov.third, ignore_pitch);
+                m_ed_cam->moveZ(delta_mov.third, ignore_pitch);
             break;
 
         default:
@@ -140,13 +140,13 @@ namespace deng {
     void Camera3D::rotCameraPOVC(const dengMath::vec2<deng_vec_t> &rot) {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_EDITOR:
-            ed_cam->rotU(rot.first);
-            ed_cam->rotV(rot.second);
+            m_ed_cam->rotU(rot.first);
+            m_ed_cam->rotV(rot.second);
             break;
 
         case DENG_CAMERA_TYPE_FPP:
-            fpp_cam->rotU(rot.first);
-            fpp_cam->rotV(rot.second);
+            m_fpp_cam->rotU(rot.first);
+            m_fpp_cam->rotV(rot.second);
             break;
 
         default:
@@ -159,13 +159,13 @@ namespace deng {
     void Camera3D::rotCameraPOVW(const dengMath::vec2<deng_vec_t> &rot) {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_EDITOR:
-            ed_cam->rotX(rot.first);
-            ed_cam->rotY(rot.second);
+            m_ed_cam->rotX(rot.first);
+            m_ed_cam->rotY(rot.second);
             break;
 
         case DENG_CAMERA_TYPE_FPP:
-            fpp_cam->rotX(rot.first);
-            fpp_cam->rotY(rot.second);
+            m_fpp_cam->rotX(rot.first);
+            m_fpp_cam->rotY(rot.second);
             break;
 
         default:
@@ -178,11 +178,11 @@ namespace deng {
     void Camera3D::update() {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_EDITOR:
-            ed_cam->update();
+            m_ed_cam->update();
             break;
 
         case DENG_CAMERA_TYPE_FPP:
-            fpp_cam->update();
+            m_fpp_cam->update();
             break;
 
         default:
@@ -201,10 +201,10 @@ namespace deng {
     dengMath::mat4<deng_vec_t> Camera3D::getCameraMat() {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_EDITOR:
-            return ed_cam->getCamMat() * ed_cam->getProjMat();
+            return m_ed_cam->getCamMat() * m_ed_cam->getProjMat();
 
         case DENG_CAMERA_TYPE_FPP:
-            return fpp_cam->getCamMat() * fpp_cam->getProjMat();
+            return m_fpp_cam->getCamMat() * m_fpp_cam->getProjMat();
 
         default:
             return dengMath::mat4<deng_vec_t>();
@@ -216,10 +216,10 @@ namespace deng {
     dengMath::mat4<deng_vec_t> Camera3D::getViewMat() {
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_EDITOR:
-            return ed_cam->getCamMat();
+            return m_ed_cam->getCamMat();
 
         case DENG_CAMERA_TYPE_FPP:
-            return fpp_cam->getCamMat();
+            return m_fpp_cam->getCamMat();
 
         default:
             return dengMath::mat4<deng_vec_t>();

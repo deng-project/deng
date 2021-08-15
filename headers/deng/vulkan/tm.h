@@ -49,6 +49,7 @@ namespace deng {
             __vk_BufferData &m_bd;
             deng::BufferSectionInfo &m_buf_sec;
             deng::Registry &m_reg;
+            void *m_udata;
 
         private:
             /// Create missing texture in case any texture mapped asset
@@ -108,7 +109,7 @@ namespace deng {
         public:
             __vk_TextureManager(VkDevice device, VkPhysicalDevice gpu, VkCommandPool cmd_pool,
                 VkQueue g_queue, std::vector<deng_Id> &textures, deng::Registry &reg,
-                __vk_BufferData &bd, deng::BufferSectionInfo &buf_sec);
+                __vk_BufferData &bd, deng::BufferSectionInfo &buf_sec, void *udata);
 
 
             /// Create new Vulkan texture from texture specified via id

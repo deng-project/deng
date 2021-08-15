@@ -8,6 +8,24 @@
 #define __VK_REND_INFOS_H
 
 
+#ifdef __DEBUG
+    #ifdef __VK_IC_CPP
+        #define SET_UDATA(fun)      m_udata.file = __FILE__, m_udata.func = fun, m_udata.line = __LINE__ + 1
+    #else
+        #define SET_UDATA(fun)      ((__vk_DebugUserData*) m_udata)->file = __FILE__, ((__vk_DebugUserData*) m_udata)->func = fun, ((__vk_DebugUserData*) m_udata)->line = __LINE__ + 1
+    #endif
+        
+    /// Debugging user info structure
+    struct __vk_DebugUserData {
+        std::string file;
+        std::string func;
+        deng_ui32_t line;
+    };
+#else 
+    #define         SET_UDATA(func) 
+#endif
+
+
 namespace deng {
     namespace vulkan {
 

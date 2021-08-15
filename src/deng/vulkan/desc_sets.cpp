@@ -21,10 +21,11 @@ namespace deng {
             deng::Registry &reg,
             std::vector<deng_Id> &assets,
             std::vector<deng_Id> &textures,
-            VkSampleCountFlagBits sample_c
-        ) : __vk_DescriptorPoolCreator(assets, reg), 
-            __vk_DescriptorSetLayoutCreator(device), m_assets(assets), 
-            m_textures(textures), m_reg(reg) {
+            VkSampleCountFlagBits sample_c,
+            void *udata
+        ) : __vk_DescriptorPoolCreator(assets, reg, udata), 
+            __vk_DescriptorSetLayoutCreator(device, udata), m_assets(assets), 
+            m_textures(textures), m_reg(reg), m_udata(udata) {
 
             // Create the initial descriptor pools
             __vk_DescriptorPoolCreator::mkDescPools(device, __DEFAULT_DESC_POOL_CAP);
@@ -375,6 +376,7 @@ namespace deng {
             allocinfo.pSetLayouts = set_layouts.data();
 
             // Allocate all required descriptor sets 
+            SET_UDATA("vkAllocateDescriptorSets");
             if(vkAllocateDescriptorSets(device, &allocinfo, asset.desc_sets) != VK_SUCCESS)
                 VK_DESC_ERR("failed to allocate descriptor sets for unmapped assets");
 
@@ -389,6 +391,7 @@ namespace deng {
                     buffer_infos, asset.desc_sets[i]);
 
                 // Update descriptor sets
+                SET_UDATA("vkUpdateDescriptorSets");
                 vkUpdateDescriptorSets(device, static_cast<deng_ui32_t>(write_desc.size()), 
                     write_desc.data(), 0, NULL);
             }
@@ -456,6 +459,7 @@ namespace deng {
             allocinfo.pSetLayouts = set_layouts.data();
             
             // Allocate descriptor sets
+            SET_UDATA("vkAllocateDescriptorSets");
             if(vkAllocateDescriptorSets(device, &allocinfo, asset.desc_sets) != VK_SUCCESS)
                 VK_DESC_ERR("failed to allocate descriptor sets");
 
@@ -471,6 +475,7 @@ namespace deng {
                     buffer_infos, asset.desc_sets[i], desc_imageinfo);
 
                 // Update texture mapped descriptor sets
+                SET_UDATA("vkUpdateDescriptorSets");
                 vkUpdateDescriptorSets(device, static_cast<deng_ui32_t>(write_descs.size()), 
                     write_descs.data(), 0, NULL);
             }
@@ -508,6 +513,7 @@ namespace deng {
             allocinfo.pSetLayouts = set_layouts.data();
             
             // Allocate descriptor sets
+            SET_UDATA("vkAllocateDescriptorSets");
             if(vkAllocateDescriptorSets(device, &allocinfo, m_ui_desc_sets.data()) != VK_SUCCESS)
                 VK_DESC_ERR("failed to allocate descriptor sets");
 
@@ -517,6 +523,7 @@ namespace deng {
                 const VkWriteDescriptorSet write_desc_set = __mkUIWriteDescInfo(m_ui_desc_sets[i], desc_imageinfo);
 
                 // Update texture mapped descriptor sets
+                SET_UDATA("vkUpdateDescriptorSets");
                 vkUpdateDescriptorSets(device, 1, &write_desc_set, 0, NULL);
             }
         }

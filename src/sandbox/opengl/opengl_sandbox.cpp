@@ -98,7 +98,10 @@ namespace deng {
 
 int main() {
     deng_InitWindowAPI();
-    deng::OpenGLApplication app;
-    app.run();
+    {
+        deng::OpenGLApplication app;
+        app.run();
+    }
+    deng_DeinitWindowAPI();
     return 0;
 }

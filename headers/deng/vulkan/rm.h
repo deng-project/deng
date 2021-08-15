@@ -67,6 +67,7 @@ namespace deng {
             std::vector<VkFramebuffer> m_framebuffers;
             VkSampleCountFlagBits m_sample_c;
             deng_ui32_t m_tex_mem_bits = 0;
+            void *m_udata;
 
         private:
 
@@ -83,7 +84,7 @@ namespace deng {
             __vk_ResourceManager(VkDevice device, VkPhysicalDevice gpu, VkExtent2D ext, VkSampleCountFlagBits sample_c,
                 VkRenderPass renderpass, VkCommandPool cmd_pool, VkQueue g_queue, const std::vector<VkImageView> &sc_img_views,
                 deng::Registry &reg, std::vector<deng_Id> &assets, std::vector<deng_Id> &textures, VkFormat sc_color_format,
-                const VkPhysicalDeviceLimits &gpu_limits);
+                const VkPhysicalDeviceLimits &gpu_limits, void *udata);
 
 
         // Getter and setter methods

@@ -32,7 +32,8 @@ typedef int64_t deng_px_t;
 typedef float deng_vec_t;
 
 typedef deng_ui32_t deng_idx_t;
-typedef deng_ui32_t deng_gl_t;
+typedef deng_i32_t deng_gl_t;
+typedef deng_ui32_t deng_ugl_t;
 
 
 // MSVC C++ compiler does not allow redefining true and false keywords C4005

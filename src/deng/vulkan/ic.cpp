@@ -26,6 +26,10 @@ namespace deng {
             __selectPhysicalDevice();
             __findSupportedProperties();
             __mkLogicalDevice(enable_vl);
+
+            // Find surface capabilities
+            SET_UDATA("vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_gpu, m_surface, &m_surface_capabilities);
         }
 
 
@@ -74,6 +78,11 @@ namespace deng {
                 debug_createinfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
                 debug_createinfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
                 debug_createinfo.pfnUserCallback = __vk_InstanceCreator::__debugCallback;
+#ifdef __DEBUG
+                debug_createinfo.pUserData = &m_udata;
+#else
+                debug_createinfo.pUserData = NULL;
+#endif
             }
 
             else if(!enable_vl) {
@@ -116,18 +125,18 @@ namespace deng {
             messenger_createinfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
             messenger_createinfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
             messenger_createinfo.pfnUserCallback = __vk_InstanceCreator::__debugCallback;
+#ifdef __DEBUG
+            messenger_createinfo.pUserData = (void*) &m_udata;
+#else 
+            messenger_createinfo.pUserData = NULL;
+#endif
             
             auto debugUtilsMessengerCreator_fun = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
 
             if(!debugUtilsMessengerCreator_fun)
                 VK_GEN_ERR("could not create debug messenger!");
 
-            debugUtilsMessengerCreator_fun (
-                m_instance, 
-                &messenger_createinfo, 
-                NULL, 
-                &m_debug_mes
-            );
+            debugUtilsMessengerCreator_fun(m_instance, &messenger_createinfo, NULL, &m_debug_mes);
         }
 
 
@@ -139,6 +148,13 @@ namespace deng {
             void *p_user_data
         ) {
             VK_VAL_LAYER(p_callback_data->pMessage);
+#ifdef __DEBUG
+            if((message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) && (message_type & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)) {
+                __vk_DebugUserData *p_udata = (__vk_DebugUserData*) p_user_data;
+                WARNME(p_udata->file + "(): " + std::to_string(p_udata->line) + ", error in Vulkan function call " + p_udata->func);
+                std::abort();
+            }
+#endif
             return VK_FALSE;
         }
 
@@ -147,36 +163,25 @@ namespace deng {
         void __vk_InstanceCreator::__selectPhysicalDevice() {
             deng_ui32_t device_count;
             deng_ui32_t score;
-            vkEnumeratePhysicalDevices (
-                m_instance, 
-                &device_count, 
-                NULL
-            );
+            SET_UDATA("vkEnumeratePhysicalDevices");
+            vkEnumeratePhysicalDevices(m_instance, &device_count, NULL);
 
             if(device_count == 0)
                 VK_INSTANCE_ERR("failed to find graphics cards!");
 
             std::vector<VkPhysicalDevice> devices(device_count);
             std::multimap<deng_ui32_t, VkPhysicalDevice> device_candidates;
-            VkResult result = vkEnumeratePhysicalDevices (
-                m_instance, 
-                &device_count, 
-                devices.data()
-            );
+ 
+            SET_UDATA("vkEnumeratePhysicalDevices");
+            VkResult result = vkEnumeratePhysicalDevices(m_instance, &device_count, devices.data());
             
             if(result != VK_SUCCESS) 
                 VK_INSTANCE_ERR("no physical devices found!");
 
             // Iterate through every potential gpu device
             for(deng_ui32_t i = 0; i < device_count; i++) {
-                score = __vk_HardwareSpecs::getDeviceScore (
-                    devices[i], 
-                    m_required_extension_names
-                );
-                __vk_SwapChainDetails swapchain_details (
-                    devices[i], 
-                    m_surface
-                );
+                score = __vk_HardwareSpecs::getDeviceScore(devices[i], m_required_extension_names, (void*) &m_udata);
+                __vk_SwapChainDetails swapchain_details(devices[i], m_surface);
                 
                 if(!swapchain_details.getFormats().empty() && !swapchain_details.getPresentModes().empty())
                     device_candidates.insert(std::make_pair(score, devices[i]));
@@ -239,7 +244,9 @@ namespace deng {
             if(vkCreateDevice(m_gpu, &logical_device_createinfo, NULL, &m_device) != VK_SUCCESS)
                 VK_INSTANCE_ERR("failed to create logical device!");
 
+            SET_UDATA("vkGetDeviceQueue");
             vkGetDeviceQueue(m_device, m_qff.getGraphicsQFIndex(), 0, &m_qff.graphics_queue );
+            SET_UDATA("vkGetDeviceQueue");
             vkGetDeviceQueue(m_device, m_qff.getPresentQFIndex(), 0, &m_qff.present_queue );
         }
 
@@ -254,6 +261,7 @@ namespace deng {
         /// Find the maximum supported sample count for anti-aliasing (MSAA) 
         void __vk_InstanceCreator::__findSupportedProperties() {
             VkPhysicalDeviceProperties props;
+            SET_UDATA("vkGetPhysicalDeviceProperties");
             vkGetPhysicalDeviceProperties(m_gpu, &props);
             m_dev_limits = props.limits;
 
@@ -280,11 +288,8 @@ namespace deng {
 
             // Find linear filtering support needed for mipmapping
             VkFormatProperties format_props;
-            vkGetPhysicalDeviceFormatProperties (
-                m_gpu,
-                VK_FORMAT_B8G8R8A8_SRGB,
-                &format_props
-            );
+            SET_UDATA("vkGetPhysicalDeviceFormatProperties");
+            vkGetPhysicalDeviceFormatProperties(m_gpu, VK_FORMAT_B8G8R8A8_SRGB, &format_props);
 
             if(!(format_props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
                 m_tex_linear_filtering_support = false;
@@ -302,17 +307,10 @@ namespace deng {
             VkInstance instance,
             VkDebugUtilsMessengerEXT messenger
         ) {
-            auto messengerDestroyer = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr (
-                instance,
-                "vkDestroyDebugUtilsMessengerEXT"
-            );
+            auto messengerDestroyer = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 
             if(messengerDestroyer)
-                messengerDestroyer (
-                    instance,
-                    messenger,
-                    NULL
-                );
+                messengerDestroyer(instance, messenger, NULL);
             else
                 WARNME("Failed to destroy Vulkan debug utils");
         }
@@ -324,10 +322,12 @@ namespace deng {
         VkDevice __vk_InstanceCreator::getDev() { return m_device; }
         VkPhysicalDevice __vk_InstanceCreator::getGpu() { return m_gpu; }
         VkSurfaceKHR __vk_InstanceCreator::getSu() { return m_surface; }
+        VkSurfaceCapabilitiesKHR __vk_InstanceCreator::getSurfaceCapabilities() { return m_surface_capabilities; }
         __vk_QueueManager __vk_InstanceCreator::getQFF() { return m_qff; } 
         const VkPhysicalDeviceLimits &__vk_InstanceCreator::getGpuLimits() { return m_dev_limits; } 
         VkDebugUtilsMessengerEXT __vk_InstanceCreator::getDMEXT() { return m_debug_mes; }
         deng_bool_t __vk_InstanceCreator::getLFSupport() { return m_tex_linear_filtering_support; }
         VkSampleCountFlagBits __vk_InstanceCreator::getMaxSampleCount() { return m_max_sample_count; }
+        void *__vk_InstanceCreator::getUserData() { return (void*) &m_udata; }
     }
 }

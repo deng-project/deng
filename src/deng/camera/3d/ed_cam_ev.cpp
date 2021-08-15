@@ -76,6 +76,7 @@ namespace deng {
             if(m_is_rot_cur) {
                 m_p_win->changeVCMode(false);
                 m_is_rot_cur = false;
+                m_p_win->changeCursor(DENG_CURSOR_MODE_STANDARD);
             }
 
             __zoomIn(p_vm);
@@ -88,6 +89,7 @@ namespace deng {
             if(m_is_rot_cur) {
                 m_p_win->changeVCMode(false);
                 m_is_rot_cur = false;
+                m_p_win->changeCursor(DENG_CURSOR_MODE_STANDARD);
             }
 
             __zoomOut(p_vm);
@@ -104,6 +106,7 @@ namespace deng {
             if(!m_is_rot_cur) {
                 m_p_win->changeVCMode(true);
                 m_is_rot_cur = true;
+                m_p_win->changeCursor(DENG_CURSOR_MODE_POINTER);
             }
 
             m_last_rot = __Event3DBase::__getMouseRotation();
@@ -115,6 +118,7 @@ namespace deng {
             if(m_is_rot_cur) {
                 m_p_win->changeVCMode(false);
                 m_is_rot_cur = false;
+                m_p_win->changeCursor(DENG_CURSOR_MODE_STANDARD);
             }
             break;
         }

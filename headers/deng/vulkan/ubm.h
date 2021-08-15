@@ -27,12 +27,15 @@
     #include <deng/cam3d.h>
 
     #include <deng/lighting/light_srcs.h>
+    #include <deng/vulkan/sd.h>
+    #include <deng/vulkan/qm.h>
     #include <deng/vulkan/resources.h>
+    #include <deng/vulkan/rend_infos.h>
+
     #include <deng/cross_api/ubo.h>
     #include <deng/lighting/light_srcs.h>
     #include <deng/registry/registry.h>
 
-    #define __DEFAULT_ASSET_CAP             32
 
     // This is a fucking war crime
     extern deng_ui32_t __max_frame_c;
@@ -49,6 +52,7 @@ namespace deng {
             deng_ui64_t m_global_ubo_chunk_size;
             deng::Registry &m_reg;
             __vk_BufferData &m_buffer_data;
+            void *m_udata;
 
         private:
             /// Create new uniform buffer instance and allocate memory for it.
@@ -68,9 +72,8 @@ namespace deng {
             void __resetUboBufferSize(deng::BufferSectionInfo &buf_sec);
 
         public:
-            __vk_UniformBufferManager(std::vector<deng_Id> &assets,
-                const deng_ui64_t min_align, deng::Registry &reg,
-                __vk_BufferData &buf_data);
+            __vk_UniformBufferManager(std::vector<deng_Id> &assets, const deng_ui64_t min_align, deng::Registry &reg,
+                __vk_BufferData &buf_data, void *udata);
 
 
             /// Reserve a uniform data memory location for Vulkan asset

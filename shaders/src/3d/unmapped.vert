@@ -15,7 +15,7 @@ struct Light {
 };
 
 // Uniform data structure
-layout(binding = 0) uniform UboTransform {
+layout(binding = 0) uniform UniformData {
     mat4 transform;
     mat4 view;
 } ubo;

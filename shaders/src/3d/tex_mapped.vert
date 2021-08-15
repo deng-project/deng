@@ -7,7 +7,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // Uniform trasformation structure
-layout(binding = 0) uniform UboTransform {
+layout(std140, binding = 0) uniform UniformData {
     mat4 transform;
     mat4 view;
 } ubo;

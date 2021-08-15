@@ -19,7 +19,6 @@ namespace deng {
             __compileShadersToProgram(TM3D_I);
             __compileShadersToProgram(UM2D_I);
             __compileShadersToProgram(TM2D_I);
-            __prepareUniformBindings();
         }
 
 
@@ -100,109 +99,7 @@ namespace deng {
             glErrorCheck("glDeleteShader", __FILE__, __LINE__);
         }
 
-
-        /// Prepare bindings for uniform data
-        void __gl_Pipelines::__prepareUniformBindings() {
-            // 2D unmapped assets
-            deng_ui32_t index;
-            index = glGetUniformBlockIndex(m_programs[UM2D_I], "UniformData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            db_PipelineMsg(UM2D_I, "Uniform index for block UniformData is " + std::to_string(index));
-
-            glUniformBlockBinding(m_programs[UM2D_I], index, 0);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            index = glGetUniformBlockIndex(m_programs[UM2D_I], "ColorData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            db_PipelineMsg(UM2D_I, "Uniform index for block ColorData is " + std::to_string(index));
-
-            glUniformBlockBinding(m_programs[UM2D_I], index, 1);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            // 2D texture mapped assets
-            index = glGetUniformBlockIndex(m_programs[TM2D_I], "UniformData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            db_PipelineMsg(TM2D_I, "Uniform index for block UniformData is " + std::to_string(index));
-
-            glUniformBlockBinding(m_programs[TM2D_I], index, 0);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            index = glGetUniformBlockIndex(m_programs[TM2D_I], "ColorData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            db_PipelineMsg(TM2D_I, "Uniform index for block ColorData is " + std::to_string(index));
-
-            glUniformBlockBinding(m_programs[TM2D_I], index, 1);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            // 3D unmapped assets
-            index = glGetUniformBlockIndex(m_programs[UM3D_I], "UboTransform");
-            db_PipelineMsg(UM3D_I, "Uniform index for block UboTransform is " + std::to_string(index));
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-
-            glUniformBlockBinding(m_programs[UM3D_I], index, 0);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            index = glGetUniformBlockIndex(m_programs[UM3D_I], "AssetData");
-            db_PipelineMsg(UM3D_I, "Uniform index for block AssetData is " + std::to_string(index));
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-
-            glUniformBlockBinding(m_programs[UM3D_I], index, 1);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            index = glGetUniformBlockIndex(m_programs[UM3D_I], "LightData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            db_PipelineMsg(UM3D_I, "Uniform index for block LightData is " + std::to_string(index));
-
-            glUniformBlockBinding(m_programs[UM3D_I], index, 2);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            // 3D texture mapped assets
-            index = glGetUniformBlockIndex(m_programs[TM3D_I], "UboTransform");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            db_PipelineMsg(TM3D_I, "Uniform index for block UboTransform is " + std::to_string(index));
-
-            glUniformBlockBinding(m_programs[TM3D_I], index, 0);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            // index = glGetUniformBlockIndex(m_programs[TM3D_I], "LightData");
-            // glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            // db_PipelineMsg(TM3D_I, "Uniform index for block LightData is " + std::to_string(index));
-
-            // glUniformBlockBinding(m_programs[TM3D_I], index, 2);
-            // glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-
-            // index = glGetUniformBlockIndex(m_programs[TM3D_I], "AssetData");
-            // glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
-            // db_PipelineMsg(TM3D_I, "Uniform index for block AssetData is " + std::to_string(index));
-
-            // glUniformBlockBinding(m_programs[TM3D_I], index, 1);
-            // glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
-        }
-
-		/// Write debug message about certain pipeline
-        void __gl_Pipelines::_db_PipelineMsg(const deng_ui32_t pipeline_id, const std::string& msg) {
-            switch (pipeline_id) {
-            case UM2D_I:
-                LOG("UM2D_I: " + msg);
-                break;
-
-            case TM2D_I:
-                LOG("TM2D_I: " + msg);
-                break;
-
-            case UM3D_I:
-                LOG("UM3D_I: " + msg);
-                break;
-
-            case TM3D_I:
-                LOG("TM3D_I: " + msg);
-                break;
-            
-            default: return;
-            }
-        }
-
-
+        
         /// Load shader data from file to a buffer
         char *__gl_Pipelines::__loadShaderFromFile(const char *file_name) {
             FILE *file = fopen(file_name, "rb");
@@ -252,72 +149,59 @@ namespace deng {
         }
 
 
+        /// Set appropriate asset drawing attributes according to the specified asset mode
+        //void setAssetVertAttributes(const das_Asset &asset) {
+            //switch(asset.asset_mode) {
+            //case DAS_ASSET_MODE_2D_UNMAPPED:
+                ////glUseProgram(m_programs[UM2D_I]);
+                //glVertexAttribPointer(0, 2, GL_FLOAT, GL_TRUE, sizeof(das_ObjPosData2D), (void*) asset.offsets.pos_offset);
+                //glEnableVertexAttribArray(0);
+                //break;
+
+            //case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
+                //glUseProgram(m_programs[TM2D_I]);
+
+                //glEnableVertexAttribArray(0);
+                //glVertexAttribPointer(0, 2, GL_FLOAT, GL_TRUE, sizeof(das_ObjPosData2D), (void*) asset.offsets.pos_offset);
+                //glEnableVertexAttribArray(1);
+                //glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(das_ObjTextureData), (void*) asset.offsets.tex_offset);
+                //break;
+
+            //case DAS_ASSET_MODE_3D_UNMAPPED:
+                ////glUseProgram(m_programs[UM3D_I]);
+                //glEnableVertexAttribArray(0);
+                //glEnableVertexAttribArray(1);
+                //break;
+
+            //case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
+                //glUseProgram(m_programs[TM3D_I]);
+
+                //// Enable position vertices
+                //glEnableVertexAttribArray(0);
+                //glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, pos));
+                //glEnableVertexAttribArray(1);
+                //glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, tex));
+                //glEnableVertexAttribArray(2);
+                //glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, norm));
+                //break;
+
+            //default:
+                //break;
+            //}
+
+            //glErrorCheck("glBindVertexArray", __FILE__, __LINE__);
+        //}
+
+
         const deng_ui32_t __gl_Pipelines::getShaderProgram(const deng_ui32_t pipeline_id) {
             return m_programs[pipeline_id];
         }
 
 
-        /// Set appropriate asset drawing attributes according to the specified asset mode
-        void __gl_Pipelines::setAssetVertAttributes(const das_Asset &asset) {
-            switch(asset.asset_mode) {
-            case DAS_ASSET_MODE_2D_UNMAPPED:
-                //glUseProgram(m_programs[UM2D_I]);
-                glVertexAttribPointer(0, 2, GL_FLOAT, GL_TRUE, sizeof(das_ObjPosData2D), (void*) asset.offsets.pos_offset);
-                glEnableVertexAttribArray(0);
-                break;
-
-            case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
-                glUseProgram(m_programs[TM2D_I]);
-
-                glEnableVertexAttribArray(0);
-                glVertexAttribPointer(0, 2, GL_FLOAT, GL_TRUE, sizeof(das_ObjPosData2D), (void*) asset.offsets.pos_offset);
-                glEnableVertexAttribArray(1);
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(das_ObjTextureData), (void*) asset.offsets.tex_offset);
-                break;
-
-            case DAS_ASSET_MODE_3D_UNMAPPED:
-                //glUseProgram(m_programs[UM3D_I]);
-                glEnableVertexAttribArray(0);
-                glEnableVertexAttribArray(1);
-                break;
-
-            case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
-                glUseProgram(m_programs[TM3D_I]);
-
-                // Enable position vertices
-                glEnableVertexAttribArray(0);
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, pos));
-                glEnableVertexAttribArray(1);
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, tex));
-                glEnableVertexAttribArray(2);
-                glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(das_GL3DVertex), (void*) offsetof(das_GL3DVertex, norm));
-                break;
-
-            default:
-                break;
-            }
-
-            glErrorCheck("glBindVertexArray", __FILE__, __LINE__);
-        }
-
-
-        /// Disable vertex attributes for given asset
-        void __gl_Pipelines::disableAssetVertAttributes(const das_Asset &asset) {
-            glDisableVertexAttribArray(0);
-
-            switch(asset.asset_mode) {
-            case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
-            case DAS_ASSET_MODE_3D_UNMAPPED:
-                glDisableVertexAttribArray(1);
-                break;
-
-            case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
-                glDisableVertexAttribArray(2);
-                break;
-
-            default:
-                break;
-            }
+        const std::vector<deng_ugl_t> __gl_Pipelines::getShaderPrograms() {
+            std::vector<deng_ugl_t> out(m_programs.size());
+            out.insert(out.begin(), m_programs.begin(), m_programs.end());
+            return out;
         }
     }
 }

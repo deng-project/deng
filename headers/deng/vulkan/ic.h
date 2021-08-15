@@ -32,10 +32,7 @@
 
 namespace deng {
     namespace vulkan {
-        /* 
-         * Class for picking appropriate physical device, creating 
-         * logical device and creating new instance for Vulkan 
-         */
+
         class __vk_InstanceCreator : private __vk_InstanceInfo, private __vk_DeviceInfo {
         private:
             // Supported device properties flags
@@ -43,9 +40,14 @@ namespace deng {
 
             // Required vulkan extensions
             std::vector<const char*> m_required_extension_names; 
-            VkSampleCountFlagBits m_max_sample_count;
-            VkPhysicalDeviceLimits m_dev_limits;
+            VkSampleCountFlagBits m_max_sample_count = {};
+            VkPhysicalDeviceLimits m_dev_limits = {};
+            VkSurfaceCapabilitiesKHR m_surface_capabilities = {};
             const char *m_p_validation_layer = "VK_LAYER_KHRONOS_validation";
+#ifdef __DEBUG
+            __vk_DebugUserData m_udata;
+#endif
+
 
         private:
             void __mkInstance(const deng_bool_t enable_vl);
@@ -80,9 +82,11 @@ namespace deng {
             VkSampleCountFlagBits getMaxSampleCount();
             VkPhysicalDevice getGpu();
             VkSurfaceKHR getSu();
+            VkSurfaceCapabilitiesKHR getSurfaceCapabilities();
             __vk_QueueManager getQFF();
             const VkPhysicalDeviceLimits &getGpuLimits();
             VkDebugUtilsMessengerEXT getDMEXT();
+            void *getUserData();
         };
     }
 }

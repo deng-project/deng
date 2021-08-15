@@ -3,13 +3,14 @@
 /// file: das_reader.c - das file format reader header file
 /// author: Karl-Mihkel Ott
 
+
 #define __DAS_READER_C
 #include <data/das_loader.h>
 
 
 /// Temporarely log every vertex and index
 static void _db_Asset(das_Asset *asset, const char *file_name) {
-    const char o_file = cm_GetLogFile();
+    const char *o_file = cm_GetLogFile();
     cm_OpenLogger(__ASSET_LOG_FILE, false);
 
     char buf[512];

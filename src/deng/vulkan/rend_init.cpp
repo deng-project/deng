@@ -24,13 +24,13 @@ namespace deng {
             
             // Create new swapchain creator
             m_scc = std::make_unique<__vk_SwapChainCreator>(m_ic->getDev(),
-                win, m_ic->getGpu(), m_ic->getSu(), m_ic->getQFF(),
-                conf.msaa_sample_count);
+                win, m_ic->getGpu(), m_ic->getSu(), m_ic->getSurfaceCapabilities(), m_ic->getQFF(),
+                conf.msaa_sample_count, m_ic->getUserData());
 
             // Create new vulkan descriptor creator
             m_desc_c = std::make_unique<__vk_DescriptorSetsCreator>(m_ic->getDev(),
                 m_scc->getExt(), m_scc->getRp(), m_reg, m_assets,
-                m_textures, conf.msaa_sample_count);
+                m_textures, conf.msaa_sample_count, m_ic->getUserData());
 
             // Create new draw caller instance and make command pool
             m_dc = std::make_unique<__vk_DrawCaller>(m_ic->getDev(),
@@ -45,7 +45,7 @@ namespace deng {
                 m_ic->getGpu(), m_scc->getExt(), conf.msaa_sample_count,
                 m_scc->getRp(), m_dc->getComPool(), m_ic->getQFF().graphics_queue,
                 m_scc->getSCImgViews(), m_reg, m_assets, m_textures, m_scc->getSF(),
-                m_ic->getGpuLimits()); 
+                m_ic->getGpuLimits(), m_ic->getUserData()); 
 
             // Create new vulkan pipeline creator
             m_pl_c = std::make_unique<__vk_PipelineCreator>(

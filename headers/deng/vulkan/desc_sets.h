@@ -34,6 +34,7 @@
     #include <deng/vulkan/pipelines.h>
     #include <deng/vulkan/desc_set_layout.h>
     #include <deng/vulkan/desc_pool.h>
+    #include <deng/vulkan/rend_infos.h>
 
 
     // Default capacity for descriptor pool
@@ -59,6 +60,7 @@ namespace deng {
 
             deng::Registry &m_reg;
             std::vector<VkDescriptorSet> m_ui_desc_sets;
+            void *m_udata;
 
         private:
             /// Check if the pool was reallocated and if it was reallocate 
@@ -109,7 +111,8 @@ namespace deng {
                 deng::Registry &reg,
                 std::vector<deng_Id> &assets,
                 std::vector<deng_Id> &textures,
-                VkSampleCountFlagBits sample_c
+                VkSampleCountFlagBits sample_c,
+                void *udata
             );
 
 

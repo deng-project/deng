@@ -17,8 +17,9 @@ namespace deng {
             std::vector<deng_Id> &textures,
             deng::Registry &reg,
             __vk_BufferData &bd,
-            deng::BufferSectionInfo &buf_sec
-        ) : m_textures(textures), m_bd(bd), m_buf_sec(buf_sec), m_reg(reg)
+            deng::BufferSectionInfo &buf_sec,
+            void *udata
+        ) : m_textures(textures), m_bd(bd), m_buf_sec(buf_sec), m_reg(reg), m_udata(udata)
         {
             // Create missing texture instance
             __mkMissingTex(device, gpu, cmd_pool, g_queue);
@@ -75,7 +76,7 @@ namespace deng {
             // Generate all mipmaps
             VkCommandBuffer cmd_buf;
             __vk_CommandBufferRecorder::beginCommandBufferSingleCommand(
-                device, cmd_pool, &cmd_buf);
+                device, cmd_pool, &cmd_buf, m_udata);
 
             VkImageMemoryBarrier mem_barrier{};
             VkImageBlit blit{};
@@ -99,6 +100,7 @@ namespace deng {
                 mem_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
                 // Record pipeline barrier
+                SET_UDATA("vkCmdPipelineBarrier");
                 vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1,
                     &mem_barrier);
@@ -117,6 +119,7 @@ namespace deng {
                 blit.dstSubresource.mipLevel = i;
                 blit.dstSubresource.layerCount = 1;
 
+                SET_UDATA("vkCmdBlitImage");
                 vkCmdBlitImage(cmd_buf, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
@@ -125,6 +128,7 @@ namespace deng {
                 mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                 mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
+                SET_UDATA("vkCmdPipelineBarrier");
                 vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1,
                     &mem_barrier);
@@ -140,11 +144,12 @@ namespace deng {
             mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
+            SET_UDATA("vkCmdPipelineBarrier");
             vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &mem_barrier);
 
             __vk_CommandBufferRecorder::endCommandBufferSingleCommand(device,
-                g_queue, cmd_pool, &cmd_buf);
+                g_queue, cmd_pool, &cmd_buf, m_udata);
         }
 
 
@@ -173,6 +178,7 @@ namespace deng {
             sampler_info.maxLod = static_cast<deng_vec_t>(mip_levels);
 
             // Create texture sampler 
+            SET_UDATA("vkCreateSampler");
             if(vkCreateSampler(device, &sampler_info, NULL, &sampler) != VK_SUCCESS)
                 VK_RES_ERR("failed to create texture sampler!");
         }
@@ -191,10 +197,7 @@ namespace deng {
             m_buf_sec.img_cap = size + 1;
 
             // Allocate new memory for new texture image buffer
-            __vk_BufferCreator::allocateMemory ( device, gpu, size, m_bd.img_memory,
-                m_tex_mem_bits,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-            );
+            __vk_BufferCreator::allocateMemory(device, gpu, size, m_bd.img_memory, m_tex_mem_bits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_udata);
         }
 
 
@@ -239,12 +242,15 @@ namespace deng {
                     DENG_REGISTRY_TYPE_VK_TEXTURE, NULL);
 
                 if(reg_vk_tex.vk_tex.is_buffered) {
+                    SET_UDATA("vkDestroyImageView");
                     vkDestroyImageView(device, reg_vk_tex.vk_tex.image_view, NULL);
+                    SET_UDATA("vkDestroyImage");
                     vkDestroyImage(device, reg_vk_tex.vk_tex.image, NULL);
                     realloc_queue.push(m_textures[i]);
                 }
             }
 
+            SET_UDATA("vkFreeMemory");
             vkFreeMemory(device, m_bd.img_memory, NULL);
             __allocateTexMemory(device, gpu, cmd_pool, g_queue, min_size);
 
@@ -288,7 +294,7 @@ namespace deng {
             else {
                 __vk_ImageCreator::transitionImageLayout(device, tex.image, cmd_pool, 
                     g_queue, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels, m_udata);
             }
 
         }
@@ -301,8 +307,9 @@ namespace deng {
             deng_ui32_t mip_levels
         ) {
             VkImageViewCreateInfo viewinfo = __vk_ImageCreator::getImageViewInfo(
-                tex.image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+                tex.image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels, m_udata);
 
+            SET_UDATA("vkCreateImageView");
             if(vkCreateImageView(device, &viewinfo, NULL, &tex.image_view) != VK_SUCCESS) 
                 VK_RES_ERR("Failed to create texture image view!");
             LOG("Created image view for texture with id: " + std::string(tex.uuid));
@@ -326,27 +333,30 @@ namespace deng {
 
             // Create the staging buffer
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu,
-                reg_tex.tex.pixel_data.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, m_bd.staging_buffer);
+                reg_tex.tex.pixel_data.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, m_bd.staging_buffer, m_udata);
 
             // Allocate memory for staging buffer
             __vk_BufferCreator::allocateMemory(device, gpu, mem_req.size, m_bd.staging_buffer_memory, 
-                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_udata);
 
             // Bind staging buffer to its memory
+            SET_UDATA("vkBindBufferMemory");
             vkBindBufferMemory(device, m_bd.staging_buffer, m_bd.staging_buffer_memory, 0);
 
             // Copy all bitmap data to staging buffer
             __vk_BufferCreator::cpyToBufferMem(device, reg_tex.tex.pixel_data.size,
-                reg_tex.tex.pixel_data.pixel_data, m_bd.staging_buffer_memory, 0);
+                reg_tex.tex.pixel_data.pixel_data, m_bd.staging_buffer_memory, 0, m_udata);
 
             // Copy data from staging buffer to image buffer
             __vk_ImageCreator::cpyBufferToImage(device, cmd_pool, g_queue, m_bd.staging_buffer,
-                tex.image, reg_tex.tex.pixel_data.width, reg_tex.tex.pixel_data.height);
+                tex.image, reg_tex.tex.pixel_data.width, reg_tex.tex.pixel_data.height, m_udata);
 
             // Clean the staging buffer
+            SET_UDATA("vkDestroyBuffer");
             vkDestroyBuffer(device, m_bd.staging_buffer, NULL);
 
             // Free staging buffer's memory
+            SET_UDATA("vkFreeMemory");
             vkFreeMemory(device, m_bd.staging_buffer_memory, NULL);
         }
 
@@ -371,7 +381,7 @@ namespace deng {
                 device, gpu, tex.image, (deng_ui32_t) base_tex.tex.pixel_data.width,
                 (deng_ui32_t) base_tex.tex.pixel_data.height, mip_levels, VK_FORMAT_B8G8R8A8_SRGB,
                 VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_SAMPLE_COUNT_1_BIT);
+                VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_SAMPLE_COUNT_1_BIT, m_udata);
 
             // If default memory type specification is required set them
             if(set_default_mem_req) m_tex_mem_bits = mem_req.memoryTypeBits;
@@ -394,12 +404,13 @@ namespace deng {
             m_buf_sec.img_size += mem_req.size;
             
             // Bind the image to its memory with correct offsets
+            SET_UDATA("vkBindImageMemory");
             vkBindImageMemory(device, tex.image, m_bd.img_memory, reg_tex.tex.pixel_data.memory_offset);
 
             // Transition the image layout to make it suitable for recieving data 
             __vk_ImageCreator::transitionImageLayout(device, tex.image, cmd_pool, g_queue,
                 VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                mip_levels);
+                mip_levels, m_udata);
 
             // Copy bitmap data over to image buffer
             cpyBitmap(device, gpu, cmd_pool, g_queue, mip_levels, tex);
