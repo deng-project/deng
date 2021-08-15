@@ -100,8 +100,6 @@ namespace deng {
             default:
                 break;
             }
-
-            printf("Stop\n");
         }
 
 

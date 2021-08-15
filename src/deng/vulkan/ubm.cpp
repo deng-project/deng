@@ -30,7 +30,7 @@ namespace deng {
             deng_ui64_t asset_cap,
             deng::BufferSectionInfo &buf_sec
         ) {
-            buf_sec.ubo_asset_cap = __max_frame_c * cm_FindChunkSize(m_min_align, asset_cap * std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D)));
+            buf_sec.ubo_asset_cap = asset_cap;
 
             // Calculate the chunk size for uniform data
             m_global_ubo_chunk_size = cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + 
@@ -40,8 +40,7 @@ namespace deng {
             buf_sec.ubo_non_asset_size = __max_frame_c * m_global_ubo_chunk_size;
             
             // Calculate the initial asset uniform data size and overall asset data capacity
-            buf_sec.ubo_asset_size = __max_frame_c * (asset_cap * cm_FindChunkSize(m_min_align, std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D))));
-            buf_sec.ubo_cap = buf_sec.ubo_non_asset_size + buf_sec.ubo_asset_size;
+            buf_sec.ubo_cap = buf_sec.ubo_asset_cap + buf_sec.ubo_non_asset_size;
             
             // Create a new uniform buffer instance
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu, 
@@ -130,8 +129,8 @@ namespace deng {
             // Check if buffer reallocation is needed 
             if(buf_sec.ubo_asset_size > buf_sec.ubo_asset_cap) {
                 // Capcity is either 1.5x the current capacity or 1.5x the required capacity
-                const deng_ui64_t req_size = std::max(buf_sec.ubo_asset_cap * 3 / 2, buf_sec.ubo_asset_size * 3 / 2) + buf_sec.ubo_non_asset_size;
-                __reallocUniformBufferMemory(device, gpu, cmd_pool, g_queue, req_size, buf_sec);
+                const deng_ui64_t req_asize = std::max(buf_sec.ubo_asset_cap * 3 / 2, buf_sec.ubo_asset_size * 3 / 2);
+                __reallocUniformBufferMemory(device, gpu, cmd_pool, g_queue, req_asize, buf_sec);
             }
 
             // Copy the data to reserved memory area in the buffer
@@ -252,7 +251,8 @@ namespace deng {
             VkQueue g_queue,
             deng::BufferSectionInfo &buf_sec
         ) {
-            __mkUniformBuffer(device, gpu, cmd_pool, g_queue, DENG_DEFAULT_ASSET_CAP, buf_sec);
+            deng_ui64_t asset_cap = __max_frame_c * DENG_DEFAULT_ASSET_CAP * cm_FindChunkSize(m_min_align, std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D)));
+            __mkUniformBuffer(device, gpu, cmd_pool, g_queue, asset_cap, buf_sec);
             __resetUboBufferSize(buf_sec);
         }
 
