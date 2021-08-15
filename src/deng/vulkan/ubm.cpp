@@ -30,7 +30,7 @@ namespace deng {
             deng_ui64_t asset_cap,
             deng::BufferSectionInfo &buf_sec
         ) {
-            buf_sec.ubo_asset_cap = asset_cap;
+            buf_sec.ubo_asset_cap = __max_frame_c * cm_FindChunkSize(m_min_align, asset_cap * std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D)));
 
             // Calculate the chunk size for uniform data
             m_global_ubo_chunk_size = cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + 
@@ -45,8 +45,7 @@ namespace deng {
             
             // Create a new uniform buffer instance
             VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu, 
-                buf_sec.ubo_cap, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                m_buffer_data.uniform_buffer, m_udata);
+                buf_sec.ubo_cap, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_buffer_data.uniform_buffer, m_udata);
 
             // Allocate memory for uniform buffer
             __vk_BufferCreator::allocateMemory(device, gpu, mem_req.size,
@@ -66,26 +65,17 @@ namespace deng {
             VkPhysicalDevice gpu,
             VkCommandPool cmd_pool,
             VkQueue g_queue,
-            deng_ui64_t req_cap,
+            deng_ui64_t req_acap,
             deng::BufferSectionInfo &buf_sec
         ) {
-            // Create a new staging buffer for the previous uniform data
-            VkMemoryRequirements mem_req = __vk_BufferCreator::makeBuffer(device, gpu,
-                buf_sec.ubo_cap, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                m_buffer_data.staging_buffer, m_udata);
-            
-            // Allocate memory for the staging buffer
-            __vk_BufferCreator::allocateMemory(device, gpu,
-                mem_req.size, m_buffer_data.staging_buffer_memory, 
-                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | 
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_udata);
-
-            // Bind the staging buffer with its memory
-            vkBindBufferMemory(device, m_buffer_data.staging_buffer, m_buffer_data.staging_buffer_memory, 0);
-
-            // Copy from uniform buffer to staging buffer
-            __vk_BufferCreator::cpyBufferToBuffer(device, cmd_pool, g_queue, m_buffer_data.uniform_buffer, 
-                m_buffer_data.staging_buffer, buf_sec.ubo_cap, 0, 0, m_udata);
+            // Map current uniform buffer memory to a data pointer 
+            void *ubo_buf, *lbuf;
+            SET_UDATA("vkMapMemory");
+            vkMapMemory(device, m_buffer_data.uniform_buffer_mem, 0, buf_sec.ubo_cap, 0, &ubo_buf);
+                lbuf = malloc(buf_sec.ubo_cap);
+                memcpy(lbuf, ubo_buf, buf_sec.ubo_cap);
+            SET_UDATA("vkUnmapMemory");
+            vkUnmapMemory(device, m_buffer_data.uniform_buffer_mem);
 
             // Free all resources used in uniform buffers
             SET_UDATA("vkDestroyBuffer");
@@ -94,11 +84,14 @@ namespace deng {
             vkFreeMemory(device, m_buffer_data.uniform_buffer_mem, NULL);
 
             // Allocate memory for new uniform buffer instance
-            __mkUniformBuffer(device, gpu, cmd_pool, g_queue, req_cap, buf_sec);
+            __mkUniformBuffer(device, gpu, cmd_pool, g_queue, req_acap, buf_sec);
 
-            // Copy from staging buffer to the newly created uniform buffer instance
-            __vk_BufferCreator::cpyBufferToBuffer(device, cmd_pool, g_queue, m_buffer_data.staging_buffer, 
-                m_buffer_data.uniform_buffer, buf_sec.ubo_cap, 0, 0, m_udata);
+            // Copy data from local buffer to uniform buffer
+            SET_UDATA("vkMapMemory");
+            vkMapMemory(device, m_buffer_data.uniform_buffer_mem, 0, buf_sec.ubo_cap, 0, &ubo_buf);
+                memcpy(ubo_buf, lbuf, buf_sec.ubo_cap);
+            SET_UDATA("vkUnmapMemory");
+            vkUnmapMemory(device, m_buffer_data.uniform_buffer_mem);
         }
 
 

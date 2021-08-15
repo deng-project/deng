@@ -31,6 +31,22 @@ namespace deng {
             m_vk_vars->p_win = &main_win;
             m_vk_vars->enable_validation_layers = m_hints & DENG_RENDERER_HINT_ENABLE_API_DEBUGGING;
 
+            // Find the sample count
+            if(m_hints & DENG_RENDERER_HINT_MSAA_64)
+                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_64_BIT;
+            else if(m_hints & DENG_RENDERER_HINT_MSAA_32)
+                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_32_BIT;
+            else if(m_hints & DENG_RENDERER_HINT_MSAA_16)
+                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_16_BIT;
+            else if(m_hints & DENG_RENDERER_HINT_MSAA_8)
+                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_8_BIT;
+            else if(m_hints & DENG_RENDERER_HINT_MSAA_4)
+                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_4_BIT;
+            else if(m_hints & DENG_RENDERER_HINT_MSAA_2)
+                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_2_BIT;
+            else m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_1_BIT;
+
+
             // Create a new renderer instance
             m_vk_rend = std::make_unique<vulkan::__vk_Renderer>(*m_vk_vars.get(), Renderer::m_reg, m_assets, m_textures);
 
@@ -41,7 +57,7 @@ namespace deng {
             // Setup the renderer
             m_vk_rend->setup();
         }
-        else RUN_ERR("deng::Renderer::setup()", "OpenGL is not supported in DENG :(");
+        else RUN_ERR("deng::Renderer::setup()", "OpenGL is not supported by DENG default renderer :(");
 
         m_is_init = true;
     }

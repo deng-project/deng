@@ -37,6 +37,14 @@ namespace deng {
             void *m_udata;
         
         private:
+#ifdef __DEBUG
+            #define db_SampleCount() _db_SampleCount()
+            // DEBUGGING HELPERS
+            void _db_SampleCount();
+#else
+            #define db_SampleCount()
+#endif
+
             void __mkSwapChainSettings();
             void __mkSwapChain(VkSurfaceKHR &surface, VkSurfaceCapabilitiesKHR &surface_cap, deng_ui32_t g_queue_i, deng_ui32_t p_queue_i);
             void __mkRenderPass();

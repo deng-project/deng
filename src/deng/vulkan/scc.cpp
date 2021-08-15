@@ -21,6 +21,7 @@ namespace deng {
             void *p_udata
         ) : __vk_DeviceInfo(win), m_udata(p_udata) { 
             m_msaa_sample_c = sample_c;       
+            db_SampleCount();
             m_device = device;
             m_gpu = gpu;
             m_qff = qff;
@@ -32,6 +33,44 @@ namespace deng {
             __mkSCImageViews();
             __mkRenderPass();
         }
+
+        /// DEBUGGING
+#ifdef __DEBUG
+        void __vk_SwapChainCreator::_db_SampleCount() {
+            switch(m_msaa_sample_c) {
+            case VK_SAMPLE_COUNT_64_BIT:
+                LOG("Using VK_SAMPLE_COUNT_64_BIT for sample count");
+                break;
+
+            case VK_SAMPLE_COUNT_32_BIT:
+                LOG("Using VK_SAMPLE_COUNT_32_BIT for sample count");
+                break;
+
+            case VK_SAMPLE_COUNT_16_BIT:
+                LOG("Using VK_SAMPLE_COUNT_16_BIT for sample count");
+                break;
+
+            case VK_SAMPLE_COUNT_8_BIT:
+                LOG("Using VK_SAMPLE_COUNT_8_BIT for sample count");
+                break;
+
+            case VK_SAMPLE_COUNT_4_BIT:
+                LOG("Using VK_SAMPLE_COUNT_4_BIT for sample count");
+                break;
+
+            case VK_SAMPLE_COUNT_2_BIT:
+                LOG("Using VK_SAMPLE_COUNT_2_BIT for sample count");
+                break;
+
+            case VK_SAMPLE_COUNT_1_BIT:
+                LOG("Using VK_SAMPLE_COUNT_1_BIT for sample count");
+                break;
+
+            default:
+                return;
+            }
+        }
+#endif
 
 
         /// Initialise swapchain settings in order to create swapchain 

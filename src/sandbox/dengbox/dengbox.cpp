@@ -42,7 +42,7 @@ namespace Sandbox {
 
         m_assets.back().tex_uuid = m_textures[2].uuid;
 
-        #ifndef __DEBUG
+        #ifdef __DEBUG
             m_rend = std::make_unique<deng::Renderer>(DENG_RENDERER_HINT_ENABLE_API_DEBUGGING | 
                 DENG_RENDERER_HINT_MIPMAP_ENABLE | DENG_RENDERER_HINT_MSAA_4,
                 dengMath::vec4<deng_vec_t>{ 0.0f, 0.0f, 0.0f, 1.0f });

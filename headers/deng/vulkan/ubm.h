@@ -13,6 +13,7 @@
     #include <vector>
     #include <mutex>
     #include <string>
+    #include <cstring>
     #include <vulkan/vulkan.h>
 
     #include <common/base_types.h>
