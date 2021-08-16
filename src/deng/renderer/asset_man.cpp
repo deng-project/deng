@@ -100,12 +100,9 @@ namespace deng {
 
         // Pop the queue while not empty
         while(!m_texture_queue.empty()) {
-            LOG("Pushed texture to the texture array");
             m_textures.push_back(m_texture_queue.front());
 
-            LOG("Window hint bits are " + std::to_string(m_win_hints) + " but should be " + 
-                std::to_string(DENG_WINDOW_HINT_API_VULKAN));
-            if(m_win_hints == DENG_WINDOW_HINT_API_VULKAN)
+            if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
                 m_vk_rend->prepareTexture(m_texture_queue.front());
 
             m_texture_queue.pop();
