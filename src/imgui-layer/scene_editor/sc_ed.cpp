@@ -56,8 +56,10 @@ namespace dengEditor {
 
 int main() {
     deng_InitWindowAPI();
-    dengEditor::SceneEditor3D sc(DENG_RENDERER_HINT_MSAA_2, DENG_WINDOW_HINT_API_VULKAN);
-    sc.run();
+    {
+        dengEditor::SceneEditor3D sc(DENG_RENDERER_HINT_MSAA_2, DENG_WINDOW_HINT_API_VULKAN);
+        sc.run();
+    }
     deng_DeinitWindowAPI();
     return 0;
 }

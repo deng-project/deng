@@ -6,6 +6,7 @@
 *.vcxproj*
 *.sln
 *~*
+*.log
 normalising.txt
 compile_commands.json
 x64/
