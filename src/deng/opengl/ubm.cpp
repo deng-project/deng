@@ -73,8 +73,8 @@ namespace deng {
             
             // 3D texture mapped uniform bindings
             __bindUniformBlockToBindingPoint("UniformData", TM3D_UNIFORMDATA_INDEX, programs[TM3D_I]);
-            __bindUniformBlockToBindingPoint("AssetData", TM3D_ASSETDATA_INDEX, programs[TM3D_I]);
-            __bindUniformBlockToBindingPoint("LightData", TM3D_LIGHTDATA_INDEX, programs[TM3D_I]);
+            // __bindUniformBlockToBindingPoint("AssetData", TM3D_ASSETDATA_INDEX, programs[TM3D_I]);
+            // __bindUniformBlockToBindingPoint("LightData", TM3D_LIGHTDATA_INDEX, programs[TM3D_I]);
         }
 
 
@@ -128,18 +128,16 @@ namespace deng {
         /// camera's view and projection matrix
         void __gl_UniformManager::updateUboTransform3D(Camera3D *p_cam) {
             __UniformObjectTransform ubo;
-            // ubo.transform = p_cam->getCameraMat();
-            // ubo.view = p_cam->getViewMat();
-            ubo.transform = dengMath::mat4<deng_vec_t>();
-            ubo.view = dengMath::mat4<deng_vec_t>();
-
-            MAT_LOG(ubo.transform, "Camera transformation matrix");
+            ubo.transform = p_cam->getCameraMat();
+            ubo.view = p_cam->getViewMat();
+            // ubo.transform = dengMath::mat4<deng_vec_t>();
+            // ubo.view = dengMath::mat4<deng_vec_t>();
 
             // 3D uniform transformation data always has binding of 0 and offset of 0
             glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
             glErrorCheck("glBindBuffer");
 
-            void *data = glMapBufferRange(GL_UNIFORM_BUFFER, 0, cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)), GL_MAP_WRITE_BIT);
+            void *data = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(__UniformObjectTransform), GL_MAP_WRITE_BIT);
             glErrorCheck("glMapBufferRange");
             memcpy(data, &ubo, sizeof(__UniformObjectTransform));
             glUnmapBuffer(GL_UNIFORM_BUFFER);
@@ -286,16 +284,16 @@ namespace deng {
                 break;
 
             case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
-                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_UNIFORMDATA_INDEX, m_resources.ubo_buffer, 0, sizeof(__UniformObjectTransform));
+                glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_resources.ubo_buffer, 0, sizeof(__UniformObjectTransform));
                 glErrorCheck("glBindBufferRange");
 
-                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData));
-                glErrorCheck("glBindBufferRange");
+                // glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData));
+                // glErrorCheck("glBindBufferRange");
 
-                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_LIGHTDATA_INDEX, m_resources.ubo_buffer, 
-                                  cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)),
-                                  sizeof(__UniformLightData));
-                glErrorCheck("glBindBufferRange");
+                // glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_LIGHTDATA_INDEX, m_resources.ubo_buffer, 
+                //                   cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)),
+                //                   sizeof(__UniformLightData));
+                // glErrorCheck("glBindBufferRange");
                 break;
 
             default:

@@ -32,7 +32,7 @@ layout(std140, binding = 1) uniform AssetData {
 } asset_data;
 
 
-/// Uniform buffer of all lighting objects to use
+///// Uniform buffer of all lighting objects to use
 layout(std140, binding = 2) uniform LightData {
     // Light source data
     Light light[max_light_src_c];

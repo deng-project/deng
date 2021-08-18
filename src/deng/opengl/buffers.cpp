@@ -52,7 +52,7 @@ namespace deng {
             // Set some initial buffer capacity values
             deng::BufferSectionInfo& bsec = __OffsetFinder::getSectionInfo();
             bsec.asset_cap = DENG_DEF_ASSET_CAP;
-            // bsec.indices_cap = DENG_DEF_ASSET_CAP;
+            bsec.indices_cap = DENG_DEF_ASSET_CAP;
             bsec.ui_cap = DENG_DEF_UI_CAP;
 
             // Allocate the initial amount of memory for buffers

@@ -215,10 +215,11 @@ namespace deng {
                    glActiveTexture(__textureToUnit(reg_gl_tex.gl_tex));
                    glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
                    glErrorCheck("glBindTexture");
+
                 }
 
                 glDrawElements(GL_TRIANGLES, reg_asset.asset.indices.n, GL_UNSIGNED_INT, (void*) reg_asset.asset.offsets.ind_offset);
-                glErrorCheck("glDrawElements", __FILE__,__LINE__);
+                glErrorCheck("glDrawElements");
 
                 m_buf_manager->unbindAssetDataBufferRegion(reg_asset.asset);
             }
