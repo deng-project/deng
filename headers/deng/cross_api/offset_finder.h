@@ -64,6 +64,10 @@ namespace deng {
         const deng_bool_t assetCapCheck();
 
 
+        /// Check if the current capacity is enough for asset indices and if it isn't resize the capacity and return true
+        const deng_bool_t indicesCapCheck();
+
+
         /// Check if the current capacity is enough for ImGui elements and if it isn't resize the capacity and return true
         const deng_bool_t uiCapCheck();
 

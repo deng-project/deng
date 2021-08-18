@@ -16,14 +16,23 @@ namespace deng {
 
     /// Check if the current capacity is enough for assets and if it isn't resize the capacity and return true
     const deng_bool_t __OffsetFinder::assetCapCheck() {
-        if(__OffsetFinder::getSectionInfo().asset_size < __OffsetFinder::getSectionInfo().asset_cap) return false;
+        if(m_buf_sec_info.asset_size < m_buf_sec_info.asset_cap) return false;
 
         // Scale the current or required capacity by a factor of 1.5 and set it as a new capacity
-        __OffsetFinder::getSectionInfo().asset_cap = (__OffsetFinder::getSectionInfo().asset_cap * 3 / 2 <= __OffsetFinder::getSectionInfo().asset_size ? 
-            __OffsetFinder::getSectionInfo().asset_size * 3 / 2 : __OffsetFinder::getSectionInfo().asset_cap * 3 / 2);
+        m_buf_sec_info.asset_cap = std::max(m_buf_sec_info.asset_cap * 3 /2, m_buf_sec_info.asset_size * 3 / 2);
+        m_buf_sec_info.asset_cap += ZERO_MOD_CEIL_REM(m_buf_sec_info.asset_cap, sizeof(deng_idx_t));
 
-        // Round asset capacity to the nearest multiple of index size 
-        __OffsetFinder::getSectionInfo().asset_cap += ZERO_MOD_CEIL_REM(__OffsetFinder::getSectionInfo().asset_cap, sizeof(deng_idx_t));
+        return true;
+    }
+
+
+	/// Check if the current capacity is enough for asset indices and if it isn't resize the capacity and return true
+    const deng_bool_t __OffsetFinder::indicesCapCheck() {
+        if (m_buf_sec_info.indices_size < m_buf_sec_info.indices_cap) return false;
+
+        // Scale the current or required capacity by a factor of 1.5 and set it as a new capacity
+        m_buf_sec_info.indices_cap = std::max(m_buf_sec_info.indices_cap * 3 / 2, m_buf_sec_info.indices_size * 3 / 2);
+        m_buf_sec_info.indices_cap += ZERO_MOD_CEIL_REM(m_buf_sec_info.indices_cap, sizeof(deng_idx_t));
 
         return true;
     }
@@ -31,13 +40,12 @@ namespace deng {
 
     /// Check if the current capacity is enough for ImGui elements and if it isn't resize the capacity and return true
     const deng_bool_t __OffsetFinder::uiCapCheck() {
-        if(__OffsetFinder::getSectionInfo().ui_size < __OffsetFinder::getSectionInfo().ui_cap) return false;
+        if(m_buf_sec_info.ui_size < m_buf_sec_info.ui_cap) return false;
 
         // Scale the current or required capacity by a factor of 1.5 and set it as a new capacity
-        __OffsetFinder::getSectionInfo().ui_cap = __OffsetFinder::getSectionInfo().ui_cap * 3 / 2 <= __OffsetFinder::getSectionInfo().ui_size ? 
-            __OffsetFinder::getSectionInfo().ui_size * 3 / 2 : __OffsetFinder::getSectionInfo().ui_cap * 3 / 2;
+        m_buf_sec_info.ui_cap = std::max(m_buf_sec_info.ui_cap * 3 / 2, m_buf_sec_info.ui_size * 3 / 2);
+        m_buf_sec_info.ui_cap += ZERO_MOD_CEIL_REM(m_buf_sec_info.ui_cap, sizeof(deng_idx_t));
 
-        __OffsetFinder::getSectionInfo().ui_cap += ZERO_MOD_CEIL_REM(__OffsetFinder::getSectionInfo().ui_cap, sizeof(deng_idx_t));
         return true;
     }
 

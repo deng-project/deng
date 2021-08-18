@@ -20,40 +20,21 @@
 namespace deng {
 
     struct BufferSectionInfo {
-        BufferSectionInfo() {
-            asset_cap = DENG_DEF_ASSET_CAP;
-            asset_size = 0;
-
-            indices_cap = DENG_DEF_ASSET_CAP;
-            indices_size = 0;
-            
-            img_cap = 0;
-            img_size = 0;
-
-            ui_cap = DENG_DEF_UI_CAP;
-            ui_size = 0;
-
-            ubo_cap = 0;
-            ubo_non_asset_size = 0;
-            ubo_asset_size = 0;
-            ubo_asset_cap = 0;
-        }
-
         // Asset size information
-        deng_ui64_t asset_cap;
-        deng_ui64_t asset_size;
+        deng_ui64_t asset_cap = 0;
+        deng_ui64_t asset_size = 0;
 
         // Indices size information
-        deng_ui64_t indices_cap;
-        deng_ui64_t indices_size;
+        deng_ui64_t indices_cap = 0;
+        deng_ui64_t indices_size = 0;
 
         // Image data size information
-        deng_ui64_t img_cap;
-        deng_ui64_t img_size;
+        deng_ui64_t img_cap = 0;
+        deng_ui64_t img_size = 0;
 
         // UI data size information
-        deng_ui64_t ui_cap;
-        deng_ui64_t ui_size;
+        deng_ui64_t ui_cap = 0;
+        deng_ui64_t ui_size = 0;
 
         // Uniform buffer data size information
         // NOTE: Data alignment
@@ -66,10 +47,10 @@ namespace deng {
         //  * Asset data: 
         //      Each asset contains various coloring information about that certain asset
         //      NOTE: Asset color data structure is different for 3D and 2D assets
-        deng_ui64_t ubo_cap;
-        deng_ui64_t ubo_non_asset_size;
-        deng_ui64_t ubo_asset_size;
-        deng_ui64_t ubo_asset_cap;
+        deng_ui64_t ubo_cap = 0;
+        deng_ui64_t ubo_non_asset_size = 0;
+        deng_ui64_t ubo_asset_size = 0;
+        deng_ui64_t ubo_asset_cap = 0;
     };
 }
 

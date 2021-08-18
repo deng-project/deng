@@ -25,11 +25,11 @@ namespace deng {
 
             // Enable some OpenGL features
             glEnable(GL_PROGRAM_POINT_SIZE);
-            glErrorCheck("glEnable", __FILE__, __LINE__);
+            glErrorCheck("glEnable");
             glEnable(GL_DEPTH_TEST);
-            glErrorCheck("glEnable", __FILE__, __LINE__);
+            glErrorCheck("glEnable");
             glEnable(GL_STENCIL_TEST);
-            glErrorCheck("glEnable", __FILE__, __LINE__);
+            glErrorCheck("glEnable");
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
@@ -39,15 +39,12 @@ namespace deng {
             glErrorCheck("glTexParameteri", __FILE__,__LINE__);
 
             // Load all shaders into OpenGL
-            //m_pipelines = new __gl_Pipelines(lglErrorCheck);
-            //m_buf_manager = new __gl_BufferManager(m_assets, m_pipelines, m_reg, lglErrorCheck);
-            
             m_pipelines = std::make_shared<__gl_Pipelines>(lglErrorCheck);
             m_buf_manager = std::make_unique<__gl_BufferManager>(m_assets, m_pipelines, m_reg, lglErrorCheck);
 
 
             glDepthFunc(GL_LESS);
-            glErrorCheck("glDepthFunc", __FILE__, __LINE__);
+            glErrorCheck("glDepthFunc");
         }
 
         __gl_Renderer::~__gl_Renderer() {
@@ -201,7 +198,7 @@ namespace deng {
                 default:
                     break;
                 }
-                glErrorCheck("glUseProgram", __FILE__, __LINE__);
+                glErrorCheck("glUseProgram");
 
                 // Draw asset by its elements to the screen
                 m_buf_manager->updateUboTransform3D(m_cfg_vars.p_cam);
@@ -217,7 +214,7 @@ namespace deng {
                    // Console logging
                    glActiveTexture(__textureToUnit(reg_gl_tex.gl_tex));
                    glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
-                   glErrorCheck("glBindTexture", __FILE__, __LINE__);
+                   glErrorCheck("glBindTexture");
                 }
 
                 glDrawElements(GL_TRIANGLES, reg_asset.asset.indices.n, GL_UNSIGNED_INT, (void*) reg_asset.asset.offsets.ind_offset);

@@ -41,6 +41,7 @@ namespace deng {
             Registry &m_reg;
             __gl_Resources m_resources;
             deng_ui64_t m_global_ubo_chunk_size;
+            deng_ui64_t m_const_offset;
             deng_ui64_t m_min_align;
             PFNGLERRORCHECK lglErrorCheck;
 

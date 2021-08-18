@@ -39,7 +39,7 @@ namespace deng {
             __vk_BufferData &bd,
             deng_Id missing_tex_uuid,
             const dengMath::vec2<deng_ui32_t> &asset_bounds,
-            deng_ui64_t ubo_chunk_size,
+            deng_ui64_t const_offset,
             deng_ui64_t min_ubo_align
         ) {
             LOG("Asset bounds: " + std::to_string(asset_bounds.first) + " " + std::to_string(asset_bounds.second));
@@ -98,14 +98,14 @@ namespace deng {
                 if(reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED ||
                    reg_asset.asset.asset_mode == DAS_ASSET_MODE_3D_TEXTURE_MAPPED) {
                     __mkTexMappedDS(device, reg_vk_asset.vk_asset,
-                        bd, missing_tex_uuid, min_ubo_align, ubo_chunk_size);
+                        bd, missing_tex_uuid, min_ubo_align, const_offset);
                 }
 
                 // Create non-texture mapped descriptor sets
                 else if(reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_UNMAPPED ||
                         reg_asset.asset.asset_mode == DAS_ASSET_MODE_3D_UNMAPPED) {
                     __mkUnmappedDS(device, reg_vk_asset.vk_asset,
-                        bd, min_ubo_align, ubo_chunk_size);
+                        bd, min_ubo_align, const_offset);
                 }
             }
         }
@@ -118,7 +118,7 @@ namespace deng {
             __vk_BufferData &bd,
             deng_Id non_tex_id,
             deng_ui64_t min_ubo_align,
-            deng_ui64_t ubo_chunk_size
+            deng_ui64_t const_offset
         ) {
             // Create a vector to store the ids of all assets that had their
             // descriptor sets destroyed
@@ -142,13 +142,12 @@ namespace deng {
                 switch(reg_asset.asset.asset_mode) {
                 case DAS_ASSET_MODE_2D_UNMAPPED:
                 case DAS_ASSET_MODE_3D_UNMAPPED:
-                    __mkUnmappedDS(device, reg_vk_asset.vk_asset, bd, min_ubo_align, ubo_chunk_size);
+                    __mkUnmappedDS(device, reg_vk_asset.vk_asset, bd, min_ubo_align, const_offset);
                     break;
 
                 case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
                 case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
-                    __mkTexMappedDS(device, reg_vk_asset.vk_asset, bd, non_tex_id,
-                        min_ubo_align, ubo_chunk_size);
+                    __mkTexMappedDS(device, reg_vk_asset.vk_asset, bd, non_tex_id, min_ubo_align, const_offset);
                     break;
 
                 default:
@@ -166,7 +165,7 @@ namespace deng {
             deng_ui64_t cur_frame,
             deng_ui64_t frame_c,
             deng_ui64_t min_align,
-            deng_ui64_t ubo_chunk_size
+            deng_ui64_t const_offset
         ) {
             std::vector<VkDescriptorBufferInfo> buf_info{};
 
@@ -176,11 +175,11 @@ namespace deng {
             case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
                 buf_info.resize(2);
                 buf_info[0].buffer = bd.uniform_buffer;
-                buf_info[0].offset = cur_frame * ubo_chunk_size + cm_FindChunkSize(min_align, sizeof(__UniformObjectTransform));
+                buf_info[0].offset = cur_frame * (const_offset / __max_frame_c) + cm_FindChunkSize(min_align, sizeof(__UniformObjectTransform2D));
                 buf_info[0].range = sizeof(__UniformObjectTransform2D);
 
                 buf_info[1].buffer = bd.uniform_buffer;
-                buf_info[1].offset = asset.offsets.ubo_offset + cur_frame * cm_FindChunkSize(min_align, sizeof(__UniformAssetData));
+                buf_info[1].offset = const_offset + cur_frame * cm_FindChunkSize(min_align, sizeof(__UniformAssetData)) + asset.offsets.ubo_offset ;
                 buf_info[1].range = sizeof(__UniformAssetData);
                 break;
 
@@ -188,15 +187,15 @@ namespace deng {
             case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
                 buf_info.resize(3);
                 buf_info[0].buffer = bd.uniform_buffer;
-                buf_info[0].offset = cur_frame * ubo_chunk_size;
+                buf_info[0].offset = cur_frame * (const_offset / __max_frame_c);
                 buf_info[0].range = sizeof(__UniformObjectTransform);
 
                 buf_info[1].buffer = bd.uniform_buffer;
-                buf_info[1].offset = asset.offsets.ubo_offset + cur_frame * cm_FindChunkSize(min_align, sizeof(__UniformAssetData));
+                buf_info[1].offset = const_offset + cur_frame * cm_FindChunkSize(min_align, sizeof(__UniformAssetData)) + asset.offsets.ubo_offset;
                 buf_info[1].range = sizeof(__UniformAssetData);
 
                 buf_info[2].buffer = bd.uniform_buffer;
-                buf_info[2].offset = cur_frame * ubo_chunk_size + cm_FindChunkSize(min_align, sizeof(__UniformObjectTransform)) +
+                buf_info[2].offset = cur_frame * const_offset + cm_FindChunkSize(min_align, sizeof(__UniformObjectTransform)) +
                     cm_FindChunkSize(min_align, sizeof(__UniformObjectTransform2D));
                 buf_info[2].range = sizeof(__UniformLightData);
                 break;
@@ -349,7 +348,7 @@ namespace deng {
             __vk_Asset &asset,
             __vk_BufferData &bd,
             deng_ui64_t min_align,
-            deng_ui64_t ubo_chunk_size
+            deng_ui64_t const_offset
         ) {
             // Set up multiple descriptor layout structures
             std::vector<VkDescriptorSetLayout> set_layouts;
@@ -384,7 +383,7 @@ namespace deng {
             for(size_t i = 0; i < __max_frame_c; i++) {
                 // Find required bufferinfos
                 std::vector<VkDescriptorBufferInfo> buffer_infos = __findBufferInfos(reg_asset.asset,
-                    bd, i, __max_frame_c, min_align, ubo_chunk_size);
+                    bd, i, __max_frame_c, min_align, const_offset);
 
                 // Find required write descriptors
                 std::vector<VkWriteDescriptorSet> write_desc = __mkUnmappedWriteDescInfos(reg_asset.asset.asset_mode,
@@ -405,7 +404,7 @@ namespace deng {
             __vk_BufferData &bd,
             deng_Id missing_tex_uuid,
             deng_ui64_t min_align,
-            deng_ui64_t ubo_chunk_size
+            deng_ui64_t const_offset
         ) {
             std::vector<VkDescriptorSetLayout> set_layouts;
             set_layouts.resize(__max_frame_c);
@@ -467,7 +466,7 @@ namespace deng {
             for(size_t i = 0; i < __max_frame_c; i++) {
                 // Find all required buffer infos
                 std::vector<VkDescriptorBufferInfo> buffer_infos = __findBufferInfos(reg_asset.asset,
-                    bd, i, __max_frame_c, min_align, ubo_chunk_size);
+                    bd, i, __max_frame_c, min_align, const_offset);
 
 
                 // Find write descriptors for texture mapped asset

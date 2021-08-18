@@ -30,12 +30,7 @@
 
 namespace dengMath {
 
-    /*
-     * This class is used as an abstraction for performing transformations 
-     * on camera systems
-     */
-    class CameraMatrix 
-    {
+    class CameraMatrix {
     private:
         vec4<deng_vec_t> m_camera_pos;
         mat4<deng_vec_t> m_camera_mat;

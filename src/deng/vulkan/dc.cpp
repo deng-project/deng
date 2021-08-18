@@ -79,8 +79,7 @@ namespace deng {
             if(asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED ||
                asset.asset_mode == DAS_ASSET_MODE_3D_TEXTURE_MAPPED) {
                 // Bind texture vertex location in buffer
-                vkCmdBindVertexBuffers(cur_buf, 1, 1, &bd.main_buffer, 
-                    &asset.offsets.tex_offset);
+                vkCmdBindVertexBuffers(cur_buf, 1, 1, &bd.main_buffer, &asset.offsets.tex_offset);
 
                 nor_bind_nr = 2;
             }
@@ -89,8 +88,7 @@ namespace deng {
             if(asset.asset_mode == DAS_ASSET_MODE_3D_TEXTURE_MAPPED ||
                asset.asset_mode == DAS_ASSET_MODE_3D_UNMAPPED) {
                 // Bind vertex normals location in buffer
-                vkCmdBindVertexBuffers(cur_buf, nor_bind_nr, 1, &bd.main_buffer,
-                    &asset.offsets.nor_offset);
+                vkCmdBindVertexBuffers(cur_buf, nor_bind_nr, 1, &bd.main_buffer, &asset.offsets.nor_offset);
             }
 
             // Bind the position indices location in buffer

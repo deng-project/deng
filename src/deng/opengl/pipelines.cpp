@@ -53,9 +53,9 @@ namespace deng {
 			#endif
 
             shaders.first = glCreateShader(GL_VERTEX_SHADER);
-            glErrorCheck("glCreateShader", __FILE__, __LINE__);
+            glErrorCheck("glCreateShader");
             shaders.second = glCreateShader(GL_FRAGMENT_SHADER);
-            glErrorCheck("glCreateShader", __FILE__, __LINE__);
+            glErrorCheck("glCreateShader");
 
             // Load shader sources
             char *vert = __loadShaderFromFile(__shader_src_files[index][0]);
@@ -64,11 +64,11 @@ namespace deng {
             deng_i32_t len;
             len = strlen(vert);
             glShaderSource(shaders.first, 1, &vert, &len);
-            glErrorCheck("glShaderSource", __FILE__, __LINE__);
+            glErrorCheck("glShaderSource");
 
             len = strlen(frag);
             glShaderSource(shaders.second, 1, &frag, &len);
-            glErrorCheck("glShaderSource", __FILE__, __LINE__);
+            glErrorCheck("glShaderSource");
             
             /// Attempt to compile shaders
             glCompileShader(shaders.first);
@@ -81,22 +81,22 @@ namespace deng {
 
             // Create new shader programs for each pipeline type
             m_programs[index] = glCreateProgram();
-            glErrorCheck("glCreateProgram", __FILE__, __LINE__);
+            glErrorCheck("glCreateProgram");
             glAttachShader(m_programs[index], shaders.first);
-            glErrorCheck("glAttachShader", __FILE__, __LINE__);
+            glErrorCheck("glAttachShader");
             glAttachShader(m_programs[index], shaders.second);
-            glErrorCheck("glAttachShader", __FILE__, __LINE__);
+            glErrorCheck("glAttachShader");
 
             glLinkProgram(m_programs[index]);
-            glErrorCheck("glLinkProgram", __FILE__, __LINE__);
+            glErrorCheck("glLinkProgram");
 
             __checkLinkingStatus(m_programs[index], static_cast<deng_ui32_t>(index));
 
             // Delete all shader objects
             glDeleteShader(shaders.first);
-            glErrorCheck("glDeleteShader", __FILE__, __LINE__);
+            glErrorCheck("glDeleteShader");
             glDeleteShader(shaders.second);
-            glErrorCheck("glDeleteShader", __FILE__, __LINE__);
+            glErrorCheck("glDeleteShader");
         }
 
         
@@ -189,7 +189,7 @@ namespace deng {
                 //break;
             //}
 
-            //glErrorCheck("glBindVertexArray", __FILE__, __LINE__);
+            //glErrorCheck("glBindVertexArray");
         //}
 
 

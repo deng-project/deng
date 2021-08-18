@@ -22,6 +22,9 @@ namespace deng {
                 reg, m_buffer_data, udata), __OffsetFinder(assets, reg),
             m_assets(assets), m_gpu_limits(gpu_limits), m_reg(reg), m_udata(udata)
         {
+            __OffsetFinder::getSectionInfo().asset_cap = DENG_DEF_ASSET_CAP;
+            __OffsetFinder::getSectionInfo().ui_cap = DENG_DEF_UI_CAP;
+
             // Allocate initial amount of memory for the renderer
             allocateMainBufferMemory(device, gpu);
         }

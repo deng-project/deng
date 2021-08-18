@@ -19,12 +19,12 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const de
     #define WARNME(x) std::cout << "WARNING: " << x << std::endl
 
     // OpenGL error checking function, that is enabled during debug mode but disabled otherwise
-	#define glErrorCheck(func_name, file, line) lglErrorCheck(func_name, file, line)
+	#define glErrorCheck(func_name) lglErrorCheck(func_name, __FILE__, __LINE__ - 1)
 #else
     #define LOG(x)
     #define MAT_LOG(mat, msg);
     #define WARNME(x)
-    #define glErrorCheck(func_name, file, line)
+    #define glErrorCheck(func_name)
 #endif
 
 

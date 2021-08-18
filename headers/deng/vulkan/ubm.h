@@ -50,7 +50,8 @@ namespace deng {
         private:
             std::vector<deng_Id> &m_assets;
             const deng_ui64_t m_min_align;
-            deng_ui64_t m_global_ubo_chunk_size;
+            deng_ui64_t m_const_offset;
+            deng_ui64_t m_prim_ubo_block_size;
             deng::Registry &m_reg;
             __vk_BufferData &m_buffer_data;
             void *m_udata;

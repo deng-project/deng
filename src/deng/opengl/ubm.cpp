@@ -25,15 +25,14 @@ namespace deng {
 
             deng::BufferSectionInfo &buf_sec = __OffsetFinder::getSectionInfo();
             buf_sec.ubo_asset_cap = DENG_DEFAULT_ASSET_CAP * cm_FindChunkSize(m_min_align, std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D))); 
-            buf_sec.ubo_non_asset_size = cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + 
-                                         cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)) + 
-                                         cm_FindChunkSize(m_min_align, sizeof(__UniformLightData)); 
+            buf_sec.ubo_non_asset_size = m_const_offset = cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + 
+														  cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)) + 
+														  cm_FindChunkSize(m_min_align, sizeof(__UniformLightData)); 
             buf_sec.ubo_cap = buf_sec.ubo_asset_cap + buf_sec.ubo_non_asset_size;
             m_global_ubo_chunk_size = buf_sec.ubo_non_asset_size;
 
             glGenBuffers(1, &m_resources.ubo_buffer);
-            glErrorCheck("glGenBuffers", __FILE__, __LINE__);
-            LOG("new ubo_buffer value: " + std::to_string(m_resources.ubo_buffer));
+            glErrorCheck("glGenBuffers");
 
             glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
             glErrorCheck("glBindBuffer", __FILE__,__LINE__);
@@ -41,12 +40,11 @@ namespace deng {
             glBufferData(GL_UNIFORM_BUFFER, buf_sec.ubo_cap, NULL, GL_STATIC_DRAW);  
             glErrorCheck("glBufferData", __FILE__,__LINE__);
 
-
             LOG("Uniform buffer capacity is " + std::to_string(buf_sec.ubo_cap) + ", sizeof UniformObjectTransformation " + std::to_string(sizeof(__UniformObjectTransform)));
 
             GLint max_ubo;
             glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &max_ubo);
-            glErrorCheck("glGetIntegerv", __FILE__, __LINE__);
+            glErrorCheck("glGetIntegerv");
             LOG("Maximum uniform block size " + std::to_string(max_ubo));
 
             glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -82,10 +80,10 @@ namespace deng {
 
         void __gl_UniformManager::__bindUniformBlockToBindingPoint(const std::string &block_name, const deng_ugl_t bpt, const deng_ugl_t program) {
             deng_ui32_t index = glGetUniformBlockIndex(program, "UniformData");
-            glErrorCheck("glGetUniformBlockIndex", __FILE__, __LINE__);
+            glErrorCheck("glGetUniformBlockIndex");
 
             glUniformBlockBinding(program, index, bpt);
-            glErrorCheck("glUniformBlockBinding", __FILE__, __LINE__);
+            glErrorCheck("glUniformBlockBinding");
         }
 
 
@@ -112,14 +110,14 @@ namespace deng {
                     __OffsetFinder::getSectionInfo().ubo_non_asset_size;
 
                 glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
-                glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+                glErrorCheck("glBindBuffer");
 
                 // Reallocate uniform buffers
-                glBufferData(GL_UNIFORM_BUFFER, __OffsetFinder::getSectionInfo().ui_cap, NULL, GL_STATIC_DRAW);
-                glErrorCheck("glBufferData", __FILE__, __LINE__);
+                glBufferData(GL_UNIFORM_BUFFER, __OffsetFinder::getSectionInfo().ubo_cap, NULL, GL_STATIC_DRAW);
+                glErrorCheck("glBufferData");
 
                 glBindBuffer(GL_UNIFORM_BUFFER, 0);
-                glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+                glErrorCheck("glBindBuffer");
             }
 
             updateAssetUboData(asset);
@@ -130,23 +128,25 @@ namespace deng {
         /// camera's view and projection matrix
         void __gl_UniformManager::updateUboTransform3D(Camera3D *p_cam) {
             __UniformObjectTransform ubo;
-            ubo.transform = p_cam->getCameraMat();
-            ubo.view = p_cam->getViewMat();
+            // ubo.transform = p_cam->getCameraMat();
+            // ubo.view = p_cam->getViewMat();
+            ubo.transform = dengMath::mat4<deng_vec_t>();
+            ubo.view = dengMath::mat4<deng_vec_t>();
 
             MAT_LOG(ubo.transform, "Camera transformation matrix");
 
             // 3D uniform transformation data always has binding of 0 and offset of 0
             glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
-            glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+            glErrorCheck("glBindBuffer");
 
-            void *data = glMapBufferRange(GL_UNIFORM_BUFFER, 0, cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT);
-            glErrorCheck("glMapBufferRange", __FILE__, __LINE__);
+            void *data = glMapBufferRange(GL_UNIFORM_BUFFER, 0, cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)), GL_MAP_WRITE_BIT);
+            glErrorCheck("glMapBufferRange");
             memcpy(data, &ubo, sizeof(__UniformObjectTransform));
             glUnmapBuffer(GL_UNIFORM_BUFFER);
-            glErrorCheck("glUnmapBuffer", __FILE__, __LINE__);
+            glErrorCheck("glUnmapBuffer");
 
             glBindBuffer(GL_UNIFORM_BUFFER, 0);
-            glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+            glErrorCheck("glBindBuffer");
         }
 
 
@@ -166,14 +166,16 @@ namespace deng {
                 ubo.is_unmapped = static_cast<deng_ui32_t>(asset.force_unmap);
 
                 glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
-                glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+                glErrorCheck("glBindBuffer");
 
-                glBufferSubData(GL_UNIFORM_BUFFER, asset.offsets.ubo_offset, sizeof(__UniformAssetData), &ubo);
-                glErrorCheck("glBufferSubData", __FILE__, __LINE__);
+                void *data = glMapBufferRange(GL_UNIFORM_BUFFER, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData), GL_MAP_WRITE_BIT);
+                glErrorCheck("glMapBufferRange");
+                memcpy(data, &ubo, sizeof(__UniformAssetData));
+                glUnmapBuffer(GL_UNIFORM_BUFFER);
+                glErrorCheck("glUnmappBuffer");
 
-                // Asset uniform binding is always 1 and has offset of specified asset ubo_offset
-                glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_resources.ubo_buffer, asset.offsets.ubo_offset, sizeof(__UniformAssetData));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glBindBuffer(GL_UNIFORM_BUFFER, 0);
+                glErrorCheck("glBindBuffer");
             }
 
             else {
@@ -183,14 +185,16 @@ namespace deng {
                 ubo.is_unmapped = asset.force_unmap;
 
                 glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
-                glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+                glErrorCheck("glBindBuffer");
                 
-                glBufferSubData(GL_UNIFORM_BUFFER, asset.offsets.ubo_offset, sizeof(__UniformAssetData2D), &ubo);
-                glErrorCheck("glBufferSubData", __FILE__, __LINE__);
+                void* data = glMapBufferRange(GL_UNIFORM_BUFFER, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData2D), GL_MAP_WRITE_BIT);
+                glErrorCheck("glMapBufferRange");
+                memcpy(data, &ubo, sizeof(__UniformAssetData2D));
+                glUnmapBuffer(GL_UNIFORM_BUFFER);
+                glErrorCheck("glUnmapBuffer");
 
-                // Asset uniform binding is always 1 and has offset of specified asset ubo_offset
-                glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_resources.ubo_buffer, asset.offsets.ubo_offset, sizeof(__UniformAssetData2D));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glBindBuffer(GL_UNIFORM_BUFFER, 0);
+                glErrorCheck("glBindBuffer");
             }
         }
 
@@ -219,70 +223,79 @@ namespace deng {
                     break;
 
                 default:
-                    goto BIND;
+                    goto MAP;
                 }
             }
 
             // Light source always has a binding of 2 and offset of sizeof(__UniformObjectTransform) + sizeof(__UniformObjectTransform2D)
-            BIND:
+            MAP:
             const deng_ui64_t offset = cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) +
                                        cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D));
-            glBindBufferRange(GL_UNIFORM_BUFFER, 2, m_resources.ubo_buffer, offset, sizeof(__UniformLightData));
-            glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+
+            glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
+            glErrorCheck("glBindBuffer");
+
+            void *data = glMapBufferRange(GL_UNIFORM_BUFFER, offset, sizeof(__UniformLightData), GL_MAP_WRITE_BIT);
+            glErrorCheck("glMapBufferRange");
+            memcpy(data, &ubo, sizeof(__UniformLightData));
+            glUnmapBuffer(GL_UNIFORM_BUFFER);
+            glErrorCheck("glUnmapBuffer");
+
+
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
         }
 
 
         void __gl_UniformManager::bindAssetUboBufferRange(const das_Asset &asset) {
             glBindBuffer(GL_UNIFORM_BUFFER, 0);
-            glErrorCheck("glBindBuffer", __FILE__, __LINE__);
+            glErrorCheck("glBindBuffer");
 
             switch(asset.asset_mode) {
             case DAS_ASSET_MODE_2D_UNMAPPED:
                 glBindBufferRange(GL_UNIFORM_BUFFER, UM2D_UNIFORMDATA_INDEX, m_resources.ubo_buffer, 
-                                  cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)), sizeof(__UniformObjectTransform2D));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                                  cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)), sizeof(__UniformObjectTransform2D));
+                glErrorCheck("glBindBufferRange");
 
 
                 glBindBufferRange(GL_UNIFORM_BUFFER, UM2D_ASSETDATA_INDEX, m_resources.ubo_buffer, asset.offsets.ubo_offset, sizeof(__UniformAssetData2D));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
                 break;
 
             case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
                 glBindBufferRange(GL_UNIFORM_BUFFER, TM2D_UNIFORMDATA_INDEX, m_resources.ubo_buffer, 
                                   cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)), sizeof(__UniformObjectTransform2D));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
 
 
                 glBindBufferRange(GL_UNIFORM_BUFFER, TM2D_ASSETDATA_INDEX, m_resources.ubo_buffer, asset.offsets.ubo_offset, sizeof(__UniformAssetData2D));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
                 break;
 
             case DAS_ASSET_MODE_3D_UNMAPPED:
                 glBindBufferRange(GL_UNIFORM_BUFFER, UM3D_UNIFORMDATA_INDEX, m_resources.ubo_buffer, 0, sizeof(__UniformObjectTransform));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
 
 
                 glBindBufferRange(GL_UNIFORM_BUFFER, UM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, asset.offsets.ubo_offset, sizeof(__UniformAssetData));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
 
                 glBindBufferRange(GL_UNIFORM_BUFFER, UM3D_LIGHTDATA_INDEX, m_resources.ubo_buffer, 
                                   cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)),
                                   sizeof(__UniformLightData));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
                 break;
 
             case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
                 glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_UNIFORMDATA_INDEX, m_resources.ubo_buffer, 0, sizeof(__UniformObjectTransform));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
 
-
-                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, asset.offsets.ubo_offset, sizeof(__UniformAssetData));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData));
+                glErrorCheck("glBindBufferRange");
 
                 glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_LIGHTDATA_INDEX, m_resources.ubo_buffer, 
                                   cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)),
                                   sizeof(__UniformLightData));
-                glErrorCheck("glBindBufferRange", __FILE__, __LINE__);
+                glErrorCheck("glBindBufferRange");
                 break;
 
             default:
