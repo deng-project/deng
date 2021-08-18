@@ -37,6 +37,10 @@ namespace deng {
 
     /// Data union for all suitable registry types that can be submitted
     union RegData {
+        RegData() { memset(this, 0, sizeof(RegData)); }
+        RegData(const RegData &data) { *this = data; }
+        void operator=(const RegData& data) { this->asset = data.asset; }
+
         das_Asset asset;
         das_Texture tex;
         vulkan::__vk_Asset vk_asset;
@@ -51,6 +55,12 @@ namespace deng {
     /// Main data structure for keeping information about hash mapped 
     /// registry entry
     struct __RegEntry {
+        __RegEntry(const RegData &elem, deng_RegistryType rt, deng_ui32_t i) {
+            element = elem;
+            type = rt;
+            index = i;
+        }
+
         RegData element;
         deng_RegistryType type;
         deng_ui32_t index;

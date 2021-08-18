@@ -6,6 +6,10 @@
 
 /*
  * Matrix structure requirements are follwing
+ * mat<T>();
+ * mat<T>(const vec<T> &r1, ...);
+ * mat<T>(mat<T> &val);
+ * mat<T>(mat<T> &&val);
  * OPERATORS:
  *   mat<T> + mat<T>
  *   mat<T> + T
@@ -39,10 +43,14 @@ namespace dengMath {
 
     template<typename T>
     struct mat4 {
-        vec4<T> row1;
-        vec4<T> row2;
-        vec4<T> row3;
-        vec4<T> row4; 
+        mat4();
+        mat4(const vec4<T> &r1, const vec4<T> &r2, const vec4<T> &r3, const vec4<T> &r4);
+        mat4(vec4<T> &&r1, vec4<T> &&r2, vec4<T> &&r3, vec4<T> &&r4);
+        mat4(const mat4<T> &val);
+        mat4(mat4<T>&& val);
+        void operator=(const mat4<T> &val);
+
+        vec4<T> row1, row2, row3, row4; 
 
 
         /******************************/

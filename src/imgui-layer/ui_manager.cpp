@@ -103,6 +103,8 @@ namespace deng {
         m_p_io->MousePos.y = static_cast<deng_vec_t>(win.getMPos().second);
         m_p_io->WantCaptureMouse = true;
 
+        LOG("Mouse position: " + std::to_string(win.getMPos().first) + ":" + std::to_string(win.getMPos().second));
+
         // Check if mouse wheel event should be recorded
         if(neko_FindKeyStatus(NEKO_MOUSE_SCROLL_UP, NEKO_INPUT_EVENT_TYPE_ACTIVE))
             m_p_io->MouseWheel = 0.5f;

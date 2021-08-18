@@ -106,6 +106,8 @@ extern "C" {
 	#ifdef __DEBUG
 		#define __ASSET_LOG_FILE        "assets.log"
 		static void _db_Asset(das_Asset *asset, const char *file_name);
+	#else
+        #define __ASSET_LOG_FILE
 	#endif
 
 

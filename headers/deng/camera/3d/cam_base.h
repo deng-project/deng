@@ -31,7 +31,7 @@ namespace deng {
     class __Camera3DBase {
     protected:
         deng_vec_t m_fov; // Radians
-        dengMath::vec4<deng_vec_t> m_origin = dengMath::vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 0.0f}; // Origin doesn't accept transformations
+        dengMath::vec4<deng_vec_t> m_origin = dengMath::vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 0.0f); // Origin doesn't accept transformations
         dengMath::CameraMatrix m_cam_mat;
         dengMath::ProjectionMatrix m_proj_mat;
 

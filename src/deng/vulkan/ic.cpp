@@ -180,7 +180,7 @@ namespace deng {
 
             // Iterate through every potential gpu device
             for(deng_ui32_t i = 0; i < device_count; i++) {
-                score = __vk_HardwareSpecs::getDeviceScore(devices[i], m_required_extension_names, (void*) &m_udata);
+                score = __vk_HardwareSpecs::getDeviceScore(devices[i], m_required_extension_names, (void*) PUDATA);
                 __vk_SwapChainDetails swapchain_details(devices[i], m_surface);
                 
                 if(!swapchain_details.getFormats().empty() && !swapchain_details.getPresentModes().empty())
@@ -328,6 +328,6 @@ namespace deng {
         VkDebugUtilsMessengerEXT __vk_InstanceCreator::getDMEXT() { return m_debug_mes; }
         deng_bool_t __vk_InstanceCreator::getLFSupport() { return m_tex_linear_filtering_support; }
         VkSampleCountFlagBits __vk_InstanceCreator::getMaxSampleCount() { return m_max_sample_count; }
-        void *__vk_InstanceCreator::getUserData() { return (void*) &m_udata; }
+        void *__vk_InstanceCreator::getUserData() { return (void*) PUDATA; }
     }
 }

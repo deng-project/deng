@@ -34,7 +34,7 @@ namespace deng {
             VkCommandPool cmd_pool,
             VkQueue g_queue
         ) {
-            deng::RegData missing_base_tex = { { 0 } };
+            deng::RegData missing_base_tex = deng::RegData();
             strcpy(missing_base_tex.tex.src, "missing_tex.deng");
             missing_base_tex.tex.uuid = uuid_Generate();
             missing_base_tex.tex.pixel_data.width = DENG_DEF_TEX_WIDTH;
@@ -44,7 +44,7 @@ namespace deng {
             memset(missing_base_tex.tex.pixel_data.pixel_data, 255, DENG_DEF_TEX_SIZE);
 
             // Make Vulkan texture
-            deng::RegData missing_vk_tex = { { 0 } };
+            deng::RegData missing_vk_tex = deng::RegData();
             missing_vk_tex.vk_tex.base_id = missing_base_tex.tex.uuid;
             missing_vk_tex.vk_tex.uuid = uuid_Generate();
             missing_base_tex.tex.vk_id = missing_vk_tex.vk_tex.uuid;

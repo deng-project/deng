@@ -30,7 +30,7 @@ namespace deng {
 
         case DENG_CAMERA_TYPE_EDITOR: {
             deng_vec_t zoom_step = __DENG_DEFAULT_ZOOM_STEP * (mov_speed.first + mov_speed.second + mov_speed.third) / 3;
-            m_ed_cam = std::make_unique<__EditorCamera>(zoom_step, dengMath::vec3<deng_vec_t>{0.0f, 0.0f, 0.0f}, rot_sens, fov,
+            m_ed_cam = std::make_unique<__EditorCamera>(zoom_step, dengMath::vec3<deng_vec_t>(0.0f, 0.0f, 0.0f), rot_sens, fov,
                 planes.first, planes.second, m_p_win);
             break;
         }   

@@ -139,14 +139,13 @@ namespace deng {
         deng_RegistryType *p_type_feedback
     ) {
         // Find the pointer value from the map
-        __RegEntry *p_entry = (__RegEntry*) findValue(&m_map,
-            (void*) id, strlen(id));
+        __RegEntry *p_entry = (__RegEntry*) findValue(&m_map, (void*) id, strlen(id));
 
         if(!p_entry)
             RUN_ERR("Registry::retrieve()", "Invalid element id \"" + std::string(id) + "\"");
 
         // Entry type check
-        if((p_entry->type & expected_type) != p_entry->type) {
+        if((expected_type & p_entry->type) != p_entry->type) {
             RUN_ERR("Registry::retrieve()", 
                 "Expected and retrieved registry entry types do not match");
         }
@@ -165,17 +164,13 @@ namespace deng {
         deng_RegistryType type, 
         const RegData &data
     ) {
-        void *val = findValue(&m_map, id,
-            strlen(id));
-
-        if(val)
-            RUN_ERR("Registry::push()", "Value with identifier \"" + std::string(id) + "\" already exists");
+        void *val = findValue(&m_map, id, strlen(id));
+        if(val) RUN_ERR("Registry::push()", "Value with identifier \"" + std::string(id) + "\" already exists");
     
         // Push the element to entries and 
         std::vector<vulkan::__vk_Asset> asset;
-        m_entries.push_back(__RegEntry{data, type, (deng_ui32_t) m_entries.size()});
-        pushToHashmap(&m_map, id, strlen(id),
-            &m_entries.back());
+        m_entries.push_back(__RegEntry{data, type, static_cast<deng_ui32_t>(m_entries.size())});
+        pushToHashmap(&m_map, id, strlen(id), &m_entries.back());
 
         // Check the data type and push id to corresponding vector 
         switch(type) {
@@ -251,7 +246,7 @@ namespace deng {
         }
 
 
-        return p_entry->element;
+        return RegData(p_entry->element);
     }
 
 

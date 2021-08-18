@@ -28,6 +28,12 @@
     #include <deng/vulkan/sd.h>
     #include <deng/vulkan/qm.h>
     #include <deng/vulkan/rend_infos.h>
+
+#ifdef __DEBUG
+    #define PUDATA  &m_udata
+#else
+    #define PUDATA  NULL
+#endif
 #endif
 
 namespace deng {

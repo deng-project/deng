@@ -147,8 +147,9 @@ namespace deng {
             Camera3D *p_cam
         ) {
             __UniformObjectTransform ubo;
-            ubo.transform = p_cam->getCameraMat();
-            ubo.view = p_cam->getViewMat();
+            // ubo.transform = dengMath::mat4();
+            // ubo.view = p_cam->getViewMat();
+
 
             __vk_BufferCreator::cpyToBufferMem(device, sizeof(__UniformObjectTransform),
                 &ubo, m_buffer_data.uniform_buffer_mem, current_image * m_global_ubo_chunk_size, m_udata);
@@ -208,7 +209,7 @@ namespace deng {
             std::array<deng_Id, __DENG_MAX_LIGHT_SRC_COUNT> &light_srcs,
             deng_ui32_t current_image
         ) {
-            __UniformLightData ubo = { { { { 0 } } } };
+            __UniformLightData ubo = __UniformLightData();
 
             // For each possible light source copy the data to ubo structure
             for(deng_ui64_t i = 0; i < light_srcs.size(); i++) {

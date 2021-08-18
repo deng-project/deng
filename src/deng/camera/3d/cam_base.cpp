@@ -20,13 +20,13 @@ namespace deng {
 
     /// Following methods are for moving the camera position in its coordinate system
     void __Camera3DBase::moveU(deng_vec_t delta, deng_bool_t ignore_pitch) {
-        m_cam_mat.moveCamera(dengMath::vec3<deng_vec_t>{delta, 0.0f, 0.0f}, false,
+        m_cam_mat.moveCamera(dengMath::vec3<deng_vec_t>(delta, 0.0f, 0.0f), false,
             ignore_pitch, DENG_COORD_AXIS_X);
     }
 
 
     void __Camera3DBase::moveV(deng_vec_t delta, deng_bool_t ignore_pitch) {
-        m_cam_mat.moveCamera(dengMath::vec3<deng_vec_t>{0.0f, delta, 0.0f}, false,
+        m_cam_mat.moveCamera(dengMath::vec3<deng_vec_t>(0.0f, delta, 0.0f), false,
             ignore_pitch, DENG_COORD_AXIS_Y );
     }
 
@@ -69,12 +69,12 @@ namespace deng {
 
     /// Following methods are for rotating the camera in origin specific coordinate system
     void __Camera3DBase::rotX(deng_vec_t rot) {
-        m_cam_mat.setOriginRotation({m_origin.first, m_origin.second, m_origin.third}, rot, 0);
+        m_cam_mat.setOriginRotation(dengMath::vec3<deng_vec_t>(m_origin.first, m_origin.second, m_origin.third), rot, 0);
     }
 
 
     void __Camera3DBase::rotY(deng_vec_t rot) { 
-        m_cam_mat.setOriginRotation({m_origin.first, m_origin.second, m_origin.third}, 0, rot);
+        m_cam_mat.setOriginRotation(dengMath::vec3<deng_vec_t>(m_origin.first, m_origin.second, m_origin.third), 0, rot);
     }
 
 

@@ -11,6 +11,56 @@
 
 namespace dengMath {
 
+    template<typename T>
+    mat3<T>::mat3() {
+        if(std::is_floating_point<T>::value || std::is_integral<T>::value) {
+            row1 = vec3<T>{1, 0, 0};
+            row2 = vec3<T>{0, 1, 0};
+            row3 = vec3<T>{0, 0, 1};
+        }
+    }
+
+
+    template<typename T>
+    mat3<T>::mat3(const vec3<T> &r1, const vec3<T> &r2, const vec3<T> &r3) {
+        row1 = r1;
+        row2 = r2;
+        row3 = r3;
+    }
+
+
+    template<typename T>
+    mat3<T>::mat3(vec3<T> &&r1, vec3<T> &&r2, vec3<T> &&r3) {
+        row1 = std::move(r1);
+        row2 = std::move(r2);
+        row3 = std::move(r3);
+    }
+
+
+    template<typename T>
+    mat3<T>::mat3(const mat3<T> &val) {
+        row1 = val.row1;
+        row2 = val.row2;
+        row3 = val.row3;
+    }
+
+
+    template<typename T>
+    mat3<T>::mat3(mat3<T> &&val) {
+        row1 = std::move(val.row1);
+        row2 = std::move(val.row2);
+        row3 = std::move(val.row3);
+    }
+
+
+    template<typename T>
+    void mat3<T>::operator=(const mat3<T> &val) {
+        row1 = val.row1;
+        row2 = val.row2;
+        row3 = val.row3;
+    }
+
+
     /// Add two matrices together
     template<typename T>
     mat3<T> mat3<T>::operator+(const mat3<T> &mat) {

@@ -107,15 +107,15 @@ namespace deng {
         void __vk_Renderer::__cleanAssets() {
             LOG("Asset count: " + std::to_string(__vk_RendererInitialiser::m_assets.size()));
             for(size_t i = 0; i < __vk_RendererInitialiser::m_assets.size(); i++) {
-                RegData &reg_vk_asset = __vk_RendererInitialiser::m_reg.retrieve (
-                    __vk_RendererInitialiser::m_assets[i], DENG_REGISTRY_TYPE_VK_ASSET, NULL);
+                // Bug detected when retrieving from registry: No error on retrieving DENG_REGISTRY_TYPE_ASSET item under expected flags of DENG_REGISTRY_TYPE_VK_ASSET
+                RegData &reg_asset = __vk_RendererInitialiser::m_reg.retrieve (
+                    __vk_RendererInitialiser::m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
+
+                RegData reg_vk_asset = __vk_RendererInitialiser::m_reg.retrieve(
+                    reg_asset.asset.vk_id, DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                 // Check if asset has descriptor sets allocated and if it does then destroy them
                 if(reg_vk_asset.vk_asset.is_desc) {
-                    // Retrieve the base asset
-                    RegData &reg_asset = __vk_RendererInitialiser::m_reg.retrieve (
-                        reg_vk_asset.vk_asset.base_id, DENG_REGISTRY_TYPE_ASSET, NULL);
-
                     // Free descriptor sets
                     vkFreeDescriptorSets(__vk_RendererInitialiser::getIC().getDev(), __vk_RendererInitialiser::getDescC().getDescPool(assetModeToPipelineType(reg_asset.asset.asset_mode)),
                         static_cast<deng_ui32_t>(reg_vk_asset.vk_asset.desc_c), reg_vk_asset.vk_asset.desc_sets);

@@ -21,7 +21,7 @@ namespace dengUtils {
 
         m_base_cube_verts[4] = dengMath::vec4<deng_vec_t>{-0.5f, -0.5f, 0.5f, 1.0f};
         m_base_cube_verts[5] = dengMath::vec4<deng_vec_t>{0.5f, -0.5f, 0.5f, 1.0f};
-        m_base_cube_verts[6] = dengMath::vec4<deng_vec_t>{0.5f, 0.5f, 0.5f, 1.0f};
+        m_base_cube_verts[6] = dengMath::vec4<deng_vec_t>(0.5f, 0.5f, 0.5f, 1.0f);
         m_base_cube_verts[7] = dengMath::vec4<deng_vec_t>{-0.5f, 0.5f, 0.5f, 1.0f};
 
 

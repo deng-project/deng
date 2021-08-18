@@ -44,7 +44,7 @@ namespace deng {
     /// Add texture id to submission queue
     /// PS! Texture UUIDs have to be generated before submitting them
     void __AssetManager::submitTexture(das_Texture &texture) {
-        RegData reg_tex = { { 0 } };
+        RegData reg_tex = RegData();
         reg_tex.tex = texture;
         m_reg.push(reg_tex.tex.uuid, DENG_REGISTRY_TYPE_TEXTURE, reg_tex);
         m_texture_queue.push(reg_tex.tex.uuid);
@@ -56,7 +56,7 @@ namespace deng {
     void __AssetManager::submitAsset(das_Asset &asset) {
         __assetTypeIncr(asset);
 
-        RegData reg_asset = { { 0 } };
+        RegData reg_asset = RegData();
         reg_asset.asset = asset;
         m_reg.push(reg_asset.asset.uuid, DENG_REGISTRY_TYPE_ASSET, reg_asset);
         m_asset_queue.push(reg_asset.asset.uuid);

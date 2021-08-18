@@ -11,6 +11,8 @@
 #ifdef __CONVERSION_CPP
     #include <type_traits>
     #include <stdlib.h>
+	#include <string.h>
+
     #include <common/base_types.h>
     #include <data/assets.h>
     #include <math/vec2.h>

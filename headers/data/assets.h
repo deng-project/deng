@@ -9,7 +9,7 @@
 #define DAS_DEFAULT_DIFFUSE_COLOR       (das_ObjColorData) {0.6f, 0.6f, 0.6f, 1.0f}   
 #define DAS_DEFAULT_AMBIENT_COLOR       (das_ObjColorData) {0.4f, 0.4f, 0.4f, 1.0f}   
 #define DAS_DEFAULT_SPECULAR_COLOR       (das_ObjColorData) {0.0f, 0.0f, 0.0f, 1.0f}   
-#define FNAME_LEN       256
+#define FNAME_LEN       255
 
 /// Universal asset element offset container struct 
 typedef struct das_OffsetData {
@@ -174,7 +174,6 @@ typedef struct das_Asset {
     deng_Id uuid;               // Identifier that is used to access the asset from the registry
     deng_Id tex_uuid;           // Texture id that the current asset is bound to (can be set to zero, if unmapped)
     deng_Id vk_id;              // Vulkan asset id, that is generated when Vulkan is used as the backend api
-    deng_Id gl_id;              // OpenGL asset id, that is generated when OpenGL is used as the backend api
     char src[FNAME_LEN];                 // Asset name that is displayed in editors 
 
     // Temporary variables, since no material system is present

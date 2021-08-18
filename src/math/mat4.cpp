@@ -9,6 +9,62 @@
 #define __MAT4_CPP
 
 namespace dengMath {
+
+    template<typename T>
+    mat4<T>::mat4() {
+        if(std::is_floating_point<T>::value || std::is_integral<T>::value) {
+            row1 = vec4<T>{1, 0, 0, 0};
+            row2 = vec4<T>{0, 1, 0, 0};
+            row3 = vec4<T>{0, 0, 1, 0};
+            row4 = vec4<T>{0, 0, 0, 1};
+        }
+    }
+
+
+    template<typename T>
+    mat4<T>::mat4(const vec4<T> &r1, const vec4<T> &r2, const vec4<T> &r3, const vec4<T> &r4) {
+        row1 = r1;
+        row2 = r2;
+        row3 = r3;
+        row4 = r4;
+    }
+
+
+    template<typename T>
+    mat4<T>::mat4(vec4<T> &&r1, vec4<T> &&r2, vec4<T> &&r3, vec4<T> &&r4) {
+        row1 = std::move(r1);
+        row2 = std::move(r2);
+        row3 = std::move(r3);
+        row4 = std::move(r4);
+    }
+
+
+    template<typename T>
+    mat4<T>::mat4(const mat4<T> &val) {
+        row1 = val.row1;
+        row2 = val.row2;
+        row3 = val.row3;
+        row4 = val.row4;
+    }
+
+
+    template<typename T>
+    mat4<T>::mat4(mat4<T> &&val) {
+        row1 = std::move(val.row1);
+        row2 = std::move(val.row2);
+        row3 = std::move(val.row3);
+        row4 = std::move(val.row4);
+    }
+
+
+    template<typename T>
+    void mat4<T>::operator=(const mat4<T> &val) {
+        row1 = val.row1;
+        row2 = val.row2;
+        row3 = val.row3;
+        row4 = val.row4;
+    }
+
     
     /// Add two matrices together
     template<typename T>

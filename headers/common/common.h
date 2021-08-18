@@ -209,11 +209,23 @@ void cm_FormatTimeFromEpoch (
 );
 
 
-// Log writer functions
-void cm_OpenLogger(const char* file_name, const deng_bool_t overwrite);
-const char *cm_GetLogFile();
-void cm_LogWrite(const char *content);
-void cm_CloseLogger();
+#ifdef __DEBUG
+	#define cm_OpenLogger(file_name, is_overwrite)      _cm_OpenLogger(file_name, is_overwrite)
+	#define cm_GetLogFile()                             _cm_GetLogFile()
+	#define cm_LogWrite(content)                        _cm_LogWrite(content)
+	#define cm_CloseLogger()                            _cm_CloseLogger()
+
+	// Logging functions
+	void _cm_OpenLogger(const char* file_name, const deng_bool_t overwrite);
+	const char *_cm_GetLogFile();
+	void _cm_LogWrite(const char *content);
+	void _cm_CloseLogger();
+#else
+	#define cm_OpenLogger(file_name, is_overwrite)
+	#define cm_GetLogFile()                         NULL
+	#define cm_LogWrite(content)
+	#define cm_CloseLogger()
+#endif
 
 
 #ifdef __cplusplus

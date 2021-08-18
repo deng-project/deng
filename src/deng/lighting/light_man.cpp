@@ -123,7 +123,7 @@ namespace deng {
     deng_Id LightManager::newDirectionalLightSrc (
         deng_vec_t intensity, 
         deng_vec_t radius,
-        const dengMath::vec3<deng_vec_t> &normal, 
+        const dengMath::vec3<deng_vec_t> &normal,
         const dengMath::vec3<deng_vec_t> &pos
     ) {
         // Construct a new registry entry
@@ -184,7 +184,7 @@ namespace deng {
 
         // Create u axis rotation matrices
         dengMath::mat3<deng_vec_t> rot_u = dengMath::mat3<deng_vec_t> {
-            dengMath::vec3<deng_vec_t>{1.0f, 0.0f, 0.0f},
+            dengMath::vec3<deng_vec_t>(1.0f, 0.0f, 0.0f),
             dengMath::vec3<deng_vec_t>{0.0f, cosf(rot.first), -sinf(rot.first)},
             dengMath::vec3<deng_vec_t>{0.0f, sinf(rot.first), cosf(rot.first)}
         };
@@ -192,7 +192,7 @@ namespace deng {
         // Create v axis rotation matrices
         dengMath::mat3<deng_vec_t> rot_v = dengMath::mat3<deng_vec_t> {
             dengMath::vec3<deng_vec_t>{cosf(rot.second), 0.0f, -sinf(rot.second)},
-            dengMath::vec3<deng_vec_t>{0.0f, 1.0f, 0.0f},
+            dengMath::vec3<deng_vec_t>(0.0f, 1.0f, 0.0f),
             dengMath::vec3<deng_vec_t>{sinf(rot.second), 0.0f, cosf(rot.second)}
         };
 

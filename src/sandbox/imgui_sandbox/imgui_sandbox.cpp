@@ -9,13 +9,13 @@
 namespace deng {
 
     ImGUIApplication::ImGUIApplication() : 
-        m_win(1280, 720, DENG_WINDOW_HINT_API_VULKAN, "ImGUI demo"),
+        m_win(1280, 720, DENG_WINDOW_HINT_API_VULKAN | DENG_WINDOW_HINT_FULL_SCREEN, "ImGUI demo"),
         m_cam(DENG_CAMERA_TYPE_EDITOR, static_cast<deng_vec_t>(dengMath::Conversion::degToRad(65.0)), 
             {0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3, 0.3}, false, &m_win),
 #ifdef __DEBUG
-        m_rend(DENG_RENDERER_HINT_MSAA_2 | DENG_RENDERER_HINT_ENABLE_API_DEBUGGING, dengMath::vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f})
+        m_rend(DENG_RENDERER_HINT_MSAA_2 | DENG_RENDERER_HINT_ENABLE_API_DEBUGGING, dengMath::vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f))
 #else
-        m_rend(DENG_RENDERER_HINT_MSAA_2, dengMath::vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f})
+        m_rend(DENG_RENDERER_HINT_MSAA_2, dengMath::vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f))
 #endif
     { 
 #ifdef __DEBUG

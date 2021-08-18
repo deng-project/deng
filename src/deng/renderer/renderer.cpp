@@ -79,7 +79,6 @@ namespace deng {
     void Renderer::run() {
         while(m_p_win->isRunning()) {
             update();
-            std::this_thread::sleep_for(std::chrono::microseconds(50));
         }
         
         // Idle the renderer for destruction

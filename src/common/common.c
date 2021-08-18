@@ -631,9 +631,9 @@ char *cm_MakeLowerCase(const char *str) {
     return out_str;
 }
 
-
+#ifdef __DEBUG
 /// Open new file for logging (write only)
-void cm_OpenLogger(const char* file_name, const deng_bool_t overwrite) {
+void _cm_OpenLogger(const char* file_name, const deng_bool_t overwrite) {
     if (overwrite) __file = fopen(file_name, "wb");
     else __file = fopen(file_name, "ab");
 
@@ -648,13 +648,13 @@ void cm_OpenLogger(const char* file_name, const deng_bool_t overwrite) {
 
 
 /// Check if logging is active on some file
-const char *cm_GetLogFile() {
+const char *_cm_GetLogFile() {
     return __o_file;
 }
 
 
 /// Close logger FILE instance 
-void cm_CloseLogger() {
+void _cm_CloseLogger() {
     fclose(__file);
     __file = NULL;
     __o_file = NULL;
@@ -662,7 +662,8 @@ void cm_CloseLogger() {
 
 
 /// Write content into log file 
-void cm_LogWrite(const char *content) {
+void _cm_LogWrite(const char *content) {
     fwrite(content, sizeof(const char), strlen(content), __file);
     fwrite("\n", sizeof(char), 1, __file);
 }
+#endif

@@ -58,14 +58,15 @@ static void _db_Asset(das_Asset *asset, const char *file_name) {
     cm_CloseLogger();
 }
 
-
-void _das_RewriteAssetLogs() {
-    FILE* file = fopen(__ASSET_LOG_FILE, "wb");
-    const char* emsg = "#ENTRY POINT\n";
-    fwrite(emsg, strlen(emsg), 1, file);
-    DENG_ASSERT(file, "Failed to open file stream for asset logs file");
-    fclose(file);
-}
+#ifdef __DEBUG
+	void _das_RewriteAssetLogs() {
+		FILE* file = fopen(__ASSET_LOG_FILE, "wb");
+		const char* emsg = "#ENTRY POINT\n";
+		fwrite(emsg, strlen(emsg), 1, file);
+		DENG_ASSERT(file, "Failed to open file stream for asset logs file");
+		fclose(file);
+	}
+#endif
 
 
 /// Read .das binary asset file into das_Asset instance

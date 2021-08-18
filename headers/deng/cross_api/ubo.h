@@ -63,6 +63,7 @@ namespace deng {
 
     /// Light data uniform structure
     struct __UniformLightData {
+        __UniformLightData() { memset(this, 0, sizeof(__UniformLightData)); }
         __UniformLightSource light_srcs[__DENG_MAX_LIGHT_SRC_COUNT];
         deng_ui32_t light_src_c;
 

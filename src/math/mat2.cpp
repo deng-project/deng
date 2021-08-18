@@ -11,6 +11,50 @@
 
 namespace dengMath {
 
+    template<typename T>
+    mat2<T>::mat2() {
+        if(std::is_floating_point<T>::value || std::is_integral<T>::value) {
+            row1 = vec2<T>(1, 0);
+            row2 = vec2<T>(0, 1);
+        }
+    }
+
+
+    template<typename T>
+    mat2<T>::mat2(const vec2<T> &r1, const vec2<T> &r2) {
+        row1 = r1;
+        row2 = r2;
+    }
+
+
+    template<typename T>
+    mat2<T>::mat2(vec2<T> &&r1, vec2<T> &&r2) {
+        row1 = std::move(r1);
+        row2 = std::move(r2);
+    }
+
+
+    template<typename T>
+    mat2<T>::mat2(const mat2<T> &val) {
+        row1 = val.row1;
+        row2 = val.row2;
+    }
+
+
+    template<typename T>
+    mat2<T>::mat2(mat2<T> &&val) {
+        row1 = std::move(val.row1);
+        row2 = std::move(val.row2);
+    }
+
+
+    template<typename T>
+    void mat2<T>::operator=(const mat2<T> &val) {
+        row1 = val.row1;
+        row2 = val.row2;
+    }
+
+
     /// Add two matrices together
     template<typename T>
     mat2<T> mat2<T>::operator+(const mat2<T> &mat) {

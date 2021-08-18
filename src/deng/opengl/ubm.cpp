@@ -24,7 +24,7 @@ namespace deng {
             m_min_align = static_cast<deng_ui64_t>(min_align);
 
             deng::BufferSectionInfo &buf_sec = __OffsetFinder::getSectionInfo();
-            buf_sec.ubo_asset_cap = cm_FindChunkSize(m_min_align, DENG_DEFAULT_ASSET_CAP * std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D))); 
+            buf_sec.ubo_asset_cap = DENG_DEFAULT_ASSET_CAP * cm_FindChunkSize(m_min_align, std::max(sizeof(__UniformAssetData), sizeof(__UniformAssetData2D))); 
             buf_sec.ubo_non_asset_size = cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + 
                                          cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)) + 
                                          cm_FindChunkSize(m_min_align, sizeof(__UniformLightData)); 

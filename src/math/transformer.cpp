@@ -97,7 +97,7 @@ namespace dengMath {
 
         rot_mat.row1 = vec3<deng_vec_t>{cosf(rot), -sinf(rot), 0.0f};
         rot_mat.row2 = vec3<deng_vec_t>{sinf(rot), cosf(rot), 0.0f};
-        rot_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        rot_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
         
         __matApply(rot_mat, asset);
     }
@@ -109,7 +109,7 @@ namespace dengMath {
         
         mat.row1 = vec3<deng_vec_t>{scale.first, 0.0f, 0.0f};
         mat.row2 = vec3<deng_vec_t>{0.0f, scale.second, 0.0f};
-        mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 0.0f};
+        mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 0.0f);
 
         __matApply(mat, asset);
     }
@@ -121,7 +121,7 @@ namespace dengMath {
 
         mat.row1 = vec3<deng_vec_t>{1.0f, shear.first, 0.0f};
         mat.row2 = vec3<deng_vec_t>{shear.second, 1.0f, 0.0f};
-        mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 0.0f};
+        mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 0.0f);
 
         __matApply(mat, asset);
     }
@@ -139,7 +139,7 @@ namespace dengMath {
 
         mat.row1 = vec3<deng_vec_t>{u.first, v.first, origin.first};
         mat.row2 = vec3<deng_vec_t>{u.second, v.second, origin.second};
-        mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
 
         __matApply(mat, asset);
     }
@@ -149,7 +149,7 @@ namespace dengMath {
     void Transformer2D::setRotation(deng_vec_t rot) {
         m_rot_mat.row1 = vec3<deng_vec_t>{cosf(rot), -sinf(rot), 0.0f};
         m_rot_mat.row2 = vec3<deng_vec_t>{sinf(rot), cosf(rot), 0.0f};
-        m_rot_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 0.0f};
+        m_rot_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 0.0f);
     }
 
 
@@ -157,7 +157,7 @@ namespace dengMath {
     void Transformer2D::setScale(const vec2<deng_vec_t> &scale) {
         m_scale_mat.row1 = vec3<deng_vec_t>{scale.first, 0.0f, 0.0f};
         m_scale_mat.row2 = vec3<deng_vec_t>{0.0f, scale.second, 0.0f};
-        m_scale_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_scale_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
     }
 
 
@@ -165,7 +165,7 @@ namespace dengMath {
     void Transformer2D::setShear(const vec2<deng_vec_t> &shear) {
         m_shear_mat.row1 = vec3<deng_vec_t>{1.0f, shear.first, 0.0f};
         m_shear_mat.row2 = vec3<deng_vec_t>{shear.second, 1.0f, 0.0f};
-        m_shear_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_shear_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
     }
 
 
@@ -178,7 +178,7 @@ namespace dengMath {
     ) {
         m_translation_mat.row1 = vec3<deng_vec_t>{u.first, v.first, origin.first};
         m_translation_mat.row2 = vec3<deng_vec_t>{u.second, v.second, origin.second};
-        m_translation_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_translation_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
     }
 
 
@@ -191,21 +191,21 @@ namespace dengMath {
     
     /// Reset all transformations to identity matrices
     void Transformer2D::reset() {
-        m_rot_mat.row1 = vec3<deng_vec_t>{1.0f, 0.0f, 0.0f};
-        m_rot_mat.row2 = vec3<deng_vec_t>{0.0f, 1.0f, 0.0f};
-        m_rot_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_rot_mat.row1 = vec3<deng_vec_t>(1.0f, 0.0f, 0.0f);
+        m_rot_mat.row2 = vec3<deng_vec_t>(0.0f, 1.0f, 0.0f);
+        m_rot_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
 
-        m_translation_mat.row1 = vec3<deng_vec_t>{1.0f, 0.0f, 0.0f};
-        m_translation_mat.row2 = vec3<deng_vec_t>{0.0f, 1.0f, 0.0f};
-        m_translation_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_translation_mat.row1 = vec3<deng_vec_t>(1.0f, 0.0f, 0.0f);
+        m_translation_mat.row2 = vec3<deng_vec_t>(0.0f, 1.0f, 0.0f);
+        m_translation_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
 
-        m_scale_mat.row1 = vec3<deng_vec_t>{1.0f, 0.0f, 0.0f};
-        m_scale_mat.row2 = vec3<deng_vec_t>{0.0f, 1.0f, 0.0f};
-        m_scale_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_scale_mat.row1 = vec3<deng_vec_t>(1.0f, 0.0f, 0.0f);
+        m_scale_mat.row2 = vec3<deng_vec_t>(0.0f, 1.0f, 0.0f);
+        m_scale_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
 
-        m_shear_mat.row1 = vec3<deng_vec_t>{1.0f, 0.0f, 0.0f};
-        m_shear_mat.row2 = vec3<deng_vec_t>{0.0f, 1.0f, 0.0f};
-        m_shear_mat.row3 = vec3<deng_vec_t>{0.0f, 0.0f, 1.0f};
+        m_shear_mat.row1 = vec3<deng_vec_t>(1.0f, 0.0f, 0.0f);
+        m_shear_mat.row2 = vec3<deng_vec_t>(0.0f, 1.0f, 0.0f);
+        m_shear_mat.row3 = vec3<deng_vec_t>(0.0f, 0.0f, 1.0f);
     }
 
 
@@ -297,20 +297,20 @@ namespace dengMath {
     void Transformer3D::rotate(const vec3<deng_vec_t> &rot, das_Asset &asset) {
         mat4<deng_vec_t> x, y, z;
         LOG("Rot: " + std::to_string(rot.first) + ", " + std::to_string(rot.second) + ", " + std::to_string(rot.third));
-        x.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
+        x.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
         x.row2 = vec4<deng_vec_t>{0.0f, cosf(rot.first), -sinf(rot.first), 0.0f};
         x.row3 = vec4<deng_vec_t>{0.0f, sinf(rot.first), cosf(rot.first), 0.0f};
-        x.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        x.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
         y.row1 = vec4<deng_vec_t>{cosf(rot.second), 0.0f, sinf(rot.second), 0.0f};
-        y.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
+        y.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
         y.row3 = vec4<deng_vec_t>{-sinf(rot.second), 0.0f, cosf(rot.second), 0.0f};
-        y.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        y.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
         z.row1 = vec4<deng_vec_t>{cosf(rot.third), -sinf(rot.third), 0.0f, 0.0f}; 
         z.row2 = vec4<deng_vec_t>{sinf(rot.third), cosf(rot.third), 0.0f, 0.0f}; 
-        z.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f}; 
-        z.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f}; 
+        z.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f); 
+        z.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f); 
 
         // Rotation transformations are performed in z, x, y order
         mat4<deng_vec_t> rot_mat = y * x * z;
@@ -324,7 +324,7 @@ namespace dengMath {
         mat.row1 = vec4<deng_vec_t>{scale.first, 0.0f, 0.0f, 0.0f};
         mat.row2 = vec4<deng_vec_t>{0.0f, scale.second, 0.0f, 0.0f};
         mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, scale.third, 0.0f};
-        mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 0.0f};
+        mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 0.0f);
 
         __matApply(mat, asset);
     }
@@ -342,7 +342,7 @@ namespace dengMath {
         mat.row1 = vec4<deng_vec_t>{u.first, v.first, w.first, origin.first};
         mat.row2 = vec4<deng_vec_t>{u.second, v.second, w.second, origin.second};
         mat.row3 = vec4<deng_vec_t>{u.third, v.third, w.third, origin.third};
-        mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
         __matApply(mat, asset);
     }
@@ -350,20 +350,20 @@ namespace dengMath {
 
     /// Set rotation for the class transformation matrix
     void Transformer3D::setRotation(const vec3<deng_vec_t> &rot) {
-        m_rot_x_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0, 0.0f};
+        m_rot_x_mat.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0, 0.0f);
         m_rot_x_mat.row2 = vec4<deng_vec_t>{0.0f, cosf(rot.first), -sinf(rot.first), 0.0f};
         m_rot_x_mat.row3 = vec4<deng_vec_t>{0.0f, sinf(rot.first), cosf(rot.first), 0.0f};
-        m_rot_x_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0, 1.0f};
+        m_rot_x_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0, 1.0f);
 
         m_rot_y_mat.row1 = vec4<deng_vec_t>{cosf(rot.second), 0.0f, sinf(rot.second), 0.0f};
-        m_rot_y_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
+        m_rot_y_mat.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
         m_rot_y_mat.row3 = vec4<deng_vec_t>{-sinf(rot.second), 1.0f, cosf(rot.second), 0.0f};
-        m_rot_y_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_rot_y_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
         m_rot_z_mat.row1 = vec4<deng_vec_t>{cosf(rot.third), -sinf(rot.third), 0.0f, 0.0f};
         m_rot_z_mat.row2 = vec4<deng_vec_t>{sinf(rot.third), sinf(rot.third), 0.0f, 0.0f};
-        m_rot_z_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        m_rot_z_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_rot_z_mat.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f);
+        m_rot_z_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
 
@@ -372,7 +372,7 @@ namespace dengMath {
         m_scale_mat.row1 = vec4<deng_vec_t>{scale.first, 0.0f, 0.0f, 0.0f};
         m_scale_mat.row2 = vec4<deng_vec_t>{0.0f, scale.second, 0.0f, 0.0f};
         m_scale_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, scale.third, 0.0f};
-        m_scale_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_scale_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
 
@@ -386,7 +386,7 @@ namespace dengMath {
         m_translation_mat.row1 = vec4<deng_vec_t>{u.first, v.first, w.first, origin.first};
         m_translation_mat.row2 = vec4<deng_vec_t>{u.second, v.second, w.second, origin.second};
         m_translation_mat.row3 = vec4<deng_vec_t>{u.third, v.third, w.third, origin.third};
-        m_translation_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_translation_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
 
@@ -405,29 +405,29 @@ namespace dengMath {
 
     /// Reset all transformations to identity matrices
     void Transformer3D::reset() {
-        m_rot_x_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
-        m_rot_x_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
-        m_rot_x_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        m_rot_x_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_rot_x_mat.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
+        m_rot_x_mat.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
+        m_rot_x_mat.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f);
+        m_rot_x_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
-        m_rot_y_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
-        m_rot_y_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
-        m_rot_y_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        m_rot_y_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_rot_y_mat.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
+        m_rot_y_mat.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
+        m_rot_y_mat.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f);
+        m_rot_y_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
-        m_rot_z_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
-        m_rot_z_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
-        m_rot_z_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        m_rot_z_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_rot_z_mat.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
+        m_rot_z_mat.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
+        m_rot_z_mat.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f);
+        m_rot_z_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
-        m_translation_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
-        m_translation_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
-        m_translation_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        m_translation_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_translation_mat.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
+        m_translation_mat.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
+        m_translation_mat.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f);
+        m_translation_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
 
-        m_scale_mat.row1 = vec4<deng_vec_t>{1.0f, 0.0f, 0.0f, 0.0f};
-        m_scale_mat.row2 = vec4<deng_vec_t>{0.0f, 1.0f, 0.0f, 0.0f};
-        m_scale_mat.row3 = vec4<deng_vec_t>{0.0f, 0.0f, 1.0f, 0.0f};
-        m_scale_mat.row4 = vec4<deng_vec_t>{0.0f, 0.0f, 0.0f, 1.0f};
+        m_scale_mat.row1 = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
+        m_scale_mat.row2 = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
+        m_scale_mat.row3 = vec4<deng_vec_t>(0.0f, 0.0f, 1.0f, 0.0f);
+        m_scale_mat.row4 = vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
     }
 }

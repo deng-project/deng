@@ -37,7 +37,7 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const de
 #define INVALID_ASSET_TEX(asset, uuid)      throw std::runtime_error(std::string("Invalid texture specified on asset: ") + asset + ", " + uuid) 
 #define INVALID_ASSET(asset, uuid)          throw std::runtime_error(std::string("Invalid asset: ") + asset + ", " + uuid)
 #define UNDEFINED_ASSET_MODE(asset, uuid)   throw std::runtime_error(std::string("Unknown asset mode for asset: ") + asset + ", " + uuid)
-#define RUN_ERR(method, x)                  throw std::runtime_error(std::string(method) + ": " + std::string(x))
+#define RUN_ERR(method, x)                  throw std::runtime_error(std::string(method) + ": " + std::string(x) + std::string("\n"))
 #define DENG_ASSERT(msg, cond)              if(!(cond)) throw std::runtime_error(std::string(__FILE__) + std::string(", ") + std::to_string(__LINE__) + std::string(": ") + std::string(msg))
 
 

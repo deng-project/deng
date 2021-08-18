@@ -56,35 +56,35 @@ layout(location = 3) in vec3 in_normal;
 layout(location = 0) out vec4 out_color;
 
 void main() {
-    vec4 dif_color = asset_data.kd;
+    //vec4 dif_color = asset_data.kd;
 
-    // Check if color or texture mapping should be used
-    if(asset_data.is_unmapped == 1)
-        dif_color = asset_data.kd;
-    else dif_color = texture(tex_sampler, in_tex);
+    //// Check if color or texture mapping should be used
+    //if(asset_data.is_unmapped == 1)
+        //dif_color = asset_data.kd;
+    //else dif_color = texture(tex_sampler, in_tex);
 
-    out_color = asset_data.ka * dif_color;
+    //out_color = asset_data.ka * dif_color;
 
-    // For each light source apply Blinn-Phong shading
-    for(uint i = 0; i < ld.light_src_c; i++) {
-        vec3 light_ray = normalize(vec3(ld.light[i].pos) - in_vert);
+    //// For each light source apply Blinn-Phong shading
+    //for(uint i = 0; i < ld.light_src_c; i++) {
+        //vec3 light_ray = normalize(vec3(ld.light[i].pos) - in_vert);
 
-        // Cosine of the angle between surface to light position vector and 
-        // vertex normal vector
-        float cos_theta = dot(light_ray, normalize(in_normal));
+        //// Cosine of the angle between surface to light position vector and 
+        //// vertex normal vector
+        //float cos_theta = dot(light_ray, normalize(in_normal));
         
-        // Calculate the half vector between surface to light source and 
-        // surface to view vectors
-        vec3 hf = normalize(vec3(in_pos) + light_ray);
+        //// Calculate the half vector between surface to light source and 
+        //// surface to view vectors
+        //vec3 hf = normalize(vec3(in_pos) + light_ray);
 
-        // Calculate the cosine of the angle between vertex normal and 
-        // half vector
-        float cos_alpha = dot(normalize(in_normal), hf);
+        //// Calculate the cosine of the angle between vertex normal and 
+        //// half vector
+        //float cos_alpha = dot(normalize(in_normal), hf);
 
-        out_color += dif_color * ld.light[i].intensity * clamp(cos_theta, 0, 1) +
-            asset_data.ks * ld.light[i].intensity * pow(clamp(cos_alpha, 0, 1), asset_data.phong_exp);
-    }
+        //out_color += dif_color * ld.light[i].intensity * clamp(cos_theta, 0, 1) +
+            //asset_data.ks * ld.light[i].intensity * pow(clamp(cos_alpha, 0, 1), asset_data.phong_exp);
+    //}
 
-    //out_color = texture(tex_sampler, in_tex);
+    out_color = texture(tex_sampler, in_tex);
     //out_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }

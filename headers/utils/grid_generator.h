@@ -19,7 +19,7 @@
     #include <math/deng_math.h>
 #endif
 
-#define DENG_DEFAULT_GRID_COLOR             dengMath::vec4<deng_vec_t>{0.8f, 0.8f, 0.8f, 1.0f}
+#define DENG_DEFAULT_GRID_COLOR             dengMath::vec4<deng_vec_t>(0.8f, 0.8f, 0.8f, 1.0f)
 #define DENG_DEFAULT_GRID_RAY_LEN           50.0f    
 #define DENG_DEFAULT_GRID_ROW_C             100
 #define DENG_GRID_THICKNESS                 0.005f
