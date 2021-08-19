@@ -10,6 +10,7 @@
 
 #ifdef __VK_REND_INIT_CPP
     #include <mutex>
+    #include <string.h>
     #include <vector>
     #include <queue>
     #include <array>

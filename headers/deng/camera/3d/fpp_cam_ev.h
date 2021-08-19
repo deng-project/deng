@@ -9,6 +9,7 @@
 
 #ifdef __FPP_CAM_EV_CPP
     #include <string>
+    #include <string.h>
     #include <iostream>
     #include <chrono>
 

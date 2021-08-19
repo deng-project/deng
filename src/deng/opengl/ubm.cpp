@@ -35,10 +35,10 @@ namespace deng {
             glErrorCheck("glGenBuffers");
 
             glBindBuffer(GL_UNIFORM_BUFFER, m_resources.ubo_buffer);
-            glErrorCheck("glBindBuffer", __FILE__,__LINE__);
+            glErrorCheck("glBindBuffer");
             
             glBufferData(GL_UNIFORM_BUFFER, buf_sec.ubo_cap, NULL, GL_STATIC_DRAW);  
-            glErrorCheck("glBufferData", __FILE__,__LINE__);
+            glErrorCheck("glBufferData");
 
             LOG("Uniform buffer capacity is " + std::to_string(buf_sec.ubo_cap) + ", sizeof UniformObjectTransformation " + std::to_string(sizeof(__UniformObjectTransform)));
 

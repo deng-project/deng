@@ -9,6 +9,7 @@
 
 
 #ifdef __DATA_UPDATER_CPP
+    #include <string.h>
     #include <array>
     #include <vector>
     #include <memory>

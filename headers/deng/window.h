@@ -10,6 +10,7 @@
     #include <stdlib.h>
     #include <vector>
     #include <string>
+    #include <string.h>
 
     #include <common/base_types.h>
     #include <common/err_def.h>

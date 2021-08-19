@@ -9,6 +9,7 @@
 
 #ifdef __CAM_BASE_CPP
     #include <stdlib.h>
+    #include <string.h>
     #include <vulkan/vulkan.h>
 
     #include <common/base_types.h>

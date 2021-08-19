@@ -9,6 +9,7 @@
 
 
 #ifdef __VK_DESC_POOL_C_CPP
+    #include <string.h>
     #include <array>
     #include <vector>
     #include <vulkan/vulkan.h>

@@ -8,6 +8,7 @@
 
 
 #ifdef __DENGBOX_CPP
+    #include <string.h>
     #include <vector>
 	#include <array>
     #include <thread>

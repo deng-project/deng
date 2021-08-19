@@ -11,6 +11,7 @@
 #ifdef __CAMERA_MAT_CPP
     #include <type_traits>
     #include <stdlib.h>
+    #include <string.h>
     #include <cmath>
 
     #include <common/base_types.h>

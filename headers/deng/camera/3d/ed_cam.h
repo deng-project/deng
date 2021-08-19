@@ -10,6 +10,7 @@
 
 #ifdef __ED_CAM_CPP
     #include <stdlib.h>
+    #include <string.h>
     #include <mutex>
     #include <cmath>
     #include <string>

@@ -9,6 +9,7 @@
 
 #ifdef __ASSET_MAN_CPP
     #include <stdlib.h>
+    #include <string.h>
     #include <vector>
     #include <array>
     #include <mutex>

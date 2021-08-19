@@ -6,6 +6,7 @@
 
 #ifdef __EV_BASE_CPP
     #include <string>
+    #include <string.h>
     #include <vulkan/vulkan.h>
     #include <common/base_types.h>
     #include <common/err_def.h>

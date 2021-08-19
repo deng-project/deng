@@ -8,6 +8,7 @@
 
 
 #ifdef __GL_UBM_CPP
+    #include <string.h>
     #include <memory>
     #include <string>
     #include <vector>

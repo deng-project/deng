@@ -8,6 +8,7 @@
 #define __VK_BM_H
 
 #ifdef __VK_BM_CPP
+    #include <string.h>
     #include <memory>
     #include <vector>
     #include <string>

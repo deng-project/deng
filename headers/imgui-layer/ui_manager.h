@@ -8,6 +8,7 @@
 
 
 #ifdef __IMGUI_RENDERER_CPP
+    #include <string.h>
     #include <vector>
     #include <array>
     #include <string>

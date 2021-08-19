@@ -8,6 +8,7 @@
 #define __VK_RENDERER_H
 
 #ifdef __VK_RENDERER_CPP
+    #include <string.h>
     #include <vector>
     #include <memory>
     #include <chrono>

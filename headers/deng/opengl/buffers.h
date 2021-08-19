@@ -9,6 +9,7 @@
 
 
 #ifdef __GL_BUFFERS_CPP
+    #include <string.h>
     #include <vector>
     #include <chrono>
     #include <string>

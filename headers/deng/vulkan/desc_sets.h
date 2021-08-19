@@ -8,6 +8,7 @@
 #define __VK_DESC_SETS_H
 
 #ifdef __VK_DESC_SETS_CPP
+    #include <string.h>
     #include <vector>
     #include <string>
     #include <array>

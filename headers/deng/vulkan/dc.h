@@ -9,6 +9,7 @@
 
 
 #ifdef __VK_DC_CPP
+    #include <string.h>
     #include <vector>
     #include <array>
     #include <queue>

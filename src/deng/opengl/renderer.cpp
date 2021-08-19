@@ -36,7 +36,7 @@ namespace deng {
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glErrorCheck("glTexParameteri", __FILE__,__LINE__);
+            glErrorCheck("glTexParameteri");
 
             // Load all shaders into OpenGL
             m_pipelines = std::make_shared<__gl_Pipelines>(lglErrorCheck);
@@ -137,10 +137,10 @@ namespace deng {
             reg_tex.tex.gl_id = reg_gl_tex.gl_tex.uuid;
 
             glBindTexture(GL_TEXTURE_2D, reg_gl_tex.gl_tex.gl_id);
-            glErrorCheck("glBindTexture", __FILE__,__LINE__);
+            glErrorCheck("glBindTexture");
 
             glGenTextures(1, &reg_gl_tex.gl_tex.gl_id);
-            glErrorCheck("glGenTextures", __FILE__,__LINE__);
+            glErrorCheck("glGenTextures");
 
             GLint max_t;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_t);
@@ -150,9 +150,9 @@ namespace deng {
             // Copy image data into texture object
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(reg_tex.tex.pixel_data.width), static_cast<GLsizei>(reg_tex.tex.pixel_data.height),
                 0, GL_BGRA, GL_UNSIGNED_BYTE, reg_tex.tex.pixel_data.pixel_data);
-            glErrorCheck("glTexImage2D", __FILE__,__LINE__);
+            glErrorCheck("glTexImage2D");
             glGenerateMipmap(GL_TEXTURE_2D);
-            glErrorCheck("glGenerateMipmap", __FILE__,__LINE__);
+            glErrorCheck("glGenerateMipmap");
 
             // Push the OpenGL texture to registry
             m_reg.push(reg_gl_tex.gl_tex.uuid, DENG_REGISTRY_TYPE_GL_TEXTURE, reg_gl_tex);
@@ -162,16 +162,16 @@ namespace deng {
         /// Main frame updating function
         void __gl_Renderer::makeFrame() {
             glViewport(0, 0, m_cfg_vars.p_win->getSize().first, m_cfg_vars.p_win->getSize().second);
-            glErrorCheck("glViewport", __FILE__,__LINE__);
+            glErrorCheck("glViewport");
             glClearColor(m_cfg_vars.background.first, m_cfg_vars.background.second, m_cfg_vars.background.third,
                 m_cfg_vars.background.fourth);
 
-            glErrorCheck("glClearColor", __FILE__,__LINE__);
+            glErrorCheck("glClearColor");
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glErrorCheck("glClear", __FILE__,__LINE__);
+            glErrorCheck("glClear");
             
 			glBindVertexArray(m_buf_manager->getResources().vert_array);
-			glErrorCheck("glBindVertexArray", __FILE__,__LINE__);
+			glErrorCheck("glBindVertexArray");
 
             // For each asset draw it to the screen
             for(deng_ui64_t i = 0; i < m_assets.size(); i++) {

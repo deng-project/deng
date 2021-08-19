@@ -8,6 +8,7 @@
 #define __DENG_H
 
 // STL includes, that are necessary for some DENG components
+#include <string.h>
 #include <vector>
 #include <memory>
 #include <string>

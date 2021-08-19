@@ -8,6 +8,7 @@
 
 
 #ifdef __OPENGL_SANDBOX_CPP
+    #include <string.h>
     #include <chrono>
     #include <memory>
     #include <vector>

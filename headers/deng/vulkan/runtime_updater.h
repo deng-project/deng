@@ -8,6 +8,7 @@
 #define __VK_RUNTIME_UPDATER_H
 
 #ifdef __VK_RUNTIME_UPDATE_CPP
+    #include <string.h>
     #include <memory>
     #include <vector>
     #include <array>

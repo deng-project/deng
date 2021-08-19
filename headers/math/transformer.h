@@ -11,6 +11,7 @@
 #ifdef __TRANSFORMER_CPP
     #include <type_traits>
     #include <stdlib.h>
+    #include <string.h>
 	#include <string>
     #include <cmath>
 

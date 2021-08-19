@@ -8,6 +8,7 @@
 
 
 #ifdef __VK_UBM_CPP
+    #include <string.h>
     #include <array>
     #include <memory>
     #include <vector>

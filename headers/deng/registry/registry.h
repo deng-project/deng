@@ -9,6 +9,7 @@
 
 
 #ifdef __REGISTRY_CPP
+    #include <string.h>
     #include <vector>
     #include <utility>
     #include <stdlib.h>

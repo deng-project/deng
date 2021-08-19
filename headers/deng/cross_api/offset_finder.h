@@ -9,6 +9,7 @@
 
 
 #ifdef __OFFSET_FINDER_CPP
+    #include <string.h>
     #include <vector>
     #include <string>
     #include <vulkan/vulkan.h>

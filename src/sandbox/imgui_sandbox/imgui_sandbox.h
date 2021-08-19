@@ -9,6 +9,7 @@
 
 
 #ifdef __IMGUI_SANDBOX_CPP
+    #include <string.h>
     #include <vector>
     #include <array>
     #include <string>

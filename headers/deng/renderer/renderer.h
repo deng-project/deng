@@ -8,6 +8,7 @@
 #define __RENDERER_H
 
 #ifdef __RENDERER_CPP
+    #include <string.h>
     #include <vector>
     #include <thread>
     #include <chrono>
