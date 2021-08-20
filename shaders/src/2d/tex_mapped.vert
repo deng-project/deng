@@ -13,7 +13,7 @@ layout(binding = 0) uniform UniformData {
 
 
 // Store color information about asset when it is not texture mapped
-layout(binding = 1) uniform ColorData {
+layout(binding = 1) uniform AssetData {
     vec4 color;
     uint is_transform;
     uint is_unmapped;

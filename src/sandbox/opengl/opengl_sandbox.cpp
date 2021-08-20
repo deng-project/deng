@@ -11,7 +11,7 @@ namespace deng {
 
     OpenGLApplication::OpenGLApplication() : 
         m_win(1280, 720, DENG_WINDOW_HINT_API_OPENGL | DENG_WINDOW_HINT_FIXED_SIZE, "OpenGL sample"),
-        m_cam(DENG_CAMERA_TYPE_EDITOR, dengMath::Conversion::degToRad(65.0), dengMath::vec2<deng_vec_t>{0.1f, -25.0f}, 
+        m_cam(DENG_CAMERA_TYPE_EDITOR, dengMath::Conversion::degToRad(65.0), dengMath::vec2<deng_vec_t>(0.1f, -25.0f), 
             dengMath::vec3<deng_vec_t>(0.7f, 0.7f, 0.7f), dengMath::vec2<deng_f64_t>(0.3, 0.3), false, &m_win) {
 
         // Check the current camera type and create input bindings accordingly
@@ -32,7 +32,8 @@ namespace deng {
         m_cfg.background = dengMath::vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f);
         m_cfg.p_cam = &m_cam;
         m_cfg.p_win = &m_win;
-        
+        m_cfg.enable_vsync = true;
+
         m_rend = std::make_unique<opengl::__gl_Renderer>(m_cfg, m_reg, m_assets, m_textures);
 
         das_RewriteAssetLogs();
@@ -53,7 +54,7 @@ namespace deng {
         m_textures.push_back(reg_tex.tex.uuid);
 
         // Prepare texture for usage
-        m_rend->prepareAssets(dengMath::vec2<deng_ui32_t>{0, static_cast<deng_ui32_t>(m_assets.size())});
+        m_rend->prepareAsset(reg_asset.asset.uuid);
         m_rend->prepareTexture(reg_tex.tex.uuid);
     }
 

@@ -35,8 +35,10 @@
 #include <imgui-layer/imgui_entity.h>
 #include <deng/cross_api/cross_api.h>
 #include <deng/vulkan/renderer.h>
+#include <deng/opengl/renderer.h>
 #include <deng/renderer/asset_man.h>
 #include <deng/renderer/data_updater.h>
+
 
 #define DENG_DEFAULT_NEAR_PLANE 0.1f
 #define DENG_DEFAULT_FAR_PLANE 25.0f
@@ -52,8 +54,10 @@ namespace deng {
     /// Main renderer class
     class Renderer : public __DataUpdater {   
     private:
-        std::unique_ptr<vulkan::__vk_ConfigVars> m_vk_vars;
-        std::unique_ptr<vulkan::__vk_Renderer> m_vk_rend;   
+        vulkan::__vk_ConfigVars m_vk_vars;
+        opengl::__gl_ConfigVars m_gl_vars;
+        std::shared_ptr<vulkan::__vk_Renderer> m_vk_rend;   
+        std::shared_ptr<opengl::__gl_Renderer> m_gl_rend;   
         dengMath::vec4<deng_vec_t> m_env_color;
         deng_RendererHintBits m_hints;
         deng_bool_t m_is_init;
@@ -82,6 +86,7 @@ namespace deng {
     // Render backend getter and setter methods
     public:
         void setUIDataPtr(__ImGuiData *p_data);
+        const deng_bool_t isInit();
         const std::vector<deng_Id> &getAssets();
         const std::vector<deng_Id> &getTextures();
         deng::Registry &getRegistry();

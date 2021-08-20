@@ -44,6 +44,8 @@ void main() {
     if(asset_data.ignore_transform == 1)
         gl_Position = ubo.view * vec4(in_pos.x, in_pos.y, in_pos.z, 1.0f);
     else gl_Position = ubo.transform * vec4(in_pos.x, in_pos.y, in_pos.z, 1.0f);
+
+    /// DEBUGGING GHOST CODE:
     //if(ubo.transform[0][0] == 1)
         //gl_Position = vec4(in_pos, 1.0f);
     //else gl_Position = vec4(in_pos.x, -in_pos.y, in_pos.z, 1.0f);

@@ -10,7 +10,7 @@
 namespace deng {
 
     Renderer::Renderer(deng_RendererHintBits hints, const dengMath::vec4<deng_vec_t> &env_color) :
-        __DataUpdater(m_reg, m_vk_rend, m_vk_vars) {
+        __DataUpdater(m_reg, m_vk_vars, m_gl_vars) {
         m_hints = hints;
         m_env_color = env_color;
     }
@@ -25,30 +25,30 @@ namespace deng {
         m_win_hints = m_p_win->getHints();
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN) {
             // Setup Vulkan renderer configuration values
-            m_vk_vars = std::make_unique<vulkan::__vk_ConfigVars>();
-            m_vk_vars->background = m_env_color,
-            m_vk_vars->p_cam = &main_cam;
-            m_vk_vars->p_win = &main_win;
-            m_vk_vars->enable_validation_layers = m_hints & DENG_RENDERER_HINT_ENABLE_API_DEBUGGING;
+            m_vk_vars.background = m_env_color,
+            m_vk_vars.p_cam = m_p_cam;
+            m_vk_vars.p_win = m_p_win;
+            m_vk_vars.enable_validation_layers = m_hints & DENG_RENDERER_HINT_ENABLE_API_DEBUGGING;
 
             // Find the sample count
             if(m_hints & DENG_RENDERER_HINT_MSAA_64)
-                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_64_BIT;
+                m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_64_BIT;
             else if(m_hints & DENG_RENDERER_HINT_MSAA_32)
-                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_32_BIT;
+                m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_32_BIT;
             else if(m_hints & DENG_RENDERER_HINT_MSAA_16)
-                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_16_BIT;
+                m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_16_BIT;
             else if(m_hints & DENG_RENDERER_HINT_MSAA_8)
-                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_8_BIT;
+                m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_8_BIT;
             else if(m_hints & DENG_RENDERER_HINT_MSAA_4)
-                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_4_BIT;
+                m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_4_BIT;
             else if(m_hints & DENG_RENDERER_HINT_MSAA_2)
-                m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_2_BIT;
-            else m_vk_vars->msaa_sample_count = VK_SAMPLE_COUNT_1_BIT;
+                m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_2_BIT;
+            else m_vk_vars.msaa_sample_count = VK_SAMPLE_COUNT_1_BIT;
 
 
             // Create a new renderer instance
-            m_vk_rend = std::make_unique<vulkan::__vk_Renderer>(*m_vk_vars.get(), Renderer::m_reg, m_assets, m_textures);
+            m_vk_rend = std::make_shared<vulkan::__vk_Renderer>(m_vk_vars, m_reg, m_assets, m_textures);
+            __DataUpdater::setVkRenderer(m_vk_rend);
 
             // Tell Vulkan renderer to initialise Vulkan specific asset and texture instances 
             __AssetManager::submitTextureQueue();
@@ -57,7 +57,18 @@ namespace deng {
             // Setup the renderer
             m_vk_rend->setup();
         }
-        else RUN_ERR("deng::Renderer::setup()", "OpenGL is not supported by DENG default renderer :(");
+
+        else {
+            m_gl_vars.background = m_env_color;
+            m_gl_vars.p_cam = &main_cam;
+            m_gl_vars.p_win = &main_win;
+
+            m_gl_rend = std::make_shared<opengl::__gl_Renderer>(m_gl_vars, m_reg, m_assets, m_textures);
+            __DataUpdater::setGlRenderer(m_gl_rend);
+
+            __AssetManager::submitTextureQueue();
+            __AssetManager::submitAssetQueue();
+        }
 
         m_is_init = true;
     }
@@ -72,14 +83,14 @@ namespace deng {
         m_win_hints = m_p_win->getHints();
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
             m_vk_rend->makeFrame();
+        else m_gl_rend->makeFrame();
     }
 
 
     /// Begin the rendering loop
     void Renderer::run() {
-        while(m_p_win->isRunning()) {
+        while(m_p_win->isRunning())
             update();
-        }
         
         // Idle the renderer for destruction
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
@@ -87,21 +98,29 @@ namespace deng {
     }
 
 
-    /// idle the renderer 
+    /// Idle the renderer Vulkan only
     void Renderer::idle() {
-        if(m_p_win->getHints() & DENG_WINDOW_HINT_API_VULKAN)
+        if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
             m_vk_rend->idle();
     }
     
 
     void Renderer::setUIDataPtr(__ImGuiData *p_data) {
         // Check the backend renderer and call the correct ui data setter method accordingly
-        if(m_p_win->getHints() & DENG_WINDOW_HINT_API_VULKAN)
+        if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
             m_vk_rend->setUIDataPtr(p_data);
+        else m_gl_rend->setUIDataPtr(p_data);
     }
 
 
     const std::vector<deng_Id> &Renderer::getAssets() { return m_assets; }
     const std::vector<deng_Id> &Renderer::getTextures() { return m_textures; }
+    const deng_bool_t Renderer::isInit() { 
+        if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
+            return m_vk_rend->isInit();
+        else m_gl_rend->isInit();
+
+        return false;
+    }
     Registry &Renderer::getRegistry() { return m_reg; }
 } 

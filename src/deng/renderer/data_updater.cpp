@@ -11,9 +11,9 @@ namespace deng {
 
     __DataUpdater::__DataUpdater (
         Registry &reg, 
-        std::unique_ptr<vulkan::__vk_Renderer> &vk_rend,
-        std::unique_ptr<vulkan::__vk_ConfigVars> &vk_cfg
-    ) : __AssetManager(vk_rend, vk_cfg), m_vk_rend(vk_rend), m_vk_cfg(vk_cfg) {}
+        vulkan::__vk_ConfigVars &vk_cfg,
+        opengl::__gl_ConfigVars &gl_cfg
+    ) : __AssetManager(vk_cfg, gl_cfg), m_vk_cfg(vk_cfg), m_gl_cfg(gl_cfg) {}
 
 
     /// Check if the renderer is initialised for update methods and throw error if needed
@@ -32,6 +32,8 @@ namespace deng {
         // Check the currently used API
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
             m_vk_rend->updateAssetData(bounds);
+        else if(m_win_hints & DENG_WINDOW_HINT_API_OPENGL)
+            m_gl_rend->updateAssetData(bounds);
     }
 
 
@@ -40,14 +42,18 @@ namespace deng {
         // Check the backend api type
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
             m_vk_rend->setLighting(light_srcs);
+        else if(m_win_hints & DENG_WINDOW_HINT_API_OPENGL)
+            m_vk_rend->setLighting(light_srcs);
     }
 
 
-    /// Check if buffer needs to be reallocated for ui data
+    /// Check if buffer needs to be reallocated for data
     void __DataUpdater::checkBufferRealloc() {
         // Check the backend api type
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
-            m_vk_rend->checkForReallocation();
+            m_vk_rend->checkForBufferReallocation();
+        else if(m_win_hints & DENG_WINDOW_HINT_API_OPENGL)
+            m_gl_rend->checkForBufferReallocation();
     }
 
 
@@ -55,6 +61,18 @@ namespace deng {
     void __DataUpdater::uiUpdateData() {
         // Check the backend api type
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
-            m_vk_rend->updateUIData(m_vk_cfg->background);
+            m_vk_rend->updateUIData(m_vk_cfg.background);
+        else if(m_win_hints & DENG_WINDOW_HINT_API_OPENGL)
+            m_gl_rend->updateUIData();
+    }
+
+
+    void __DataUpdater::setVkRenderer(std::shared_ptr<vulkan::__vk_Renderer> rend) {
+        __AssetManager::m_vk_rend = rend;
+    }
+
+
+    void __DataUpdater::setGlRenderer(std::shared_ptr<opengl::__gl_Renderer> rend) {
+        __AssetManager::m_gl_rend = rend;
     }
 }

@@ -31,19 +31,22 @@
     #include <deng/cam3d.h>
 
     #include <deng/cross_api/cross_api.h>
-    #include <deng/opengl/cfg_vars.h>
-    #include <deng/opengl/pipelines.h>
-    #include <deng/opengl/resources.h>
     #include <deng/window.h>
-    #include <deng/opengl/ubm.h>
-    #include <deng/opengl/buffers.h>
 #endif
+
+#include <deng/opengl/cfg_vars.h>
+#include <deng/opengl/pipelines.h>
+#include <deng/opengl/resources.h>
+#include <deng/opengl/ubm.h>
+#include <deng/opengl/buffers.h>
 
 namespace deng {
     namespace opengl {
 
         class __gl_Renderer {
         private:
+            deng_bool_t m_is_init;
+            __ImGuiData *m_p_imgui_data;
             __gl_ConfigVars m_cfg_vars;
             deng::Registry &m_reg;
             std::vector<deng_Id> &m_assets;
@@ -70,12 +73,25 @@ namespace deng {
             void setLighting(std::array<deng_Id, __DENG_MAX_LIGHT_SRC_COUNT> &light_srcs);
 
 
-            /// Prepare an asset for OpenGL usage
-            void prepareAssets(const dengMath::vec2<deng_ui32_t> &bounds);
+            /// Prepare a single asset for OpenGL usage
+            void prepareAsset(const deng_Id id);
+
 
             /// Prepare texture for OpenGL usage
             void prepareTexture(const deng_Id id);
+
+
+            /// Overwrite asset vertices and indices data in buffer
+            void updateAssetData(const dengMath::vec2<deng_ui32_t> &bounds);
+
+
+            /// Overwrite all UI data in buffer
+            void updateUIData();
             
+
+            /// Check if any buffer reallocations are necessary
+            void checkForBufferReallocation();
+
 
             // Main frame updating function
             void makeFrame();

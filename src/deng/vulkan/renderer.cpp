@@ -281,8 +281,7 @@ namespace deng {
         /// Prepare assets for rendering with Vulkan
         void __vk_Renderer::prepareAsset(deng_Id id) {
             // Retrive base  asset
-            RegData &reg_asset = __vk_RendererInitialiser::m_reg.retrieve(id, 
-                DENG_REGISTRY_TYPE_ASSET, NULL);
+            RegData &reg_asset = __vk_RendererInitialiser::m_reg.retrieve(id, DENG_REGISTRY_TYPE_ASSET, NULL);
 
             // Create new Vulkan specific asset instance
             RegData reg_vk_asset = {};

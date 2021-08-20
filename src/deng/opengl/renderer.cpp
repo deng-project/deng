@@ -98,13 +98,11 @@ namespace deng {
         }
 
 
-        void __gl_Renderer::prepareAssets(const dengMath::vec2<deng_ui32_t> &bounds) {
+        void __gl_Renderer::prepareAsset(const deng_Id id) {
             // For each asset between bounds, merge index buffers
-            for(deng_ui32_t i = bounds.first; i < bounds.second; i++) {
-                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
-                das_MergeIndexBuffers(&reg_asset.asset);
-                reg_asset.asset.is_opengl = true;
-            }
+            RegData &reg_asset = m_reg.retrieve(id, DENG_REGISTRY_TYPE_ASSET, NULL);
+            das_MergeIndexBuffers(&reg_asset.asset);
+            reg_asset.asset.is_opengl = true;
 
             /// BUG: Whenever there is a reallocation occuring for the new asset, the offsets are not calculated, thus
             /// corrupting the vertex data in buffer. 
@@ -112,7 +110,7 @@ namespace deng {
             
             // Check if any reallocations should occur
             const deng_bool_t is_realloc = m_buf_manager->reallocCheck();
-            if(!is_realloc) m_buf_manager->cpyAssetsToBuffer(false, bounds);
+            if(!is_realloc) m_buf_manager->cpyAssetToBuffer(id);
         }
 
 
@@ -156,6 +154,29 @@ namespace deng {
 
             // Push the OpenGL texture to registry
             m_reg.push(reg_gl_tex.gl_tex.uuid, DENG_REGISTRY_TYPE_GL_TEXTURE, reg_gl_tex);
+        }
+
+
+        /// Overwrite asset vertices and indices data in buffer
+        void __gl_Renderer::updateAssetData(const dengMath::vec2<deng_ui32_t> &bounds) {
+            const deng_bool_t is_realloc = m_buf_manager->reallocCheck();
+            if(!is_realloc) {
+                for(deng_ui32_t i = bounds.first; i < bounds.second; i++)
+                    m_buf_manager->cpyAssetToBuffer(m_assets[i]);
+            }
+        }
+
+
+        /// Overwrite all UI data in buffer
+        void __gl_Renderer::updateUIData() {
+            const deng_bool_t is_realloc = m_buf_manager->reallocCheck();
+            if(!is_realloc) m_buf_manager->cpyUIDataToBuffer(false);
+        }
+
+
+        /// Check if any buffer reallocations are necessary
+        void __gl_Renderer::checkForBufferReallocation() {
+            m_buf_manager->reallocCheck();
         }
 
 
@@ -207,7 +228,7 @@ namespace deng {
 
                 // Check if texture must be bound
                 if((reg_asset.asset.asset_mode == DAS_ASSET_MODE_3D_TEXTURE_MAPPED || 
-                  reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED) && !reg_asset.asset.force_unmap) {
+                    reg_asset.asset.asset_mode == DAS_ASSET_MODE_2D_TEXTURE_MAPPED) && !reg_asset.asset.force_unmap) {
                    RegData &reg_tex = m_reg.retrieve(reg_asset.asset.tex_uuid, DENG_REGISTRY_TYPE_TEXTURE, NULL);
                    RegData &reg_gl_tex = m_reg.retrieve(reg_tex.tex.gl_id, DENG_REGISTRY_TYPE_GL_TEXTURE, NULL);
 
@@ -223,6 +244,17 @@ namespace deng {
 
                 m_buf_manager->unbindAssetDataBufferRegion(reg_asset.asset);
             }
+        }
+
+        /// Setter and getter methods
+        void __gl_Renderer::setUIDataPtr(__ImGuiData *p_data) {
+            m_p_imgui_data = p_data;
+            m_buf_manager->setUIDataPtr(p_data);
+        }
+
+
+        const deng_bool_t __gl_Renderer::isInit() {
+            return m_is_init;
         }
     }
 }

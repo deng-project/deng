@@ -32,8 +32,6 @@ namespace deng {
             m_resources.vert_buffer = buffers[0];
             m_resources.idx_buffer = buffers[1];
 
-            LOG("vert_buffer and idx_buffer instances are " + std::to_string(m_resources.vert_buffer) + " " + std::to_string(m_resources.idx_buffer));
-
             // Bind all buffers handles with their corresponding buffer types
             glBindBuffer(GL_ARRAY_BUFFER, m_resources.vert_buffer);
             glErrorCheck("glBindBuffer");
@@ -86,7 +84,10 @@ namespace deng {
 
             if(asset_realloc || indices_realloc || ui_realloc) {
                 allocateBufferMemory();
-                cpyAssetsToBuffer(true, dengMath::vec2<deng_ui32_t>{ 0, static_cast<deng_ui32_t>(m_assets.size()) });
+                // For each asset copy its data to buffers
+                for(size_t i = 0; i < m_assets.size(); i++)
+                    cpyAssetToBuffer(m_assets[i]);
+
                 if(m_p_imgui_data) cpyUIDataToBuffer(true);
             }
 
@@ -96,57 +97,60 @@ namespace deng {
 
         /// Copy all asset data between given bounds to buffer
         /// NOTE: The asset capacity in buffer has to be larger than required asset size (use assetCapCheck() for this)
-        void __gl_BufferManager::cpyAssetsToBuffer(deng_bool_t no_offset_calc, const dengMath::vec2<deng_ui32_t> &bounds) {
-            if(!no_offset_calc) {
-                __OffsetFinder::getSectionInfo().asset_size = 0;
-                __OffsetFinder::getSectionInfo().indices_size = 0;
-                for(deng_ui64_t i = 0; i < m_assets.size(); i++) {
-                    RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
-                    __OffsetFinder::__findAssetOffsets(reg_asset.asset);
-                }
+        void __gl_BufferManager::cpyAssetToBuffer(const deng_Id id) {
+            RegData &reg_asset = m_reg.retrieve(id, DENG_REGISTRY_TYPE_ASSET, NULL);
+            void *data;
+
+            // Check the asset type and bind data accordingly
+            switch(reg_asset.asset.asset_mode) {
+            case DAS_ASSET_MODE_2D_UNMAPPED:
+                data = glMapBufferRange(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v2d.mer.n * sizeof(das_GL2DVertexUnmapped), 
+                                        GL_MAP_WRITE_BIT);
+                glErrorCheck("glMapBufferRange");
+                memcpy(data, reg_asset.asset.vertices.v2d.mer.uvert, reg_asset.asset.vertices.v2d.mer.n * sizeof(das_GL2DVertexUnmapped));
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+                glErrorCheck("glUnmapBuffer");
+                break;
+
+            case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
+                data = glMapBufferRange(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v2d.mer.n * sizeof(das_GL2DVertex), 
+                                        GL_MAP_WRITE_BIT);
+                glErrorCheck("glMapBufferRange");
+                memcpy(data, reg_asset.asset.vertices.v2d.mer.vert, reg_asset.asset.vertices.v2d.mer.n * sizeof(das_GL2DVertex));
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+                glErrorCheck("glUnmapBuffer");
+                break;
+
+            case DAS_ASSET_MODE_3D_UNMAPPED:
+                data = glMapBufferRange(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v3d.mer.n * sizeof(das_GL3DVertexUnmapped),
+                                        GL_MAP_WRITE_BIT);
+                glErrorCheck("glMapBufferRange");
+                memcpy(data, reg_asset.asset.vertices.v3d.mer.uvert, reg_asset.asset.vertices.v3d.mer.n * sizeof(das_GL3DVertexUnmapped));
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+                glErrorCheck("glUnmapBuffer");
+                break;
+
+            case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
+                data = glMapBufferRange(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v3d.mer.n * sizeof(das_GL3DVertex),
+                                        GL_MAP_WRITE_BIT);
+                glErrorCheck("glMapBufferRange");
+                memcpy(data, reg_asset.asset.vertices.v3d.mer.vert, reg_asset.asset.vertices.v3d.mer.n * sizeof(das_GL3DVertex));
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+                glErrorCheck("glUnmapBuffer");
+                break;
+
+            default:
+                break;
             }
- 
-            // For each asset copy its data over to the buffers
-            for(deng_ui32_t i = bounds.first; i < bounds.second; i++) {
-                RegData &reg_asset = m_reg.retrieve(m_assets[i], DENG_REGISTRY_TYPE_ASSET, NULL);
 
-                // Check the asset type and bind data accordingly
-                switch(reg_asset.asset.asset_mode) {
-                case DAS_ASSET_MODE_2D_UNMAPPED:
-                    glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v2d.mer.n * 
-                        sizeof(das_GL2DVertexUnmapped), reg_asset.asset.vertices.v2d.mer.uvert);
-					glErrorCheck("glBufferSubData");
-                    break;
+            data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, reg_asset.asset.offsets.ind_offset, reg_asset.asset.indices.n * sizeof(deng_idx_t), 
+                                    GL_MAP_WRITE_BIT);
+            glErrorCheck("glMapBufferRange");
+            memcpy(data, reg_asset.asset.indices.gl, reg_asset.asset.indices.n * sizeof(deng_idx_t));
+            glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+            glErrorCheck("glUnmapBuffer");
 
-                case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
-                    glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v2d.mer.n * 
-                        sizeof(das_GL2DVertex), reg_asset.asset.vertices.v2d.mer.vert);
-					glErrorCheck("glBufferSubData");
-                    break;
-
-                case DAS_ASSET_MODE_3D_UNMAPPED:
-                    glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v3d.mer.n * 
-                        sizeof(das_GL3DVertexUnmapped), reg_asset.asset.vertices.v3d.mer.uvert);
-					glErrorCheck("glBufferSubData");
-                    break;
-
-                case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
-                    LOG("Asset offset " + std::to_string(reg_asset.asset.offsets.pos_offset));
-                    glBufferSubData(GL_ARRAY_BUFFER, reg_asset.asset.offsets.pos_offset, reg_asset.asset.vertices.v3d.mer.n * 
-                        sizeof(das_GL3DVertex), reg_asset.asset.vertices.v3d.mer.vert);
-					glErrorCheck("glBufferSubData");
-                    break;
-
-                default:
-                    break;
-                }
-
-                LOG("Indices offset for asset " + std::string(reg_asset.asset.src) + " is " + std::to_string(reg_asset.asset.offsets.ind_offset));
-                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, reg_asset.asset.offsets.ind_offset, reg_asset.asset.indices.n * sizeof(deng_idx_t), reg_asset.asset.indices.gl);
-                glErrorCheck("glBufferSubData");
-
-                mapUniformBufferArea(reg_asset.asset);
-            }
+            mapUniformBufferArea(reg_asset.asset);
         }
 
 

@@ -11,7 +11,8 @@ normalising.txt
 compile_commands.json
 x64/
 website/
-./Makefile
+Makefile
+*.ini
 *.make
 init.sh
 init.bat

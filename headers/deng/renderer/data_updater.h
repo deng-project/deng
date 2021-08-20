@@ -31,6 +31,7 @@
     // Api specific renderer instances
     #include <deng/cross_api/cross_api.h>
     #include <deng/vulkan/renderer.h>
+    #include <deng/opengl/renderer.h>
     #include <deng/renderer/asset_man.h>
 #endif
 
@@ -38,8 +39,8 @@ namespace deng {
 
     class __DataUpdater : public __AssetManager {
     private:
-        std::unique_ptr<vulkan::__vk_Renderer> &m_vk_rend;
-        std::unique_ptr<vulkan::__vk_ConfigVars> &m_vk_cfg;
+        vulkan::__vk_ConfigVars &m_vk_cfg;
+        opengl::__gl_ConfigVars &m_gl_cfg;
 
     protected:
         deng_bool_t m_is_init = false;
@@ -49,7 +50,7 @@ namespace deng {
         void __initCheck(const std::string &func_name);
 
     public:
-        __DataUpdater(Registry &reg, std::unique_ptr<vulkan::__vk_Renderer> &vk_rend, std::unique_ptr<vulkan::__vk_ConfigVars> &vk_cfg);
+        __DataUpdater(Registry &reg, vulkan::__vk_ConfigVars &vk_cfg, opengl::__gl_ConfigVars &gl_cfg);
 
         /// Overwrite asset vertices to main buffer.
         /// Note that this method expects that vertices count hasn't changed,
@@ -67,6 +68,11 @@ namespace deng {
 
         /// Update ui vertices data in the buffer
         void uiUpdateData();
+
+    // Setter
+    public:
+        void setVkRenderer(std::shared_ptr<vulkan::__vk_Renderer> rend);
+        void setGlRenderer(std::shared_ptr<opengl::__gl_Renderer> rend);
     };
 }
 

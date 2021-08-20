@@ -9,10 +9,10 @@
     
 namespace deng {
 
-    __AssetManager::__AssetManager (
-        std::unique_ptr<vulkan::__vk_Renderer> &vk_rend, 
-        std::unique_ptr<vulkan::__vk_ConfigVars> &vk_vars
-    ) : m_vk_vars(vk_vars), m_vk_rend(vk_rend) {}
+    __AssetManager::__AssetManager ( 
+        vulkan::__vk_ConfigVars &vk_vars,
+        opengl::__gl_ConfigVars &gl_vars
+    ) : m_vk_vars(vk_vars), m_gl_vars(gl_vars) {}
 
 
     /// Increment asset type instance count
@@ -75,6 +75,7 @@ namespace deng {
             m_assets.push_back(m_asset_queue.front());
             if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
                 m_vk_rend->prepareAsset(m_asset_queue.front());
+            else m_gl_rend->prepareAsset(m_asset_queue.front());
 
             m_asset_queue.pop();
         }
@@ -83,15 +84,13 @@ namespace deng {
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN && m_vk_rend->isInit()) {
             m_vk_rend->updateAssetData({ old_size, static_cast<deng_ui32_t>(m_assets.size()) });
             m_vk_rend->updateAssetDS({ old_size, static_cast<deng_ui32_t>(m_assets.size()) });
-            m_vk_rend->updateCmdBuffers(m_vk_vars->background);
+            m_vk_rend->updateCmdBuffers(m_vk_vars.background);
         }
     }
 
 
     /// Submit all textures in submission queue to renderer
     void __AssetManager::submitTextureQueue() {
-        printf("Vulkan renderer pointer value: 0x%p\n", m_vk_rend.get());
-        printf("Vulkan config pointer value: 0x%p\n", m_vk_vars.get());
         // Check if any textures are available in the queue
         if(m_texture_queue.empty()) return;
 
@@ -104,6 +103,7 @@ namespace deng {
 
             if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)
                 m_vk_rend->prepareTexture(m_texture_queue.front());
+            else m_gl_rend->prepareTexture(m_texture_queue.front());
 
             m_texture_queue.pop();
         }

@@ -31,6 +31,7 @@
     
     #include <deng/cross_api/cross_api.h>
     #include <deng/vulkan/renderer.h>
+    #include <deng/opengl/renderer.h>
 #endif
 
 
@@ -38,8 +39,8 @@ namespace deng {
 
     class __AssetManager {
     private:
-        std::unique_ptr<vulkan::__vk_ConfigVars> &m_vk_vars;
-        std::unique_ptr<vulkan::__vk_Renderer> &m_vk_rend;
+        vulkan::__vk_ConfigVars &m_vk_vars;
+        opengl::__gl_ConfigVars &m_gl_vars;
         std::queue<deng_Id> m_asset_queue;
         std::queue<deng_Id> m_texture_queue;
 
@@ -58,9 +59,11 @@ namespace deng {
         Registry m_reg;
         std::vector<deng_Id> m_assets;
         std::vector<deng_Id> m_textures;
+        std::shared_ptr<vulkan::__vk_Renderer> m_vk_rend = {};
+        std::shared_ptr<opengl::__gl_Renderer> m_gl_rend = {};
         
     public:
-        __AssetManager(std::unique_ptr<vulkan::__vk_Renderer> &vk_rend, std::unique_ptr<vulkan::__vk_ConfigVars> &vk_vars);
+        __AssetManager(vulkan::__vk_ConfigVars &vk_cfg, opengl::__gl_ConfigVars &gl_cfg);
 
         /// Add texture id to submission queue
         /// PS! Texture UUIDs have to be generated before submitting them

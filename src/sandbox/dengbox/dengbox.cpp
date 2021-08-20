@@ -11,7 +11,7 @@
 namespace Sandbox {
 
     DengBox::DengBox() : 
-        m_win(1200, 1000, DENG_WINDOW_HINT_API_VULKAN | DENG_WINDOW_HINT_FIXED_SIZE, "DENG game"),
+        m_win(1200, 1000, DENG_WINDOW_HINT_API_OPENGL | DENG_WINDOW_HINT_FIXED_SIZE, "DENG game"),
         m_cam(DENG_CAMERA_TYPE_EDITOR, static_cast<deng_vec_t>(dengMath::Conversion::degToRad(65.0)),
             {0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3f, 0.3f}, false, &m_win),
         m_light_man(m_reg) {
@@ -29,18 +29,13 @@ namespace Sandbox {
             break;
         }
 
-        __loadTextures ({
-            "textures/brick.tga",
-            "textures/statue.tga",
-            "textures/viking_room.tga"
-        });
-
+        __loadTextures ({ "textures/viking_room.tga" });
         __loadAssets ({ "assets/viking.das" });
 
         // Create some demo light sources
         __mkLightSources();
 
-        m_assets.back().tex_uuid = m_textures[2].uuid;
+        m_assets.back().tex_uuid = m_textures[0].uuid;
 
         #ifdef __DEBUG
             m_rend = std::make_unique<deng::Renderer>(DENG_RENDERER_HINT_ENABLE_API_DEBUGGING | 

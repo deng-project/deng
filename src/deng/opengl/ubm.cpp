@@ -73,13 +73,13 @@ namespace deng {
             
             // 3D texture mapped uniform bindings
             __bindUniformBlockToBindingPoint("UniformData", TM3D_UNIFORMDATA_INDEX, programs[TM3D_I]);
-            // __bindUniformBlockToBindingPoint("AssetData", TM3D_ASSETDATA_INDEX, programs[TM3D_I]);
-            // __bindUniformBlockToBindingPoint("LightData", TM3D_LIGHTDATA_INDEX, programs[TM3D_I]);
+            __bindUniformBlockToBindingPoint("AssetData", TM3D_ASSETDATA_INDEX, programs[TM3D_I]);
+            __bindUniformBlockToBindingPoint("LightData", TM3D_LIGHTDATA_INDEX, programs[TM3D_I]);
         }
 
 
         void __gl_UniformManager::__bindUniformBlockToBindingPoint(const std::string &block_name, const deng_ugl_t bpt, const deng_ugl_t program) {
-            deng_ui32_t index = glGetUniformBlockIndex(program, "UniformData");
+            deng_ui32_t index = glGetUniformBlockIndex(program, block_name.c_str());
             glErrorCheck("glGetUniformBlockIndex");
 
             glUniformBlockBinding(program, index, bpt);
@@ -287,13 +287,13 @@ namespace deng {
                 glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_resources.ubo_buffer, 0, sizeof(__UniformObjectTransform));
                 glErrorCheck("glBindBufferRange");
 
-                // glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData));
-                // glErrorCheck("glBindBufferRange");
+                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_ASSETDATA_INDEX, m_resources.ubo_buffer, m_const_offset + asset.offsets.ubo_offset, sizeof(__UniformAssetData));
+                glErrorCheck("glBindBufferRange");
 
-                // glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_LIGHTDATA_INDEX, m_resources.ubo_buffer, 
-                //                   cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)),
-                //                   sizeof(__UniformLightData));
-                // glErrorCheck("glBindBufferRange");
+                glBindBufferRange(GL_UNIFORM_BUFFER, TM3D_LIGHTDATA_INDEX, m_resources.ubo_buffer, 
+                                  cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform)) + cm_FindChunkSize(m_min_align, sizeof(__UniformObjectTransform2D)),
+                                  sizeof(__UniformLightData));
+                 glErrorCheck("glBindBufferRange");
                 break;
 
             default:

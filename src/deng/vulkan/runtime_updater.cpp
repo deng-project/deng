@@ -98,7 +98,7 @@ namespace deng {
         
         /// Reallocate main buffer and copy all asset to it
         /// NOTE: Vulkan renderer must be idled
-        void __vk_RuntimeUpdater::checkForReallocation() {
+        void __vk_RuntimeUpdater::checkForBufferReallocation() {
             m_rm.reallocCheck(m_ic.getDev(), m_ic.getGpu(), m_dc.getComPool(), m_ic.getQFF().graphics_queue, 
                 m_dc.flight_fences);
         }
