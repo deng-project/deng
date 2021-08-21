@@ -35,11 +35,10 @@ namespace deng {
     class __FPPCameraEv : protected __Event3DBase {
     private:
         // NEED TO BE REPLACED WITH STD::CHRONO CALLS ! ! !
-        //dengUtils::Timer m_mov_timer;
-        //dengUtils::Timer m_input_mode_timer;
-        
-        std::chrono::duration<deng_ui64_t, std::milli> m_mov_timer = std::chrono::milliseconds(0); 
-        std::chrono::duration<deng_ui64_t, std::milli> m_input_mode_timer = std::chrono::milliseconds(0);
+        //std::chrono::duration<deng_ui64_t, std::milli> m_mov_timer = std::chrono::milliseconds(0); 
+        //std::chrono::duration<deng_ui64_t, std::milli> m_input_mode_timer = std::chrono::milliseconds(0);
+        std::chrono::system_clock::time_point m_last_mov_beg = std::chrono::system_clock::now();
+        std::chrono::system_clock::time_point m_last_input_mode_ch_beg = std::chrono::system_clock::now();
         dengMath::vec4<deng_vec_t> m_move_speed;
         dengMath::vec3<deng_MovementEvent> m_movements;
 

@@ -19,8 +19,8 @@ workspace "deng"
 	pic "On"
 
 	-- Ignore safety warnings that MSVC gives
-	--filter "platforms:Win32"
-		--defines { "_CRT_SECURE_NO_WARNINGS" }
+	filter "platforms:Win32"
+		defines { "_CRT_SECURE_NO_WARNINGS" }
 
     -- Enable debug symbols if specified
     filter "configurations:Debug"
@@ -33,16 +33,10 @@ workspace "deng"
         symbols "Off"
         optimize "Speed"
         targetdir "build/release"
+
     filter {}
 
 --!!! Add new options to use !!!--
--- Create an option to specify vulkan sdk library location (Windows only)
-newoption {
-	trigger = "vk-sdk-path",
-	description = "Specify Vulkan SDK path for Windows builds (Windows only)"
-}
-
-
 -- Create an option to build DENG sandboxapp using specific sandbox configuration
 newoption {
     trigger = "sandbox-mode",
@@ -52,8 +46,8 @@ newoption {
         { "deng", "Build an application for testing the renderer by loading assets" },
         { "imgui", "Build an application for testing ImGui with DENG renderer" },
         { "opengl", "Build a test application for testing OpenGL functionality" },
-        { "none", "Do not build any sandbox applications (default)" },
-        { "all", "Build all sandbox applications" }
+        { "all", "Build all sandbox applications" },
+        { "none", "Do not build any sandbox applications" }
     }
 }
 
@@ -112,16 +106,7 @@ function modcheck()
 
     local libneko = require("premake/libneko");
     libneko.build()
-    if _OPTIONS["sandbox-mode"] then
-        postbuildcommands {
-            "{RMDIR} %{cfg.targetdir}/assets",
-            "{COPYDIR} assets %{cfg.targetdir}/assets",
-            "{RMDIR} %{cfg.targetdir}/shaders",
-            "{COPYDIR} shaders %{cfg.targetdir}/shaders",
-            "{RMDIR} %{cfg.targetdir}/textures",
-            "{COPYDIR} textures %{cfg.targetdir}/textures"
-        }
-    end
+
 end
 
 
@@ -149,6 +134,23 @@ function buildcfg()
     -- Build DENG runtime library
     local libdeng = require("premake/libdeng")
     libdeng.build()
+
+    --- Filters for libdeng build regarding sandbox application builds
+    filter "options:sandbox-mode=all or options:sandbox-mode=imgui or options:sandbox-mode=opengl or options:sandbox-mode=deng"
+        postbuildcommands {
+            "{RMDIR} %{cfg.targetdir}/assets",
+            "{COPYDIR} assets %{cfg.targetdir}/assets",
+            "{RMDIR} %{cfg.targetdir}/shaders",
+            "{COPYDIR} shaders %{cfg.targetdir}/shaders",
+            "{RMDIR} %{cfg.targetdir}/textures",
+            "{COPYDIR} textures %{cfg.targetdir}/textures"
+        }
+
+    filter "options:sandbox-mode=none"
+        postbuildcommands {
+            "{RMDIR} %{cfg.targetdir}/shaders",
+            "{COPYDIR} shaders %{cfg.targetdir}/shaders"
+        }
 
     -- Build DENG asset manager application
     local dam = require("premake/dam")

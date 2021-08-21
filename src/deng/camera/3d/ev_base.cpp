@@ -125,6 +125,7 @@ namespace deng {
         case DENG_CAMERA_ACTION_CHANGE_MM:
             evs = neko_UnmaskInput(m_bindings.ch_vcp);
             break;
+
         default:
             break;
         }

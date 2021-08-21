@@ -26,9 +26,9 @@ namespace deng {
             p_win
     ) {
         m_p_win = p_win;
-        m_move_speed.first = (deng_vec_t) (DENG_CAMERA_BASE_SPEED_X * camera_mov_sens.first);
-        m_move_speed.second = (deng_vec_t) (DENG_CAMERA_BASE_SPEED_Y * camera_mov_sens.second);
-        m_move_speed.third = (deng_vec_t) (DENG_CAMERA_BASE_SPEED_Z * camera_mov_sens.third);
+        m_move_speed.first = static_cast<deng_vec_t>(DENG_CAMERA_BASE_SPEED_X * camera_mov_sens.first);
+        m_move_speed.second = static_cast<deng_vec_t>(DENG_CAMERA_BASE_SPEED_Y * camera_mov_sens.second);
+        m_move_speed.third = static_cast<deng_vec_t>(DENG_CAMERA_BASE_SPEED_Z * camera_mov_sens.third);
         m_move_speed.fourth = 0.0f;
     }
 
@@ -60,12 +60,16 @@ namespace deng {
     /// Check if input FPP camera mouse input mode has changed 
     void __FPPCameraEv::__checkForInputModeChange(dengMath::CameraMatrix *p_vm) {
         __Event3DBase::__updateCameraMousePos();
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::chrono::duration<deng_ui64_t, std::milli> im_duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_input_mode_ch_beg);
 
         // Check if input mode should be changed ([ESC] key)
-        if(m_input_mode_timer.count() > NEKO_INPUT_EV_COUNT && 
-           __checkInputAction(DENG_CAMERA_ACTION_CHANGE_MM)) {
+        if(im_duration.count() > NEKO_INPUT_EV_COUNT && __checkInputAction(DENG_CAMERA_ACTION_CHANGE_MM)) {
             m_p_win->toggleVCMode();
-            m_input_mode_timer = std::chrono::milliseconds(0);
+            if(m_p_win->isVCP())
+                m_p_win->changeCursor(DENG_CURSOR_MODE_HIDDEN);
+            else m_p_win->changeCursor(DENG_CURSOR_MODE_STANDARD);
+            m_last_input_mode_ch_beg = std::chrono::system_clock::now();
         }
 
 
@@ -95,7 +99,9 @@ namespace deng {
         deng_bool_t ignore_pitch
     ) {
         __checkForInputModeChange(p_cam->getCamMatPtr());
-        if(m_mov_timer.count() > DENG_MOVEMENT_INTERVAL) {
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::chrono::duration<deng_ui64_t, std::milli> lmov_duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_mov_beg);
+        if(lmov_duration.count() > DENG_MOVEMENT_INTERVAL) {
             switch (m_movements.first) {
             case DENG_MOVEMENT_LEFTWARD:
                 p_cam->moveU(-m_move_speed.first, ignore_pitch);
@@ -111,8 +117,7 @@ namespace deng {
                 break;
             }
 
-            switch (m_movements.second)
-            {
+            switch (m_movements.second) {
             case DENG_MOVEMENT_UPWARD:
                 p_cam->moveV(-m_move_speed.second, ignore_pitch);
                 break;
@@ -121,7 +126,8 @@ namespace deng {
                 p_cam->moveV(m_move_speed.second, ignore_pitch);
                 break;
 
-            case DENG_MOVEMENT_NONE: break;
+            case DENG_MOVEMENT_NONE: 
+                break;
 
             default:
                 break;
@@ -140,7 +146,7 @@ namespace deng {
                 break;
             }
 
-            m_mov_timer = std::chrono::milliseconds(0);
+            m_last_mov_beg = std::chrono::system_clock::now();
         }
     }
 
