@@ -18,16 +18,9 @@ namespace deng {
 		deng_vec_t far_plane, 
         deng_bool_t ignore_pitch_mov,
 		Window *p_win
-	) : __FPPCameraEv (
-            p_win,
-            mouse_sens, 
-            camera_mov_sens
-        ),
-        __Camera3DBase (
-            DENG_CAMERA_TYPE_FPP,
-            fov,
-            {near_plane, far_plane},
-            static_cast<deng_vec_t>(__FPPCameraEv::getWinPtr()->getSize().first) / static_cast<deng_vec_t>(__FPPCameraEv::getWinPtr()->getSize().second)
+	) : __FPPCameraEv(p_win, mouse_sens, camera_mov_sens),
+        __Camera3DBase(DENG_CAMERA_TYPE_FPP, fov, {near_plane, far_plane}, 
+                       static_cast<deng_vec_t>(__FPPCameraEv::getWinPtr()->getSize().first) / static_cast<deng_vec_t>(__FPPCameraEv::getWinPtr()->getSize().second)
         ) {
         __FPPCameraEv::setWinPtr(p_win);
     }
