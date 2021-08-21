@@ -22,6 +22,8 @@
     #include <deng/window.h>
     #include <deng/camera/3d/cam_bindings.h>
     #include <deng/camera/3d/ev_base.h>
+
+    //
 #endif
 
 
