@@ -60,7 +60,7 @@ window API before and after the scope.
 deng_InitWindowAPI();
 
 {
-    // DENG renderer code here
+    // DENG application code here
 }
 
 dengDeinitWindowAPI();
@@ -91,7 +91,7 @@ related hint.
 
 ```C++
 deng::Camera3D cam = deng::Camera3D(DENG_CAMERA_TYPE_FPP, static_cast<deng_vec_t>(conversion::degToRad(65.0)), vec2<deng_vec_t>(-0.1f, -25.0f), 
-                                    vec3<deng_vec_t>(0.7f, 0.7f, 0.7f), vec2<deng_vec_t>(0.3f, 0.3f), &win);
+                                    vec3<deng_vec_t>(0.7f, 0.7f, 0.7f), vec2<deng_f64_t>(0.3, 0.3), &win);
 ```
 
 The constructor for the class `Camera3D` takes 6 parameters. First parameter specifies the camera type, which
