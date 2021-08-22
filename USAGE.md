@@ -63,7 +63,7 @@ deng_InitWindowAPI();
     // DENG application code here
 }
 
-dengDeinitWindowAPI();
+deng_DeinitWindowAPI();
 ```
 
 ### Create new window and camera instances
@@ -190,7 +190,7 @@ The structures are `das_Asset` and `das_Texture`. In the following example snipp
 information from their files.  
 
 ```C++
-das_Texture = {};
+das_Texture texture = {};
 das_LoadTexture(&texture, "example_tex.bmp");
 
 das_Asset asset = {};
