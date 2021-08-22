@@ -9,7 +9,7 @@
 namespace deng {
 
     ImGUIApplication::ImGUIApplication() : 
-        m_win(1280, 720, DENG_WINDOW_HINT_API_VULKAN | DENG_WINDOW_HINT_FULL_SCREEN, "ImGUI demo"),
+        m_win(1280, 720, DENG_WINDOW_HINT_API_OPENGL | DENG_WINDOW_HINT_RESIZEABLE, "ImGUI demo"),
         m_cam(DENG_CAMERA_TYPE_EDITOR, static_cast<deng_vec_t>(dengMath::conversion::degToRad(65.0)), 
             {0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3, 0.3}, &m_win),
 #ifdef __DEBUG

@@ -93,5 +93,11 @@ namespace dengMath {
 }
 
 
-#include <../src/math/vec2.cpp>
+#ifdef __DENG_LIB_EXPORT
+    #include <../src/math/vec2.cpp>
+#else 
+    #include <math/vec2.cpp>
+#endif
+
+
 #endif

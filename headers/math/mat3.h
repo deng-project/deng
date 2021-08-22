@@ -95,5 +95,9 @@ namespace dengMath {
 }
 
 
-#include <../src/math/mat3.cpp>
+#ifdef __DENG_LIB_EXPORT
+    #include <../src/math/mat3.cpp>
+#else 
+    #include <math/mat3.cpp>
+#endif
 #endif

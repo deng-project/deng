@@ -5,7 +5,7 @@
 
 After successfully building DENG you can find either `libdeng.so` or `libdeng.lib` (depending on your
 target system) in the final build directory. You should copy the build library to your project directory
-alongside with `shaders` and `headers` directories from the root of the DENG repository.  
+alongside with `shaders` and `include` directories from the build directory.
 After the copying step is done you should also make sure that the include and library linking directories
 are set correctly according to your build environment / IDE of your choice.
 
@@ -19,7 +19,7 @@ Along with the actual runtime library, you should have also `dam` executable bui
 DENG asset manager and is used as a CLI compiler for compiling 3D model data into binary DENG readable format, specfied with
 .das file format. Generating .das files is quite easy, assuming that the input model is triangulated and the compilation can be 
 done with following command:  
-`dam model.obj -o model.das`
+`dam example_model.obj -o example_model.das`
 **PS! Currently it is possible to only use Wavefront OBJ files for dam input.**
 
 As long as textures are consired you can currently use only 32bit or 24bit uncompressed tga or bmp files.

@@ -106,6 +106,10 @@ namespace dengMath {
     };
 }
 
+#ifdef __DENG_LIB_EXPORT
+    #include <../src/math/vec3.cpp>
+#else
+    #include <math/vec3.cpp>
+#endif
 
-#include <../src/math/vec3.cpp>
 #endif

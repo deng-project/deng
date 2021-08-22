@@ -15,7 +15,7 @@ workspace "deng"
     }
 
 	architecture "x86_64"
-    defines { "ImDrawIdx=unsigned int" }
+    defines { "ImDrawIdx=unsigned int", "__DENG_LIB_EXPORT" }
 	pic "On"
 
 	-- Ignore safety warnings that MSVC gives

@@ -96,6 +96,11 @@ namespace dengMath {
 }
 
 
-#include <../src/math/mat4.cpp>
+#ifdef __DENG_LIB_EXPORT
+    #include <../src/math/mat4.cpp>
+#else 
+    #include <math/mat4.cpp>
+#endif
+
 #endif
 

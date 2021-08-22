@@ -68,6 +68,7 @@
 #define __SC_ED_ENTITY_PANEL_H
 
 #ifdef __SC_ED_ENTITY_PANEL_CPP
+    #define __DENG_LIB_EXPORT
     #include <deng/deng.h>
     #include <deng/ui.h>
 #endif
