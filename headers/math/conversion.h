@@ -21,26 +21,24 @@
 
 
 namespace dengMath {
-    class Conversion {
-    public:
-        
+    namespace conversion {
         /// Convert degrees into radians
-        static const deng_f64_t degToRad(deng_f64_t deg);
+        const deng_f64_t degToRad(deng_f64_t deg);
 
         
         /// Convert radians into degrees
-        static const deng_f64_t radToDeg(deng_f64_t rad);
+        const deng_f64_t radToDeg(deng_f64_t rad);
 
 
         /// Convert from vector coordinate size into pixel size
-        static const deng_px_t vector2DSizeToPixelSize (
+        const deng_px_t vector2DSizeToPixelSize (
             deng_vec_t vec_size, 
             deng_ui32_t window_size
         );
 
 
         /// Convert from pixel size into vector coordinate size
-        static const deng_vec_t pixelSizeToVector2DSize (
+        const deng_vec_t pixelSizeToVector2DSize (
             deng_px_t pixel_size,
             deng_ui32_t window_size
         );
@@ -48,7 +46,7 @@ namespace dengMath {
 
         /// Find the absolute position of child coordinates
         /// vert must be a pointer to valid array with at least 4 members
-        static const vec2<deng_vec_t> findAbsPosition (
+        const vec2<deng_vec_t> findAbsPosition (
             das_ObjPosData *vert,
             vec2<deng_vec_t> child_pos
         );
@@ -56,21 +54,21 @@ namespace dengMath {
 
         /// Find the relative position of absolute coordinates
         /// vert must be a pointer to valid array with at least 4 members
-        static const vec2<deng_vec_t> findRelPosition (
+        const vec2<deng_vec_t> findRelPosition (
             das_ObjPosData *vert,
             vec2<deng_vec_t> abs_pos
         );
 
 
         /// Find the absolute size of the child element
-        static const deng_vec_t findAbsSize (
+        const deng_vec_t findAbsSize (
             deng_vec_t parent_size,
             deng_vec_t child_size
         );
 
 
         /// Find the relative size of abs_size from its parent_size
-        static const deng_vec_t findRelSize (
+        const deng_vec_t findRelSize (
             deng_vec_t parent_size,
             deng_vec_t abs_size
         );
@@ -85,12 +83,12 @@ namespace dengMath {
 
 
         /// Convert mouse axis position to corresponding vector coordinate
-        static const deng_vec_t mouseCoordToVecCoord(const deng_px_t mouse_axis_pos, const deng_px_t axis_len);
+        const deng_vec_t mouseCoordToVecCoord(const deng_px_t mouse_axis_pos, const deng_px_t axis_len);
 
 
         /// Convert vector axis coordinate to corresponding mouse coordinate
-        static const deng_vec_t vecCoordToMouseCoord(const deng_vec_t vec_axis_pos, const deng_px_t axis_len);
-    };
+        const deng_vec_t vecCoordToMouseCoord(const deng_vec_t vec_axis_pos, const deng_px_t axis_len);
+    }
 }
 
 #endif

@@ -65,7 +65,7 @@ namespace deng {
 
 
         /// Check for input mode changes and move camera if needed
-        void updateEv(__FPPCamera *p_cam, deng_bool_t ignore_pitch);
+        void updateEv(__FPPCamera *p_cam);
 
 
         /// Set the first person perspective camera bindings

@@ -52,7 +52,6 @@ namespace deng {
             const dengMath::vec2<deng_vec_t> &planes,
             const dengMath::vec3<deng_vec_t> &mov_speed,
             const dengMath::vec2<deng_f64_t> &rot_sens,
-            deng_bool_t ignore_pitch_rot,
             Window *win
         );
 

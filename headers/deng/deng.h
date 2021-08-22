@@ -8,13 +8,15 @@
 #define __DENG_H
 
 // STL includes, that are necessary for some DENG components
-#include <string.h>
-#include <vector>
-#include <memory>
-#include <string>
-#include <queue>
-#include <chrono>
-#include <array>
+#ifndef DENG_NO_STL_INCLUDES
+    #include <vector>
+    #include <queue>
+    #include <array>
+    #include <memory>
+    #include <string>
+    #include <cstring>
+    #include <chrono>
+#endif
 
 // Third party dependencies
 #include <vulkan/vulkan.h>
@@ -24,6 +26,8 @@
 #include <common/err_def.h>
 #include <common/hashmap.h>
 #include <data/assets.h>
+#include <data/das_loader.h>
+#include <data/tex_loader.h>
 #include <math/deng_math.h>
 #include <deng/window.h>
 #include <deng/cam3d.h>

@@ -16,7 +16,6 @@ namespace deng {
 		deng_vec_t fov, 
 		deng_vec_t near_plane, 
 		deng_vec_t far_plane, 
-        deng_bool_t ignore_pitch_mov,
 		Window *p_win
 	) : __FPPCameraEv(p_win, mouse_sens, camera_mov_sens),
         __Camera3DBase(DENG_CAMERA_TYPE_FPP, fov, {near_plane, far_plane}, 
@@ -28,20 +27,13 @@ namespace deng {
 
     /// __FPPCamera wrapper method for event update 
     void __FPPCamera::update() {
-        __FPPCameraEv::updateEv(this, m_is_pitch_ignore);
+        __FPPCameraEv::updateEv(this);
     }
 
     
     /// Set first person camera control bindings
     void __FPPCamera::setBindings(const Camera3DBindings &bindings) {
         m_bindings = bindings;
-    }
-
-    
-    /// Check if camera movement system should ignore pitch rotation, when translating
-    /// movements into camera coordinate system.
-    deng_bool_t __FPPCamera::isPitchIgnore() {
-        return m_is_pitch_ignore;
     }
 
 

@@ -103,8 +103,6 @@ namespace deng {
         m_p_io->MousePos.y = static_cast<deng_vec_t>(win.getMPos().second);
         m_p_io->WantCaptureMouse = true;
 
-        LOG("Mouse position: " + std::to_string(win.getMPos().first) + ":" + std::to_string(win.getMPos().second));
-
         // Check if mouse wheel event should be recorded
         if(neko_FindKeyStatus(NEKO_MOUSE_SCROLL_UP, NEKO_INPUT_EVENT_TYPE_ACTIVE))
             m_p_io->MouseWheel = 0.5f;
@@ -164,8 +162,8 @@ namespace deng {
 
             // For each vertex, convert its pixel size to vector size
             for(deng_ui32_t j = 0; j < draw_list->VtxBuffer.Size; j++) {
-                verts[j].pos.x = dengMath::Conversion::mouseCoordToVecCoord(verts[j].pos.x, static_cast<deng_px_t>(win.getSize().first));
-                verts[j].pos.y = dengMath::Conversion::mouseCoordToVecCoord(verts[j].pos.y, static_cast<deng_px_t>(win.getSize().second));
+                verts[j].pos.x = dengMath::conversion::mouseCoordToVecCoord(verts[j].pos.x, static_cast<deng_px_t>(win.getSize().first));
+                verts[j].pos.y = dengMath::conversion::mouseCoordToVecCoord(verts[j].pos.y, static_cast<deng_px_t>(win.getSize().second));
             }
 
             m_gui_data.cmd_data[i].verts = verts;

@@ -15,7 +15,6 @@ namespace deng {
         const dengMath::vec2<deng_vec_t> &planes,
         const dengMath::vec3<deng_vec_t> &mov_speed,
         const dengMath::vec2<deng_f64_t> &rot_sens,
-        deng_bool_t ignore_pitch_rot,
         Window *win
     ) {
         m_p_win = win;
@@ -24,8 +23,7 @@ namespace deng {
         // Check for camera instance to create
         switch(m_cam_type) {
         case DENG_CAMERA_TYPE_FPP:
-            m_fpp_cam = std::make_unique<__FPPCamera>(mov_speed, rot_sens, fov, planes.first, planes.second, 
-                ignore_pitch_rot, m_p_win);
+            m_fpp_cam = std::make_unique<__FPPCamera>(mov_speed, rot_sens, fov, planes.first, planes.second, m_p_win);
             break;
 
         case DENG_CAMERA_TYPE_EDITOR: {

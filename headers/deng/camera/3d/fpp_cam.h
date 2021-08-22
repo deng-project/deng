@@ -31,9 +31,6 @@ namespace deng {
         
     /// First person perspective camera class 
     class __FPPCamera : private __FPPCameraEv, public __Camera3DBase {
-    private:
-        deng_bool_t m_is_pitch_ignore;
-
     public:
         __FPPCamera (
             const dengMath::vec3<deng_vec_t> &camera_mov_speed_mul, 
@@ -41,7 +38,6 @@ namespace deng {
             deng_vec_t fov, 
             deng_vec_t near_plane, 
             deng_vec_t far_plane, 
-            deng_bool_t ignore_pitch_mov,
             Window *p_win
         );
 

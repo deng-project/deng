@@ -99,7 +99,6 @@ typedef deng_ui16_t deng_RendererHintBits;
 #define DENG_WINDOW_HINT_FULL_SCREEN        NEKO_HINT_FULL_SCREEN
 #define DENG_WINDOW_HINT_FIXED_SIZE         NEKO_HINT_FIXED_SIZE
 #define DENG_WINDOW_HINT_RESIZEABLE         NEKO_HINT_RESIZEABLE
-#define DENG_WINDOW_HINT_NO_FULL_SCREEN     NEKO_HINT_NO_FULL_SCREEN
 
 
 /// Definitions for mouse cursors

@@ -81,7 +81,7 @@ namespace dengUtils {
         if(!border_thickness) return;
 
         // Convert border size from pixel size to vector 2D size
-        deng_vec_t vec_border_width = dengMath::Conversion::pixelSizeToVector2DSize (
+        deng_vec_t vec_border_width = dengMath::conversion::pixelSizeToVector2DSize (
             border_thickness,
             deng_window_size.first
         );
@@ -687,7 +687,7 @@ namespace dengUtils {
         if(vert_c < DENG_CIRCLE_MIN_VERT_COUNT) 
             vert_c = DENG_CIRCLE_MIN_VERT_COUNT;
 
-        deng_vec_t step = dengMath::Conversion::degToRad(360.0f / (deng_vec_t) vert_c);
+        deng_vec_t step = dengMath::conversion::degToRad(360.0f / (deng_vec_t) vert_c);
 
         deng_i32_t l_index, n_index, i;
         std::vector<das_ObjPosData2D> cir_vert;

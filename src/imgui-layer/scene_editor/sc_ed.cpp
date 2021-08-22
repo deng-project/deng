@@ -12,8 +12,8 @@ namespace dengEditor {
 
     SceneEditor3D::SceneEditor3D(deng_RendererHintBits rend_hints, deng_WindowHint win_hints) : 
         m_win(WIDTH, HEIGHT, DENG_WINDOW_HINT_API_VULKAN, "DENG - Scene editor"),
-        m_cam(DENG_CAMERA_TYPE_EDITOR, static_cast<deng_vec_t>(dengMath::Conversion::degToRad(65.0)),
-            {-0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3f, 0.3f}, false, &m_win),
+        m_cam(DENG_CAMERA_TYPE_EDITOR, static_cast<deng_vec_t>(dengMath::conversion::degToRad(65.0)),
+            {-0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3f, 0.3f}, &m_win),
         m_rend(rend_hints, dengMath::vec4<deng_vec_t>(0.0f, 0.0f, 0.0f, 1.0f))
     {
         deng::Camera3DBindings bindings = {};

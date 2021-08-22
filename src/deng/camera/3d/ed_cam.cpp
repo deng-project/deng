@@ -18,17 +18,9 @@ namespace deng {
         deng_vec_t near_plane,
         deng_vec_t far_plane,
         Window *p_ww
-    ) : __EditorCameraEv (
-            mouse_sens, 
-            zoom_step, 
-            origin, 
-            p_ww
-        ), 
-        __Camera3DBase (
-            DENG_CAMERA_TYPE_EDITOR,
-            fov,
-            {near_plane, far_plane},
-            (deng_vec_t) __EditorCameraEv::getWinPtr()->getSize().first / (deng_vec_t) __EditorCameraEv::getWinPtr()->getSize().second
+    ) : __EditorCameraEv(mouse_sens, zoom_step, origin, p_ww), 
+        __Camera3DBase(DENG_CAMERA_TYPE_EDITOR, fov, {near_plane, far_plane},
+            static_cast<deng_vec_t>(__EditorCameraEv::getWinPtr()->getSize().first) / static_cast<deng_vec_t>(__EditorCameraEv::getWinPtr()->getSize().second)
         ) {
         m_origin = origin;
         setWinPtr(p_ww);

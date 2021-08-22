@@ -94,21 +94,18 @@ namespace deng {
 
 
     /// Check for input mode changes and move camera if needed
-    void __FPPCameraEv::updateEv (
-        __FPPCamera *p_cam,
-        deng_bool_t ignore_pitch
-    ) {
+    void __FPPCameraEv::updateEv(__FPPCamera *p_cam) {
         __checkForInputModeChange(p_cam->getCamMatPtr());
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
         std::chrono::duration<deng_ui64_t, std::milli> lmov_duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_mov_beg);
         if(lmov_duration.count() > DENG_MOVEMENT_INTERVAL) {
             switch (m_movements.first) {
             case DENG_MOVEMENT_LEFTWARD:
-                p_cam->moveU(-m_move_speed.first, ignore_pitch);
+                p_cam->moveU(-m_move_speed.first, true);
                 break;
 
             case DENG_MOVEMENT_RIGHTWARD:
-                p_cam->moveU(m_move_speed.first, ignore_pitch);
+                p_cam->moveU(m_move_speed.first, true);
                 break;
 
             case DENG_MOVEMENT_NONE: break;
@@ -119,11 +116,11 @@ namespace deng {
 
             switch (m_movements.second) {
             case DENG_MOVEMENT_UPWARD:
-                p_cam->moveV(-m_move_speed.second, ignore_pitch);
+                p_cam->moveV(-m_move_speed.second, true);
                 break;
 
             case DENG_MOVEMENT_DOWNWARD:
-                p_cam->moveV(m_move_speed.second, ignore_pitch);
+                p_cam->moveV(m_move_speed.second, true);
                 break;
 
             case DENG_MOVEMENT_NONE: 
@@ -135,11 +132,11 @@ namespace deng {
 
             switch (m_movements.third) {
             case DENG_MOVEMENT_FORWARD:
-                p_cam->moveW(-m_move_speed.first, ignore_pitch);
+                p_cam->moveW(-m_move_speed.first, true);
                 break;
 
             case DENG_MOVEMENT_BACKWARD:
-                p_cam->moveW(m_move_speed.first, ignore_pitch);
+                p_cam->moveW(m_move_speed.first, true);
                 break;
 
             default:
