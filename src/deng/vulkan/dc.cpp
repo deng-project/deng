@@ -116,23 +116,23 @@ namespace deng {
             // Find correct pipelines and their layouts according to the asset mode
             switch(asset.asset_mode) {
             case DAS_ASSET_MODE_2D_UNMAPPED:
-                p_pl = &m_pl_data[UM2D_I].pipeline;
-                p_pl_layout = m_pl_data[UM2D_I].p_pipeline_layout;
+                p_pl = &m_p_pl_data->at(UM2D_I).pipeline;
+                p_pl_layout = m_p_pl_data->at(UM2D_I).p_pipeline_layout;
                 break;
 
             case DAS_ASSET_MODE_2D_TEXTURE_MAPPED:
-                p_pl = &m_pl_data[TM2D_I].pipeline;
-                p_pl_layout = m_pl_data[TM2D_I].p_pipeline_layout;
+                p_pl = &m_p_pl_data->at(TM2D_I).pipeline;
+                p_pl_layout = m_p_pl_data->at(TM2D_I).p_pipeline_layout;
                 break;
 
             case DAS_ASSET_MODE_3D_UNMAPPED:
-                p_pl = &m_pl_data[UM3D_I].pipeline;
-                p_pl_layout = m_pl_data[UM3D_I].p_pipeline_layout;
+                p_pl = &m_p_pl_data->at(UM3D_I).pipeline;
+                p_pl_layout = m_p_pl_data->at(UM3D_I).p_pipeline_layout;
                 break;
 
             case DAS_ASSET_MODE_3D_TEXTURE_MAPPED:
-                p_pl = &m_pl_data[TM3D_I].pipeline;
-                p_pl_layout = m_pl_data[TM3D_I].p_pipeline_layout;
+                p_pl = &m_p_pl_data->at(TM3D_I).pipeline;
+                p_pl_layout = m_p_pl_data->at(TM3D_I).p_pipeline_layout;
                 break;
 
             default:
@@ -150,25 +150,22 @@ namespace deng {
 
         /// Set miscellanious data arrays 
         void __vk_DrawCaller::setMiscData (
-            const std::array<__vk_PipelineData, PIPELINE_C> &pl_data, 
-            const std::vector<VkFramebuffer> &fb
+            std::array<__vk_PipelineData, PIPELINE_C> *pl_data, 
+            std::vector<VkFramebuffer> *fb
         ) {
-            m_pl_data = pl_data;
-            m_framebuffers = fb;
+            m_p_pl_data = pl_data;
+            m_p_framebuffers = fb;
         }
 
 
         /// Allocate memory for commandbuffers
         void __vk_DrawCaller::allocateCmdBuffers (
             VkDevice device, 
-            VkQueue g_queue, 
-            VkRenderPass renderpass, 
-            VkExtent2D ext,
             const dengMath::vec4<deng_vec_t> &background,
             const __vk_BufferData &bd,
             const deng::BufferSectionInfo &buf_sec
         ) {
-            m_cmd_bufs.resize(m_framebuffers.size());
+            m_cmd_bufs.resize(m_p_framebuffers->size());
 
             // Set up commandbuffer allocate info
             VkCommandBufferAllocateInfo cmd_buf_alloc_info = {};
@@ -204,7 +201,7 @@ namespace deng {
                 VkRenderPassBeginInfo renderpass_begininfo = {};
                 renderpass_begininfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 renderpass_begininfo.renderPass = renderpass;
-                renderpass_begininfo.framebuffer = m_framebuffers[i];
+                renderpass_begininfo.framebuffer = m_p_framebuffers->at(i);
                 renderpass_begininfo.renderArea.offset = { 0, 0 };
                 renderpass_begininfo.renderArea.extent = ext;
 
@@ -251,10 +248,10 @@ namespace deng {
                             __bindUIElementResources(&m_p_ui_data->entities[j], m_cmd_bufs[i], bd, buf_sec);
 
                             vkCmdBindPipeline(m_cmd_bufs[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                m_pl_data[UI_I].pipeline);
+                                m_p_pl_data->at(UI_I).pipeline);
 
                             vkCmdBindDescriptorSets(m_cmd_bufs[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                *m_pl_data[UI_I].p_pipeline_layout, 0, 1, &m_ui_sets[i], 0, NULL);
+                                *m_p_pl_data->at(UI_I).p_pipeline_layout, 0, 1, &m_ui_sets[i], 0, NULL);
 
                             // Convert scissor coordinates to VkRect2D structure
                             const VkRect2D sc_rect = VkRect2D {

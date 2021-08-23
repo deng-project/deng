@@ -21,17 +21,12 @@ namespace deng {
 
         class __vk_SwapChainDetails {
         private:
-            VkSurfaceCapabilitiesKHR m_capabilities;
             std::vector<VkSurfaceFormatKHR> m_formats;
             std::vector<VkPresentModeKHR> m_present_modes;
 
         public:
-            __vk_SwapChainDetails (
-                VkPhysicalDevice &gpu, 
-                VkSurfaceKHR &surface
-            );
-
-            VkSurfaceCapabilitiesKHR getCapabilities();
+            __vk_SwapChainDetails(VkPhysicalDevice gpu, VkSurfaceKHR surface);
+            VkSurfaceCapabilitiesKHR getCapabilities(VkPhysicalDevice gpu, VkSurfaceKHR surface);
             std::vector<VkSurfaceFormatKHR> getFormats();
             std::vector<VkPresentModeKHR> getPresentModes();
         };

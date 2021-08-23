@@ -89,8 +89,10 @@ namespace deng {
 
     /// Begin the rendering loop
     void Renderer::run() {
-        while(m_p_win->isRunning())
+        while(m_p_win->isRunning()) {
             update();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
         
         // Idle the renderer for destruction
         if(m_win_hints & DENG_WINDOW_HINT_API_VULKAN)

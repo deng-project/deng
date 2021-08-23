@@ -78,8 +78,7 @@ namespace dengMath {
     ) {
         vec4<deng_vec_t> mov = {0.0f, 0.0f, 0.0f, 0.0f};
 
-        switch(movement_type)
-        {
+        switch(movement_type) {
         case DENG_COORD_AXIS_X:
             mov.first = mov_speed.first;
             if(ignore_pitch && !is_world)

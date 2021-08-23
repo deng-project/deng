@@ -185,9 +185,9 @@ namespace deng {
             glViewport(0, 0, m_cfg_vars.p_win->getSize().first, m_cfg_vars.p_win->getSize().second);
             glErrorCheck("glViewport");
             glClearColor(m_cfg_vars.background.first, m_cfg_vars.background.second, m_cfg_vars.background.third,
-                m_cfg_vars.background.fourth);
-
+                         m_cfg_vars.background.fourth);
             glErrorCheck("glClearColor");
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glErrorCheck("glClear");
             

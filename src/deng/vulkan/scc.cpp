@@ -19,17 +19,15 @@ namespace deng {
             __vk_QueueManager qff,
             VkSampleCountFlagBits sample_c,
             void *p_udata
-        ) : __vk_DeviceInfo(win), m_udata(p_udata) { 
-            m_msaa_sample_c = sample_c;       
+        ) : __vk_DeviceInfo(win), m_udata(p_udata), m_sc_details(gpu, surface) { 
+            m_msaa_sample_c = sample_c;
             db_SampleCount();
             m_device = device;
             m_gpu = gpu;
             m_qff = qff;
             
-            m_p_sc_details = new __vk_SwapChainDetails(gpu, surface);
-
             __mkSwapChainSettings();
-            __mkSwapChain(surface, surface_cap, m_qff.getGraphicsQFIndex(), m_qff.getPresentQFIndex());
+            __mkSwapChain(gpu, surface, surface_cap, m_qff.getGraphicsQFIndex(), m_qff.getPresentQFIndex());
             __mkSCImageViews();
             __mkRenderPass();
         }
@@ -76,7 +74,7 @@ namespace deng {
         /// Initialise swapchain settings in order to create swapchain 
         void __vk_SwapChainCreator::__mkSwapChainSettings() {
             deng_bool_t found_suitable_format = false;
-            for(const VkSurfaceFormatKHR &surface_format : m_p_sc_details->getFormats()) {
+            for(const VkSurfaceFormatKHR &surface_format : m_sc_details.getFormats()) {
                 if(surface_format.format == VK_FORMAT_B8G8R8A8_SRGB && surface_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                     m_surface_format = surface_format;
                     found_suitable_format = true;
@@ -85,11 +83,11 @@ namespace deng {
             
             if(!found_suitable_format) {
                 WARNME("Didn't find suitable surface format! Trying to use first available one!");
-                m_surface_format = m_p_sc_details->getFormats()[0];
+                m_surface_format = m_sc_details.getFormats()[0];
             }
 
             deng_bool_t foundSuitablePresentMode = false;
-            for(const VkPresentModeKHR &presentFormat : m_p_sc_details->getPresentModes()) {
+            for(const VkPresentModeKHR &presentFormat : m_sc_details.getPresentModes()) {
                 // Check which present modes are available
                 switch (presentFormat) {
                 case VK_PRESENT_MODE_IMMEDIATE_KHR:
@@ -131,30 +129,22 @@ namespace deng {
                 WARNME("Didn't find suitable present mode! Using vSync instead!");
                 m_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
             }
-
-            if(m_p_sc_details->getCapabilities().currentExtent.width != UINT32_MAX && 
-               m_p_sc_details->getCapabilities().currentExtent.height != UINT32_MAX) 
-                m_ext = m_p_sc_details->getCapabilities().currentExtent;
-
-            else {
-                m_ext.width = m_win.getSize().first;
-                m_ext.height = m_win.getSize().second;
-            }
         }
 
 
         /// Create new swapchain for the surface
         void __vk_SwapChainCreator::__mkSwapChain (
-            VkSurfaceKHR &surface, 
-            VkSurfaceCapabilitiesKHR &surface_cap,
+            VkPhysicalDevice gpu,
+            VkSurfaceKHR surface, 
+            const VkSurfaceCapabilitiesKHR &surface_cap,
             deng_ui32_t g_queue_i, 
             deng_ui32_t p_queue_i
         ) {
-            deng_ui32_t min_image_count = m_p_sc_details->getCapabilities().minImageCount + 1;
+            deng_ui32_t min_image_count = m_sc_details.getCapabilities(gpu, surface).minImageCount + 1;
             
             // Verify that the maximum image count is not exceeded
-            if(m_p_sc_details->getCapabilities().maxImageCount > 0 && min_image_count > m_p_sc_details->getCapabilities().maxImageCount) 
-                min_image_count = m_p_sc_details->getCapabilities().maxImageCount;
+            if(m_sc_details.getCapabilities(gpu, surface).maxImageCount > 0 && min_image_count > m_sc_details.getCapabilities(gpu, surface).maxImageCount) 
+                min_image_count = m_sc_details.getCapabilities(gpu, surface).maxImageCount;
 
 
             VkSwapchainCreateInfoKHR swapchain_createinfo = {};
@@ -163,7 +153,17 @@ namespace deng {
             swapchain_createinfo.minImageCount = min_image_count;
             swapchain_createinfo.imageFormat = m_surface_format.format;
             swapchain_createinfo.imageColorSpace = m_surface_format.colorSpace;
-            swapchain_createinfo.imageExtent = m_ext;
+
+            // Check if the retrieved extent is valid
+            VkExtent2D ext = m_sc_details.getCapabilities(gpu, surface).currentExtent;
+            if(ext.width != UINT32_MAX && ext.height != UINT32_MAX)
+                swapchain_createinfo.imageExtent = ext;
+            else {
+                swapchain_createinfo.imageExtent.width = m_win.getSize().first;
+                swapchain_createinfo.imageExtent.height = m_win.getSize().second;
+            }
+
+            m_extent = VkExtent2D{ swapchain_createinfo.imageExtent.width, swapchain_createinfo.imageExtent.height };
             swapchain_createinfo.imageArrayLayers = 1;
             swapchain_createinfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -178,7 +178,7 @@ namespace deng {
             else swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             
 
-            swapchain_createinfo.preTransform = m_p_sc_details->getCapabilities().currentTransform;
+            swapchain_createinfo.preTransform = m_sc_details.getCapabilities(gpu, surface).currentTransform;
 
             // Check, which composite alpha mode is supported
             if(surface_cap.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) 
@@ -290,8 +290,8 @@ namespace deng {
             m_swapchain_image_views.resize(m_swapchain_images.size());
 
             for(deng_ui32_t i = 0; i < m_swapchain_image_views.size(); i++) {
-                VkImageViewCreateInfo createInfo = 
-                __vk_ImageCreator::getImageViewInfo ( m_swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1, m_udata);
+                VkImageViewCreateInfo createInfo = __vk_ImageCreator::getImageViewInfo(m_swapchain_images[i], m_surface_format.format, 
+                                                                                       VK_IMAGE_ASPECT_COLOR_BIT, 1, m_udata);
                 SET_UDATA("vkCreateImageView");
                 if(vkCreateImageView(m_device, &createInfo, NULL, &m_swapchain_image_views[i]) != VK_SUCCESS)
                     VK_SWAPCHAIN_ERR("failed to create image views!");
@@ -302,19 +302,21 @@ namespace deng {
         /// Remake the swapchain (needed for resizing the window) 
         void __vk_SwapChainCreator::remkSwapChain (
             VkDevice device,
+            VkPhysicalDevice gpu,
             deng::Window *p_win,
             VkSurfaceKHR surface,
-            VkSurfaceCapabilitiesKHR &surface_cap,
-            VkSurfaceFormatKHR s_format
+            const VkSurfaceCapabilitiesKHR &surface_cap
         ) {
             SET_UDATA("vkDeviceWaitIdle");
             vkDeviceWaitIdle(m_device);
+            m_sc_details = __vk_SwapChainDetails(gpu, surface);
 
             SCCleanup();
+            vkDestroyRenderPass(m_device, m_renderpass, NULL);
             __mkSwapChainSettings();
-            __mkSwapChain(surface, surface_cap, m_qff.getGraphicsQFIndex(), m_qff.getPresentQFIndex());
-            __mkRenderPass();
+            __mkSwapChain(gpu, surface, surface_cap, m_qff.getGraphicsQFIndex(), m_qff.getPresentQFIndex());
             __mkSCImageViews();
+            __mkRenderPass();
         }
 
 
@@ -330,15 +332,10 @@ namespace deng {
             vkDestroySwapchainKHR(m_device, m_swapchain, NULL);
         }
 
-
-        __vk_SwapChainCreator::~__vk_SwapChainCreator() {
-            delete m_p_sc_details;
-        }
-
         
         /// Getters
         VkRenderPass __vk_SwapChainCreator::getRp() { return m_renderpass; }
-        VkExtent2D __vk_SwapChainCreator::getExt() { return m_ext; }
+        VkExtent2D __vk_SwapChainCreator::getExt(VkPhysicalDevice gpu, VkSurfaceKHR surface) { return m_extent; }
         VkSwapchainKHR __vk_SwapChainCreator::getSC() { return m_swapchain; }
         VkFormat __vk_SwapChainCreator::getSF() { return m_surface_format.format; }
         std::vector<VkImage> __vk_SwapChainCreator::getSCImg() { return m_swapchain_images; }

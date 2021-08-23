@@ -9,7 +9,7 @@
 namespace deng {
 
     ImGUIApplication::ImGUIApplication() : 
-        m_win(1280, 720, DENG_WINDOW_HINT_API_OPENGL | DENG_WINDOW_HINT_RESIZEABLE, "ImGUI demo"),
+        m_win(1280, 720, DENG_WINDOW_HINT_API_VULKAN | DENG_WINDOW_HINT_RESIZEABLE, "ImGUI demo"),
         m_cam(DENG_CAMERA_TYPE_EDITOR, static_cast<deng_vec_t>(dengMath::conversion::degToRad(65.0)), 
             {0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3, 0.3}, &m_win),
 #ifdef __DEBUG
@@ -77,7 +77,7 @@ namespace deng {
             // Update the renderer
             m_rend.update();
 
-            std::this_thread::sleep_for(std::chrono::microseconds(50));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
             auto t2 = std::chrono::high_resolution_clock::now();
 
             m_ui_man->setTime(t1, t2);

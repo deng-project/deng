@@ -29,7 +29,7 @@ namespace deng {
 
             // Create new vulkan descriptor creator
             m_desc_c = std::make_unique<__vk_DescriptorSetsCreator>(m_ic->getDev(),
-                m_scc->getExt(), m_scc->getRp(), m_reg, m_assets,
+                m_scc->getExt(m_ic->getGpu(), m_ic->getSu()), m_scc->getRp(), m_reg, m_assets,
                 m_textures, conf.msaa_sample_count, m_ic->getUserData());
 
             // Create new draw caller instance and make command pool
@@ -42,7 +42,7 @@ namespace deng {
 
             // Create new buffer resources allocator
             m_rm = std::make_unique<__vk_ResourceManager>(m_ic->getDev(), 
-                m_ic->getGpu(), m_scc->getExt(), conf.msaa_sample_count,
+                m_ic->getGpu(), m_scc->getExt(m_ic->getGpu(), m_ic->getSu()), conf.msaa_sample_count,
                 m_scc->getRp(), m_dc->getComPool(), m_ic->getQFF().graphics_queue,
                 m_scc->getSCImgViews(), m_reg, m_assets, m_textures, m_scc->getSF(),
                 m_ic->getGpuLimits(), m_ic->getUserData()); 

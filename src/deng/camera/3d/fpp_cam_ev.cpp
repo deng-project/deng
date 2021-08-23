@@ -64,7 +64,7 @@ namespace deng {
         std::chrono::duration<deng_ui64_t, std::milli> im_duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_input_mode_ch_beg);
 
         // Check if input mode should be changed ([ESC] key)
-        if(im_duration.count() > NEKO_INPUT_EV_COUNT && __checkInputAction(DENG_CAMERA_ACTION_CHANGE_MM)) {
+        if(im_duration.count() > DENG_KEY_PRESS_INTERVAL && __checkInputAction(DENG_CAMERA_ACTION_CHANGE_MM)) {
             m_p_win->toggleVCMode();
             if(m_p_win->isVCP())
                 m_p_win->changeCursor(DENG_CURSOR_MODE_HIDDEN);
@@ -78,10 +78,7 @@ namespace deng {
         if(m_p_win->isVCP()) {
             __findMovements();
             dengMath::vec2<deng_f64_t> rot = __Event3DBase::__getMouseRotation();
-            p_vm->setCameraRotation (
-                (deng_vec_t) rot.first, 
-                (deng_vec_t) rot.second
-            );
+            p_vm->setCameraRotation(static_cast<deng_vec_t>(rot.first), static_cast<deng_vec_t>(rot.second));
             p_vm->camTransform(false);
         }
 
@@ -116,11 +113,15 @@ namespace deng {
 
             switch (m_movements.second) {
             case DENG_MOVEMENT_UPWARD:
-                p_cam->moveV(-m_move_speed.second, true);
+                if(m_p_win->getHints() & DENG_WINDOW_HINT_API_OPENGL)
+                    p_cam->moveV(m_move_speed.second, true);
+                else p_cam->moveV(-m_move_speed.second, true);
                 break;
 
             case DENG_MOVEMENT_DOWNWARD:
-                p_cam->moveV(m_move_speed.second, true);
+                if(m_p_win->getHints() & DENG_WINDOW_HINT_API_OPENGL)
+                    p_cam->moveV(-m_move_speed.second, true);
+                else p_cam->moveV(m_move_speed.second, true);
                 break;
 
             case DENG_MOVEMENT_NONE: 

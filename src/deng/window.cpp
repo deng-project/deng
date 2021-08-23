@@ -105,7 +105,7 @@ namespace deng {
     }
 
 
-    std::string Window::getTitle() const { 
+    const std::string Window::getTitle() const { 
         return std::string(neko_GetTitle(m_surface));
     }
 
@@ -119,5 +119,8 @@ namespace deng {
 
 
     /// Check if virtual cursor mode is enabled
-    deng_bool_t Window::isVCP() { return neko_IsVCMode(m_surface); }
+    const deng_bool_t Window::isVCP() { return neko_IsVCMode(m_surface); }
+
+
+    const deng_bool_t Window::resizeNotify() { return neko_ResizeNotify(m_surface); }
 }

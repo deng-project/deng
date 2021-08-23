@@ -30,8 +30,17 @@
 namespace deng {
     namespace vulkan {
 
-        class __vk_SwapChainCreator : private __vk_SwapChainInfo, private __vk_DeviceInfo {
+        class __vk_SwapChainCreator : private __vk_DeviceInfo {
         private:
+            VkRenderPass m_renderpass;
+            VkSwapchainKHR m_swapchain;
+            VkExtent2D m_extent;
+            VkPresentModeKHR m_present_mode;
+            VkFormat m_format;
+            VkSurfaceFormatKHR m_surface_format;
+            std::vector<VkImage> m_swapchain_images;
+            std::vector<VkImageView> m_swapchain_image_views;
+            __vk_SwapChainDetails m_sc_details;
             __vk_QueueManager m_qff;
             VkSampleCountFlagBits m_msaa_sample_c;
             void *m_udata;
@@ -46,30 +55,30 @@ namespace deng {
 #endif
 
             void __mkSwapChainSettings();
-            void __mkSwapChain(VkSurfaceKHR &surface, VkSurfaceCapabilitiesKHR &surface_cap, deng_ui32_t g_queue_i, deng_ui32_t p_queue_i);
+            void __mkSwapChain(VkPhysicalDevice gpu, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR &surface_cap, 
+                               deng_ui32_t g_queue_i, deng_ui32_t p_queue_i);
             void __mkRenderPass();
             void __mkSCImageViews();
         
         public:
             __vk_SwapChainCreator(VkDevice device, Window &win, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR &&surface_cap,
                                   __vk_QueueManager qff, VkSampleCountFlagBits sample_c, void *udata);
-            ~__vk_SwapChainCreator();
 
             void SCCleanup();
 
             /// System that checks for window resizing should be made
             void remkSwapChain (
                 VkDevice device,
+                VkPhysicalDevice gpu,
                 Window *p_win,
                 VkSurfaceKHR surface, 
-                VkSurfaceCapabilitiesKHR &surface_cap,
-                VkSurfaceFormatKHR s_format
+                const VkSurfaceCapabilitiesKHR &surface_cap
             );
 
         /// Getters
         public:
             VkRenderPass getRp();
-            VkExtent2D getExt();
+            VkExtent2D getExt(VkPhysicalDevice gpu, VkSurfaceKHR surface);
             VkSwapchainKHR getSC();
             VkFormat getSF();
             std::vector<VkImage> getSCImg();

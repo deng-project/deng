@@ -13,7 +13,7 @@ namespace Sandbox {
     DengBox::DengBox() : 
         m_win(1200, 1000, DENG_WINDOW_HINT_API_VULKAN | DENG_WINDOW_HINT_RESIZEABLE, "DENG game"),
         m_cam(DENG_CAMERA_TYPE_FPP, static_cast<deng_vec_t>(dengMath::conversion::degToRad(65.0)),
-              {-0.1f, -25.0f}, {0.7f, 0.7f, 0.7f}, {0.3f, 0.3f}, &m_win),
+              dengMath::vec2<deng_vec_t>(-0.1f, -25.0f), dengMath::vec3<deng_vec_t>(0.7f, 0.7f, 0.7f), dengMath::vec2<deng_f64_t>(0.3f, 0.3f), &m_win),
         m_light_man(m_reg) {
 
         // Setup code that will be done in Lua when the scripting layer is added

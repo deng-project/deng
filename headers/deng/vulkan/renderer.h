@@ -15,6 +15,7 @@
     #include <string>
     #include <queue>
     #include <array>
+    #include <thread>
     
     #include <vulkan/vulkan.h>
     #include <common/base_types.h>
@@ -68,7 +69,9 @@ namespace deng {
                               public __vk_RuntimeUpdater 
         {
         private:
+            void *m_udata;
             __vk_ConfigVars m_config;
+            dengMath::vec2<deng_i32_t> m_prev_size;
             deng_bool_t m_is_init = false;
             deng_bool_t m_is_idle = true;
 
@@ -89,6 +92,7 @@ namespace deng {
             void __freeBuffers();
             void __cleanSemaphores();
             void __cleanDevice();
+            void __swapChainRecreationCheck();
 
             void __makeFrame();
 

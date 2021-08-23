@@ -30,7 +30,7 @@ namespace deng {
                 m_dc.flight_fences.data(), VK_TRUE, UINT64_MAX);
 
             // Record new commandbuffers
-            m_dc.recordCmdBuffers(m_scc.getRp(), m_scc.getExt(),
+            m_dc.recordCmdBuffers(m_scc.getRp(), m_scc.getExt(m_ic.getGpu(), m_ic.getSu()),
                 background, m_rm.getBD(), m_rm.getSectionInfo());
         }
 

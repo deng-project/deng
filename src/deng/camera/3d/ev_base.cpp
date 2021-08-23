@@ -34,7 +34,11 @@ namespace deng {
     /// Find the current mouse rotation 
     dengMath::vec2<deng_f64_t> __Event3DBase::__getMouseRotation() {
         dengMath::vec2<deng_f64_t> out_rot;
-        out_rot.first = static_cast<deng_f64_t>(m_mouse_pos.second) / static_cast<deng_f64_t>(m_vc_bounds.second.second) * m_max_rot.first;
+        // NOTE: In OpenGL the Y coordinate rotation must be reversed
+        if(m_p_win->getHints() & DENG_WINDOW_HINT_API_OPENGL)
+            out_rot.first = -(static_cast<deng_f64_t>(m_mouse_pos.second) / static_cast<deng_f64_t>(m_vc_bounds.second.second) * m_max_rot.first);
+        else out_rot.first = static_cast<deng_f64_t>(m_mouse_pos.second) / static_cast<deng_f64_t>(m_vc_bounds.second.second) * m_max_rot.first;
+
         out_rot.second = static_cast<deng_f64_t>(m_mouse_pos.first) / static_cast<deng_f64_t>(m_vc_bounds.first.second) * m_max_rot.second; 
         return out_rot;
     }

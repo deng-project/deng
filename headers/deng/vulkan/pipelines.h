@@ -50,7 +50,7 @@ namespace deng {
         private:
             /// Create a single pipeline layout
             void __mkPipelineLayout(VkDevice device, VkDescriptorSetLayout &ds_layout,
-                VkPipelineLayout &pl_layout);
+                                    VkPipelineLayout &pl_layout);
 
             /// Create new pipeline layouts for all compatible pipelines
             void __mkPipelineLayouts(VkDevice device);
@@ -63,8 +63,12 @@ namespace deng {
             );
 
             /// Create new pipelines 
-            void mkPipelines(VkDevice device, VkExtent2D ext, 
-                VkRenderPass rp, VkSampleCountFlagBits sample_c);
+            void mkPipelines(VkDevice device, VkExtent2D ext, VkRenderPass rp, 
+                             VkSampleCountFlagBits sample_c, bool no_layout);
+
+
+            void remkPipelines(VkDevice device, VkExtent2D ext, VkRenderPass rp, 
+                               VkSampleCountFlagBits sample_c);
 
         // Getters / Setters
         public:

@@ -47,20 +47,6 @@ namespace deng {
         };
 
 
-        /// Struct for storing all vk_ swapchain related objects 
-        struct __vk_SwapChainInfo {
-            VkRenderPass m_renderpass;
-            VkSwapchainKHR m_swapchain;
-            VkPresentModeKHR m_present_mode;
-            VkExtent2D m_ext;
-            VkFormat m_format;
-            VkSurfaceFormatKHR m_surface_format;
-            std::vector<VkImage> m_swapchain_images;
-            std::vector<VkImageView> m_swapchain_image_views;
-            __vk_SwapChainDetails *m_p_sc_details;
-        };
-
-
         /// Struct for storing all vk_ resource allocation related objects 
         struct __vk_ResourceInfo {
             std::vector<VkFramebuffer> m_framebuffers;

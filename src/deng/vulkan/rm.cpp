@@ -45,11 +45,36 @@ namespace deng {
         }
 
 
+        void __vk_ResourceManager::remkFrameBuffers (
+            VkDevice device, 
+            VkPhysicalDevice gpu,
+            VkRenderPass rp,
+            VkExtent2D ext,
+            VkFormat sc_color_format,
+            const std::vector<VkImageView> &sc_img_views
+        ) {
+            vkDestroyImageView(device, m_color_image_view, NULL);
+            vkFreeMemory(device, m_color_image_mem, NULL);
+            vkDestroyImage(device, m_color_image, NULL);
+
+            vkDestroyImageView(device, m_depth_image_view, NULL);
+            vkFreeMemory(device, m_depth_image_mem, NULL);
+            vkDestroyImage(device, m_depth_image, NULL);
+
+            for(size_t i = 0; i < m_framebuffers.size(); i++)
+                vkDestroyFramebuffer(device, m_framebuffers[i], NULL);
+
+            __mkColorResources(device, gpu, ext, sc_color_format);
+            __mkDepthResources(device, gpu, ext);
+            __mkFrameBuffers(device, rp, ext, sc_img_views);
+        }
+
+
         /// Create new framebuffers 
         void __vk_ResourceManager::__mkFrameBuffers (
-            VkDevice &device, 
-            VkRenderPass &renderpass, 
-            VkExtent2D &extent, 
+            VkDevice device, 
+            VkRenderPass renderpass, 
+            VkExtent2D extent, 
             const std::vector<VkImageView> &sc_img_views
         ) {
             size_t index;
@@ -57,7 +82,7 @@ namespace deng {
             std::array<VkImageView, 3> attachments;
 
             for(index = 0; index < sc_img_views.size(); index++) {
-                attachments = {m_color_image_view, m_depth_image_view, sc_img_views[index]};
+                attachments = { m_color_image_view, m_depth_image_view, sc_img_views[index] };
 
                 VkFramebufferCreateInfo framebuffer_createinfo{};
                 framebuffer_createinfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -79,9 +104,9 @@ namespace deng {
 
         /// Create color resources for multisampling 
         void __vk_ResourceManager::__mkColorResources (
-            VkDevice &device,
-            VkPhysicalDevice &gpu,
-            VkExtent2D &extent,
+            VkDevice device,
+            VkPhysicalDevice gpu,
+            VkExtent2D extent,
             VkFormat sc_color_format
         ) {
             // Create a new Vulkan image handle
@@ -109,9 +134,9 @@ namespace deng {
 
         /// Create depth image buffers for depth buffering 
         void __vk_ResourceManager::__mkDepthResources (
-            VkDevice &device, 
-            VkPhysicalDevice &gpu, 
-            VkExtent2D &extent
+            VkDevice device, 
+            VkPhysicalDevice gpu, 
+            VkExtent2D extent
         ) {
             // Create an VkImage instance for depth buffers
             VkMemoryRequirements mem_req = __vk_ImageCreator::makeImage (

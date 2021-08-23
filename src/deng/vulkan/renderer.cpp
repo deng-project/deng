@@ -22,8 +22,11 @@ namespace deng {
         ) : __vk_RendererInitialiser(*cnf.p_win, cnf, reg, assets, textures), 
             __vk_RuntimeUpdater(getIC(), getSCC(), getDrawCaller(), getResMan(), getDescC(), 
                 __vk_RendererInitialiser::m_reg, __vk_RendererInitialiser::m_assets, 
-                __vk_RendererInitialiser::m_textures),
-            m_config(cnf) {}
+                __vk_RendererInitialiser::m_textures), m_config(cnf) 
+        {
+            m_prev_size = m_config.p_win->getSize();
+            m_udata = __vk_RendererInitialiser::getIC().getUserData();   
+        }
 
 
         __vk_Renderer::~__vk_Renderer() {
@@ -330,11 +333,35 @@ namespace deng {
         }
 
 
+        void __vk_Renderer::__swapChainRecreationCheck() {
+            // Check if window resizing has occured
+            if(m_config.p_win->resizeNotify()) {
+                while(m_config.p_win->resizeNotify()) {
+                    m_config.p_win->update();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+
+                __vk_InstanceCreator &ic = __vk_RendererInitialiser::getIC();
+                __vk_SwapChainCreator &scc = __vk_RendererInitialiser::getSCC();
+                __vk_PipelineCreator &pipeline_c = __vk_RendererInitialiser::getPipelineC();
+                __vk_ResourceManager &rm = __vk_RendererInitialiser::getResMan();
+                __vk_DrawCaller &dc = __vk_RendererInitialiser::getDrawCaller();
+
+                scc.remkSwapChain(ic.getDev(), ic.getGpu(), m_config.p_win, ic.getSu(), ic.getSurfaceCapabilities());                        
+                pipeline_c.remkPipelines(ic.getDev(), scc.getExt(ic.getGpu(), ic.getSu()), scc.getRp(), m_config.msaa_sample_count);
+                rm.remkFrameBuffers(ic.getDev(), ic.getGpu(), scc.getRp(), scc.getExt(ic.getGpu(), ic.getSu()), scc.getSF(), scc.getSCImgViews());
+                dc.recordCmdBuffers(scc.getRp(), scc.getExt(ic.getGpu(), ic.getSu()), m_config.background, rm.getBD(), rm.getSectionInfo());
+            }
+        }
+
+
         /// Submit new draw calls and update uniform data
         void __vk_Renderer::makeFrame() {
+            __swapChainRecreationCheck();
+            SET_UDATA("vkWaitForFences");
             vkWaitForFences(__vk_RendererInitialiser::getIC().getDev(), 1, 
-                &__vk_RendererInitialiser::getDrawCaller().flight_fences[__vk_RendererInitialiser::getDrawCaller().current_frame], 
-                VK_TRUE, UINT64_MAX);
+                            &__vk_RendererInitialiser::getDrawCaller().flight_fences[__vk_RendererInitialiser::getDrawCaller().current_frame], 
+                            VK_TRUE, UINT64_MAX);
 
             // Call Vulkan next image acquire method
             deng_ui32_t image_index;
@@ -401,47 +428,46 @@ namespace deng {
         /// Setup the renderer, create descriptor sets, allocate buffers
         /// and record command buffers
         void __vk_Renderer::setup() {
+            __vk_InstanceCreator &ic = __vk_RendererInitialiser::getIC();
+            __vk_SwapChainCreator &scc = __vk_RendererInitialiser::getSCC();
+            __vk_PipelineCreator &pipeline_c = __vk_RendererInitialiser::getPipelineC();
+            __vk_ResourceManager &rm = __vk_RendererInitialiser::getResMan();
+            __vk_DescriptorSetsCreator &desc_c = __vk_RendererInitialiser::getDescC();
+            __vk_DrawCaller &dc = __vk_RendererInitialiser::getDrawCaller();
+
             // Create graphics pipelines
-            __vk_RendererInitialiser::getPipelineC().mkPipelines(__vk_RendererInitialiser::getIC().getDev(), 
-                __vk_RendererInitialiser::getSCC().getExt(), __vk_RendererInitialiser::getSCC().getRp(), 
-                m_config.msaa_sample_count);
+            pipeline_c.mkPipelines(ic.getDev(), scc.getExt(ic.getGpu(), ic.getSu()), scc.getRp(), m_config.msaa_sample_count, false);
 
             // Check if any buffer reallocations might be needed
-            const deng_bool_t is_realloc = __vk_RendererInitialiser::getResMan().reallocCheck(__vk_RendererInitialiser::getIC().getDev(),
-                __vk_RendererInitialiser::getIC().getGpu(), __vk_RendererInitialiser::getDrawCaller().getComPool(),
-                __vk_RendererInitialiser::getIC().getQFF().graphics_queue, __vk_RendererInitialiser::getDrawCaller().flight_fences);
+            const deng_bool_t is_realloc = rm.reallocCheck(ic.getDev(),
+                ic.getGpu(), dc.getComPool(),
+                ic.getQFF().graphics_queue, dc.flight_fences);
 
             // Copy all available assets to the main buffer, if no reallocation occured
             if(!is_realloc) {
-                __vk_RendererInitialiser::getResMan().cpyAssetsToBuffer(__vk_RendererInitialiser::getIC().getDev(), 
-                    __vk_RendererInitialiser::getIC().getGpu(), __vk_RendererInitialiser::getDrawCaller().getComPool(),
-                    __vk_RendererInitialiser::getIC().getQFF().graphics_queue, false, { 0, static_cast<deng_ui32_t>(__vk_RendererInitialiser::m_assets.size()) });
+                rm.cpyAssetsToBuffer(ic.getDev(), 
+                    ic.getGpu(), dc.getComPool(),
+                    ic.getQFF().graphics_queue, false, { 0, static_cast<deng_ui32_t>(__vk_RendererInitialiser::m_assets.size()) });
 
                 // Copy all available ui data to the main buffer
-                __vk_RendererInitialiser::getResMan().cpyUIDataToBuffer(__vk_RendererInitialiser::getIC().getDev(), 
-                    __vk_RendererInitialiser::getIC().getGpu(), __vk_RendererInitialiser::getDrawCaller().getComPool(),
-                    __vk_RendererInitialiser::getIC().getQFF().graphics_queue, false);
+                rm.cpyUIDataToBuffer(ic.getDev(), 
+                    ic.getGpu(), dc.getComPool(),
+                    ic.getQFF().graphics_queue, false);
             }
 
             // Create descriptor sets for all currently available assets
-            __vk_RendererInitialiser::getDescC().mkAssetDS(__vk_RendererInitialiser::getIC().getDev(), __vk_RendererInitialiser::getResMan().getBD(), 
-                __vk_RendererInitialiser::getResMan().getMissingTextureUUID(), { 0, static_cast<deng_ui32_t>(__vk_RendererInitialiser::m_assets.size()) },
-                __vk_RendererInitialiser::getResMan().getUboChunkSize(), __vk_RendererInitialiser::getIC().getGpuLimits().minUniformBufferOffsetAlignment);
+            desc_c.mkAssetDS(ic.getDev(), rm.getBD(), rm.getMissingTextureUUID(), 
+                             { 0, static_cast<deng_ui32_t>(__vk_RendererInitialiser::m_assets.size()) },
+                             rm.getUboChunkSize(), ic.getGpuLimits().minUniformBufferOffsetAlignment);
 
             // Start recording command buffers
-            __vk_RendererInitialiser::getDrawCaller().setMiscData(__vk_RendererInitialiser::getPipelineC().getPipelines(),
-                __vk_RendererInitialiser::getResMan().getFB());
+            dc.setMiscData(&pipeline_c.getPipelines(), &rm.getFB());
 
             // Allocate memory for commandbuffers
-            __vk_RendererInitialiser::getDrawCaller().allocateCmdBuffers(__vk_RendererInitialiser::getIC().getDev(), 
-                __vk_RendererInitialiser::getIC().getQFF().graphics_queue, __vk_RendererInitialiser::getSCC().getRp(),
-                __vk_RendererInitialiser::getSCC().getExt(), m_config.background, __vk_RendererInitialiser::getResMan().getBD(),
-                __vk_RendererInitialiser::getResMan().getSectionInfo());
+            dc.allocateCmdBuffers(ic.getDev(), m_config.background, rm.getBD(), rm.getSectionInfo()); 
 
             // Record commandbuffers with initial draw commands
-            __vk_RendererInitialiser::getDrawCaller().recordCmdBuffers(__vk_RendererInitialiser::getSCC().getRp(),
-                __vk_RendererInitialiser::getSCC().getExt(), m_config.background, __vk_RendererInitialiser::getResMan().getBD(),
-                __vk_RendererInitialiser::getResMan().getSectionInfo());
+            dc.recordCmdBuffers(scc.getRp(), scc.getExt(ic.getGpu(), ic.getSu()), m_config.background, rm.getBD(), rm.getSectionInfo()); 
 
             // Set the running flag as true
             m_is_init = true;
@@ -454,8 +480,7 @@ namespace deng {
         void __vk_Renderer::idle() {
             if(m_is_init && !m_is_idle) {
                 vkWaitForFences(__vk_RendererInitialiser::getIC().getDev(), static_cast<deng_ui32_t>(__vk_RendererInitialiser::getDrawCaller().flight_fences.size()), 
-                    __vk_RendererInitialiser::getDrawCaller().flight_fences.data(), VK_TRUE, UINT64_MAX);
-
+                                __vk_RendererInitialiser::getDrawCaller().flight_fences.data(), VK_TRUE, UINT64_MAX);
                 m_is_idle = true;
             }
         }

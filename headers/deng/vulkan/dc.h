@@ -50,8 +50,8 @@ namespace deng {
             const std::vector<deng_Id> &m_textures;
             const std::vector<VkDescriptorSet> &m_ui_sets;
             deng::Registry &m_reg;
-            std::vector<VkFramebuffer> m_framebuffers;
-            std::array<__vk_PipelineData, PIPELINE_C> m_pl_data;
+            std::vector<VkFramebuffer> *m_p_framebuffers;
+            std::array<__vk_PipelineData, PIPELINE_C> *m_p_pl_data;
             const __vk_QueueManager &m_qff;
 
             // Commandpools and commandbuffers
@@ -89,15 +89,13 @@ namespace deng {
                 const std::vector<deng_Id> &assets, const std::vector<deng_Id> &textures,
                 const std::vector<VkDescriptorSet> &ui_sets, deng::Registry &reg);
             
-            void setMiscData(const std::array<__vk_PipelineData, PIPELINE_C> &pl_data, 
-                const std::vector<VkFramebuffer> &fb);
+            void setMiscData(std::array<__vk_PipelineData, PIPELINE_C> *pl_data, std::vector<VkFramebuffer> *fb);
 
             void mkCommandPool(VkDevice device);
 
 
             /// Allocate enough memory for command buffers
-            void allocateCmdBuffers(VkDevice device, VkQueue g_queue, VkRenderPass renderpass, 
-                VkExtent2D ext, const dengMath::vec4<deng_vec_t> &background, const __vk_BufferData &bd,
+            void allocateCmdBuffers(VkDevice device, const dengMath::vec4<deng_vec_t> &background, const __vk_BufferData &bd,
                 const deng::BufferSectionInfo &buf_sec);
 
 

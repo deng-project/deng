@@ -66,10 +66,11 @@ namespace deng {
             VkDevice device, 
             VkExtent2D ext,
             VkRenderPass rp, 
-            VkSampleCountFlagBits sample_c
+            VkSampleCountFlagBits sample_c,
+            bool no_layout
         ) {
-            // Create new pipeline layouts
-            __mkPipelineLayouts(device);
+            // Check if new pipeline layouts should be crated
+            if(!no_layout) __mkPipelineLayouts(device);
 
             // Specify the pipiline type and layout
             m_pipelines[UM2D_I].pipeline_type = DENG_PIPELINE_TYPE_UNMAPPED_2D;
@@ -127,6 +128,14 @@ namespace deng {
                 for(size_t i = 0; i < pipelines.size(); i++)
                     m_pipelines[i].pipeline = pipelines[i];
             }
+        }
+
+
+        void __vk_PipelineCreator::remkPipelines(VkDevice device, VkExtent2D ext, VkRenderPass rp, VkSampleCountFlagBits sample_c) {
+            for(size_t i = 0; i < m_pipelines.size(); i++)
+                vkDestroyPipeline(device, m_pipelines[i].pipeline, NULL);
+
+            mkPipelines(device, ext, rp, sample_c, true);
         }
 
 

@@ -4,6 +4,10 @@
 /// author: Karl-Mihkel Ott
 
 
+#ifndef __EV_BASE_H
+#define __EV_BASE_H
+
+
 #ifdef __EV_BASE_CPP
     #include <string>
     #include <string.h>
@@ -17,10 +21,6 @@
     
     #include <deng/camera/3d/cam_bindings.h>
 #endif
-
-
-#ifndef __EV_BASE_H
-#define __EV_BASE_H
 
 
 #define BASE_MAX_VC_X   720

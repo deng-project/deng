@@ -60,7 +60,7 @@ namespace deng {
 
 
     /// Check new editor camera events from IO bindings and perform camera updates
-    void __EditorCameraEv::updateEv (
+   void __EditorCameraEv::updateEv (
         dengMath::vec3<deng_vec_t> origin, 
         dengMath::CameraMatrix *p_vm
     ) {

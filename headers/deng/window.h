@@ -53,7 +53,10 @@ namespace deng {
 
 
         /// Check if virtual cursor mode is enabled
-        deng_bool_t isVCP();
+        const deng_bool_t isVCP();
+
+
+        const deng_bool_t resizeNotify();
 
 
         /// Update window and input devices data
@@ -84,7 +87,7 @@ namespace deng {
     // Getter methods
     public:
         const deng_WindowHint getHints() const;
-        std::string getTitle() const;
+        const std::string getTitle() const;
         dengMath::vec2<deng_i32_t> getSize() const;
         dengMath::vec2<deng_vec_t> getPixelSize() const;
     };

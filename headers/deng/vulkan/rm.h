@@ -71,13 +71,9 @@ namespace deng {
 
         private:
 
-            void __mkFrameBuffers(VkDevice &device, VkRenderPass &renderpass, 
-                VkExtent2D &ext, const std::vector<VkImageView> &sc_img_views);
-
-            void __mkColorResources(VkDevice &device, VkPhysicalDevice &gpu,
-                VkExtent2D &ext, VkFormat sc_color_format);
-
-            void __mkDepthResources(VkDevice &device, VkPhysicalDevice &gpu, VkExtent2D &ext);
+            void __mkFrameBuffers(VkDevice device, VkRenderPass renderpass, VkExtent2D ext, const std::vector<VkImageView> &sc_img_views);
+            void __mkColorResources(VkDevice device, VkPhysicalDevice gpu, VkExtent2D ext, VkFormat sc_color_format);
+            void __mkDepthResources(VkDevice device, VkPhysicalDevice gpu, VkExtent2D ext);
 
             
         public:
@@ -85,6 +81,9 @@ namespace deng {
                 VkRenderPass renderpass, VkCommandPool cmd_pool, VkQueue g_queue, const std::vector<VkImageView> &sc_img_views,
                 deng::Registry &reg, std::vector<deng_Id> &assets, std::vector<deng_Id> &textures, VkFormat sc_color_format,
                 const VkPhysicalDeviceLimits &gpu_limits, void *udata);
+
+            void remkFrameBuffers(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderpass, VkExtent2D ext,
+                                  VkFormat sc_color_format, const std::vector<VkImageView> &sc_img_views);
 
 
         // Getter and setter methods

@@ -38,7 +38,7 @@ namespace deng {
 
     public:
         __Camera3DBase(deng_CameraType type, deng_vec_t fov,
-            const dengMath::vec2<deng_vec_t> &planes, deng_vec_t aspect_ratio);
+                       const dengMath::vec2<deng_vec_t> &planes, deng_vec_t aspect_ratio);
 
 
         /// Following methods are for moving the camera position in its coordinate system
