@@ -34,9 +34,12 @@ symbols and backend API call error checks.
 ### GNU/Linux (tested on Debian 11)
 
 On Debian based distributions you can install following packages that are required for building DENG  
-```md
-$ sudo apt install premake5 libx11-6 libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
 ```
+$ sudo apt install libx11-6 libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
+```
+
+Also you should install premake5 and NOT premake4 as the build configuration does not support legacy premake 
+versions. Link to repository can be found [here](https://github.com/premake/premake-core)
 
 Clone the repository and all of its submodules with following command:  
 `$ git clone --recursive https://github.com/inugami-dev64/deng`
