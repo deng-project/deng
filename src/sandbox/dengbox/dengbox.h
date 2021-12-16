@@ -13,6 +13,7 @@
 	#include <array>
     #include <thread>
     #include <chrono>
+    #include <memory>
     #include <mutex>
     #include <queue>
     #include <vulkan/vulkan.h>
