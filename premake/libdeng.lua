@@ -71,9 +71,9 @@ function libdeng.build()
             "{COPY} src/math/mat2.cpp %{cfg.targetdir}/include/math/mat2.cpp",
             "{COPY} src/math/mat3.cpp %{cfg.targetdir}/include/math/mat3.cpp",
             "{COPY} src/math/mat4.cpp %{cfg.targetdir}/include/math/mat4.cpp",
-            "{COPY} modules/imgui/*.h %{cfg.targetdir}/include",
-            "{COPY} modules/nekowin/include/*.h %{cfg.targetdir}/include",
-            "{COPY} modules/nekowin/include/glad %{cfg.targetdir}/include"
+            "{COPY} deps/imgui/*.h %{cfg.targetdir}/include",
+            "{COPY} deps/nekowin/include/*.h %{cfg.targetdir}/include",
+            "{COPY} deps/nekowin/include/glad %{cfg.targetdir}/include"
         }
 end
 

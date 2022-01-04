@@ -9,13 +9,13 @@ workspace "deng"
     platforms { "Win32", "Linux" }
     includedirs { 
         "./headers",
-        "./modules/imgui",
-        "./modules/glad/include",
-        "./modules/nekowin/include"
+        "./deps/imgui",
+        "./deps/glad/include",
+        "./deps/nekowin/include"
     }
 
 	architecture "x86_64"
-    defines { "ImDrawIdx=unsigned int", "__DENG_LIB_EXPORT" }
+    defines { "__DENG_LIB_EXPORT" }
 	pic "On"
 
 	-- Ignore safety warnings that MSVC gives
@@ -101,12 +101,11 @@ end
 -- Check which modules to build
 function modcheck()
     -- These modules are going to be required so they are built
-    local imgui = require("premake/imgui")
+    local imgui = require("premake/ImGui")
     imgui.build()
 
-    local libneko = require("premake/libneko");
+    local libneko = require("premake/Libneko");
     libneko.build()
-
 end
 
 

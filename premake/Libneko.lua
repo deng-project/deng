@@ -1,24 +1,24 @@
 --- DENG: dynamic engine - powerful 3D game engine
 --- licence: Apache, see LICENCE file
---- file: libneko.lua - libneko build configuration file
+--- file: Libneko.lua - Libneko build configuration file
 --- author: Karl-Mihkel Ott
 
 
-local libneko = {};
+local Libneko = {};
 
-function libneko.build()
+function Libneko.build()
     project "nwin"
         kind "StaticLib"
         language "C"
         cdialect "C99"
 
         files {
-            "modules/nekowin/include/*.h",
-            "modules/nekowin/src/*.c"
+            "deps/nekowin/include/*.h",
+            "deps/nekowin/src/*.c"
         }
 
         filter "platforms:Win32"
-            removefiles { "modules/nekowin/src/x11_window.c" }
+            removefiles { "deps/nekowin/src/x11_window.c" }
             defines { "_CRT_SECURE_NO_WARNINGS" }
             links {
                 "vulkan-1",
@@ -26,7 +26,7 @@ function libneko.build()
             }
 
         filter "platforms:Linux"
-            removefiles { "modules/nekowin/src/win32_window.c" }
+            removefiles { "deps/nekowin/src/win32_window.c" }
             links {
                 "X11",
                 "Xcursor",
@@ -39,4 +39,4 @@ function libneko.build()
         filter {}
 end
 
-return libneko
+return Libneko

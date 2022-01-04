@@ -1,9 +1,9 @@
-[submodule "modules/imgui"]
-	path = modules/imgui
+[submodule "deps/libdas"]
+	path = deps/libdas
+	url = https://git.sadblog.xyz/libdas
+[submodule "deps/nekowin"]
+	path = deps/nekowin
+	url = https://git.sadblog.xyz/nekowin
+[submodule "deps/imgui"]
+	path = deps/imgui
 	url = https://github.com/ocornut/imgui
-[submodule "modules/freetype"]
-	path = modules/freetype
-	url = https://git.savannah.gnu.org/git/freetype/freetype2.git/
-[submodule "modules/nekowin"]
-	path = modules/nekowin
-	url = https://github.com/inugami-dev64/nekowin
