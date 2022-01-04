@@ -192,6 +192,7 @@ namespace deng {
             for(size_t i = 0; i < m_cmd_bufs.size(); i++) {
                 VkCommandBufferBeginInfo cmd_buf_info = {};
                 cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                cmd_buf_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
                 // Begin recording command buffer
                 if(vkBeginCommandBuffer(m_cmd_bufs[i], &cmd_buf_info) != VK_SUCCESS)
@@ -224,11 +225,8 @@ namespace deng {
 
                     // Iterate through every asset, bind resources and issue an index draw to commandbuffer
                     for(size_t j = 0; j < m_assets.size(); j++) {
-                        RegData reg_asset = m_reg.retrieve(m_assets[j], 
-                            DENG_REGISTRY_TYPE_ASSET, NULL);
-
-                        RegData reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id,
-                            DENG_REGISTRY_TYPE_VK_ASSET, NULL);
+                        RegData reg_asset = m_reg.retrieve(m_assets[j], DENG_REGISTRY_TYPE_ASSET, NULL);
+                        RegData reg_vk_asset = m_reg.retrieve(reg_asset.asset.vk_id, DENG_REGISTRY_TYPE_VK_ASSET, NULL);
 
                         if(reg_asset.asset.is_shown) {
                             __bindAssetResources(reg_asset.asset, m_cmd_bufs[i], bd, buf_sec);

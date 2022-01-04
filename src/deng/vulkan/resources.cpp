@@ -459,7 +459,7 @@ namespace deng {
 
 
         /// Finish recording cmd_buf
-        /// This method end cmd_buf recording, submits it into graphics queue
+        /// This method ends cmd_buf recording, submits it into graphics queue
         /// and frees cmd_bufs
         void __vk_CommandBufferRecorder::endCommandBufferSingleCommand (
             VkDevice device, 
