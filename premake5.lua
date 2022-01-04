@@ -85,7 +85,7 @@ function vksdkoptcheck()
         includedirs{ _OPTIONS["vk-sdk-path"] .. "\\Include" }
     elseif os.istarget("windows") then
         libdirs { "C:/VulkanSDK/*/Lib" }
-        includedirs { "C:/VulkanSDK/*/Include" }
+        includedirs { "C:/VulkanSDK/**/Include" }
     end
 end
 
