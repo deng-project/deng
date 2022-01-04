@@ -11,7 +11,7 @@ function ImGui.build()
         kind "StaticLib"
         language "C++"
         defines { "ImDrawIdx=unsigned int" }
-        includedirs { "deps/imgui" }
+        includedirs { "./deps/imgui" }
         files {
             "deps/imgui/imgui.cpp",
             "deps/imgui/imgui_widgets.cpp",

@@ -10,6 +10,7 @@ function OpenGLSandbox.build()
         kind "ConsoleApp"
         language "C++"
         cppdialect "C++14"
+        includedirs{ "./include", "./deps" }
         files {
             "src/sandbox/opengl/opengl_sandbox.h",
             "src/sandbox/opengl/opengl_sandbox.cpp",

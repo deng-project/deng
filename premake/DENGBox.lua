@@ -11,6 +11,7 @@ function DENGBox.build()
         kind "ConsoleApp"
         language "C++"
         cppdialect "C++14"
+        includedirs{ "./include", "./deps" }
         files {
             "src/sandbox/dengbox/dengbox.h",
             "src/sandbox/dengbox/dengbox.cpp"

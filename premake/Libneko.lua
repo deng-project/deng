@@ -11,6 +11,7 @@ function Libneko.build()
         kind "StaticLib"
         language "C"
         cdialect "C99"
+        includedirs{ "./deps/nekowin/include" }
 
         files {
             "deps/nekowin/include/*.h",

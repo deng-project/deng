@@ -15,25 +15,21 @@ function Libdeng.build()
         end
         language "C++"
         cppdialect "C++14"
+        includedirs { "./include", "./deps" }
 
         files {
-            "include/**/*.h",
-            "src/common/*.c",
-            "src/data/*.c",
-            "src/deng/**.cpp",
-            "src/deng/**.c",
-            "src/imgui-layer/ui_manager.cpp",
-            "src/math/camera_mat.cpp",
-            "src/math/conversion.cpp",
-            "src/math/projection_mat.cpp",
-            "src/math/transformer.cpp",
-            "src/utils/*.cpp"
+            -- manually defining each and every single file, grim --
+            "include/*.h",
+            "src/*.c",
+            "src/*.cpp",
+            "src/imgui-layer/ui_manager.cpp"
         }
 
         removefiles { 
-            "src/deng/opengl/test_application/test.cpp",
-            "src/utils/font.cpp",
-            "include/utils/font.h"
+            "src/vec*.cpp",
+            "src/mat*.cpp",
+            "src/font.cpp",
+            "include/font.h"
         }
         removefiles {  }
 
@@ -61,20 +57,6 @@ function Libdeng.build()
             }
 
         filter {}
-
-        postbuildcommands {
-            "{RMDIR} %{cfg.targetdir}/include",
-            "{COPY} include %{cfg.targetdir}/include",
-            "{COPY} src/math/vec2.cpp %{cfg.targetdir}/include/math/vec2.cpp",
-            "{COPY} src/math/vec3.cpp %{cfg.targetdir}/include/math/vec3.cpp",
-            "{COPY} src/math/vec4.cpp %{cfg.targetdir}/include/math/vec4.cpp",
-            "{COPY} src/math/mat2.cpp %{cfg.targetdir}/include/math/mat2.cpp",
-            "{COPY} src/math/mat3.cpp %{cfg.targetdir}/include/math/mat3.cpp",
-            "{COPY} src/math/mat4.cpp %{cfg.targetdir}/include/math/mat4.cpp",
-            "{COPY} deps/imgui/*.h %{cfg.targetdir}/include",
-            "{COPY} deps/nekowin/include/*.h %{cfg.targetdir}/include",
-            "{COPY} deps/nekowin/include/glad %{cfg.targetdir}/include"
-        }
 end
 
 return Libdeng

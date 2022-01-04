@@ -13,6 +13,7 @@ function ImGuiSandbox.build()
         kind "ConsoleApp"
         language "C++"
         cppdialect "C++14"
+        includedirs{ "./include", "./deps" }
 
         files { 
             "src/sandbox/imgui_sandbox/imgui_sandbox.cpp",

@@ -7,11 +7,6 @@ workspace "deng"
     cleancommands { "make clean %{cfg.buildcfg}" }
     configurations { "Debug", "Release" }
     platforms { "Win32", "Linux" }
-    includedirs { 
-        "./include",
-        "./deps/imgui",
-        "./deps/nekowin/include"
-    }
 
 	architecture "x86_64"
     defines { "__DENG_LIB_EXPORT" }

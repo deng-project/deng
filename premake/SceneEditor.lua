@@ -11,10 +11,13 @@ function SceneEditor.build()
         kind "ConsoleApp"
         language "C++"
         cppdialect "C++14"
+        includedirs{ "./include", "./deps" }
 
         files {
-            "headers/imgui-layer/scene_editor/*",
-            "src/imgui-layer/scene_editor/*"
+            "headers/*",
+            "src/sc_ed.cpp",
+            "src/sc_ed_entity_panel.cpp",
+            "src/sc_ed_ui.cpp",
         }
 
         links { "deng", "imgui" }
