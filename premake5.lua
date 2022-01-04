@@ -8,9 +8,8 @@ workspace "deng"
     configurations { "Debug", "Release" }
     platforms { "Win32", "Linux" }
     includedirs { 
-        "./headers",
+        "./include",
         "./deps/imgui",
-        "./deps/glad/include",
         "./deps/nekowin/include"
     }
 
@@ -115,23 +114,23 @@ function buildcfg()
 
         -- Sandbox application build configuration
         if _OPTIONS["sandbox-mode"] == "deng" or _OPTIONS["sandbox-mode"] == "all" then
-            local dengbox = require("premake/dengbox")
-            dengbox.build()
+            local DENGBox = require("premake/DENGBox")
+            DENGBox.build()
         end
 
         if _OPTIONS["sandbox-mode"] == "imgui" or _OPTIONS["sandbox-mode"] == "all" then
-            local imgui_sandbox = require("premake/imgui_sandbox")
+            local imgui_sandbox = require("premake/ImGuiSandbox")
             imgui_sandbox.build()
         end
 
         if _OPTIONS["sandbox-mode"] == "opengl" or _OPTIONS["sandbox-mode"] == "all" then
-            local opengl_sandbox = require("premake/opengl_sandbox")
+            local opengl_sandbox = require("premake/OpenGLSandbox")
             opengl_sandbox.build()
         end
     end
 
     -- Build DENG runtime library
-    local libdeng = require("premake/libdeng")
+    local libdeng = require("premake/Libdeng")
     libdeng.build()
 
     --- Filters for libdeng build regarding sandbox application builds
@@ -156,8 +155,8 @@ function buildcfg()
     dam.build()
 
     -- Build DENG scene editor
-    local scene_ed = require("premake/scene_ed")
-    scene_ed.build()
+    local scene_editor = require("premake/SceneEditor")
+    scene_editor.build()
 end
 
 

@@ -1,15 +1,15 @@
 --- DENG: dynamic engine - powerful 3D game engine
 --- licence: Apache, see LICENCE file
---- file: imgui_sandbox.lua - imgui_sandbox application build configuration
+--- file: ImGuiSandbox.lua - ImGui sandbox application build configuration
 --- author: Karl-Mihkel Ott
 
 
-local imgui_sandbox = {}
+local ImGuiSandbox = {}
 
 
 -- Build ImGui sandbox application
-function imgui_sandbox.build()
-    project "imgui_sandbox"
+function ImGuiSandbox.build()
+    project "ImGuiSandbox"
         kind "ConsoleApp"
         language "C++"
         cppdialect "C++14"
@@ -22,4 +22,4 @@ function imgui_sandbox.build()
 end
 
 
-return imgui_sandbox
+return ImGuiSandbox

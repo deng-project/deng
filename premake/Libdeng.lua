@@ -1,12 +1,12 @@
 --- DENG: dynamic engine - powerful 3D game engine
 --- licence: Apache, see LICENCE file
---- file: libdeng.lua - libdeng build configuration file
+--- file: Libdeng.lua - Libdeng build configuration file
 --- author: Karl-Mihkel Ott
 
-local libdeng = {}
+local Libdeng = {}
 
 -- Build libdeng library
-function libdeng.build()
+function Libdeng.build()
     project "deng"
         if os.istarget("windows") then
             kind "StaticLib"
@@ -17,7 +17,7 @@ function libdeng.build()
         cppdialect "C++14"
 
         files {
-            "headers/**/*.h",
+            "include/**/*.h",
             "src/common/*.c",
             "src/data/*.c",
             "src/deng/**.cpp",
@@ -33,7 +33,7 @@ function libdeng.build()
         removefiles { 
             "src/deng/opengl/test_application/test.cpp",
             "src/utils/font.cpp",
-            "headers/utils/font.h"
+            "include/utils/font.h"
         }
         removefiles {  }
 
@@ -64,7 +64,7 @@ function libdeng.build()
 
         postbuildcommands {
             "{RMDIR} %{cfg.targetdir}/include",
-            "{COPY} headers %{cfg.targetdir}/include",
+            "{COPY} include %{cfg.targetdir}/include",
             "{COPY} src/math/vec2.cpp %{cfg.targetdir}/include/math/vec2.cpp",
             "{COPY} src/math/vec3.cpp %{cfg.targetdir}/include/math/vec3.cpp",
             "{COPY} src/math/vec4.cpp %{cfg.targetdir}/include/math/vec4.cpp",
@@ -77,4 +77,4 @@ function libdeng.build()
         }
 end
 
-return libdeng
+return Libdeng
