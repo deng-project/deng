@@ -15,7 +15,7 @@ function Libdeng.build()
         end
         language "C++"
         cppdialect "C++14"
-        includedirs { "./include", "./deps" }
+        includedirs { "./include", "./deps", "./deps/nekowin/include/third_party" }
 
         files {
             -- manually defining each and every single file, grim --

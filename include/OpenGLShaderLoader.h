@@ -11,7 +11,7 @@
     #include <array>
     #include <vector>
     #include <fstream>
-    #include <nekowin/include/glad/glad.h>
+    #include <glad/glad.h>
 
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>

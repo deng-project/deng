@@ -54,7 +54,7 @@ int main() {
     renderer.UpdateVertexBuffer(vertices);
     renderer.UpdateIndexBuffer(iv);
 
-    DENG::MeshReference mesh = { .name = "Mesh", .indices_count = 3 };
+    DENG::MeshReference mesh = { "Mesh", 0, 0, 3, 0 };
     renderer.PushMeshReference(mesh);
 
     // main run loop

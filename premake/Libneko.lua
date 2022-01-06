@@ -11,7 +11,7 @@ function Libneko.build()
         kind "StaticLib"
         language "C"
         cdialect "C99"
-        includedirs{ "./deps/nekowin/include" }
+        includedirs{ "./deps/nekowin/include", "./deps/nekowin/include/third_party" }
 
         files {
             "deps/nekowin/include/*.h",
@@ -21,6 +21,8 @@ function Libneko.build()
         filter "platforms:Win32"
             removefiles { "deps/nekowin/src/x11_window.c" }
             defines { "_CRT_SECURE_NO_WARNINGS" }
+            libdirs { "C:/VulkanSDK/**/Lib" }
+            includedirs { "C:/VulkanSDK/**/Include" }
             links {
                 "vulkan-1",
                 "gdi32"

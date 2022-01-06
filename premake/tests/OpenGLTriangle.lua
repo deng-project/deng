@@ -11,9 +11,10 @@ function OpenGLTriangle.build()
         language "C++"
         cppdialect "C++17"
 
-        includedirs { "include", "deps" }
+        includedirs { "include", "deps", "./deps/nekowin/include/third_party" }
 
         files {
+            "include/*.h",
             "src/OpenGLBufferLoader.cpp",
             "src/OpenGLShaderLoader.cpp",
             "src/OpenGLRenderer.cpp",
@@ -25,6 +26,9 @@ function OpenGLTriangle.build()
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }
+        filter "platforms:Win32"
+            libdirs { "C:/VulkanSDK/**/Lib" }
+            includedirs { "C:/VulkanSDK/**/Include" }
 end
 
 return OpenGLTriangle

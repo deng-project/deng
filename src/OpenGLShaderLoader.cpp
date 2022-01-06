@@ -37,7 +37,7 @@ namespace DENG {
             std::vector<char> data(len);
             file.read(data.data(), len);
 
-            if(!file.good()) {
+            if(file.bad()) {
                 if(_type == VERTEX) FILE_ERR(m_shader_files[_id].first);
                 else FILE_ERR(m_shader_files[_id].second);
             }

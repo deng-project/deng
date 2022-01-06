@@ -9,7 +9,7 @@
 #ifdef OPENGL_BUFFER_LOADER_CPP
     #include <cstdint>
 
-    #include <nekowin/include/glad/glad.h>
+    #include <glad/glad.h>
     #include <ErrorDefinitions.h>
 #define DEBUG_ONLY
     #include <OpenGLRenderer.h>
