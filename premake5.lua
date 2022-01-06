@@ -9,7 +9,6 @@ workspace "deng"
     platforms { "Win32", "Linux" }
 
 	architecture "x86_64"
-    defines { "__DENG_LIB_EXPORT" }
 	pic "On"
 
 	-- Ignore safety warnings that MSVC gives
@@ -21,7 +20,7 @@ workspace "deng"
         symbols "On"
         optimize "Debug"
         targetdir "build/debug"
-        defines { "__DEBUG" }
+        defines { "_DEBUG" }
 
     filter "configurations:Release"
         symbols "Off"
@@ -31,23 +30,27 @@ workspace "deng"
     filter {}
 
 --!!! Add new options to use !!!--
--- Create an option to build DENG sandboxapp using specific sandbox configuration
 newoption {
-    trigger = "sandbox-mode",
-    value = "MODE",
-    description = "Select sandbox application mode",
+    trigger = "tests",
+    value = "<TEST-NAME>",
+    description = "Choose tests to build",
+    default = "none",
     allowed = {
-        { "deng", "Build an application for testing the renderer by loading assets" },
-        { "imgui", "Build an application for testing ImGui with DENG renderer" },
-        { "opengl", "Build a test application for testing OpenGL functionality" },
-        { "all", "Build all sandbox applications" },
-        { "none", "Do not build any sandbox applications" }
+        { "OpenGLTriangle", "Build OpenGL triangle test application" },
+        { "all", "Build all available tests" },
+        { "none", "Do not build any test application (use only with legacy build)" }
     }
 }
 
 
+newoption {
+    trigger = "legacy",
+    description = "Build legacy DENG with bunch of spaghetti code"
+}
+
+
 -- Check if given operating system is even supported
-function oscheck() 
+function OsCheck() 
     if(not os.istarget("linux") and not os.istarget("windows")) then
         local host = os.target()
         host = host:gsub("%a", string.upper, 1)
@@ -58,7 +61,7 @@ end
 
 
 -- Define the clean action 
-function cleanoptcheck()
+function CheckForCleaning()
     if _ACTION == "clean" then
         print("Cleaning project files")
         if(os.host() == "linux") then
@@ -72,93 +75,36 @@ function cleanoptcheck()
 end
 
 
--- Check for the SDK path to be used in correct situation
-function vksdkoptcheck()
-    -- Check if Vulkan SDK path should be and if it is specified
-    if os.istarget("windows") and _OPTIONS["vk-sdk-path"] then
-        libdirs { _OPTIONS["vk-sdk-path"] .. "\\Lib" }
-        includedirs{ _OPTIONS["vk-sdk-path"] .. "\\Include" }
-    elseif os.istarget("windows") then
-        libdirs { "C:/VulkanSDK/*/Lib" }
-        includedirs { "C:/VulkanSDK/**/Include" }
-    end
-end
-
-
--- Check if given options are valid
-function optcheck()
-    cleanoptcheck()
-    vksdkoptcheck()
-end
-
-
 -- Check which modules to build
-function modcheck()
-    -- These modules are going to be required so they are built
-    local imgui = require("premake/ImGui")
-    imgui.build()
-
+function LoadModuleConfs()
     local libneko = require("premake/Libneko");
     libneko.build()
+
+    local libdas = require("premake/Libdas")
+    libdas.build()
 end
 
 
 -- Setup build destinations
-function buildcfg()
-    if _OPTIONS["sandbox-mode"] then
-
-        -- Sandbox application build configuration
-        if _OPTIONS["sandbox-mode"] == "deng" or _OPTIONS["sandbox-mode"] == "all" then
-            local DENGBox = require("premake/DENGBox")
-            DENGBox.build()
-        end
-
-        if _OPTIONS["sandbox-mode"] == "imgui" or _OPTIONS["sandbox-mode"] == "all" then
-            local imgui_sandbox = require("premake/ImGuiSandbox")
-            imgui_sandbox.build()
-        end
-
-        if _OPTIONS["sandbox-mode"] == "opengl" or _OPTIONS["sandbox-mode"] == "all" then
-            local opengl_sandbox = require("premake/OpenGLSandbox")
-            opengl_sandbox.build()
-        end
+function LoadTestConfs()
+    if _OPTIONS["tests"] == "all" or _OPTIONS["tests"] == "OpenGLTriangle" then
+        local triangle = require("premake/tests/OpenGLTriangle")
+        triangle.build()
     end
 
-    -- Build DENG runtime library
-    local libdeng = require("premake/Libdeng")
-    libdeng.build()
-
-    --- Filters for libdeng build regarding sandbox application builds
-    filter "options:sandbox-mode=all or options:sandbox-mode=imgui or options:sandbox-mode=opengl or options:sandbox-mode=deng"
+    if _OPTIONS["tests"] then
         postbuildcommands {
-            "{RMDIR} %{cfg.targetdir}/assets",
-            "{COPYDIR} assets %{cfg.targetdir}/assets",
             "{RMDIR} %{cfg.targetdir}/shaders",
             "{COPYDIR} shaders %{cfg.targetdir}/shaders",
-            "{RMDIR} %{cfg.targetdir}/textures",
-            "{COPYDIR} textures %{cfg.targetdir}/textures"
         }
-
-    filter "options:sandbox-mode=none"
-        postbuildcommands {
-            "{RMDIR} %{cfg.targetdir}/shaders",
-            "{COPYDIR} shaders %{cfg.targetdir}/shaders"
-        }
-
-    -- Build DENG asset manager application
-    local dam = require("premake/dam")
-    dam.build()
-
-    -- Build DENG scene editor
-    local scene_editor = require("premake/SceneEditor")
-    scene_editor.build()
+    end
 end
 
 
 -- Script entry point, check if not help
 if not _OPTIONS["help"] then
-    oscheck()
-    optcheck()
-    modcheck()
-    buildcfg()
+    OsCheck()
+    CheckForCleaning()
+    LoadModuleConfs()
+    LoadTestConfs()
 end

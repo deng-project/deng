@@ -9,6 +9,8 @@
 *.log
 normalising.txt
 compile_commands.json
+compile_flags.txt
+legacy/
 x64/
 website/
 Makefile

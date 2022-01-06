@@ -1,7 +1,7 @@
-/// DENG: dynamic engine - small but powerful 2D and 3D game engine
-/// licence: Apache, see LICENCE file
-/// file: CameraMatrix.h - camera matrix class header
-/// author: Karl-Mihkel Ott
+// DENG: dynamic engine - small but powerful 2D and 3D game engine
+// licence: Apache, see LICENCE file
+// file: CameraMatrix.h - camera matrix class header
+// author: Karl-Mihkel Ott
 
 
 #ifndef CAMERA_MATRIX_H
@@ -14,108 +14,82 @@
     #include <string.h>
     #include <cmath>
 
-    #include <base_types.h>
-    #include <err_def.h>
-    #include <assets.h>
-    #include <vec2.h>
-    #include <vec3.h>
-    #include <vec4.h>
-    #include <mat3.h>
-    #include <mat4.h>
+    #include <BaseTypes.h>
+    #include <libdas/include/Points.h>
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
+    #include <libdas/include/Quaternion.h>
     
-    #define __DENG_CAMERA_RIGHT     vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
-    #define __DENG_CAMERA_UP        vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
-    #define __DENG_CAMERA_FORWARD   vec4<deng_vec_t>{0.0f, 0.0f, -1.0f, 0.0f};
+    #define CAMERA_RIGHT     Libdas::Vector4<float>(1.0f, 0.0f, 0.0f, 0.0f);
+    #define CAMERA_UP        Libdas::Vector4<float>(0.0f, 1.0f, 0.0f, 0.0f);
+    #define CAMERA_FORWARD   Libdas::Vector4<float>{0.0f, 0.0f, -1.0f, 0.0f};
 #endif
 
 
-namespace dengMath {
+namespace DENG {
 
     class CameraMatrix {
     private:
-        vec4<deng_vec_t> m_camera_pos;
-        mat4<deng_vec_t> m_camera_mat;
+        Libdas::Vector4<float> m_camera_pos;
+        Libdas::Matrix4<float> m_camera_mat;
 
-        deng_vec_t m_x_rot;
-        deng_vec_t m_y_rot;
+        float m_x_rot;
+        float m_y_rot;
 
-        vec4<deng_vec_t> m_rs = vec4<deng_vec_t>(1.0f, 0.0f, 0.0f, 0.0f);
-        vec4<deng_vec_t> m_ts = vec4<deng_vec_t>(0.0f, 1.0f, 0.0f, 0.0f);
-        vec4<deng_vec_t> m_fs = vec4<deng_vec_t>{0.0f, 0.0f, -1.0f, 0.0f};
+        Libdas::Vector4<float> m_rs = Libdas::Vector4<float>(1.0f, 0.0f, 0.0f, 0.0f);
+        Libdas::Vector4<float> m_ts = Libdas::Vector4<float>(0.0f, 1.0f, 0.0f, 0.0f);
+        Libdas::Vector4<float> m_fs = Libdas::Vector4<float>{0.0f, 0.0f, -1.0f, 0.0f};
 
         // Camera coordinate specific rotation matrices
-        mat4<deng_vec_t> m_rot_x_mat;
-        mat4<deng_vec_t> m_rot_y_mat;
+        Libdas::Quaternion m_x_quaternion;
+        Libdas::Quaternion m_y_quaternion;
 
     public:
-        CameraMatrix(deng_CameraType type);
+        CameraMatrix(CameraType type);
 
-        
-        /* 
-         * Force set camera position to a new one
-         */
-        void setCameraPosition(const vec3<deng_vec_t> &camera_pos);
+        /// Move camera by one movement step
+        void MoveCamera(const Libdas::Vector3<float> &mov_speed, bool is_world, bool ignore_pitch, const CoordinateAxisType &movement_type);
 
 
-        /*
-         * Move camera by one movement step
-         */
-        void moveCamera (
-            const vec3<deng_vec_t> &mov_speed, 
-            deng_bool_t is_world,
-            deng_bool_t ignore_pitch,
-            const deng_CoordinateAxisType &movement_type
-        );
+        /// Create transformation matrix for camera system based on previously submitted values
+        void CameraTransform(bool is_world_origin);
 
-
-        /*
-         * Set new rotation for the camera relative to the its coordinate system
-         */
-        void setCameraRotation (
-            deng_vec_t x_rot, 
-            deng_vec_t y_rot
-        );
-
-
-        /*
-         * Set new rotation for the camera relative to its origin point in world coordinates
-         */
-        void setOriginRotation (
-            dengMath::vec3<deng_vec_t> point,
-            deng_vec_t x_rot,
-            deng_vec_t y_rot
-        );
-
-
-        /*
-         * Create transformation matrix for camera system based
-         * on previously submitted values
-         */
-        void camTransform(deng_bool_t is_world_origin);
-
-    // Getter methods
+    // Inlined methods
     public: 
+        /// Force set camera position to a new one
+        inline void SetCameraPosition(const Libdas::Vector4<float> &camera_pos) {
+            m_camera_pos = camera_pos;
+        }
+
+        /// Set new rotation for the camera relative to the its coordinate system
+        inline void SetCameraRotation(float x_rot, float y_rot) {
+            m_x_rot = x_rot;
+            m_y_rot = y_rot;
+
+            m_x_quaternion = Libdas::Quaternion(sinf(x_rot / 2), 0, 0, cosf(x_rot / 2));
+            m_y_quaternion = Libdas::Quaternion(0, sinf(y_rot / 2), 0, cosf(y_rot / 2));
+        }
+
+
+        /// Set new rotation for the camera relative to its origin point in world coordinates
+        inline void SetOriginRotation(Libdas::Point3D<float> point, float x_rot, float y_rot);
         
-        /*
-         * Get the transformation matrix
-         */
-        mat4<deng_vec_t> getTransformMat();
+        /// Get the transformation matrix
+        inline Libdas::Matrix4<float> GetTransformMatrix() {
+            return m_camera_mat.Transpose();
+        }
 
 
-        /*
-         * Get the current position of the camera
-         */
-        vec4<deng_vec_t> getPosition();
+        /// Get the current position of the camera
+        inline Libdas::Vector4<float> GetPosition() {
+            return m_camera_pos;
+        }
 
         
-        /*
-         * Get current camera sides' coordinates
-         */
-        void getSides (
-            vec4<deng_vec_t> *p_u,
-            vec4<deng_vec_t> *p_v,
-            vec4<deng_vec_t> *p_w
-        );
+        /// Get current camera sides' coordinates in RTF matrix representation
+        inline void GetSides() {
+            return Libdas::Matrix3<float> { m_rs, m_ts, m_fs };
+        }
     };
 }
 

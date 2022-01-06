@@ -12,14 +12,13 @@
     #include <string>
     #include <string.h>
     #include <vulkan/vulkan.h>
-    #include <common/base_types.h>
-    #include <common/err_def.h>
 
-    #include <data/assets.h>
-    #include <math/deng_math.h>
-    #include <deng/window.h>
-    
-    #include <deng/camera/3d/cam_bindings.h>
+    #include <BaseTypes.h>
+    #include <ErrorDefinitions.h>
+
+    #include <libdas/include/Points.h>
+    #include <Window.h>
+    #include <CameraControlBindings.h>
 #endif
 
 
@@ -29,33 +28,35 @@
 
 namespace DENG {
 
-    class Camera3DEvent3DBase {
+    class Camera3DEventBase {
     protected:
-        Window *m_p_win = NULL;
-        dengMath::vec2<deng_px_t> m_mouse_pos = dengMath::vec2<deng_px_t>(0, 0);
-        dengMath::vec2<neko_VCPOverflowAction> m_vcp_overflow;
-        dengMath::vec2<dengMath::vec2<deng_i64_t>> m_vc_bounds;
-        dengMath::vec2<deng_f64_t> m_max_rot;
-        Camera3DBindings m_bindings;
+        Window *m_p_win = nullptr;
+        Libdas::Point2D<uint64_t> m_mouse_pos = Libdas::Point2D<uint64_t>(0, 0);
+        Libdas::Point2D<neko_VCPOverflowAction> m_vcp_overflow;
+        Libdas::Point2D<Libdas::Point2D<int64_t>> m_vc_bounds;
+        Libdas::Point2D<double> m_max_rot;
+        CameraControlBindings m_bindings;
 
     protected:
 
         /// Camera mouse position update method 
-        void __updateCameraMousePos();
+        inline void _UpdateCameraMousePos() {
+            m_mouse_pos = m_p_win->GetMousePosition();
+        }
 
 
         /// Find the current mouse control rotation 
-        dengMath::vec2<deng_f64_t> __getMouseRotation();
+        Libdas::Point2D<double> _GetMouseRotation();
 
 
         /// Check if input input conditions are satified for certain action
-        deng_bool_t __checkInputAction(deng_CameraAction action);
+        bool _CheckInputAction(CameraAction action);
 
     public:
-        __Event3DBase (
-            const dengMath::vec2<neko_VCPOverflowAction> &vcp_act,
-            const dengMath::vec2<dengMath::vec2<deng_px_t>> &vc_bounds,
-            const dengMath::vec2<deng_f64_t> &max_rot,
+        Camera3DEventBase (
+            const Libdas::Point2D<neko_VCPOverflowAction> &vcp_act,
+            const Libdas::Point2D<Libdas::Point2D<int64_t>> &vc_bounds,
+            const Libdas::Point2D<double> &max_rot,
             Window *p_win
         );
     };

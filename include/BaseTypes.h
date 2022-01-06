@@ -5,6 +5,7 @@
 
 #ifndef BASE_TYPES_H
 #define BASE_TYPES_H
+
 #include <cstdint>
 
 #define PI 3.14159
@@ -58,7 +59,7 @@ typedef uint16_t RendererHintBits;
 
 
 /// Hints for controlling window creation
-typedef neko_Hint DENG::WindowHint;
+#define WindowHint neko_Hint
 #define DENG_WINDOW_HINT_API_OPENGL         NEKO_HINT_API_OPENGL
 #define DENG_WINDOW_HINT_API_VULKAN         NEKO_HINT_API_VULKAN
 #define DENG_WINDOW_HINT_FULL_SCREEN        NEKO_HINT_FULL_SCREEN
@@ -67,7 +68,7 @@ typedef neko_Hint DENG::WindowHint;
 
 
 /// Definitions for mouse cursors
-#typedef neko_CursorMode DENG::CursorMode;
+#define CursorMode neko_CursorMode
 #define DENG_CURSOR_MODE_STANDARD       NEKO_CURSOR_MODE_STANDARD
 #define DENG_CURSOR_MODE_HIDDEN         NEKO_CURSOR_MODE_HIDDEN
 #define DENG_CURSOR_MODE_POINTER        NEKO_CURSOR_MODE_POINTER
@@ -85,11 +86,11 @@ namespace DENG {
         DENG_COORD_AXIS_Z           = 2,
         DENG_COORD_AXIS_FIRST       = DENG_COORD_AXIS_UNDEFINED,
         DENG_COORD_AXIS_LAST        = DENG_COORD_AXIS_Z
-    } deng_CoordinateAxisType;
+    } CoordinateAxisType;
 
 
     /// Movement mode specifier 
-    typedef enum deng_MovementEvent {
+    typedef enum MovementEvent {
         DENG_MOVEMENT_NONE          = -1,
         DENG_MOVEMENT_FORWARD       = 0,
         DENG_MOVEMENT_BACKWARD      = 1,
@@ -99,11 +100,11 @@ namespace DENG {
         DENG_MOVEMENT_DOWNWARD      = 5,
         DENG_MOVEMENT_FIRST         = DENG_MOVEMENT_NONE,
         DENG_MOVEMENT_LAST          = DENG_MOVEMENT_DOWNWARD
-    } deng_MovementEvent;
+    } MovementEvent;
 
 
     /// Pipeline type specifier 
-    typedef enum deng_PipelineType {
+    typedef enum PipelineType {
         DENG_PIPELINE_TYPE_UNKNOWN                  = -1,
         DENG_PIPELINE_TYPE_UNMAPPED_3D              =  0,
         DENG_PIPELINE_TYPE_TEXTURE_MAPPED_3D        =  1,
@@ -112,82 +113,82 @@ namespace DENG {
         DENG_PIPELINE_TYPE_UI                       =  4,
         DENG_PIPELINE_TYPE_FIRST                    =  DENG_PIPELINE_TYPE_UNKNOWN,
         DENG_PIPELINE_TYPE_LAST                     =  DENG_PIPELINE_TYPE_UI
-    } deng_PipelineType;
+    } PipelineType;
 
 
     /// Renderer usage mode 
-    typedef enum deng_RendererUsageMode {
+    typedef enum RendererUsageMode {
         DENG_RENDERER_USAGE_ASSET_EDITOR    = 0,
         DENG_RENDERER_USAGE_MAP_EDITOR      = 1,
         DENG_RENDERER_USAGE_GAME_MODE       = 2,
         DENG_RENDERER_USAGE_FIRST           = DENG_RENDERER_USAGE_ASSET_EDITOR,
         DENG_RENDERER_USAGE_LAST            = DENG_RENDERER_USAGE_GAME_MODE
-    } deng_RendererUsageMode;
+    } RendererUsageMode;
 
 
     /// Camera type specifier 
-    typedef enum deng_CameraType {
+    typedef enum CameraType {
         DENG_CAMERA_TYPE_FPP        = 0,
         DENG_CAMERA_TYPE_EDITOR     = 1,
         DENG_CAMERA_TYPE_FIRST      = 0,
         DENG_CAMERA_TYPE_LAST       = 1,
-    } deng_CameraType;
+    } CameraType;
 
 
     /// Editor camera event specifier 
-    typedef enum deng_EditorCameraEvent {
+    typedef enum EditorCameraEvent {
         DENG_EDITOR_CAMERA_EVENT_NONE               = -1,
         DENG_EDITOR_CAMERA_EVENT_Z_MOV_IN           = 0,
         DENG_EDITOR_CAMERA_EVENT_Z_MOV_OUT          = 1,
         DENG_EDITOR_CAMERA_EVENT_MOUSE_ROTATE       = 2,
         DENG_EDITOR_CAMERA_EVENT_FIRST              = -1,
         DENG_EDITOR_CAMERA_EVENT_LAST               = 2
-    } deng_EditorCameraEvent;
+    } EditorCameraEvent;
 
 
     /// Specify input device type for action lookup
-    typedef enum deng_InputType {
+    typedef enum InputType {
         DENG_INPUT_TYPE_MOUSE   = 0,
         DENG_INPUT_TYPE_KB      = 1,
         DENG_INPUT_TYPE_FIRST   = 0,
         DENG_INPUT_TYPE_LAST    = 1
 
-    } deng_InputType;
+    } InputType;
 
 
     /// Light source type specifier enum
-    typedef enum deng_LightSrcType {
+    typedef enum LightSrcType {
         DENG_LIGHT_SRC_TYPE_PT      = 0,
         DENG_LIGHT_SRC_TYPE_SUN     = 1,
         DENG_LIGHT_SRC_TYPE_DIR     = 2,
 
         DENG_LIGHT_SRC_TYPE_FIRST   = DENG_LIGHT_SRC_TYPE_PT,
         DENG_LIGHT_SRC_TYPE_LAST    = DENG_LIGHT_SRC_TYPE_DIR
-    } deng_LightSrcType;
+    } LightSrcType;
 
 
     /// Specify input event type for lookup
-    typedef enum deng_InputEventType {
+    typedef enum InputEventType {
         DENG_INPUT_EVENT_TYPE_ACTIVE    = 0,
         DENG_INPUT_EVENT_TYPE_RELEASED  = 1,
         DENG_INPUT_EVENT_TYPE_FIRST     = 0,
         DENG_INPUT_EVENT_TYPE_LAST      = 1
-    } deng_InputEventType;
+    } InputEventType;
 
 
     /// Specify what should happen if virtual cursor achieves 
     /// its maximum or minimum position 
-    typedef enum deng_VCPOverflowAction {
+    typedef enum VCPOverflowAction {
         DENG_VCP_OVERFLOW_ACTION_TO_OPPOSITE_POSITION   = 0,
         DENG_VCP_OVERFLOW_ACTION_BLOCK_POSITION         = 1,
         DENG_VCP_OVERFLOW_ACTION_NONE                   = 2,
         DENG_VCP_OVERFLOW_FIRST                         = DENG_VCP_OVERFLOW_ACTION_TO_OPPOSITE_POSITION,
         DENG_VCP_OVERFLOW_LAST                          = DENG_VCP_OVERFLOW_ACTION_BLOCK_POSITION
-    } deng_VCPOverflowAction;
+    } VCPOverflowAction;
 
 
     /// Camera action specifier enum
-    typedef enum deng_CameraAction {
+    typedef enum CameraAction {
         DENG_CAMERA_ACTION_MOV_U        = 0,
         DENG_CAMERA_ACTION_MOV_NU       = 1,
         DENG_CAMERA_ACTION_MOV_V        = 2,
@@ -221,7 +222,7 @@ namespace DENG {
 
         DENG_CAMERA_ACTION_FIRST        = DENG_CAMERA_ACTION_MOV_U,
         DENG_CAMERA_ACTION_LAST         = DENG_CAMERA_ACTION_CHANGE_MM,
-    } deng_CameraAction;
+    } CameraAction;
 }
 
 

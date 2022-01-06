@@ -1,22 +1,20 @@
-/// DENG: dynamic engine - small but powerful 3D game engine
-/// licence: Apache, see LICENCE file
-/// file: Window.h - Nekowin library abstraction class header for DENG
-/// author: Karl-Mihkel Ott
+// DENG: dynamic engine - small but powerful 3D game engine
+// licence: Apache, see LICENCE file
+// file: Window.h - Nekowin library abstraction class header for DENG
+// author: Karl-Mihkel Ott
 
 #ifndef WINDOW_H
 #define WINDOW_H
 
 #ifdef WINDOW_CPP
-    #include <stdlib.h>
+    #include <cstdint>
     #include <vector>
     #include <string>
-    #include <string.h>
+    #include <vulkan/vulkan.h>
 
-    #include <base_types.h>
-    #include <err_def.h>
-    #include <assets.h>
-    #include <deng_math.h>
 #endif
+
+#include <nekowin/include/nwin.h>
 
 #define NOMINMAX
 #define deng_LoadGL             neko_LoadGL
@@ -26,7 +24,11 @@
 #define deng_CreateInputMask    neko_CreateInputMask
 typedef neko_Window deng_Window;
 
-#include <nekowin/include/nwin.h>
+#ifdef WINDOW_CPP
+    #include <BaseTypes.h>
+    #include <ErrorDefinitions.h>
+    #include <libdas/include/Points.h>
+#endif
 
 
 namespace DENG {   
@@ -34,63 +36,91 @@ namespace DENG {
     class Window {
     private:
         neko_Window m_surface;
-        DENG::vec2<deng_px_t> m_prev_vc_pos;
+        Libdas::Point2D<uint64_t> m_prev_vc_pos;
 
     public:
-        Window(deng_i32_t width, deng_i32_t height, deng_WindowHint win_hints, const char *title);
+        Window(int32_t width, int32_t height, WindowHint hints, const char *title);
         ~Window();
 
 
         /// Toggle virtual cursor mode
-        void toggleVCMode();
-
-
-        /// Explicitly change virtual cursor mode
-        void changeVCMode(const deng_bool_t is_vcp);
-
-
-        /// Change DENG cursor mode
-        void changeCursor(deng_CursorMode cur);
-
-
-        /// Check if virtual cursor mode is enabled
-        const deng_bool_t isVCP();
-
-
-        const deng_bool_t resizeNotify();
-
-
-        /// Update window and input devices data
-        void update();
-
-
-        /// Check if the current window is still active and running
-        const bool isRunning();
-
-
-        /// Create new vulkan surface instance
-        VkResult initVkSurface(VkInstance &instance,
-            VkSurfaceKHR &surface);
+        void ToggleVCMode();
 
 
         /// Search for all required vulkan extensions
-        char **findVulkanSurfaceExtensions(size_t *p_ext_c, deng_bool_t enable_vl);
+        char **FindVulkanSurfaceExtensions(size_t *p_ext_c, bool enable_vl);
 
 
         /// Get the current mouse position
-        dengMath::vec2<deng_px_t> getMPos() const;
+        Libdas::Point2D<uint64_t> GetMousePosition() const;
 
 
         /// Get the mouse delta compared to previous frame mouse position
-        dengMath::vec2<deng_px_t> getMDelta() const;
+        Libdas::Point2D<uint64_t> GetMouseDelta() const;
 
 
-    // Getter methods
+    // inlined methods
     public:
-        const deng_WindowHint getHints() const;
-        const std::string getTitle() const;
-        dengMath::vec2<deng_i32_t> getSize() const;
-        dengMath::vec2<deng_vec_t> getPixelSize() const;
+        /// Explicitly change virtual cursor mode
+        inline void ChangeVCMode(const bool is_vcp) {
+            neko_ChangeVCMode(is_vcp, m_surface);
+        }
+
+        /// Change DENG cursor mode
+        inline void ChangeCursor(CursorMode cur) {
+            neko_SetMouseCursorMode(m_surface, cur);
+        }
+
+        /// Update window and input devices data
+        inline void Update() {
+            neko_UpdateWindow(m_surface);
+        }
+
+        /// Close the current window
+        inline void CloseWindow() {
+        }
+
+        /// Check if the current window is still active and running
+        inline const bool IsRunning() {
+            return neko_IsRunning(m_surface);
+        }
+
+        /// Check if virtual cursor mode is enabled
+        inline const bool IsVirtualCursor() {
+            return neko_IsVCMode(m_surface);
+        }
+
+        inline const bool IsResized() {
+            return neko_ResizeNotify(m_surface);
+        }
+
+        /// Create new vulkan surface instance
+        inline VkResult InitVkSurface(VkInstance &instance, VkSurfaceKHR &surface) {
+            return neko_InitVKSurface(m_surface, instance, &surface);
+        }
+
+
+        inline const WindowHint GetHints() const {
+            neko_Hint hints;
+            neko_GetWindowHints(m_surface, &hints);
+            return hints;
+        }
+
+        inline const std::string GetTitle() const {
+            return std::string(neko_GetTitle(m_surface));
+        }
+
+        inline Libdas::Point2D<int32_t> GetSize() const {
+            Libdas::Point2D<int32_t> pos;
+            neko_GetWindowSize(m_surface, &pos.x, &pos.y);
+            return pos;
+        }
+
+        inline Libdas::Point2D<float> GetPixelSize() const {
+            Libdas::Point2D<float> pix;
+            neko_GetPixelSize(m_surface, &pix.x, &pix.y);
+            return pix;
+        }
     };
 }
 
