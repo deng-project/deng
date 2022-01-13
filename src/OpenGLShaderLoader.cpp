@@ -11,24 +11,12 @@ namespace DENG {
 
     namespace OpenGL {
         
-        ShaderLoader::ShaderLoader() {
-            _CompileShadersToProgram(UM3D_I);
-            _CompileShadersToProgram(TM3D_I);
-            _CompileShadersToProgram(UM2D_I);
-            _CompileShadersToProgram(TM2D_I);
-        }
-
-
-        std::vector<char> ShaderLoader::_ReadShaderSource(uint32_t _id, ShaderType _type) {
+        std::string ShaderLoader::_ReadShaderSource(const std::string &_file_name) {
             std::ifstream file;
-            if(_type == VERTEX) file.open(m_shader_files[_id].first);
-            else file.open(m_shader_files[_id].second);
+            file.open(_file_name);
 
             // check if file was opened correctly
-            if(file.fail()) {
-                if(_type == VERTEX) FILE_ERR(m_shader_files[_id].first);
-                else FILE_ERR(m_shader_files[_id].second);
-            }
+            if(file.fail()) FILE_ERR(_file_name);
 
             file.seekg(0, std::ios_base::end);
             size_t len = file.tellg();
@@ -37,63 +25,91 @@ namespace DENG {
             std::vector<char> data(len);
             file.read(data.data(), len);
 
-            if(file.bad()) {
-                if(_type == VERTEX) FILE_ERR(m_shader_files[_id].first);
-                else FILE_ERR(m_shader_files[_id].second);
-            }
+            if(file.bad()) FILE_ERR(_file_name);
 
             file.close();
-            return data;
+            return std::string(data.data(), data.size());
         }
 
 
-        void ShaderLoader::_CompileShadersToProgram(uint32_t _id) {
-            std::pair<GLint, GLint> shaders = {};
+        void ShaderLoader::_CompileShadersToProgram(ShaderModule *_p_module) {
+            // 0: vertex shader
+            // 1: geometry shader
+            // 2: fragment shader
+            std::array<GLint, 3> shaders = {};
 
-            shaders.first = glCreateShader(GL_VERTEX_SHADER);
+            shaders[0] = glCreateShader(GL_VERTEX_SHADER);
             glErrorCheck("glCreateShader");
-            shaders.second = glCreateShader(GL_FRAGMENT_SHADER);
+            shaders[1] = glCreateShader(GL_GEOMETRY_SHADER);
+            glErrorCheck("glCreateShader");
+            shaders[2] = glCreateShader(GL_FRAGMENT_SHADER);
             glErrorCheck("glCreateShader");
 
-            // Load shader resources
-            std::vector<char> vert = _ReadShaderSource(_id, VERTEX);
-            std::vector<char> frag = _ReadShaderSource(_id, FRAGMENT);
+            // Load shader resources if needed
+            if(_p_module->load_shaders_from_file) {
+                _p_module->vertex_shader_src = _ReadShaderSource(_p_module->vertex_shader_file);
+                if(_p_module->geometry_shader_file != "")
+                    _p_module->geometry_shader_src = _ReadShaderSource(_p_module->geometry_shader_file);
+                _p_module->fragment_shader_src = _ReadShaderSource(_p_module->fragment_shader_file);
+            }
 
-            GLint vlen = static_cast<GLint>(vert.size());
-            GLint flen = static_cast<GLint>(frag.size());
+            GLint vlen = static_cast<GLint>(_p_module->vertex_shader_src.size());
+            GLint glen = static_cast<GLint>(_p_module->geometry_shader_src.size());
+            GLint flen = static_cast<GLint>(_p_module->fragment_shader_src.size());
 
-            GLchar *varr = vert.data();
-            GLchar *farr = frag.data();
+            GLchar *varr = const_cast<GLchar*>(_p_module->vertex_shader_src.c_str());
+            GLchar *garr = const_cast<GLchar*>(_p_module->geometry_shader_src.c_str());
+            GLchar *farr = const_cast<GLchar*>(_p_module->fragment_shader_src.c_str());
             
             // set shader source code
-            glShaderSource(shaders.first, 1, &varr, &vlen);
+            glShaderSource(shaders[0], 1, &varr, &vlen);
             glErrorCheck("glShaderSource");
-            glShaderSource(shaders.second, 1, &farr, &flen);
+            if(_p_module->geometry_shader_src.size()) {
+                glShaderSource(shaders[1], 1, &garr, &glen);
+                glErrorCheck("glShaderSource");
+            }
+
+            glShaderSource(shaders[2], 1, &farr, &flen);
             glErrorCheck("glShaderSource");
+
+            GLuint program;
+            program = glCreateProgram();
+            glErrorCheck("glCreateProgram");
 
             // attempt to compile shaders
-            glCompileShader(shaders.first);
-            _CheckCompileStatus(shaders.first, m_shader_files[_id].first);
-            glCompileShader(shaders.second);
-            _CheckCompileStatus(shaders.second, m_shader_files[_id].second);
+            glCompileShader(shaders[0]);
+            _CheckCompileStatus(shaders[0], "vertex shader");
+            if(_p_module->geometry_shader_src.size()) {
+                glCompileShader(shaders[1]);
+                _CheckCompileStatus(shaders[1], "geometry shader");
+                glAttachShader(program, shaders[1]);
+                glErrorCheck("glAttachShader");
+            }
+            glCompileShader(shaders[2]);
+            _CheckCompileStatus(shaders[2], "fragment shader");
 
             // create new shader programs
-            m_programs[_id] = glCreateProgram();
             glErrorCheck("glCreateProgram");
-            glAttachShader(m_programs[_id], shaders.first);
+            glAttachShader(program, shaders[0]);
             glErrorCheck("glAttachShader");
-            glAttachShader(m_programs[_id], shaders.second);
+            glAttachShader(program, shaders[2]);
             glErrorCheck("glAttachShader");
 
             // link the newly created program
-            glLinkProgram(m_programs[_id]);
-            _CheckLinkingStatus(_id);
+            glLinkProgram(program);
+            _CheckLinkingStatus(program);
 
             // delete shader objects
-            glDeleteShader(shaders.first);
+            glDeleteShader(shaders[0]);
             glErrorCheck("glDeleteShader");
-            glDeleteShader(shaders.second);
+            if(_p_module->geometry_shader_src.size()) {
+                glDeleteShader(shaders[1]);
+                glErrorCheck("glDeleteShader");
+            }
+            glDeleteShader(shaders[2]);
             glErrorCheck("glDeleteShader");
+
+            m_programs.push_back(program);
         }
 
 
@@ -104,25 +120,24 @@ namespace DENG {
             
             if(!success) {
                 glGetShaderInfoLog(_shader_id, 512, NULL, log);
-                LOG("Shader compilation error in file: " + _file_name);
+                LOG("Shader compilation error in shader: " + _file_name);
                 LOG(std::string(log));
                 exit(EXIT_FAILURE);
             }
         }
 
 
-        void ShaderLoader::_CheckLinkingStatus(uint32_t _id) {
+        void ShaderLoader::_CheckLinkingStatus(uint32_t _program_id) {
             int success;
             char log[512];
-            glGetProgramiv(m_programs[_id], GL_LINK_STATUS, &success);
+            glGetProgramiv(_program_id, GL_LINK_STATUS, &success);
 
             if(!success) {
-                glGetProgramInfoLog(m_programs[_id], 512, NULL, log);
-                LOG("Failed to link shaders from sources " + m_shader_files[_id].first + " and " + m_shader_files[_id].second);
+                glGetProgramInfoLog(_program_id, 512, NULL, log);
+                LOG("Failed to link shaders from sources");
                 LOG(std::string(log));
                 exit(EXIT_FAILURE);
             }
         }
-
     }
 }

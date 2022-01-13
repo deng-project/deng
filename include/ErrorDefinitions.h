@@ -7,8 +7,7 @@
 #ifndef ERROR_DEFINITIONS_H
 #define ERROR_DEFINITIONS_H
 
-// Console loggers
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 
 // Debugging function type definition
@@ -20,11 +19,13 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const ui
 
     // OpenGL error checking function, that is enabled during debug mode but disabled otherwise
 	#define glErrorCheck(func_name) lglErrorCheck(func_name, __FILE__, __LINE__ - 1)
+    #define DENG_ASSERT(_val) assert(_val)
 #else
     #define LOG(x)
     #define MAT_LOG(mat, msg);
     #define WARNME(x)
     #define glErrorCheck(func_name)
+    #define DENG_ASSERT(_val)
 #endif
 
 
@@ -38,7 +39,6 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const ui
 #define INVALID_ASSET(asset, uuid)          throw std::runtime_error(std::string("Invalid asset: ") + asset + ", " + uuid)
 #define UNDEFINED_ASSET_MODE(asset, uuid)   throw std::runtime_error(std::string("Unknown asset mode for asset: ") + asset + ", " + uuid)
 #define RUN_ERR(method, x)                  throw std::runtime_error(std::string(method) + ": " + std::string(x) + std::string("\n"))
-#define DENG_ASSERT(msg, cond)              if(!(cond)) throw std::runtime_error(std::string(__FILE__) + std::string(", ") + std::to_string(__LINE__) + std::string(": ") + std::string(msg))
 
 
 // Vulkan related

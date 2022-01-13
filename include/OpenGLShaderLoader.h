@@ -27,30 +27,23 @@ namespace DENG {
         
         class ShaderLoader {
             private:
-                const std::array<std::pair<std::string, std::string>, 4> m_shader_files = {
-                    std::make_pair(SRC_UNMAPPED_VERT_SHADER_2D, SRC_UNMAPPED_FRAG_SHADER_2D),
-                    std::make_pair(SRC_TEXTURE_MAPPED_VERT_SHADER_2D, SRC_TEXTURE_MAPPED_FRAG_SHADER_2D),
-                    std::make_pair(SRC_UNMAPPED_VERT_SHADER_3D, SRC_UNMAPPED_FRAG_SHADER_3D),
-                    std::make_pair(SRC_TEXTURE_MAPPED_VERT_SHADER_3D, SRC_TEXTURE_MAPPED_FRAG_SHADER_3D)
-                };
-
-                std::array<GLuint, 4> m_programs;
+                std::vector<GLuint> m_programs;
 
             private:
-                typedef bool ShaderType;
-#define VERTEX      false
-#define FRAGMENT    true
-
-                std::vector<char> _ReadShaderSource(uint32_t _id, ShaderType _type);
-                void _CompileShadersToProgram(uint32_t _id);
-                void _CheckCompileStatus(uint32_t _shader_id, const std::string &_src_file);
-                void _CheckLinkingStatus(uint32_t _id);
+                std::string _ReadShaderSource(const std::string &_file_name);
+                void _CompileShadersToProgram(ShaderModule *_p_module);
+                void _CheckCompileStatus(uint32_t _shader_id, const std::string &_shader);
+                void _CheckLinkingStatus(uint32_t _program_id);
 
             public:
-                ShaderLoader();
+                inline void LoadShaders(const std::vector<ShaderModule*> &_modules) {
+                    for(ShaderModule *p_module : _modules)
+                        _CompileShadersToProgram(p_module);
+                }
 
                 inline GLuint &GetShaderProgramById(uint32_t _id) {
-                    return m_programs[_id % PIPELINE_C];
+                    DENG_ASSERT(static_cast<uint32_t>(_id) < m_programs.size());
+                    return m_programs[_id];
                 }
         };
 

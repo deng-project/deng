@@ -1,79 +1,78 @@
-/// DENG: dynamic engine - small but powerful 3D game engine
-/// licence: Apache, see LICENCE file
-/// file: VulkanPipelineCreator.h - Vulkan pipeline manager class header
-/// author: Karl-Mihkel Ott
+// DENG: dynamic engine - small but powerful 3D game engine
+// licence: Apache, see LICENCE file
+// file: VulkanPipelineCreator.h - Vulkan pipeline creation class header
+// author: Karl-Mihkel Ott
 
 
 #ifndef VULKAN_PIPELINE_CREATOR_H
 #define VULKAN_PIPELINE_CREATOR_H
 
 #ifdef VULKAN_PIPELINE_CREATOR_CPP
-    #include <array>
+    #include <string>
+    #include <fstream>
     #include <vector>
+    #include <array>
     #include <vulkan/vulkan.h>
+    #include <shaderc/shaderc.hpp>
 
-    #include <common/base_types.h>
-    #include <data/assets.h>
-    #include <common/err_def.h>
-
-    #include <deng/cross_api/shader_def.h>
-    #include <deng/vulkan/pipeline_data.h>
-    #include <deng/vulkan/pipeline_ci_gen.h>
+    #include <ErrorDefinitions.h>
+    #include <ShaderDefinitions.h>
 #endif
 
 
 namespace DENG {
     namespace Vulkan {
-
-        /// Convert given asset mode into its corresponding pipeline type
-        deng_PipelineType AssetModeToPipelineType(das_AssetMode am);
         
         class PipelineCreator {
-        private:
-            // Pipeline layouts for all pipeline types
-            VkPipelineLayout m_vu2d_layout;
-            VkPipelineLayout m_vm2d_layout;
-            VkPipelineLayout m_vu3d_layout;
-            VkPipelineLayout m_vm3d_layout;
-            VkPipelineLayout m_ui_layout;
+            private:
+                VkDevice m_device;
+                VkViewport m_viewport = {};
+                VkRect2D m_scissor = {};
+                VkExtent2D m_ext = {};
+                VkSampleCountFlagBits m_samples = {};
 
-            // Descriptor set layouts, which are needed for 
-            // pipeline layout creation
-            VkDescriptorSetLayout &m_vu2d_ds_layout;
-            VkDescriptorSetLayout &m_vm2d_ds_layout;
-            VkDescriptorSetLayout &m_vu3d_ds_layout;
-            VkDescriptorSetLayout &m_vm3d_ds_layout;
-            VkDescriptorSetLayout &m_ui_ds_layout;
-        
-            std::array<__vk_PipelineData, PIPELINE_C> m_pipelines;
-
-        private:
-            /// Create a single pipeline layout
-            void __mkPipelineLayout(VkDevice device, VkDescriptorSetLayout &ds_layout,
-                                    VkPipelineLayout &pl_layout);
-
-            /// Create new pipeline layouts for all compatible pipelines
-            void __mkPipelineLayouts(VkDevice device);
-
-        public:
-            __vk_PipelineCreator (
-                VkDescriptorSetLayout &vu2d, VkDescriptorSetLayout &vm2d,
-                VkDescriptorSetLayout &vu3d, VkDescriptorSetLayout &vm3d,
-                VkDescriptorSetLayout &ui
-            );
-
-            /// Create new pipelines 
-            void mkPipelines(VkDevice device, VkExtent2D ext, VkRenderPass rp, 
-                             VkSampleCountFlagBits sample_c, bool no_layout);
+                std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_createinfos = {};
+                std::vector<VkShaderModule> m_shader_modules = {};
+                std::vector<VkVertexInputBindingDescription> m_input_binding_desc = {};
+                std::vector<VkVertexInputAttributeDescription> m_input_attr_descs = {};
 
 
-            void remkPipelines(VkDevice device, VkExtent2D ext, VkRenderPass rp, 
-                               VkSampleCountFlagBits sample_c);
+                VkPipelineVertexInputStateCreateInfo    m_vert_input_create_info = {};
+                VkPipelineInputAssemblyStateCreateInfo  m_input_asm_createinfo = {};
+                VkPipelineViewportStateCreateInfo       m_viewport_state_createinfo = {};
+                VkPipelineRasterizationStateCreateInfo  m_rasterization_createinfo = {};
+                VkPipelineMultisampleStateCreateInfo    m_multisample_createinfo = {};
+                VkPipelineColorBlendAttachmentState     m_colorblend_attachment = {};
+                VkPipelineDepthStencilStateCreateInfo   m_depth_stencil = {};
+                VkPipelineColorBlendStateCreateInfo     m_colorblend_state_createinfo = {};
 
-        // Getters / Setters
-        public:
-            __vk_PipelineData &getPipeline(deng_ui32_t id);
-            std::array<__vk_PipelineData, PIPELINE_C> &getPipelines();
+                VkPipelineDynamicStateCreateInfo        m_dynamic_state_createinfo = {};
+                std::vector<VkDynamicState> m_dynamic_states;
+
+                std::vector<uint32_t> m_vertex_bin;
+                std::vector<uint32_t> m_geometry_bin;
+                std::vector<uint32_t> m_fragment_bin;
+
+                std::vector<VkPipelineLayout> m_pipeline_layouts;
+                std::vector<VkPipeline> m_pipelines;
+                VkRenderPass m_render_pass = {};
+
+            private:
+                void _FindInputBindingDescriptions(ShaderModule *_module);
+                void _FindVertexInputAttributeDescriptions(ShaderModule *_module);
+                VkShaderModule _CreateShaderModule(std::vector<uint32_t> &_bin);
+                void _CompileShader(std::vector<uint32_t> &_target, const std::string &_src, shaderc_shader_kind _kind);
+                void _CheckAndCompileShaderSources(ShaderModule *_module);
+                std::string _ReadShaderSource(const std::string &_file_name);
+                void _CreatePipelineLayouts(const std::vector<VkDescriptorSetLayout> &_desc_set_layouts);
+                VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(ShaderModule *_module, VkPipelineLayout &_layout);
+
+            public:
+                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, const std::vector<VkDescriptorSetLayout> &_desc_set_layouts, const std::vector<ShaderModule*> &_modules);
+                ~PipelineCreator();
+
+                inline VkPipelineLayout GetPipelineLayoutById(uint32_t _id) { return m_pipeline_layouts[_id]; }
+                inline VkPipeline GetPipelineById(uint32_t _id) { return m_pipelines[_id]; }
         };
     }
 }

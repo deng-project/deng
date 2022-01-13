@@ -18,11 +18,20 @@ function OpenGLTriangle.build()
             "src/OpenGLBufferLoader.cpp",
             "src/OpenGLShaderLoader.cpp",
             "src/OpenGLRenderer.cpp",
+            "src/VulkanDescriptorPoolCreator.cpp",
+            "src/VulkanDescriptorSetLayoutCreator.cpp",
+            "src/VulkanDescriptorSetsCreator.cpp",
+            "src/VulkanHelpers.cpp",
+            "src/VulkanInstanceCreator.cpp",
+            "src/VulkanPipelineCreator.cpp",
+            "src/VulkanRenderer.cpp",
+            "src/VulkanSwapchainCreator.cpp",
+            "src/VulkanUniformBufferAllocator.cpp",
             "tests/OpenGLTriangle.cpp",
             "src/Window.cpp",
         }
 
-        links { "nwin", "das" }
+        links { "nwin", "pthread", "shaderc_shared" }
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }

@@ -35,9 +35,9 @@ namespace DENG {
 
 
     /// Find all required surface extensions
-    char **Window::FindVulkanSurfaceExtensions(size_t *p_ext_c, bool enable_vl) {
+    char **Window::FindVulkanSurfaceExtensions(size_t *p_ext_c) const {
         char **exts;
-        neko_FindRequiredVkExtensionsStrings(&exts, p_ext_c, enable_vl);
+        neko_FindRequiredVkExtensionsStrings(&exts, p_ext_c);
         return exts;
     }
 

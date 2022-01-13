@@ -48,7 +48,7 @@ namespace DENG {
 
 
         /// Search for all required vulkan extensions
-        char **FindVulkanSurfaceExtensions(size_t *p_ext_c, bool enable_vl);
+        char **FindVulkanSurfaceExtensions(size_t *p_ext_c) const;
 
 
         /// Get the current mouse position
@@ -72,30 +72,26 @@ namespace DENG {
         }
 
         /// Update window and input devices data
-        inline void Update() {
+        inline void Update() const {
             neko_UpdateWindow(m_surface);
         }
 
-        /// Close the current window
-        inline void CloseWindow() {
-        }
-
         /// Check if the current window is still active and running
-        inline const bool IsRunning() {
+        inline const bool IsRunning() const {
             return neko_IsRunning(m_surface);
         }
 
         /// Check if virtual cursor mode is enabled
-        inline const bool IsVirtualCursor() {
+        inline const bool IsVirtualCursor() const {
             return neko_IsVCMode(m_surface);
         }
 
-        inline const bool IsResized() {
+        inline const bool IsResized() const {
             return neko_ResizeNotify(m_surface);
         }
 
         /// Create new vulkan surface instance
-        inline VkResult InitVkSurface(VkInstance &instance, VkSurfaceKHR &surface) {
+        inline VkResult InitVkSurface(VkInstance &instance, VkSurfaceKHR &surface) const {
             return neko_InitVKSurface(m_surface, instance, &surface);
         }
 

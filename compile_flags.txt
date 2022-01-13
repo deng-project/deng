@@ -3,3 +3,5 @@
 ./include
 -I
 ./deps
+-I
+./deps/nekowin/include/third_party

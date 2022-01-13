@@ -7,45 +7,53 @@
 #ifndef VULKAN_DESCRIPTOR_SETS_CREATOR_H
 #define VULKAN_DESCRIPTOR_SETS_CREATOR_H
 
-#ifdef _VULKAN_DESCRIPTOR_SETS_CREATOR_CPP
-    #include <string.h>
+#ifdef VULKAN_DESCRIPTOR_SETS_CREATOR_CPP
     #include <vector>
     #include <string>
-    #include <array>
-
     #include <vulkan/vulkan.h>
-    #include <common/base_types.h>
-    #include <common/err_def.h>
-    #include <common/hashmap.h>
-    #include <common/common.h>
-    #include <data/assets.h>
 
-    #include <math/deng_math.h>
-    #include <deng/window.h>
-    #include <deng/cross_api/shader_def.h>
-    #include <deng/vulkan/sd.h>
-    #include <deng/vulkan/qm.h>
-    #include <deng/vulkan/resources.h>
+    #include <libdas/include/Points.h>
 
-    #include <deng/lighting/light_srcs.h>
-    #include <deng/cross_api/ubo.h>
-    #include <deng/registry/registry.h>
-
-    #include <deng/vulkan/pipeline_data.h>
-    #include <deng/vulkan/pipelines.h>
-    #include <deng/vulkan/desc_set_layout.h>
-    #include <deng/vulkan/desc_pool.h>
-    #include <deng/vulkan/rend_infos.h>
-
-
-    // Default capacity for descriptor pool
-    #define __DEFAULT_DESC_POOL_CAP         32
-    extern deng_ui32_t __max_frame_c;
+    #include <ErrorDefinitions.h>
+    #include <ShaderDefinitions.h>
+    #include <VulkanHelpers.h>
+    #include <VulkanUniformBufferAllocator.h>
+    #include <VulkanDescriptorPoolCreator.h>
+    #include <VulkanDescriptorSetLayoutCreator.h>
 #endif
 
 namespace DENG {
+
     namespace Vulkan {
 
+        class DescriptorSetsCreator {
+            private:
+                typedef std::vector<VkDescriptorSet> DescriptorSetsPerSwapchainImage;
+                std::vector<DescriptorSetsPerSwapchainImage> m_descriptor_sets;
+
+                VkDevice m_device;
+                VkBuffer m_uniform_buffer;
+                uint32_t m_swapchain_images_count;
+                UniformBufferAllocator *mp_ubo_allocator;
+                DescriptorPoolCreator *mp_descriptor_pool_creator;
+                DescriptorSetLayoutCreator *mp_descriptor_set_layout_creator;
+
+            private:
+                void _CreateDescriptorSets(const Libdas::Point2D<uint32_t> &_bounds);
+
+            public:
+                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, UniformBufferAllocator *_ubo_allocator, DescriptorPoolCreator *_desc_pool_creator, 
+                                      DescriptorSetLayoutCreator *_desc_set_layout_creator);
+                ~DescriptorSetsCreator();
+
+                void RecreateDescriptorSets(const Libdas::Point2D<uint32_t> &_bounds);
+
+                inline DescriptorSetsPerSwapchainImage &GetDescriptorSetsById(uint32_t _id) {
+                    return m_descriptor_sets[_id];
+                }
+        };
+
+#if 0
         /// Abstract class for creating descriptor descriptor sets and pipelines
         class DescriptorSetsCreator : public DescriptorPoolCreator, 
                                        public DescriptorSetLayoutCreator {   
@@ -131,6 +139,7 @@ namespace DENG {
         public:
             const std::vector<VkDescriptorSet> &getUIDS();
         };
+#endif
     }
 }
 

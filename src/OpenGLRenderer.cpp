@@ -48,7 +48,7 @@ namespace DENG {
     OpenGLRenderer::OpenGLRenderer(const Window &_win) : Renderer(_win) {
         // Load all OpenGL functions
         int status = deng_LoadGL();
-        DENG_ASSERT("Failed to load OpenGL functions", status);
+        DENG_ASSERT(status);
 
         // Enable some OpenGL features
         glEnable(GL_PROGRAM_POINT_SIZE);
@@ -81,7 +81,130 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::UpdateUniforms() {
+    void OpenGLRenderer::_BindVertexAttributes(uint32_t _shader_id) {
+        // enable vertex attrib arrays
+        for(uint32_t i = 0; i < static_cast<uint32_t>(m_shaders[_shader_id]->attributes.size()); i++) {
+            glEnableVertexAttribArray(i);
+            glErrorCheck("glEnableVertexAttribArray");
+        }
+
+        for(uint32_t i = 0; i < static_cast<uint32_t>(m_shaders[_shader_id]->attributes.size()); i++) {
+            switch(m_shaders[_shader_id]->attributes[i]) {
+                // single element attribute
+                case ATTRIBUTE_TYPE_FLOAT:
+                    glVertexAttribPointer(i, 1, GL_FLOAT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_DOUBLE:
+                    glVertexAttribPointer(i, 1, GL_DOUBLE, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_SHORT:
+                    glVertexAttribPointer(i, 1, GL_SHORT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_UINT:
+                    glVertexAttribPointer(i, 1, GL_UNSIGNED_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_INT:
+                    glVertexAttribPointer(i, 1, GL_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                // two element attribute
+                case ATTRIBUTE_TYPE_VEC2_FLOAT:
+                    glVertexAttribPointer(i, 2, GL_FLOAT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC2_DOUBLE:
+                    glVertexAttribPointer(i, 2, GL_DOUBLE, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC2_SHORT:
+                    glVertexAttribPointer(i, 2, GL_SHORT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC2_UINT:
+                    glVertexAttribPointer(i, 2, GL_UNSIGNED_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC2_INT:
+                    glVertexAttribPointer(i, 2, GL_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                // three element attribute
+                case ATTRIBUTE_TYPE_VEC3_FLOAT:
+                    glVertexAttribPointer(i, 3, GL_FLOAT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_DOUBLE:
+                    glVertexAttribPointer(i, 3, GL_DOUBLE, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_SHORT:
+                    glVertexAttribPointer(i, 3, GL_SHORT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_UINT:
+                    glVertexAttribPointer(i, 3, GL_UNSIGNED_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_INT:
+                    glVertexAttribPointer(i, 3, GL_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                // four element attribute
+                case ATTRIBUTE_TYPE_VEC4_FLOAT:
+                    glVertexAttribPointer(i, 4, GL_FLOAT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC4_DOUBLE:
+                    glVertexAttribPointer(i, 4, GL_DOUBLE, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC4_SHORT:
+                    glVertexAttribPointer(i, 4, GL_SHORT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC4_UINT:
+                    glVertexAttribPointer(i, 3, GL_UNSIGNED_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC4_INT:
+                    glVertexAttribPointer(i, 4, GL_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+            }
+        }
+
+    }
+
+
+    void OpenGLRenderer::LoadShaders() {
+        mp_shader_loader->LoadShaders(m_shaders);
+    }
+
+
+    void OpenGLRenderer::UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
         // currently uniform buffers hold camera data information
         UniformData ubo;
         ubo.camera = m_camera_components[m_active_camera_component].camera_matrix;
@@ -95,21 +218,21 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::UpdateVertexBuffer(std::vector<uint8_t> &_raw_data, uint32_t _offset) {
-        mp_buffer_loader->RequestMemory(_offset + static_cast<uint32_t>(_raw_data.size()), 0);
-        void *data = glMapBufferRange(GL_ARRAY_BUFFER, (GLintptr)_offset, (GLsizeiptr)_raw_data.size(), GL_MAP_WRITE_BIT);
+    void OpenGLRenderer::UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset) {
+        mp_buffer_loader->RequestMemory(_offset + _raw_data.second, 0);
+        void *data = glMapBufferRange(GL_ARRAY_BUFFER, (GLintptr) _offset, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
-        std::memcpy(data, _raw_data.data(), _raw_data.size());
+        std::memcpy(data, _raw_data.first, _raw_data.second);
         glUnmapBuffer(GL_ARRAY_BUFFER);
         glErrorCheck("glUnmapBuffer");
     }
 
 
-    void OpenGLRenderer::UpdateIndexBuffer(std::vector<uint8_t> &_raw_data, uint32_t _offset) {
-        mp_buffer_loader->RequestMemory(0, _offset + static_cast<uint32_t>(_raw_data.size(), 0));
-        void *data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, (GLintptr) _offset, (GLsizeiptr) _raw_data.size(), GL_MAP_WRITE_BIT);
+    void OpenGLRenderer::UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset) {
+        mp_buffer_loader->RequestMemory(0, _offset + _raw_data.second);
+        void *data = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, (GLintptr) _offset, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
-        std::memcpy(data, _raw_data.data(), _raw_data.size());
+        std::memcpy(data, _raw_data.first, _raw_data.second);
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
         glErrorCheck("glUnmapBuffer");
     }
@@ -132,27 +255,14 @@ namespace DENG {
 
 
     void OpenGLRenderer::RenderFrame() {
-        // ANIMATION SYSTEMS ARE NOT YET IMPLEMENTED
-        
         // draw each mesh to the screen
         for(uint32_t i = 0; i < static_cast<uint32_t>(m_meshes.size()); i++) {
-            // tmp
-            glUseProgram(mp_shader_loader->GetShaderProgramById(UM3D_I));
+            glUseProgram(mp_shader_loader->GetShaderProgramById(m_meshes[i].shader_module_id));
             glErrorCheck("glUseProgram");
 
-            // create and bind vertex attributes
-            glEnableVertexAttribArray(0);
-            glErrorCheck("glEnableVertexAttribArray");
-            glEnableVertexAttribArray(1);
-            glErrorCheck("glEnableVertexAttribArray");
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(UnmappedVertexAttribute), reinterpret_cast<const void*>(offsetof(UnmappedVertexAttribute, pos)));
-            glErrorCheck("glVertexAttribPointer");
-            glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(UnmappedVertexAttribute), reinterpret_cast<const void*>(offsetof(UnmappedVertexAttribute, norm)));
-            glErrorCheck("glVertexAttribPointer");
-
+            _BindVertexAttributes(i);
             
-            glDrawElements(GL_TRIANGLES, m_meshes[i].indices_count, GL_UNSIGNED_INT, (void*) m_meshes[i].indices_offset);
+            glDrawElements(GL_TRIANGLES, m_meshes[i].indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(m_meshes[i].indices_offset));
             glErrorCheck("glDrawElements");
         }
     }

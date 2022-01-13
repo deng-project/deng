@@ -1,69 +1,117 @@
-/// DENG: dynamic engine - small but powerful 3D game engine
-/// licence: Apache, see LICENCE file
-/// file: VulkanRenderer.h - Vulkan renderer class header
-/// author: Karl-Mihkel Ott
+// DENG: dynamic engine - small but powerful 3D game engine
+// licence: Apache, see LICENCE file
+// file: VulkanRenderer.h - Vulkan renderer class header
+// author: Karl-Mihkel Ott
 
 
 #ifndef VULKAN_RENDERER_H
 #define VULKAN_RENDERER_H
 
-#ifdef VULKAN_RENDERER_CPP
-    #include <string.h>
-    #include <vector>
-    #include <memory>
-    #include <chrono>
-    #include <string>
-    #include <queue>
-    #include <array>
-    #include <thread>
-    
-    #include <vulkan/vulkan.h>
-    #include <base_types.h>
-    #include <hashmap.h>
-    #include <common/uuid.h>
-    #include <common/err_def.h>
-    #include <data/assets.h>
 
-    #include <math/deng_math.h>
-    #include <deng/window.h>
-    #include <deng/cam3d.h>
-
-    #include <deng/lighting/light_srcs.h>
-    #include <deng/registry/registry.h>
-    #include <imgui-layer/imgui_entity.h>
-    #include <deng/cross_api/gpu_mem.h>
-    #include <deng/cross_api/shader_def.h>
-    #include <deng/cross_api/offset_finder.h>
-
-    extern deng_ui32_t __max_frame_c;
+// tmp
+#ifndef VULKAN_RENDERER_CPP
+#define VULKAN_RENDERER_CPP
 #endif
 
+#ifdef VULKAN_RENDERER_CPP
+    #include <string>
+    #include <vector>
+    #include <cstring>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
+    #include <vulkan/vulkan.h>
+    #include <shaderc/shaderc.hpp>
 
-/// Include all vulkan headers
-#include <deng/vulkan/qm.h>
-#include <deng/vulkan/sd.h>
-#include <deng/vulkan/resources.h>
-#include <deng/vulkan/rend_infos.h>
-#include <deng/vulkan/ic.h>
-#include <deng/vulkan/scc.h>
-#include <deng/vulkan/pipeline_data.h>
-#include <deng/vulkan/pipelines.h>
-#include <deng/vulkan/desc_set_layout.h>
-#include <deng/vulkan/desc_pool.h>
-#include <deng/vulkan/desc_sets.h>
-#include <deng/vulkan/dc.h>
-#include <deng/vulkan/tm.h>
-#include <deng/vulkan/ubm.h>
-#include <deng/vulkan/bm.h>
-#include <deng/vulkan/rm.h>
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
+    #include <libdas/include/Points.h>
 
-#include <deng/vulkan/runtime_updater.h>
-#include <deng/vulkan/rend_init.h>
+    #include <BaseTypes.h>
+    #include <Window.h>
+    #include <ErrorDefinitions.h>
+    #include <ShaderDefinitions.h>
+    #include <Renderer.h>
+
+    #define DEFAULT_VERTICES_SIZE   2048
+    #define DEFAULT_INDICES_SIZE    2048
+#endif
+
+#include <VulkanHelpers.h>
+#include <VulkanInstanceCreator.h>
+#include <VulkanSwapchainCreator.h>
+#include <VulkanPipelineCreator.h>
+#include <VulkanDescriptorPoolCreator.h>
+#include <VulkanDescriptorSetLayoutCreator.h>
+#include <VulkanUniformBufferAllocator.h>
+#include <VulkanDescriptorSetsCreator.h>
+
 
 
 namespace DENG {
-    namespace Vulkan {
 
+    class VulkanRenderer : public Renderer {
+        private:
+            Vulkan::InstanceCreator *mp_instance_creator;
+            Vulkan::SwapchainCreator *mp_swapchain_creator;
+            Vulkan::PipelineCreator *mp_pipeline_creator;
+            std::vector<Vulkan::DescriptorPoolCreator*> m_descriptor_pool_creators;
+            std::vector<Vulkan::DescriptorSetsCreator*> m_descriptor_sets_creators;
+            Vulkan::UniformBufferAllocator *mp_ubo_allocator;
+            Vulkan::DescriptorSetLayoutCreator *mp_descriptor_set_layout_creator;
+            Vulkan::DescriptorSetsCreator *mp_descriptor_sets_creator;
+            
+            // locally managed vulkan resources
+            VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_4_BIT; // tmp
+            VkDeviceSize m_vertices_size = DEFAULT_VERTICES_SIZE;
+            VkDeviceSize m_indices_size = DEFAULT_INDICES_SIZE;
+            VkBuffer m_main_buffer = VK_NULL_HANDLE;
+            VkDeviceMemory m_main_memory = VK_NULL_HANDLE;
+
+            VkCommandPool m_command_pool = VK_NULL_HANDLE;
+            std::vector<VkSemaphore> m_render_finished_semaphores;
+            std::vector<VkSemaphore> m_image_available_semaphores;
+            std::vector<VkFence> m_flight_fences;
+            std::vector<VkCommandBuffer> m_cmd_buffers;
+
+            // framebuffers and command buffers
+            VkImage m_color_image = VK_NULL_HANDLE;
+            VkDeviceMemory m_color_image_memory = VK_NULL_HANDLE;
+            VkImageView m_color_image_view = VK_NULL_HANDLE;
+
+            VkImage m_depth_image = VK_NULL_HANDLE;
+            VkDeviceMemory m_depth_image_memory = VK_NULL_HANDLE;
+            VkImageView m_depth_image_view = VK_NULL_HANDLE;
+
+            std::vector<VkFramebuffer> m_framebuffers;
+            std::vector<VkCommandBuffer> m_command_buffers;
+            uint32_t m_current_frame = 0;
+
+        private:
+            void _CreateCommandPool();
+            void _CreateSemaphores();
+            void _AllocateBufferResources();
+            void _ReallocateBufferResources(VkDeviceSize _old_vert_size, VkDeviceSize _old_ind_size);
+            void _CreateColorResources();
+            void _CreateDepthResources();
+            void _CreateFrameBuffers();
+            void _AllocateCommandBuffers();
+            void _RecordCommandBuffers();
+
+
+        public:
+            VulkanRenderer(const Window &_win);
+            ~VulkanRenderer();
+
+            virtual void LoadShaders() override;
+            virtual void UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void ClearFrame() override;
+            virtual void RenderFrame() override;
+    };
+        
+#if 0
         /// Main renderer class for Vulkan API
         class Renderer : private RendererInitialiser,
                          public RuntimeUpdater 
@@ -135,7 +183,8 @@ namespace DENG {
             const deng_bool_t isInit();
             const __vk_BufferData &getBufferData();
         };
-    }
+
+#endif
 }
 
 #endif

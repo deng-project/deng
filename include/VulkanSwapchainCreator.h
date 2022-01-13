@@ -1,7 +1,7 @@
-/// DENG: dynamic engine - small but powerful 3D game engine
-/// licence: Apache, see LICENCE file
-/// file: VulkanSwapchainCreator.h - Vulkan swapchain creator class header
-/// author: Karl-Mihkel Ott
+// DENG: dynamic engine - small but powerful 3D game engine
+// licence: Apache, see LICENCE file
+// file: VulkanSwapchainCreator.h - Vulkan swapchain creator class header
+// author: Karl-Mihkel Ott
 
 
 #ifndef VULKAN_SWAPCHAIN_CREATOR_H
@@ -10,79 +10,53 @@
 #ifdef VULKAN_SWAPCHAIN_CREATOR_CPP
     #include <vector>
     #include <array>
-
     #include <vulkan/vulkan.h>
-    #include <common/base_types.h>   
-    #include <common/hashmap.h>
-    #include <common/err_def.h>
-    #include <data/assets.h>
-    
-    #include <math/deng_math.h>
-    #include <deng/window.h>
-    #include <deng/vulkan/sd.h>
-    #include <deng/vulkan/qm.h>
-    #include <deng/vulkan/resources.h>
-    #include <deng/vulkan/rend_infos.h>
 
-    deng_ui32_t __max_frame_c;
+    #include <libdas/include/Points.h>
+    #include <ErrorDefinitions.h>
+    #include <BaseTypes.h>
+    #include <Window.h>
+    #include <VulkanInstanceCreator.h>
+    #include <VulkanHelpers.h>
 #endif
 
 namespace DENG {
     namespace Vulkan {
 
-        class SwapChainCreator : private DeviceInfo {
+        class SwapchainCreator {
         private:
-            VkRenderPass m_renderpass;
+            InstanceCreator *m_instance_creator = nullptr;
+            Libdas::Point2D<int32_t> m_window_size;
+
+
             VkSwapchainKHR m_swapchain;
-            VkExtent2D m_extent;
-            VkPresentModeKHR m_present_mode;
-            VkFormat m_format;
-            VkSurfaceFormatKHR m_surface_format;
             std::vector<VkImage> m_swapchain_images;
-            std::vector<VkImageView> m_swapchain_image_views;
-            __vk_SwapChainDetails m_sc_details;
-            __vk_QueueManager m_qff;
-            VkSampleCountFlagBits m_msaa_sample_c;
-            void *m_udata;
+            std::vector<VkImageView> m_swapchain_imageviews;
+            VkSurfaceFormatKHR m_selected_surface_format;
+            VkPresentModeKHR m_selected_present_mode;
+            VkExtent2D m_extent;
+            VkSampleCountFlagBits m_sample_c;
+            VkRenderPass m_renderpass;
         
         private:
-#ifdef __DEBUG
-            #define db_SampleCount() _db_SampleCount()
-            // DEBUGGING HELPERS
-            void _db_SampleCount();
-#else
-            #define db_SampleCount()
-#endif
-
-            void __mkSwapChainSettings();
-            void __mkSwapChain(VkPhysicalDevice gpu, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR &surface_cap, 
-                               deng_ui32_t g_queue_i, deng_ui32_t p_queue_i);
-            void __mkRenderPass();
-            void __mkSCImageViews();
+            void _ConfigureSwapchainSettings();
+            void _CreateSwapchain();
+            void _CreateSwapchainImageViews();
+            void _CreateRenderPass();
         
         public:
-            __vk_SwapChainCreator(VkDevice device, Window &win, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR &&surface_cap,
-                                  __vk_QueueManager qff, VkSampleCountFlagBits sample_c, void *udata);
+            SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c);
+            ~SwapchainCreator();
 
-            void SCCleanup();
+            /// Create new swapchain according to specified new window size
+            void RecreateSwapchain(Libdas::Point2D<float> _new_win_size);
 
-            /// System that checks for window resizing should be made
-            void remkSwapChain (
-                VkDevice device,
-                VkPhysicalDevice gpu,
-                Window *p_win,
-                VkSurfaceKHR surface, 
-                const VkSurfaceCapabilitiesKHR &surface_cap
-            );
-
-        /// Getters
-        public:
-            VkRenderPass getRp();
-            VkExtent2D getExt(VkPhysicalDevice gpu, VkSurfaceKHR surface);
-            VkSwapchainKHR getSC();
-            VkFormat getSF();
-            std::vector<VkImage> getSCImg();
-            std::vector<VkImageView> getSCImgViews();
+            inline VkRenderPass GetRenderPass() { return m_renderpass; }
+            inline VkSwapchainKHR &GetSwapchain() { return m_swapchain; }
+            inline VkFormat GetSwapchainFormat() { return m_selected_surface_format.format; }
+            inline VkExtent2D GetExtent() { return m_extent; }
+            inline std::vector<VkImage> &GetSwapchainImages() { return m_swapchain_images; }
+            inline std::vector<VkImageView> &GetSwapchainImageViews() { return m_swapchain_imageviews; }
         };  
     }
 }

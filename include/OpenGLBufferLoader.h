@@ -8,9 +8,11 @@
 
 #ifdef OPENGL_BUFFER_LOADER_CPP
     #include <cstdint>
+    #include <vector>
 
     #include <glad/glad.h>
     #include <ErrorDefinitions.h>
+    #include <ShaderDefinitions.h>
 #define DEBUG_ONLY
     #include <OpenGLRenderer.h>
 #undef DEBUG_ONLY

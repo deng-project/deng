@@ -21,16 +21,18 @@ namespace DENG {
 
     struct MeshReference {
         std::string name = "Mesh";
-        uint64_t vertices_offset = 0;
-        uint64_t indices_offset = 0;
-        uint64_t indices_count = 0;
-        uint64_t texture_id = 0;
+        uint32_t vertices_offset = 0;
+        uint32_t indices_offset = 0;
+        uint32_t indices_count = 0;
+        uint32_t texture_id = 0;
+        uint32_t shader_module_id = 0;
     };
 
 
     struct TextureReference {
         std::string name = "Texture";
-        uint64_t buffer_offset = 0;
+        uint32_t buffer_offset = 0;
+        uint32_t shader_module_id = 0;
     };
 
 
@@ -41,6 +43,7 @@ namespace DENG {
             std::vector<CameraComponent> m_camera_components;
             std::vector<MeshReference> m_meshes;
             std::vector<TextureReference> m_textures;
+            std::vector<ShaderModule*> m_shaders;
 
         public:
             Renderer(const Window &_win) : m_window(_win) {}
@@ -62,6 +65,10 @@ namespace DENG {
                 m_meshes.push_back(_mesh);
             }
 
+            inline void PushShader(ShaderModule *_shader) {
+                m_shaders.push_back(_shader);
+            }
+
             inline void RemoveMeshReference(uint32_t _id) {
                 m_meshes.erase(m_meshes.begin() + _id);
             }
@@ -74,9 +81,10 @@ namespace DENG {
                 m_textures.erase(m_textures.begin() + _id);
             }
 
-            virtual void UpdateUniforms() = 0;
-            virtual void UpdateVertexBuffer(std::vector<uint8_t> &_raw_data, uint32_t _offset = 0) = 0;
-            virtual void UpdateIndexBuffer(std::vector<uint8_t> &_raw_data, uint32_t _offset = 0) = 0;
+            virtual void LoadShaders() = 0;
+            virtual void UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
+            virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
+            virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;
             virtual void RenderFrame() = 0;
     };

@@ -25,13 +25,14 @@
     #include <BaseTypes.h>
     #include <ErrorDefinitions.h>
     #include <Window.h>
-    #include <Renderer.h>
     #include <ShaderDefinitions.h>
-    #include <OpenGLShaderLoader.h>
-    #include <OpenGLBufferLoader.h>
+    #include <Renderer.h>
     #include <UniformData.h>
     #include <VertexAttributes.h>
 #endif
+
+#include <OpenGLShaderLoader.h>
+#include <OpenGLBufferLoader.h>
 
 namespace DENG {
 
@@ -52,13 +53,16 @@ namespace DENG {
                 return GL_TEXTURE0 + (GLenum) _id;
             }
 
+            void _BindVertexAttributes(uint32_t _shader_id);
+
         public:
             OpenGLRenderer(const Window &_win);
             ~OpenGLRenderer();
 
-            virtual void UpdateUniforms() override;
-            virtual void UpdateVertexBuffer(std::vector<uint8_t> &_raw_data, uint32_t _offset = 0) override;
-            virtual void UpdateIndexBuffer(std::vector<uint8_t> &_raw_data, uint32_t _offset = 0) override;
+            virtual void LoadShaders() override;
+            virtual void UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;
             virtual void RenderFrame() override;
     };
