@@ -18,7 +18,7 @@ workspace "deng"
     -- Enable debug symbols if specified
     filter "configurations:Debug"
         symbols "On"
-        optimize "Debug"
+        optimize "Off"
         targetdir "build/debug"
         defines { "_DEBUG" }
 

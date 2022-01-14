@@ -167,7 +167,7 @@ namespace DENG {
 
 
         void SwapchainCreator::_CreateRenderPass() {
-            VkAttachmentDescription color_attachment{};
+            VkAttachmentDescription color_attachment = {};
             color_attachment.format = m_selected_surface_format.format;
             color_attachment.samples = m_sample_c;
             color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -175,7 +175,7 @@ namespace DENG {
             color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-            VkAttachmentDescription depth_attachment{};
+            VkAttachmentDescription depth_attachment = {};
             depth_attachment.format = VK_FORMAT_D32_SFLOAT;
             depth_attachment.samples = m_sample_c;
             depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -185,7 +185,7 @@ namespace DENG {
             depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-            VkAttachmentReference color_attachment_reference{};
+            VkAttachmentReference color_attachment_reference = {};
             color_attachment_reference.attachment = 0;
             color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             VkAttachmentReference depth_attachment_reference{};
@@ -193,7 +193,7 @@ namespace DENG {
             depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
             // Color attachment description for resolving multisampled images
-            VkAttachmentDescription color_attachment_resolve{};
+            VkAttachmentDescription color_attachment_resolve = {};
             color_attachment_resolve.format = m_selected_surface_format.format;
             color_attachment_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
             color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -207,7 +207,7 @@ namespace DENG {
             color_attachment_resolve_ref.attachment = 2;
             color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-            VkSubpassDescription subpass_desc{};
+            VkSubpassDescription subpass_desc = {};
             subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
             subpass_desc.colorAttachmentCount = 1;
             subpass_desc.pColorAttachments = &color_attachment_reference;

@@ -11,7 +11,7 @@ namespace DENG {
 
     VulkanRenderer::VulkanRenderer(const Window &_win) : Renderer(_win) {
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
-        mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), VK_SAMPLE_COUNT_4_BIT);
+        mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count);
         _CreateCommandPool();
         _CreateSemaphores();
         _AllocateBufferResources();
@@ -172,7 +172,7 @@ namespace DENG {
         for(size_t i = 0; i < mp_swapchain_creator->GetSwapchainImages().size(); i++) {
             attachments = { m_color_image_view, m_depth_image_view, mp_swapchain_creator->GetSwapchainImageViews()[i] };
 
-            VkFramebufferCreateInfo framebuffer_createinfo{};
+            VkFramebufferCreateInfo framebuffer_createinfo = {};
             framebuffer_createinfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebuffer_createinfo.renderPass = mp_swapchain_creator->GetRenderPass();
             framebuffer_createinfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -239,7 +239,14 @@ namespace DENG {
                 // Iterate through every mesh, bind resources and issue an index draw to commandbuffer
                 for(size_t j = 0; j < m_meshes.size(); j++) {
                     vkCmdBindPipeline(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineById(m_meshes[j].shader_module_id));
-                    vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineLayoutById(j), 0, 1, m_descriptor_sets_creators[i]->GetDescriptorSetsById(i).data(), 0, NULL);
+                    VkDeviceSize offset = m_meshes[j].vertices_offset;
+                    vkCmdBindVertexBuffers(m_command_buffers[i], 0, 1, &m_main_buffer, &offset);
+                    offset = m_vertices_size + m_meshes[j].indices_offset;
+                    vkCmdBindIndexBuffer(m_command_buffers[i], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
+
+                    // check if descriptor sets should be bound
+                    if(m_shaders[m_meshes[j].shader_module_id]->ubo_data_layouts.size())
+                        vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineLayoutById(j), 0, 1, m_descriptor_sets_creators[i]->GetDescriptorSetsById(i).data(), 0, NULL);
                     vkCmdDrawIndexed(m_command_buffers[i], m_meshes[j].indices_count, 1, 0, 0, 0);
                 }
 
@@ -357,7 +364,7 @@ namespace DENG {
 
         // copy data from staging buffer to main buffer
         Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
-                                    static_cast<VkDeviceSize>(_raw_data.second), 0, static_cast<VkDeviceSize>(_offset));
+                                    static_cast<VkDeviceSize>(_raw_data.second), 0, m_vertices_size + static_cast<VkDeviceSize>(_offset));
 
         // destroy the staging buffer
         vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);

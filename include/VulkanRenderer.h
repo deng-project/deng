@@ -62,7 +62,7 @@ namespace DENG {
             Vulkan::DescriptorSetsCreator *mp_descriptor_sets_creator;
             
             // locally managed vulkan resources
-            VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_4_BIT; // tmp
+            VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT; // tmp
             VkDeviceSize m_vertices_size = DEFAULT_VERTICES_SIZE;
             VkDeviceSize m_indices_size = DEFAULT_INDICES_SIZE;
             VkBuffer m_main_buffer = VK_NULL_HANDLE;

@@ -21,6 +21,7 @@
 #include <ShaderDefinitions.h>
 #include <Renderer.h>
 #include <VulkanRenderer.h>
+#include <OpenGLRenderer.h>
 
 #define WIDTH   1280
 #define HEIGHT  720
@@ -65,12 +66,12 @@ int main() {
 
     renderer.ClearFrame();
     renderer.PushShader(&module);
-    renderer.LoadShaders();
     renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<char*>(verts), static_cast<uint32_t>(sizeof(verts))));
     renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<char*>(indices), static_cast<uint32_t>(sizeof(indices))));
 
     DENG::MeshReference mesh = { "Mesh", 0, 0, 3, 0 };
     renderer.PushMeshReference(mesh);
+    renderer.LoadShaders();
 
     // main run loop
     while(window.IsRunning()) {
