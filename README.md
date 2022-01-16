@@ -45,7 +45,7 @@ Clone the repository and all of its submodules with following command:
 `$ git clone --recursive https://github.com/inugami-dev64/deng`
 
 Generate Makefiles using premake5:  
-`$ premake5 --sandbox-mode=<MODE> gmake`
+`$ premake5 --tests=<MODE> --no-deps gmake`
 
 Build DENG using Makefiles:  
 `$ make config=release_linux`
@@ -72,7 +72,7 @@ Clone the repository using following command:
 `> git clone --recursive https://github.com/inugami-dev64/deng`
 
 Generate Visual Studio solution files using premake 
-`> premake5 --sandbox-mode=<MODE> vs2019`
+`> premake5 --tests=all --no-deps vs2019`
 **PS! Given example assumes that Visual Studio 2019 is installed, if not specify appropriate version that is installed**  
 
 Open generated deng.sln file with Visual Studio, select configuration as Release and build the solution.
