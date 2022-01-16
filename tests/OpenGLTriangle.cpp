@@ -5,6 +5,8 @@
 #endif
 
 #include <vector>
+#include <thread>
+#include <chrono>
 #include <array>
 #include <cmath>
 #include <cstring>
@@ -79,5 +81,6 @@ int main() {
         renderer.ClearFrame();
         renderer.RenderFrame();
         window.Update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
