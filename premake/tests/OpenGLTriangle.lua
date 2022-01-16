@@ -31,7 +31,7 @@ function OpenGLTriangle.build()
             "src/Window.cpp",
         }
 
-        links { "nwin", "pthread", "shaderc_shared" }
+        links { "shaderc_combined", "nwin", "pthread" }
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }

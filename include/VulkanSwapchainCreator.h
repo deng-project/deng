@@ -13,6 +13,8 @@
     #include <vulkan/vulkan.h>
 
     #include <libdas/include/Points.h>
+
+    #include <Api.h>
     #include <ErrorDefinitions.h>
     #include <BaseTypes.h>
     #include <Window.h>

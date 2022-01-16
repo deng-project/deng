@@ -44,8 +44,14 @@ newoption {
 
 
 newoption {
-    trigger = "legacy",
-    description = "Build legacy DENG with bunch of spaghetti code"
+    trigger = "cleanbuild",
+    description = "Remove all statically built dependencies after building"
+}
+
+
+newoption {
+    trigger = "no-deps",
+    description = "Do not build dependencies from git submodules (do not use it on Windows)"
 }
 
 
@@ -82,6 +88,11 @@ function LoadModuleConfs()
 
     local libdas = require("premake/Libdas")
     libdas.build()
+
+    if not _OPTIONS["no-deps"] then
+        local shaderc = require("premake/ShaderC")
+        shaderc.build()
+    end
 end
 
 
@@ -102,7 +113,7 @@ end
 
 
 -- Script entry point, check if not help
-if not _OPTIONS["help"] then
+if not _OPTIONS["help"] and not _OPTIONS["shaderc-only"] then
     OsCheck()
     CheckForCleaning()
     LoadModuleConfs()

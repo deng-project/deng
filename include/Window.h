@@ -25,6 +25,7 @@
 typedef neko_Window deng_Window;
 
 #ifdef WINDOW_CPP
+    #include <Api.h>
     #include <BaseTypes.h>
     #include <ErrorDefinitions.h>
     #include <libdas/include/Points.h>
@@ -33,7 +34,7 @@ typedef neko_Window deng_Window;
 
 namespace DENG {   
     
-    class Window {
+    class DENG_API Window {
     private:
         neko_Window m_surface;
         Libdas::Point2D<uint64_t> m_prev_vc_pos;

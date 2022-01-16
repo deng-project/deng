@@ -27,6 +27,7 @@
     #include <libdas/include/Matrix.h>
     #include <libdas/include/Points.h>
 
+    #include <Api.h>
     #include <BaseTypes.h>
     #include <Window.h>
     #include <ErrorDefinitions.h>
@@ -50,7 +51,7 @@
 
 namespace DENG {
 
-    class VulkanRenderer : public Renderer {
+    class DENG_API VulkanRenderer : public Renderer {
         private:
             Vulkan::InstanceCreator *mp_instance_creator;
             Vulkan::SwapchainCreator *mp_swapchain_creator;

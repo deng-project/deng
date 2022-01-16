@@ -19,6 +19,7 @@
     #include <libdas/include/Matrix.h>
     #include <libdas/include/Points.h>
 
+    #include <Api.h>
     #include <BaseTypes.h>
     #include <ErrorDefinitions.h>
     #include <Window.h>

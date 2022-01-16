@@ -22,6 +22,7 @@
     #include <libdas/include/Matrix.h>
     #include <libdas/include/Points.h>
 
+    #include <Api.h>
     #include <BaseTypes.h>
     #include <ErrorDefinitions.h>
     #include <Window.h>
@@ -43,7 +44,7 @@ namespace DENG {
 
 #ifndef DEBUG_ONLY
 
-    class OpenGLRenderer : public Renderer {
+    class DENG_API OpenGLRenderer : public Renderer {
         private:
             OpenGL::ShaderLoader *mp_shader_loader = nullptr;
             OpenGL::BufferLoader *mp_buffer_loader = nullptr;
