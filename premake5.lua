@@ -88,6 +88,9 @@ function LoadModuleConfs()
 
     local libdas = require("premake/Libdas")
     libdas.build()
+	
+	local libdeng = require("premake/Libdeng")
+	libdeng.build()
 
     if not _OPTIONS["no-deps"] then
         local shaderc = require("premake/ShaderC")

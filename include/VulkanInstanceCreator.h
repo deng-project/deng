@@ -11,6 +11,7 @@
 #ifdef VULKAN_INSTANCE_CREATOR_CPP
     #include <iostream>
     #include <string>
+    #include <array>
     #include <vector>
     #include <map>
     #include <vulkan/vulkan.h>

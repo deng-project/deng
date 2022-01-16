@@ -16,6 +16,7 @@
 #ifdef VULKAN_RENDERER_CPP
     #include <string>
     #include <vector>
+    #include <array>
     #include <cstring>
 #ifdef _DEBUG
     #include <iostream>

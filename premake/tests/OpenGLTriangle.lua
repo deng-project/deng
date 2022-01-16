@@ -13,25 +13,9 @@ function OpenGLTriangle.build()
 
         includedirs { "include", "deps", "./deps/nekowin/include/third_party" }
 
-        files {
-            "include/*.h",
-            "src/OpenGLBufferLoader.cpp",
-            "src/OpenGLShaderLoader.cpp",
-            "src/OpenGLRenderer.cpp",
-            "src/VulkanDescriptorPoolCreator.cpp",
-            "src/VulkanDescriptorSetLayoutCreator.cpp",
-            "src/VulkanDescriptorSetsCreator.cpp",
-            "src/VulkanHelpers.cpp",
-            "src/VulkanInstanceCreator.cpp",
-            "src/VulkanPipelineCreator.cpp",
-            "src/VulkanRenderer.cpp",
-            "src/VulkanSwapchainCreator.cpp",
-            "src/VulkanUniformBufferAllocator.cpp",
-            "tests/OpenGLTriangle.cpp",
-            "src/Window.cpp",
-        }
+        files { "tests/OpenGLTriangle.cpp" }
 
-        links { "shaderc_combined", "nwin", "pthread" }
+        links { "deng", "shaderc_shared", "nwin" }
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }

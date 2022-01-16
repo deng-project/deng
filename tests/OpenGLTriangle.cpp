@@ -62,7 +62,7 @@ int main() {
     module.offsets.push_back(0);
     module.load_shaders_from_file = false;
 
-    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "OpenGLTriangle");
+    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "OpenGLTriangle");
     DENG::VulkanRenderer renderer(window);
 
     renderer.ClearFrame();
