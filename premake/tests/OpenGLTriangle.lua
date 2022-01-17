@@ -16,7 +16,7 @@ function OpenGLTriangle.build()
         files { "tests/OpenGLTriangle.cpp" }
 
         libdirs { "%{cfg.buildtarget.directory}" }
-        links { "deng", "shaderc_s", "nwin" }
+        links { "deng", "shaderc_shared", "nwin" }
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }
