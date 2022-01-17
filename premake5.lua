@@ -49,10 +49,12 @@ newoption {
 }
 
 
-newoption {
-    trigger = "no-deps",
-    description = "Do not build dependencies from git submodules (do not use it on Windows)"
-}
+-- Dependency build is not working due to some linker problems with shaderc 
+-- Use VulkanSDK for now
+--newoption {
+    --trigger = "no-deps",
+    --description = "Do not build dependencies from git submodules (do not use it on Windows)"
+--}
 
 
 -- Check if given operating system is even supported
@@ -92,10 +94,10 @@ function LoadModuleConfs()
 	local libdeng = require("premake/Libdeng")
 	libdeng.build()
 
-    if not _OPTIONS["no-deps"] then
-        local shaderc = require("premake/ShaderC")
-        shaderc.build()
-    end
+    --if not _OPTIONS["no-deps"] then
+        --local shaderc = require("premake/ShaderC")
+        --shaderc.build()
+    --end
 end
 
 

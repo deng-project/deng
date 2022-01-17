@@ -39,8 +39,6 @@ namespace DENG {
     class Renderer {
         protected:
             const Window &m_window;
-            uint32_t m_active_camera_component = 0;
-            std::vector<CameraComponent> m_camera_components;
             std::vector<MeshReference> m_meshes;
             std::vector<TextureReference> m_textures;
             std::vector<ShaderModule*> m_shaders;
@@ -48,18 +46,6 @@ namespace DENG {
         public:
             Renderer(const Window &_win) : m_window(_win) {}
             ~Renderer() {}
-
-            inline void PushCameraComponent(const CameraComponent &_component) {
-                m_camera_components.push_back(_component);
-            }
-
-            inline void MakeCameraActive(uint32_t _id) {
-                m_active_camera_component = _id;
-            }
-
-            inline void RemoveCameraComponent(uint32_t _id) {
-                m_camera_components.erase(m_camera_components.begin() + _id);
-            }
 
             inline void PushMeshReference(const MeshReference &_mesh) {
                 m_meshes.push_back(_mesh);
@@ -82,7 +68,7 @@ namespace DENG {
             }
 
             virtual void LoadShaders() = 0;
-            virtual void UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
+            virtual void UpdateUniforms(std::pair<char*, uint32_t> _raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
             virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;

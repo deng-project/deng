@@ -38,16 +38,26 @@ static float verts[] = {
 
 uint32_t indices[] = { 0, 1, 2 };
 
+struct UniformData {
+    Libdas::Matrix4<float> view_matrix;
+    Libdas::Matrix4<float> projection_matrix;
+};
+
 
 int main() {
     DENG::ShaderModule module;
     module.vertex_shader_src = 
         "#version 450\n"\
         "#extension GL_ARB_separate_shader_objects : enable\n"\
-        "layout(location = 0) in vec3 in_pos;\n"\
+        "\n"\
+        "layout(std140, binding = 0) uniform UniformBufferObject {\n"\
+        "   mat4 view;\n"\
+        "   mat4 projection;\n"\
+        "} ubo;\n"\
+        "layout(location = 0) out vec3 in_pos;\n"\
         "\n"\
         "void main() {\n"\
-        "   gl_Position = vec4(in_pos, 1.0f);\n"\
+        "   gl_Position = ubo.view * ubo.projection * vec4(in_pos, 1.0f);\n"\
         "}\n";
 
     module.fragment_shader_src =
@@ -59,18 +69,30 @@ int main() {
         "   out_color = vec4(0.8f, 0.2f, 0.2f, 1.0f);\n"\
         "}\n";
 
+    // create uniform buffer layout
+    DENG::UniformDataLayout layout;
+    layout.binding = 0;
+    layout.stage = SHADER_STAGE_VERTEX;
+    layout.type = DENG::UNIFORM_DATA_TYPE_BUFFER;
+    layout.ubo_size = sizeof(UniformData);
+
     module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
     module.strides.push_back(sizeof(float) * 3);
     module.offsets.push_back(0);
+    module.ubo_data_layouts.push_back(layout);
     module.load_shaders_from_file = false;
 
-    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "OpenGLTriangle");
-    DENG::VulkanRenderer renderer(window);
+    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "OpenGLTriangle");
+    DENG::OpenGLRenderer renderer(window);
 
+    UniformData ubo;
+    ubo.projection_matrix = Libdas::Matrix4<float>{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+    ubo.view_matrix = Libdas::Matrix4<float>{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
     renderer.ClearFrame();
     renderer.PushShader(&module);
     renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<char*>(verts), static_cast<uint32_t>(sizeof(verts))));
     renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<char*>(indices), static_cast<uint32_t>(sizeof(indices))));
+    renderer.UpdateUniforms(std::make_pair(reinterpret_cast<char*>(&ubo), static_cast<uint32_t>(sizeof(ubo))), 0, 0);
 
     DENG::MeshReference mesh = { "Mesh", 0, 0, 3, 0 };
     renderer.PushMeshReference(mesh);
@@ -81,6 +103,7 @@ int main() {
         renderer.ClearFrame();
         renderer.RenderFrame();
         window.Update();
+        renderer.UpdateUniforms(std::make_pair(reinterpret_cast<char*>(&ubo), static_cast<uint32_t>(sizeof(ubo))), 0, 0);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }

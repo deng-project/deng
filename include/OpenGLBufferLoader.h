@@ -19,7 +19,7 @@
 #endif
 
 #define DENG_DEFAULT_MESH_CAPACITY      65536
-#define DENG_DEFAULT_UBO_CAPACITY       
+#define DENG_DEFAULT_UBO_CAPACITY       256
 
 
 namespace DENG {
@@ -38,7 +38,7 @@ namespace DENG {
                 BufferData m_buffer_data;
                 uint32_t m_mesh_cap = DENG_DEFAULT_MESH_CAPACITY;
                 uint32_t m_index_cap = DENG_DEFAULT_MESH_CAPACITY;
-                //uint32_t m_ubo_cap = DE
+                uint32_t m_ubo_cap = DENG_DEFAULT_UBO_CAPACITY;
 
             private:
                 void _AllocateBufferMemory();

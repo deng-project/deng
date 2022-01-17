@@ -12,6 +12,7 @@ function Spirv.build()
         cppdialect "C++17"
 
         includedirs { "deps/shaderc/third_party/glslang" }
+        defines { "ENABLE_OPT=1" }
 
         files {
             "deps/shaderc/third_party/glslang/SPIRV/GlslangToSpv.cpp",
@@ -22,7 +23,7 @@ function Spirv.build()
             "deps/shaderc/third_party/glslang/SPIRV/doc.cpp",
             "deps/shaderc/third_party/glslang/SPIRV/SpvTools.cpp",
             "deps/shaderc/third_party/glslang/SPIRV/disassemble.cpp",
-            "deps/shaderc/third_party/glslang/SPIRV/CInterface/spirv_c_interface.cpp"
+            "deps/shaderc/third_party/glslang/SPIRV/CInterface/spirv_c_interface.cpp",
         }
 
         links { "MachineIndependent", "SPIRV-Tools-opt" }

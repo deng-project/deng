@@ -30,7 +30,8 @@ function Libdeng.build()
 		defines { "DENG_EXPORT_LIBRARY" }
 		includedirs { "include", "deps", "./deps/nekowin/include/third_party" }
 		
-		links { "shaderc_shared", "nwin" }
+        libdirs { "%{cfg.buildtarget.directory}" }
+		links { "shaderc_s", "nwin" }
 		
 		filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }

@@ -147,7 +147,7 @@ end
 
 
 function SpirvTools.build()
-    project "SPIRV-Tools-static"
+    project "SPIRV-Tools"
         kind "StaticLib"
         language "C++"
         cppdialect "C++17"
@@ -373,6 +373,8 @@ function SpirvTools.build()
             "deps/shaderc/third_party/spirv-tools/source/opt/workaround1209.cpp",
             "deps/shaderc/third_party/spirv-tools/source/opt/wrap_opkill.cpp"
         }
+
+        links { "SPIRV-Tools" }
 end
 
 return SpirvTools

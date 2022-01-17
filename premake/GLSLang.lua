@@ -6,6 +6,8 @@
 local GLSLang = {}
 
 function GLSLang.build()
+    defines { "ENABLE_OPT=1", "GLSLANG_OSINCLUDE_UNIX", "ENABLE_HLSL" }
+
     project "HLSL"
         kind "StaticLib"
         language "C++"
@@ -50,6 +52,8 @@ function GLSLang.build()
         language "C++"
         cppdialect "C++17"
 
+        includedirs { "deps/shaderc/third_party/glslang/glslang/HLSL" }
+
         files {
             "deps/shaderc/third_party/glslang/glslang/MachineIndependent/glslang.m4",
             "deps/shaderc/third_party/glslang/glslang/MachineIndependent/glslang.y",
@@ -80,8 +84,18 @@ function GLSLang.build()
             "deps/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp",
             "deps/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp",
             "deps/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp",
-            "deps/shaderc/third_party/glslang/glslang/MachineIndependent/propagateNoContraction.cpp"
+            "deps/shaderc/third_party/glslang/glslang/MachineIndependent/propagateNoContraction.cpp",
+
+            -- HLSL source files --
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslAttributes.cpp",
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslParseHelper.cpp",
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslScanContext.cpp",
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslOpMap.cpp",
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslTokenStream.cpp",
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslGrammar.cpp",
+            "deps/shaderc/third_party/glslang/glslang/HLSL/hlslParseables.cpp"
         }
+
 
         links { 
             "OGLCompiler",

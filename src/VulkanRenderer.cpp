@@ -309,7 +309,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
+    void VulkanRenderer::UpdateUniforms(std::pair<char*, uint32_t> _raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
         UniformDataLayout &layout = m_shaders[_shader_id]->ubo_data_layouts[_ubo_id];
 
         // not implemented yet

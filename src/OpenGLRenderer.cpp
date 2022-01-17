@@ -69,7 +69,6 @@ namespace DENG {
         mp_shader_loader = new OpenGL::ShaderLoader();
         mp_buffer_loader = new OpenGL::BufferLoader();
 
-
         glDepthFunc(GL_LESS);
         glErrorCheck("glDepthFunc");
     }
@@ -204,15 +203,10 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::UpdateUniforms(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        // currently uniform buffers hold camera data information
-        UniformData ubo;
-        ubo.camera = m_camera_components[m_active_camera_component].camera_matrix;
-        ubo.view = m_camera_components[m_active_camera_component].camera_view_matrix;
-
-        void *data = glMapBufferRange(GL_UNIFORM_BUFFER, (GLintptr) 0, (GLsizeiptr) sizeof(ubo), GL_MAP_WRITE_BIT);
+    void OpenGLRenderer::UpdateUniforms(std::pair<char*, uint32_t> _raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
+        void *data = glMapBufferRange(GL_UNIFORM_BUFFER, (GLintptr) 0, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
-        std::memcpy(data, &ubo, sizeof(ubo));
+        std::memcpy(data, _raw_data.first, static_cast<size_t>(_raw_data.second));
         glUnmapBuffer(GL_UNIFORM_BUFFER);
         glErrorCheck("glUnmapBuffer");
     }
@@ -249,6 +243,15 @@ namespace DENG {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glErrorCheck("glClear");
 
+        // for each shader and its uniform objects bind appropriate uniform buffer ranges
+        for(size_t i = 0; i < m_shaders.size(); i++) {
+            for(size_t j = 0; j < m_shaders[i]->ubo_data_layouts.size(); j++) {
+                // tmp
+                glBindBufferRange(GL_UNIFORM_BUFFER, 0, mp_buffer_loader->GetBufferData().ubo_buffer, 0, static_cast<GLsizeiptr>(m_shaders[i]->ubo_data_layouts[j].ubo_size));
+                glErrorCheck("glBindBufferRange");
+            }
+        }
+
         glBindVertexArray(mp_buffer_loader->GetBufferData().vert_array);
         glErrorCheck("glBindVertexArray");
     }
@@ -259,6 +262,8 @@ namespace DENG {
         for(uint32_t i = 0; i < static_cast<uint32_t>(m_meshes.size()); i++) {
             glUseProgram(mp_shader_loader->GetShaderProgramById(m_meshes[i].shader_module_id));
             glErrorCheck("glUseProgram");
+
+            glBindBuffer(GL_UNIFORM_BUFFER, mp_buffer_loader->GetBufferData().ubo_buffer);
 
             _BindVertexAttributes(i);
             

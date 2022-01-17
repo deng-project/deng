@@ -18,17 +18,21 @@ namespace DENG {
             glErrorCheck("glBindVertexArray");
 
             // Generate new buffers
-            GLuint buffers[2];
-            glGenBuffers(2, buffers);
+            GLuint buffers[3];
+            glGenBuffers(3, buffers);
             glErrorCheck("glGenBuffers");
             m_buffer_data.vert_buffer = buffers[0];
             m_buffer_data.idx_buffer = buffers[1];
+            m_buffer_data.ubo_buffer = buffers[2];
 
             // Bind all buffers handles with their corresponding buffer types
             glBindBuffer(GL_ARRAY_BUFFER, m_buffer_data.vert_buffer);
             glErrorCheck("glBindBuffer");
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer_data.idx_buffer);
+            glErrorCheck("glBindBuffer");
+
+            glBindBuffer(GL_UNIFORM_BUFFER, m_buffer_data.ubo_buffer);
             glErrorCheck("glBindBuffer");
 
             // Allocate the initial amount of memory for buffers
@@ -43,6 +47,10 @@ namespace DENG {
 
             // Allocate memory for indices buffer
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index_cap, NULL, GL_STATIC_DRAW);
+            glErrorCheck("glBufferData");
+
+            // Allocate memory for uniforms
+            glBufferData(GL_UNIFORM_BUFFER, m_ubo_cap, NULL, GL_STATIC_DRAW);
             glErrorCheck("glBufferData");
         }
 

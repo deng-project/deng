@@ -52,6 +52,7 @@ function ShaderC.build()
             "OSDependent",
             "OGLCompiler",
             "HLSL",
+            "glslang",
             "SPIRV",
             "SPIRV-Tools-opt"
         }
@@ -62,6 +63,11 @@ function ShaderC.build()
         kind "SharedLib"
         language "C++"
         cppdialect "C++17"
+
+        defines { 
+            "SHADERC_IMPLEMENTATION",
+            "SHADERC_SHAREDLIB"
+        }
 
         files {
             "deps/shaderc/libshaderc/include/shaderc/shaderc.h",
@@ -78,9 +84,11 @@ function ShaderC.build()
         }
 
         links {
-            "glslang", 
-            "OSDependent", 
+            "glslang",
+            "OSDependent",
             "OGLCompiler",
+            "glslang",
+            "pthread",
             "shaderc_util",
             "SPIRV",
             "SPIRV-Tools"
