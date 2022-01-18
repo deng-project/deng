@@ -23,6 +23,7 @@
     #include <libdas/include/Points.h>
 
     #include <Api.h>
+    #include <BufferAlignment.h>
     #include <BaseTypes.h>
     #include <ErrorDefinitions.h>
     #include <Window.h>
@@ -48,6 +49,7 @@ namespace DENG {
         private:
             OpenGL::ShaderLoader *mp_shader_loader = nullptr;
             OpenGL::BufferLoader *mp_buffer_loader = nullptr;
+            uint32_t m_high_ubo_offset = 0;
 
         private:
             inline GLenum _TextureIdToUnit(uint32_t _id) {
@@ -61,7 +63,7 @@ namespace DENG {
             ~OpenGLRenderer();
 
             virtual void LoadShaders() override;
-            virtual void UpdateUniforms(std::pair<char*, uint32_t> _raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
             virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

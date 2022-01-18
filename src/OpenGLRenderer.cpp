@@ -203,10 +203,21 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::UpdateUniforms(std::pair<char*, uint32_t> _raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        void *data = glMapBufferRange(GL_UNIFORM_BUFFER, (GLintptr) 0, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
+    void OpenGLRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
+        uint32_t &offset = m_shaders[_shader_id]->ubo_data_layouts[_ubo_id].offset;
+        const uint32_t size = m_shaders[_shader_id]->ubo_data_layouts[_ubo_id].ubo_size;
+        const uint32_t aligned_size = AlignData(size, mp_buffer_loader->GetUniformBufferOffsetAlignment());
+        
+        // check if new offsets need to be pushed back
+        if (offset == UINT32_MAX) {
+            offset = m_high_ubo_offset;
+            m_high_ubo_offset += aligned_size;
+            mp_buffer_loader->RequestMemory(offset + aligned_size, GL_UNIFORM_BUFFER);
+        }
+
+        void *data = glMapBufferRange(GL_UNIFORM_BUFFER, (GLintptr) offset, (GLsizeiptr) size, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
-        std::memcpy(data, _raw_data.first, static_cast<size_t>(_raw_data.second));
+        std::memcpy(data, _raw_data, static_cast<size_t>(size));
         glUnmapBuffer(GL_UNIFORM_BUFFER);
         glErrorCheck("glUnmapBuffer");
     }
@@ -259,12 +270,14 @@ namespace DENG {
             // for each shader and its uniform objects bind appropriate uniform buffer ranges
             for (size_t i = 0; i < m_shaders.size(); i++) {
                 for (size_t j = 0; j < m_shaders[i]->ubo_data_layouts.size(); j++) {
-                    // tmp
-                    GLuint result = glGetUniformBlockIndex(mp_shader_loader->GetShaderProgramById(i), "UniformBufferObject");
+                    const GLuint binding = static_cast<GLuint>(m_shaders[i]->ubo_data_layouts[j].binding);
+                    const GLuint index = static_cast<GLuint> (m_shaders[i]->ubo_data_layouts.size() - j - 1);
+                    const GLintptr offset = static_cast<GLintptr>(m_shaders[i]->ubo_data_layouts[j].offset);
+                    const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[i]->ubo_data_layouts[j].ubo_size);
+                    
                     glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), 0, 0);
                     glErrorCheck("glUniformBlockBinding");
-                    //glBindBufferRange(GL_UNIFORM_BUFFER, 0, mp_buffer_loader->GetBufferData().ubo_buffer, 0, static_cast<GLsizeiptr>(m_shaders[i]->ubo_data_layouts[j].ubo_size));
-                    glBindBufferBase(GL_UNIFORM_BUFFER, result, mp_buffer_loader->GetBufferData().ubo_buffer);
+                    glBindBufferRange(GL_UNIFORM_BUFFER, index, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                     glErrorCheck("glBindBufferRange");
                 }
             }

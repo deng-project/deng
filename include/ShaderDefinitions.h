@@ -51,12 +51,13 @@ namespace DENG {
     #define SHADER_STAGE_GEOMETRY   0x02
     #define SHADER_STAGE_FRAGMENT   0x04
 
-
+    // Structure to be passed into the renderer
     struct UniformDataLayout {
         UniformDataType type;
         uint32_t binding = 0;
         ShaderStage stage;
         uint32_t ubo_size;
+        uint32_t offset = UINT32_MAX; // reserved value meaning no offset is bound
     };
 
 

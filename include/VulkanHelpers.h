@@ -49,12 +49,7 @@ namespace DENG {
         /////////////////////////////////////////////////////////////
 
         void _BeginCommandBufferSingleCommand(VkDevice _dev, VkCommandPool _cmd_pool, VkCommandBuffer &_cmd_buf);
-        void _EndCommandBufferSingleCommand(VkDevice _dev, VkQueue _graphics_q, VkCommandPool _cmd_pool, VkCommandBuffer &_cmd_buf);
-
-
-        inline uint32_t _AlignData(uint32_t _req_mem, uint32_t _align) {
-            return _req_mem + (_req_mem % _align > 0 ? _align - (_req_mem % _align) : 0);
-        }
+        void _EndCommandBufferSingleCommand(VkDevice _dev, VkQueue _graphics_q, VkCommandPool _cmd_pool, VkCommandBuffer& _cmd_buf);
     }
 }
 

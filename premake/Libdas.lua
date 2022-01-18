@@ -7,7 +7,7 @@ local Libdas = {}
 
 function Libdas.build()
     project "das"
-        kind "StaticLib"
+        kind "SharedLib"
         language "C++"
         cppdialect "C++17"
 

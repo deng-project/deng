@@ -16,13 +16,18 @@ function OpenGLTriangle.build()
         files { "tests/OpenGLTriangle.cpp" }
 
         libdirs { "%{cfg.buildtarget.directory}" }
-        links { "deng", "shaderc_shared", "nwin" }
+        links { "deng" }
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }
         filter "platforms:Win32"
             libdirs { "C:/VulkanSDK/**/Lib" }
             includedirs { "C:/VulkanSDK/**/Include" }
+			
+		postbuildcommands {
+			"{RMDIR} %{cfg.buildtarget.directory}/OpenGLTriangleData",
+			"{COPYDIR} shaders/src/OpenGLTriangleData %{cfg.buildtarget.directory}/OpenGLTriangleData"
+		}
 end
 
 return OpenGLTriangle

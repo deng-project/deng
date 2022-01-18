@@ -13,6 +13,8 @@
     #include <fstream>
     #include <glad/glad.h>
 
+    #include <libdas/include/Api.h>
+    #include <libdas/include/FileNameString.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
 

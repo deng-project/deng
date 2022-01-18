@@ -12,6 +12,7 @@
     #include <vector>
     #include <vulkan/vulkan.h>
 
+    #include <BufferAlignment.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <VulkanHelpers.h>

@@ -36,8 +36,10 @@ namespace DENG {
             glErrorCheck("glBindBuffer");
 
             // Allocate the initial amount of memory for buffers
+            _FindLimits();
             _AllocateBufferMemory();
         }
+
 
 
         void BufferLoader::_AllocateBufferMemory() {
@@ -68,19 +70,57 @@ namespace DENG {
         }
 
 
-        void BufferLoader::RequestMemory(uint32_t _vertex_request, uint32_t _element_request) {
-            if(_vertex_request >= m_mesh_cap) {
-                m_mesh_cap = _CalculateNewCapacity(_vertex_request);
-                glBufferData(GL_ARRAY_BUFFER, m_mesh_cap, NULL, GL_STATIC_DRAW);
-                glErrorCheck("glBufferData");
-            }
-
-            if(_element_request >= m_index_cap) {
-                m_index_cap = _CalculateNewCapacity(_vertex_request);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index_cap, NULL, GL_STATIC_DRAW);
-                glErrorCheck("glBufferData");
-            }
+        void BufferLoader::_FindLimits() {
+            glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &m_max_vertex_uniform_blocks);
+            glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &m_max_fragment_uniform_blocks);
+            glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &m_max_geometry_uniform_blocks);
+            glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &m_uniform_buffer_offset_alignment);
         }
 
+
+        void BufferLoader::_ReallocateBuffer(GLenum _buffer, uint32_t _new_size, uint32_t &_supplement) {
+            size_t len = _supplement;
+            char *buffer = reinterpret_cast<char*>(malloc(len));
+
+            void *cp_data = glMapBufferRange(_buffer, (GLintptr)0, (GLsizeiptr)len, GL_MAP_READ_BIT);
+            glErrorCheck("glMapBufferRange");
+            std::memcpy(buffer, cp_data, len);
+            glUnmapBuffer(_buffer);
+            glErrorCheck("glUnmapBuffer");
+
+            _supplement = _new_size;
+            glBufferData(_buffer, m_mesh_cap, NULL, GL_STATIC_DRAW);
+            glErrorCheck("glBufferData");
+
+            cp_data = glMapBufferRange(_buffer, (GLintptr)0, (GLsizeiptr)len, GL_MAP_WRITE_BIT);
+            glErrorCheck("glMapBufferRange");
+            std::memcpy(cp_data, buffer, len);
+            glUnmapBuffer(_buffer);
+        }
+
+        
+        void BufferLoader::RequestMemory(uint32_t _request, GLenum _buffer_type) {
+            
+            // check the buffer type and reallocate buffer if needed
+            switch (_buffer_type) {
+                case GL_ARRAY_BUFFER:
+                    if (_request >= m_mesh_cap)
+                        _ReallocateBuffer(GL_ARRAY_BUFFER, _CalculateNewCapacity(_request), m_mesh_cap);
+                    break;
+
+                case GL_ELEMENT_ARRAY_BUFFER:
+                    if (_request >= m_index_cap)
+                        _ReallocateBuffer(GL_ELEMENT_ARRAY_BUFFER, _CalculateNewCapacity(_request), m_index_cap);
+                    break;
+
+                case GL_UNIFORM_BUFFER:
+                    if (_request >= m_ubo_cap)
+                        _ReallocateBuffer(GL_UNIFORM_BUFFER, _CalculateNewCapacity(_request), m_ubo_cap);
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 }

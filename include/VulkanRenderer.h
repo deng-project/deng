@@ -106,7 +106,7 @@ namespace DENG {
             ~VulkanRenderer();
 
             virtual void LoadShaders() override;
-            virtual void UpdateUniforms(std::pair<char*, uint32_t> _raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
             virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

@@ -32,7 +32,7 @@ namespace DENG {
             m_area_offsets.push_back(std::vector<VkDeviceSize>());
             for(size_t i = 0; i < _layouts.size(); i++) {
                 m_area_offsets.back().push_back(m_offset);
-                m_offset += m_swapchain_image_count * _AlignData(_layouts[i].ubo_size, m_min_align);
+                m_offset += m_swapchain_image_count * AlignData(_layouts[i].ubo_size, m_min_align);
             }
         }
 
