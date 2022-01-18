@@ -237,20 +237,11 @@ namespace DENG {
         glErrorCheck("glViewport");
 
         // right now the clear color will be black
-        glClearColor(0, 0, 0, 0);
+        glClearColor(0, 0.5, 0, 0);
         glErrorCheck("glClearColor");
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glErrorCheck("glClear");
-
-        // for each shader and its uniform objects bind appropriate uniform buffer ranges
-        for(size_t i = 0; i < m_shaders.size(); i++) {
-            for(size_t j = 0; j < m_shaders[i]->ubo_data_layouts.size(); j++) {
-                // tmp
-                glBindBufferRange(GL_UNIFORM_BUFFER, 0, mp_buffer_loader->GetBufferData().ubo_buffer, 0, static_cast<GLsizeiptr>(m_shaders[i]->ubo_data_layouts[j].ubo_size));
-                glErrorCheck("glBindBufferRange");
-            }
-        }
 
         glBindVertexArray(mp_buffer_loader->GetBufferData().vert_array);
         glErrorCheck("glBindVertexArray");
@@ -263,9 +254,20 @@ namespace DENG {
             glUseProgram(mp_shader_loader->GetShaderProgramById(m_meshes[i].shader_module_id));
             glErrorCheck("glUseProgram");
 
-            glBindBuffer(GL_UNIFORM_BUFFER, mp_buffer_loader->GetBufferData().ubo_buffer);
-
             _BindVertexAttributes(i);
+            
+            // for each shader and its uniform objects bind appropriate uniform buffer ranges
+            for (size_t i = 0; i < m_shaders.size(); i++) {
+                for (size_t j = 0; j < m_shaders[i]->ubo_data_layouts.size(); j++) {
+                    // tmp
+                    GLuint result = glGetUniformBlockIndex(mp_shader_loader->GetShaderProgramById(i), "UniformBufferObject");
+                    glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), 0, 0);
+                    glErrorCheck("glUniformBlockBinding");
+                    //glBindBufferRange(GL_UNIFORM_BUFFER, 0, mp_buffer_loader->GetBufferData().ubo_buffer, 0, static_cast<GLsizeiptr>(m_shaders[i]->ubo_data_layouts[j].ubo_size));
+                    glBindBufferBase(GL_UNIFORM_BUFFER, result, mp_buffer_loader->GetBufferData().ubo_buffer);
+                    glErrorCheck("glBindBufferRange");
+                }
+            }
             
             glDrawElements(GL_TRIANGLES, m_meshes[i].indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(m_meshes[i].indices_offset));
             glErrorCheck("glDrawElements");

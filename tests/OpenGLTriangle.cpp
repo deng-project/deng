@@ -54,7 +54,7 @@ int main() {
         "   mat4 view;\n"\
         "   mat4 projection;\n"\
         "} ubo;\n"\
-        "layout(location = 0) out vec3 in_pos;\n"\
+        "layout(location = 0) in vec3 in_pos;\n"\
         "\n"\
         "void main() {\n"\
         "   gl_Position = ubo.view * ubo.projection * vec4(in_pos, 1.0f);\n"\
@@ -86,8 +86,19 @@ int main() {
     DENG::OpenGLRenderer renderer(window);
 
     UniformData ubo;
-    ubo.projection_matrix = Libdas::Matrix4<float>{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
-    ubo.view_matrix = Libdas::Matrix4<float>{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+    ubo.projection_matrix = Libdas::Matrix4<float>{
+        {1, 0, 0, 0}, 
+        {0, 1, 0, 0}, 
+        {0, 0, 1, 0}, 
+        {0, 0, 0, 1}
+    };
+
+    ubo.view_matrix = Libdas::Matrix4<float>{
+        {1, 0, 0, 0}, 
+        {0, 1, 0, 0}, 
+        {0, 0, 1, 0}, 
+        {0, 0, 0, 1}
+    };
     renderer.ClearFrame();
     renderer.PushShader(&module);
     renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<char*>(verts), static_cast<uint32_t>(sizeof(verts))));
