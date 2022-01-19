@@ -81,13 +81,11 @@ namespace DENG {
 
 
     void OpenGLRenderer::_BindVertexAttributes(uint32_t _shader_id) {
-        // enable vertex attrib arrays
         for(uint32_t i = 0; i < static_cast<uint32_t>(m_shaders[_shader_id]->attributes.size()); i++) {
+            // enable vertex attribute array
             glEnableVertexAttribArray(i);
             glErrorCheck("glEnableVertexAttribArray");
-        }
 
-        for(uint32_t i = 0; i < static_cast<uint32_t>(m_shaders[_shader_id]->attributes.size()); i++) {
             switch(m_shaders[_shader_id]->attributes[i]) {
                 // single element attribute
                 case ATTRIBUTE_TYPE_FLOAT:
@@ -184,7 +182,7 @@ namespace DENG {
                     break;
 
                 case ATTRIBUTE_TYPE_VEC4_UINT:
-                    glVertexAttribPointer(i, 3, GL_UNSIGNED_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
+                    glVertexAttribPointer(i, 4, GL_UNSIGNED_INT, GL_TRUE, m_shaders[_shader_id]->strides[i], reinterpret_cast<const void*>(m_shaders[_shader_id]->offsets[i]));
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
@@ -194,7 +192,54 @@ namespace DENG {
                     break;
             }
         }
+    }
 
+
+    void OpenGLRenderer::_UnbindVertexAttributes(uint32_t _shader_id) {
+        for (size_t i = 0; i < m_shaders[_shader_id]->attributes.size(); i++) {
+            glDisableVertexAttribArray(i);
+            glErrorCheck("glDisableVertexAttribArray");
+        }
+    }
+
+
+    uint32_t OpenGLRenderer::PushTextureFromMemory(DENG::TextureReference& _tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+        // check if there are any texture units available
+        GLint max_units;
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_units);
+
+        if (static_cast<GLint>(m_textures.size() + 1) >= max_units) {
+            std::cerr << "Current texture exceeds the maximum texture capacity\n"\
+                         "Requested " << m_textures.size() + 1 << ", avalilable" << max_units << std::endl;
+            std::exit(1);
+        }
+
+        GLuint tex;
+        glGenTextures(1, &tex);
+        glErrorCheck("glGenTextures");
+
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glErrorCheck("glBindTexture");
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(_width), static_cast<GLsizei>(_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, _raw_data);
+        glErrorCheck("glTexImage2D");
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glErrorCheck("glGenerateMipmap");
+        
+        _tex.r_identifier = tex;
+        m_textures.push_back(_tex);
+        
+        return static_cast<uint32_t>(m_textures.size() - 1);
+    }
+
+
+    uint32_t OpenGLRenderer::PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) {
+        Libdas::TextureReader reader(Libdas::String::RelativePathToAbsolute(_file_name));
+        size_t len;
+        int x, y;
+        const char *buf = reader.GetRawBuffer(x, y, len);
+        return PushTextureFromMemory(_tex, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
     }
 
 
@@ -262,28 +307,40 @@ namespace DENG {
     void OpenGLRenderer::RenderFrame() {
         // draw each mesh to the screen
         for(uint32_t i = 0; i < static_cast<uint32_t>(m_meshes.size()); i++) {
-            glUseProgram(mp_shader_loader->GetShaderProgramById(m_meshes[i].shader_module_id));
+            uint32_t shader = m_meshes[i].shader_module_id;
+            glUseProgram(mp_shader_loader->GetShaderProgramById(shader));
             glErrorCheck("glUseProgram");
 
             _BindVertexAttributes(i);
             
             // for each shader and its uniform objects bind appropriate uniform buffer ranges
-            for (size_t i = 0; i < m_shaders.size(); i++) {
-                for (size_t j = 0; j < m_shaders[i]->ubo_data_layouts.size(); j++) {
-                    const GLuint binding = static_cast<GLuint>(m_shaders[i]->ubo_data_layouts[j].binding);
-                    const GLuint index = static_cast<GLuint> (m_shaders[i]->ubo_data_layouts.size() - j - 1);
-                    const GLintptr offset = static_cast<GLintptr>(m_shaders[i]->ubo_data_layouts[j].offset);
-                    const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[i]->ubo_data_layouts[j].ubo_size);
-                    
+            for (size_t j = 0; j < m_shaders[shader]->ubo_data_layouts.size(); j++) {
+                if (m_shaders[shader]->ubo_data_layouts[j].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
+                    const GLuint binding = static_cast<GLuint>(m_shaders[shader]->ubo_data_layouts[j].binding);
+                    const GLuint index = static_cast<GLuint> (m_shaders[shader]->ubo_data_layouts.size() - j - 1);
+                    const GLintptr offset = static_cast<GLintptr>(m_shaders[shader]->ubo_data_layouts[j].offset);
+                    const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader]->ubo_data_layouts[j].ubo_size);
+
                     glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), 0, 0);
                     glErrorCheck("glUniformBlockBinding");
                     glBindBufferRange(GL_UNIFORM_BUFFER, index, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                     glErrorCheck("glBindBufferRange");
                 }
             }
+
+            // check if texture should be bound
+            if (m_meshes[i].texture_id != UINT32_MAX) {
+                const uint32_t tex_id = m_textures[m_meshes[i].texture_id].r_identifier;
+                glActiveTexture(_TextureIdToUnit(tex_id));
+                glErrorCheck("glActiveTexture");
+                glBindTexture(GL_TEXTURE_2D, tex_id);
+                glErrorCheck("glBindTexture");
+            }
             
             glDrawElements(GL_TRIANGLES, m_meshes[i].indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(m_meshes[i].indices_offset));
             glErrorCheck("glDrawElements");
+
+            _UnbindVertexAttributes(i);
         }
     }
 }

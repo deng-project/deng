@@ -7,11 +7,12 @@ local Libdas = {}
 
 function Libdas.build()
     project "das"
-        kind "SharedLib"
+        kind "StaticLib"
         language "C++"
         cppdialect "C++17"
 
-        includedirs { "deps/libdas/include" }
+		includedirs { "deps/libdas/include" }
+		defines { "LIBDAS_STATIC" }
 
         files {
             "deps/libdas/src/*.cpp"

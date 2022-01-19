@@ -27,7 +27,7 @@ function Libdeng.build()
 			"src/Window.cpp",
 		}
 		
-		defines { "DENG_EXPORT_LIBRARY" }
+		defines { "DENG_EXPORT_LIBRARY", "LIBDAS_STATIC" }
 		includedirs { "include", "deps", "./deps/nekowin/include/third_party" }
 		
         libdirs { "%{cfg.buildtarget.directory}" }

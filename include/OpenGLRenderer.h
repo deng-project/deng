@@ -12,6 +12,7 @@
     #include <vector>
     #include <array>
     #include <cstring>
+    #include <fstream>
 
 #ifdef _DEBUG
     #include <iostream>
@@ -21,6 +22,11 @@
     #include <libdas/include/Vector.h>
     #include <libdas/include/Matrix.h>
     #include <libdas/include/Points.h>
+    #include <libdas/include/Quaternion.h>
+    #include <libdas/include/Api.h>
+    #include <libdas/include/FileNameString.h>
+    #include <libdas/include/DasStructures.h>
+    #include <libdas/include/TextureReader.h>
 
     #include <Api.h>
     #include <BufferAlignment.h>
@@ -57,10 +63,14 @@ namespace DENG {
             }
 
             void _BindVertexAttributes(uint32_t _shader_id);
+            void _UnbindVertexAttributes(uint32_t _shader_id);
 
         public:
             OpenGLRenderer(const Window &_win);
             ~OpenGLRenderer();
+            
+            virtual uint32_t PushTextureFromFile(DENG::TextureReference& _tex, const std::string& _file_name);
+            virtual uint32_t PushTextureFromMemory(DENG::TextureReference& _tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth);
 
             virtual void LoadShaders() override;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;

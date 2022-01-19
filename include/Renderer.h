@@ -24,15 +24,15 @@ namespace DENG {
         uint32_t vertices_offset = 0;
         uint32_t indices_offset = 0;
         uint32_t indices_count = 0;
-        uint32_t texture_id = 0;
+        uint32_t texture_id = UINT32_MAX;
         uint32_t shader_module_id = 0;
     };
 
 
     struct TextureReference {
         std::string name = "Texture";
-        uint32_t buffer_offset = 0;
         uint32_t shader_module_id = 0;
+        uint32_t r_identifier = 0;      // leave it as blank, used by renderer for referencing
     };
 
 
@@ -47,24 +47,22 @@ namespace DENG {
             Renderer(const Window &_win) : m_window(_win) {}
             ~Renderer() {}
 
-            inline void PushMeshReference(const MeshReference &_mesh) {
+            inline uint32_t PushMeshReference(const MeshReference &_mesh) {
                 m_meshes.push_back(_mesh);
+                return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
-            inline void PushShader(ShaderModule *_shader) {
+            inline uint32_t PushShader(ShaderModule *_shader) {
                 m_shaders.push_back(_shader);
+                return static_cast<uint32_t>(m_shaders.size() - 1);
             }
+
+            virtual uint32_t PushTextureFromFile(DENG::TextureReference &_tex, const std::string& _file_name) = 0;
+            virtual uint32_t PushTextureFromMemory(DENG::TextureReference& _tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
+            // virtual void RemoveTextureById(uint32_t _id);
 
             inline void RemoveMeshReference(uint32_t _id) {
                 m_meshes.erase(m_meshes.begin() + _id);
-            }
-
-            inline void PushTextureReference(const TextureReference &_texture) {
-                m_textures.push_back(_texture);
-            }
-
-            inline void RemoveTextureReference(uint32_t _id) {
-                m_textures.erase(m_textures.begin() + _id);
             }
 
             virtual void LoadShaders() = 0;

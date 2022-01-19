@@ -16,7 +16,8 @@ function OpenGLTriangle.build()
         files { "tests/OpenGLTriangle.cpp" }
 
         libdirs { "%{cfg.buildtarget.directory}" }
-        links { "deng" }
+        defines { "LIBDAS_STATIC" }
+		links { "deng" }
 
         filter "platforms:Linux"
             links { "GL", "GLX", "X11", "Xcursor", "dl", "vulkan" }

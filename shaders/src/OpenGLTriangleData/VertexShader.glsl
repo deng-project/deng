@@ -12,7 +12,12 @@ layout(binding = 1) uniform YRotation {
 
 // input data
 layout (location = 0) in vec3 pos;
+layout (location = 1) in vec2 tex;
+
+// output data
+layout (location = 0) out vec2 out_tex;
 
 void main() {
-	gl_Position = x_rot.data * y_rot.data * vec4(pos, 1.0f);
+	gl_Position = vec4(pos, 1.0f);
+	out_tex = tex;
 }
