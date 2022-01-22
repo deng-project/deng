@@ -115,9 +115,9 @@ function LoadTestConfs()
         require "premake/tests/OpenGLTriangle"
     end
 	
-	if _OPTIONS["tests"] == "all" or _OPTIONS["tests"] then
-		require "premake/tests/OpenGLCube"
-	end
+	--if _OPTIONS["tests"] == "all" or _OPTIONS["tests"] then
+		--require "premake/tests/OpenGLCube"
+	--end
 end
 
 

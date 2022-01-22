@@ -13,6 +13,7 @@
     #include <array>
     #include <cstring>
     #include <fstream>
+    #include <cmath>
 
 #ifdef _DEBUG
     #include <iostream>

@@ -17,10 +17,15 @@ project "OpenGLTriangle"
     libdirs { "%{cfg.buildtarget.directory}" }
     defines { "LIBDAS_STATIC" }
 	links { "deng" }
+
+    filter "platforms:Linux"
+        links { "X11", "GL", "vulkan" }
 		
 	filter "platforms:Win32"
         libdirs { "C:/VulkanSDK/**/Lib" }
         includedirs { "C:/VulkanSDK/**/Include" }
+
+    filter {}
 			
 	postbuildcommands {
 		"{RMDIR} %{cfg.buildtarget.directory}/OpenGLTriangleData",

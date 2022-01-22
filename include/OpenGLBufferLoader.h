@@ -9,6 +9,7 @@
 #ifdef OPENGL_BUFFER_LOADER_CPP
     #include <cstdint>
     #include <vector>
+    #include <cstring>
 
     #include <glad/glad.h>
     #include <ErrorDefinitions.h>

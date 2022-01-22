@@ -31,7 +31,7 @@ project "deng"
 	
     libdirs { "%{cfg.buildtarget.directory}" }
 	links { "shaderc_shared", "nwin", "das" }
-	
+
 	filter "platforms:Win32"
 		libdirs { "C:/VulkanSDK/**/Lib" }
         includedirs { "C:/VulkanSDK/**/Include" }

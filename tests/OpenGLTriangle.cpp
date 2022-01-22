@@ -123,4 +123,6 @@ int main() {
         // renderer.UpdateUniforms(std::make_pair(reinterpret_cast<char*>(&ubo), static_cast<uint32_t>(sizeof(ubo))), 0, 0);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+
+    return 0;
 }
