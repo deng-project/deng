@@ -12,6 +12,7 @@ namespace DENG {
     Window::Window(int32_t x, int32_t y, WindowHint hints, const char *title) {
         neko_InitAPI();
         m_surface = neko_NewWindow(x, y, hints, title);
+        neko_SetMouseCursorMode(m_surface, NEKO_CURSOR_MODE_STANDARD);
     }
 
     Window::~Window() {

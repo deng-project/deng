@@ -1,3 +1,8 @@
+// win32 and release mode is used - make sure that cmd does not spawn
+#if defined(_WIN32) !defined(_DEBUG)
+    #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+#endif
+
 #include <string>
 
 #ifdef _DEBUG
@@ -123,6 +128,4 @@ int main() {
         // renderer.UpdateUniforms(std::make_pair(reinterpret_cast<char*>(&ubo), static_cast<uint32_t>(sizeof(ubo))), 0, 0);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-
-    return 0;
 }
