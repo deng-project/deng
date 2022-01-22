@@ -20,7 +20,6 @@
 #include <ErrorDefinitions.h>
 #include <BaseTypes.h>
 #include <Window.h>
-#include <VertexAttributes.h>
 #include <ShaderDefinitions.h>
 #include <Renderer.h>
 #include <VulkanRenderer.h>

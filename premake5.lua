@@ -10,6 +10,11 @@ workspace "deng"
 
 	architecture "x86_64"
 	pic "On"
+	
+	defines { "LIBDAS_STATIC" }
+	if _OPTIONS["static"] then
+		defines { "DENG_STATIC" }
+	end
 
 	-- Ignore safety warnings that MSVC gives
 	filter "platforms:Win32"
@@ -44,8 +49,14 @@ newoption {
 
 
 newoption {
-    trigger = "cleanbuild",
-    description = "Remove all statically built dependencies after building"
+    trigger = "redist",
+    description = "Create redistributable binaries"
+}
+
+
+newoption {
+	trigger = "static",
+	description = "Build static DENG runtime library"
 }
 
 
@@ -85,35 +96,28 @@ end
 
 -- Check which modules to build
 function LoadModuleConfs()
-    local libneko = require("premake/Libneko");
-    libneko.build()
-
-    local libdas = require("premake/Libdas")
-    libdas.build()
+    require "deps/nekowin/premake/libnwin-static"
+    require "deps/libdas/premake/libdas-static"
+	require "deps/libdas/premake/DASTool"
 	
-	local libdeng = require("premake/Libdeng")
-	libdeng.build()
-
-    --if not _OPTIONS["no-deps"] then
-        --local shaderc = require("premake/ShaderC")
-        --shaderc.build()
-    --end
+	-- Check if static or dynamic runtime library should be built
+	if not _OPTIONS["static"] then
+		require "premake/libdeng-shared"
+	else
+		require "premake/libdeng-static"
+	end
 end
 
 
 -- Setup build destinations
 function LoadTestConfs()
     if _OPTIONS["tests"] == "all" or _OPTIONS["tests"] == "OpenGLTriangle" then
-        local triangle = require("premake/tests/OpenGLTriangle")
-        triangle.build()
+        require "premake/tests/OpenGLTriangle"
     end
-
-    if _OPTIONS["tests"] then
-        postbuildcommands {
-            "{RMDIR} %{cfg.targetdir}/shaders",
-            "{COPYDIR} shaders %{cfg.targetdir}/shaders",
-        }
-    end
+	
+	if _OPTIONS["tests"] == "all" or _OPTIONS["tests"] then
+		require "premake/tests/OpenGLCube"
+	end
 end
 
 
