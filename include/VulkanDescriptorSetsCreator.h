@@ -37,12 +37,15 @@ namespace DENG {
                 UniformBufferAllocator *mp_ubo_allocator;
                 DescriptorPoolCreator *mp_descriptor_pool_creator;
                 DescriptorSetLayoutCreator *mp_descriptor_set_layout_creator;
+                bool m_is_init = false;
 
             private:
                 void _CreateDescriptorSets(const Libdas::Point2D<uint32_t> &_bounds);
 
             public:
-                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, UniformBufferAllocator *_ubo_allocator, DescriptorPoolCreator *_desc_pool_creator, 
+                DescriptorSetsCreator() = default;
+                DescriptorSetsCreator(const DescriptorSetsCreator &_dc) = default;
+                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, UniformBufferAllocator *_ubo_allocator, DescriptorPoolCreator &_desc_pool_creator, 
                                       DescriptorSetLayoutCreator *_desc_set_layout_creator);
                 ~DescriptorSetsCreator();
 
@@ -50,6 +53,10 @@ namespace DENG {
 
                 inline DescriptorSetsPerSwapchainImage &GetDescriptorSetsById(uint32_t _id) {
                     return m_descriptor_sets[_id];
+                }
+
+                inline bool IsInit() {
+                    return m_is_init;
                 }
         };
 

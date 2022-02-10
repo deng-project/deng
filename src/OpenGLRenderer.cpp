@@ -235,7 +235,7 @@ namespace DENG {
 
 
     uint32_t OpenGLRenderer::PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) {
-        Libdas::TextureReader reader(Libdas::String::RelativePathToAbsolute(_file_name));
+        Libdas::TextureReader reader(Libdas::Algorithm::RelativePathToAbsolute(_file_name));
         size_t len;
         int x, y;
         const char *buf = reader.GetRawBuffer(x, y, len);

@@ -5,9 +5,9 @@ namespace DENG {
 
     namespace Vulkan {
 
-        DescriptorSetsCreator::DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, UniformBufferAllocator *_ubo_allocator, DescriptorPoolCreator *_desc_pool_creator, 
+        DescriptorSetsCreator::DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, UniformBufferAllocator *_ubo_allocator, DescriptorPoolCreator &_desc_pool_creator, 
                                                      DescriptorSetLayoutCreator *_desc_set_layout_creator) : m_device(_dev), m_swapchain_images_count(_sc_img_count), mp_ubo_allocator(_ubo_allocator), 
-                                                     mp_descriptor_pool_creator(_desc_pool_creator), mp_descriptor_set_layout_creator(_desc_set_layout_creator) 
+                                                     mp_descriptor_pool_creator(&_desc_pool_creator), mp_descriptor_set_layout_creator(_desc_set_layout_creator), m_is_init(true)
         {
             _CreateDescriptorSets(Libdas::Point2D<uint32_t>(0, mp_descriptor_pool_creator->GetDescriptorPoolCount()));
         }
@@ -37,6 +37,8 @@ namespace DENG {
                     VkDescriptorBufferInfo buffer_info = {};
                     buffer_info.buffer = m_uniform_buffer;
                 }
+
+                m_descriptor_sets.push_back(desc_sets);
             }
         }
 

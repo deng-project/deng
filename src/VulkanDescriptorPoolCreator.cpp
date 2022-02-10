@@ -12,7 +12,7 @@ namespace DENG {
     namespace Vulkan {
 
         DescriptorPoolCreator::DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, const std::vector<UniformDataLayout> &_ubo_layouts) : 
-            m_device(_dev), m_swapchain_image_count(_swapchain_image_c) 
+            m_device(_dev), m_swapchain_image_count(_swapchain_image_c), m_is_init(true)
         {
             _LoadUniformsForShader(_ubo_layouts);
         }
@@ -51,12 +51,12 @@ namespace DENG {
             // set createinfo struct
             VkDescriptorPoolCreateInfo desc_pool_info = {};
             desc_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size()) * m_swapchain_image_count;
+            desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size());
             desc_pool_info.pPoolSizes = desc_sizes.data();
             // desc_pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
             desc_pool_info.maxSets = DEFAULT_DESCRIPTOR_POOL_CAP * m_swapchain_image_count;
 
-            VkDescriptorPool desc_pool;
+            VkDescriptorPool desc_pool = VK_NULL_HANDLE;
             if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &desc_pool) != VK_SUCCESS)
                 VK_DESC_ERR("failed to create descriptor pool");
 

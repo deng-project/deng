@@ -63,7 +63,7 @@ int main() {
     layouts[1].type = DENG::UNIFORM_DATA_TYPE_BUFFER;
     layouts[1].ubo_size = sizeof(Libdas::Matrix4<float>);
 
-    layouts[2].binding = 0;
+    layouts[2].binding = 2;
     layouts[2].stage = SHADER_STAGE_FRAGMENT;
     layouts[2].type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
@@ -78,23 +78,23 @@ int main() {
     module.ubo_data_layouts.insert(module.ubo_data_layouts.end(), layouts.begin(), layouts.end());
     module.load_shaders_from_file = true;
 
-    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "OpenGLTriangle");
-    DENG::OpenGLRenderer renderer(window);
+    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "OpenGLTriangle");
+    DENG::VulkanRenderer renderer(window);
     
     // rotate the triangle 60 degrees along x axis
     const float u_rotation = PI / 3;
     Libdas::Matrix4<float> x_rot = Libdas::Matrix4<float> {
-        {1, 0, 0, 0}, 
-        {0, cosf(u_rotation), -sinf(u_rotation), 0}, 
-        {0, sinf(u_rotation), cosf(u_rotation), 0}, 
-        {0, 0, 0, 1}
+        { 1, 0, 0, 0 }, 
+        { 0, cosf(u_rotation), -sinf(u_rotation), 0 }, 
+        { 0, sinf(u_rotation), cosf(u_rotation), 0 }, 
+        { 0, 0, 0, 1 }
     };
 
     Libdas::Matrix4<float> y_rot = Libdas::Matrix4<float>{
-        {cosf(u_rotation), 0, sinf(u_rotation), 0}, 
-        {0, 1, 0, 0}, 
-        {-sinf(u_rotation), 0, cosf(u_rotation), 0}, 
-        {0, 0, 0, 1}
+        { cosf(u_rotation), 0, sinf(u_rotation), 0 },
+        { 0, 1, 0, 0 },
+        { -sinf(u_rotation), 0, cosf(u_rotation), 0 },
+        { 0, 0, 0, 1}
     };
 
     renderer.ClearFrame();

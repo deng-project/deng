@@ -170,12 +170,12 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_CompileShader(std::vector<uint32_t> &_target, const std::string &_src, shaderc_shader_kind _kind) {
+        void PipelineCreator::_CompileShader(std::vector<uint32_t> &_target, const std::string &_src, const std::string &_file_name, shaderc_shader_kind _kind) {
             shaderc::Compiler compiler;
             shaderc::CompileOptions options;
 
             options.SetOptimizationLevel(shaderc_optimization_level_size);
-            shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(_src, _kind, _src.c_str(), options);
+            shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(_src, _kind, _file_name.c_str(), options);
 
             if(module.GetCompilationStatus() != shaderc_compilation_status_success) {
                 std::cerr << module.GetErrorMessage();
@@ -189,16 +189,15 @@ namespace DENG {
         void PipelineCreator::_CheckAndCompileShaderSources(ShaderModule *_module) {
             if(_module->load_shaders_from_file) {
                 _module->vertex_shader_src = _ReadShaderSource(_module->vertex_shader_file);
-                std::string geometry_src;
                 if(_module->geometry_shader_file != "")
-                    geometry_src = _ReadShaderSource(_module->geometry_shader_file);
-                std::string fragment_src = _ReadShaderSource(_module->fragment_shader_file);
+                    _module->geometry_shader_src = _ReadShaderSource(_module->geometry_shader_file);
+                _module->fragment_shader_src = _ReadShaderSource(_module->fragment_shader_file);
             }
 
-            _CompileShader(m_vertex_bin, _module->vertex_shader_src, shaderc_glsl_vertex_shader);
+            _CompileShader(m_vertex_bin, _module->vertex_shader_src, _module->vertex_shader_file, shaderc_glsl_vertex_shader);
             if(_module->geometry_shader_src.size())
-                _CompileShader(m_geometry_bin, _module->geometry_shader_src, shaderc_glsl_geometry_shader);
-            _CompileShader(m_fragment_bin, _module->fragment_shader_src, shaderc_glsl_fragment_shader);
+                _CompileShader(m_geometry_bin, _module->geometry_shader_src, _module->geometry_shader_file, shaderc_glsl_geometry_shader);
+            _CompileShader(m_fragment_bin, _module->fragment_shader_src, _module->fragment_shader_file, shaderc_glsl_fragment_shader);
         }
 
 
@@ -297,12 +296,6 @@ namespace DENG {
             m_rasterization_createinfo.polygonMode = VK_POLYGON_MODE_FILL;
             m_rasterization_createinfo.lineWidth = 1.0f;
             m_rasterization_createinfo.cullMode = VK_CULL_MODE_NONE;
-
-            //if(pl_flags.cull_mode != VK_CULL_MODE_NONE) {
-                //m_rasterization_createinfo.frontFace = pl_flags.front_face;
-                //m_rasterization_createinfo.depthBiasEnable = VK_TRUE;
-            //}
-
 
             // Set up multisampling createinfo
             m_multisample_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;

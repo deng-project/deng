@@ -32,7 +32,7 @@ namespace DENG {
     struct TextureReference {
         std::string name = "Texture";
         uint32_t shader_module_id = 0;
-        uint32_t r_identifier = 0;      // leave it as blank, used by renderer for referencing
+        uint32_t r_identifier = UINT32_MAX;      // leave it as blank, used by renderer for referencing
     };
 
 
@@ -57,7 +57,7 @@ namespace DENG {
                 return static_cast<uint32_t>(m_shaders.size() - 1);
             }
 
-            virtual uint32_t PushTextureFromFile(DENG::TextureReference &_tex, const std::string& _file_name) = 0;
+            virtual uint32_t PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) = 0;
             virtual uint32_t PushTextureFromMemory(DENG::TextureReference& _tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
             // virtual void RemoveTextureById(uint32_t _id);
 

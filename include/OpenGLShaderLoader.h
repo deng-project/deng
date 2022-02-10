@@ -14,7 +14,7 @@
     #include <glad/glad.h>
 
     #include <libdas/include/Api.h>
-    #include <libdas/include/FileNameString.h>
+    #include <libdas/include/Algorithm.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
 

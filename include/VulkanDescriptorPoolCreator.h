@@ -28,8 +28,9 @@ namespace DENG {
                 // first: descriptor pool handle
                 // second: descriptor pool capacity
                 VkDevice m_device;
-                const uint32_t m_swapchain_image_count;
+                uint32_t m_swapchain_image_count;
                 std::vector<std::pair<VkDescriptorPool, uint32_t>> m_descriptor_pools;
+                bool m_is_init = false;
 
             private:
                 std::vector<VkDescriptorPoolSize> _FindDescriptorPoolSizes(const std::vector<UniformDataLayout> &_ubo_layouts, uint32_t _desc_c);
@@ -37,6 +38,8 @@ namespace DENG {
                 
 
             public:
+                DescriptorPoolCreator() = default;
+                DescriptorPoolCreator(const DescriptorPoolCreator &_dpc) = default;
                 DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, const std::vector<UniformDataLayout> &_ubo_layouts);
                 ~DescriptorPoolCreator();
 
@@ -51,6 +54,11 @@ namespace DENG {
 
                 inline uint32_t GetDescriptorPoolCount() {
                     return static_cast<uint32_t>(m_descriptor_pools.size());
+                }
+
+
+                inline bool IsInit() {
+                    return m_is_init;
                 }
         };
     }

@@ -25,7 +25,7 @@
     #include <libdas/include/Points.h>
     #include <libdas/include/Quaternion.h>
     #include <libdas/include/Api.h>
-    #include <libdas/include/FileNameString.h>
+    #include <libdas/include/Algorithm.h>
     #include <libdas/include/DasStructures.h>
     #include <libdas/include/TextureReader.h>
 

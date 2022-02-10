@@ -61,7 +61,7 @@ namespace DENG {
                 void _FindInputBindingDescriptions(ShaderModule *_module);
                 void _FindVertexInputAttributeDescriptions(ShaderModule *_module);
                 VkShaderModule _CreateShaderModule(std::vector<uint32_t> &_bin);
-                void _CompileShader(std::vector<uint32_t> &_target, const std::string &_src, shaderc_shader_kind _kind);
+                void _CompileShader(std::vector<uint32_t> &_target, const std::string &_src, const std::string &_file_name, shaderc_shader_kind _kind);
                 void _CheckAndCompileShaderSources(ShaderModule *_module);
                 std::string _ReadShaderSource(const std::string &_file_name);
                 void _CreatePipelineLayouts(const std::vector<VkDescriptorSetLayout> &_desc_set_layouts);

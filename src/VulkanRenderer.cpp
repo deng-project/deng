@@ -34,6 +34,15 @@ namespace DENG {
         vkDestroyImage(mp_instance_creator->GetDevice(), m_color_image, NULL);
         vkFreeMemory(mp_instance_creator->GetDevice(), m_color_image_memory, NULL);
 
+        // destroy texture resources
+        for(auto it = m_vulkan_texture_handles.begin(); it != m_vulkan_texture_handles.end(); it++) {
+            vkDestroySampler(mp_instance_creator->GetDevice(), it->sampler, nullptr);
+            vkDestroyImageView(mp_instance_creator->GetDevice(), it->image_view, nullptr);
+            vkDestroyImage(mp_instance_creator->GetDevice(), it->image, nullptr);
+            vkFreeMemory(mp_instance_creator->GetDevice(), it->memory, nullptr);
+        }
+
+
         // Free all command buffers and framebuffers
         for(size_t i = 0; i < m_framebuffers.size(); i++)
             vkDestroyFramebuffer(mp_instance_creator->GetDevice(), m_framebuffers[i], NULL);
@@ -41,11 +50,11 @@ namespace DENG {
         vkFreeCommandBuffers(mp_instance_creator->GetDevice(), m_command_pool, static_cast<uint32_t>(m_command_buffers.size()), m_command_buffers.data());
 
         // free all allocated descriptor sets and pools
-        for(size_t i = 0; i < m_descriptor_sets_creators.size(); i++)
-            delete m_descriptor_sets_creators[i];
+        while(m_descriptor_sets_creators.size())
+            m_descriptor_sets_creators.erase(m_descriptor_sets_creators.end() - 1);
 
-        for(size_t i = 0; i < m_descriptor_pool_creators.size(); i++)
-            delete m_descriptor_pool_creators[i];
+        while(m_descriptor_pool_creators.size())
+            m_descriptor_pool_creators.erase(m_descriptor_pool_creators.end() - 1);
 
         m_descriptor_sets_creators.clear();
         m_descriptor_pool_creators.clear();
@@ -67,6 +76,66 @@ namespace DENG {
 
         delete mp_swapchain_creator;
         delete mp_instance_creator;
+    }
+
+
+    uint32_t VulkanRenderer::PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) {
+        Libdas::TextureReader reader(_file_name, true);
+        int x, y;
+        size_t len;
+        const char *raw = reader.GetRawBuffer(x, y, len);
+
+        return PushTextureFromMemory(_tex, raw, static_cast<uint32_t>(x), static_cast<uint32_t>(y), 4);
+    }
+    
+
+    uint32_t VulkanRenderer::PushTextureFromMemory(DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+        // image data size
+        const VkDeviceSize size = static_cast<VkDeviceSize>(_width * _height * _bit_depth);
+        _tex.r_identifier = static_cast<uint32_t>(m_vulkan_texture_handles.size());
+        m_textures.push_back(_tex);
+
+        VkBuffer staging_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
+        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, staging_memory, mem_req.memoryTypeBits,
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
+
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), size, _raw_data, staging_memory, 0);
+        
+        // create texture image instances
+        Vulkan::TextureData texture_data;
+
+        uint32_t mip_levels = static_cast<uint32_t>(log2l(static_cast<double>(std::max<uint32_t>(_width, _height))));
+        mem_req = Vulkan::_CreateImage(mp_instance_creator->GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_B8G8R8A8_SRGB, 
+                                       VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                       VK_SAMPLE_COUNT_1_BIT);
+
+        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, texture_data.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        vkBindImageMemory(mp_instance_creator->GetDevice(), texture_data.image, texture_data.memory, 0);
+        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(), VK_FORMAT_B8G8R8A8_SRGB, 
+                                       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
+
+        Vulkan::_CopyBufferToImage(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, 
+                                   texture_data.image, _width, _height);
+
+        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, nullptr);
+        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, nullptr);
+
+        // generate mipmaps
+        _CreateMipmaps(texture_data.image, _width, _height, mip_levels);
+
+        // create texture image view
+        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+        if(vkCreateImageView(mp_instance_creator->GetDevice(), &image_view_info, nullptr, &texture_data.image_view) != VK_SUCCESS)
+            VK_RES_ERR("Failed to create texture image view");
+
+        _CreateTextureSampler(texture_data, mip_levels);
+
+        m_vulkan_texture_handles.push_back(texture_data);
+
+        return _tex.r_identifier;
     }
 
 
@@ -246,7 +315,8 @@ namespace DENG {
 
                     // check if descriptor sets should be bound
                     if(m_shaders[m_meshes[j].shader_module_id]->ubo_data_layouts.size())
-                        vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineLayoutById(j), 0, 1, m_descriptor_sets_creators[i]->GetDescriptorSetsById(i).data(), 0, NULL);
+                        vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineLayoutById(m_meshes[j].shader_module_id), 0, 1, 
+                                                m_descriptor_sets_creators[m_meshes[j].shader_module_id].GetDescriptorSetsById(i).data(), 0, NULL);
                     vkCmdDrawIndexed(m_command_buffers[i], m_meshes[j].indices_count, 1, 0, 0, 0);
                 }
 
@@ -284,6 +354,99 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::_CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels) {
+        VkCommandBuffer cmd_buf = VK_NULL_HANDLE;
+        Vulkan::_BeginCommandBufferSingleCommand(mp_instance_creator->GetDevice(), m_command_pool, cmd_buf);
+
+        VkImageMemoryBarrier mem_barrier = {};
+        VkImageBlit blit = {};
+        mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        mem_barrier.image = _img;
+        mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        mem_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        mem_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        mem_barrier.subresourceRange.baseArrayLayer = 0;
+        mem_barrier.subresourceRange.layerCount = 1;
+        mem_barrier.subresourceRange.levelCount = 1;
+
+        uint32_t mip_width = _width;
+        uint32_t mip_height = _height;
+
+        for(uint32_t i = 1; i < _mip_levels; i++) {
+            // set pipeline ready for transfer processing
+            mem_barrier.subresourceRange.baseMipLevel = i - 1;
+            mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            mem_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            mem_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
+            
+            // set up image blit structure
+            blit.srcOffsets[0] = {0, 0, 0};
+            blit.srcOffsets[1] = { static_cast<int32_t>(mip_width), static_cast<int32_t>(mip_height), 1 };
+            blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            blit.srcSubresource.baseArrayLayer = 0;
+            blit.srcSubresource.mipLevel = i - 1;
+            blit.srcSubresource.layerCount = 1;
+            blit.dstOffsets[0] = { 0, 0, 0 };
+            blit.dstOffsets[1] = { 
+                static_cast<int32_t>(mip_width) > 1 ? static_cast<int32_t>(mip_width) / 2 : 1, 
+                static_cast<int32_t>(mip_height) > 1 ? static_cast<int32_t>(mip_height) / 2 : 1,
+                1
+            };
+            blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            blit.dstSubresource.baseArrayLayer = 0;
+            blit.dstSubresource.mipLevel = i;
+            blit.dstSubresource.layerCount = 1;
+
+            vkCmdBlitImage(cmd_buf, _img, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, _img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+            // set pipeline ready for final transfer into fragment shader
+            mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            mem_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
+
+            if(mip_width > 1) mip_width >>= 1;
+            if(mip_height > 1) mip_height >>= 1;
+        }
+
+        // final mip level transitioning
+        mem_barrier.subresourceRange.baseMipLevel = _mip_levels - 1;
+        mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        mem_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
+
+        Vulkan::_EndCommandBufferSingleCommand(mp_instance_creator->GetDevice(), mp_instance_creator->GetGraphicsQueue(), m_command_pool, cmd_buf);
+    }
+
+
+    void VulkanRenderer::_CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels) {
+        VkSamplerCreateInfo sampler_info = {};
+        sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        sampler_info.magFilter = VK_FILTER_LINEAR;
+        sampler_info.minFilter = VK_FILTER_LINEAR;
+        sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.anisotropyEnable = VK_TRUE;
+        sampler_info.maxAnisotropy = 16.0f;
+        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_info.unnormalizedCoordinates = VK_FALSE;
+        sampler_info.compareEnable = VK_FALSE;
+        sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        sampler_info.mipLodBias = 0.0f;
+        sampler_info.minLod = 0.0f;
+        sampler_info.maxLod = static_cast<float>(_mip_levels);
+
+        if(vkCreateSampler(mp_instance_creator->GetDevice(), &sampler_info, nullptr, &_tex.sampler) != VK_SUCCESS)
+            VK_RES_ERR("Failed to create a texture sampler");
+    }
+
+
     void VulkanRenderer::LoadShaders() {
         mp_descriptor_set_layout_creator = new Vulkan::DescriptorSetLayoutCreator(mp_instance_creator->GetDevice(), m_shaders);
         mp_pipeline_creator = new Vulkan::PipelineCreator(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count,
@@ -292,16 +455,18 @@ namespace DENG {
                                                               m_command_pool, mp_instance_creator->GetMinimalUniformBufferAlignment(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders);
 
         // for each shader module create descriptor pool creators
+        m_descriptor_pool_creators.reserve(m_shaders.size());
+        m_descriptor_sets_creators.reserve(m_shaders.size());
         for(size_t i = 0; i < m_shaders.size(); i++) {
             if(m_shaders[i]->ubo_data_layouts.size()) {
-                m_descriptor_pool_creators.push_back(new Vulkan::DescriptorPoolCreator(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), 
-                                                                                   m_shaders[i]->ubo_data_layouts));
-                m_descriptor_sets_creators.push_back(new Vulkan::DescriptorSetsCreator(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), 
-                                                                                       mp_ubo_allocator, m_descriptor_pool_creators.back(), mp_descriptor_set_layout_creator));
+                m_descriptor_pool_creators.emplace_back(Vulkan::DescriptorPoolCreator(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), 
+                                                        m_shaders[i]->ubo_data_layouts));
+                m_descriptor_sets_creators.emplace_back(Vulkan::DescriptorSetsCreator(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), 
+                                                        mp_ubo_allocator, m_descriptor_pool_creators.back(), mp_descriptor_set_layout_creator));
             }
             else {
-                m_descriptor_pool_creators.push_back(nullptr);
-                m_descriptor_sets_creators.push_back(nullptr);
+                m_descriptor_pool_creators.emplace_back();
+                m_descriptor_sets_creators.emplace_back();
             }
         }
 

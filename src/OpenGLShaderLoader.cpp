@@ -11,7 +11,7 @@ namespace DENG {
     namespace OpenGL {
         
         std::string ShaderLoader::_ReadShaderSource(const std::string &_file_name) {
-            std::string abs_fname = Libdas::String::RelativePathToAbsolute(_file_name);
+            std::string abs_fname = Libdas::Algorithm::RelativePathToAbsolute(_file_name);
             std::ifstream file;
             file.open(abs_fname, std::ios_base::binary);
 

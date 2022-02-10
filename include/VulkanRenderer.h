@@ -8,25 +8,25 @@
 #define VULKAN_RENDERER_H
 
 
-// tmp
-#ifndef VULKAN_RENDERER_CPP
-#define VULKAN_RENDERER_CPP
-#endif
-
 #ifdef VULKAN_RENDERER_CPP
     #include <string>
     #include <vector>
     #include <array>
     #include <cstring>
+    #include <cmath>
+    #include <utility>
 #ifdef _DEBUG
     #include <iostream>
 #endif
     #include <vulkan/vulkan.h>
-    #include <shaderc/shaderc.hpp>
 
+    #include <libdas/include/Api.h>
     #include <libdas/include/Vector.h>
     #include <libdas/include/Matrix.h>
     #include <libdas/include/Points.h>
+    #include <libdas/include/Quaternion.h>
+    #include <libdas/include/DasStructures.h>
+    #include <libdas/include/TextureReader.h>
 
     #include <Api.h>
     #include <BaseTypes.h>
@@ -35,10 +35,12 @@
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
 
-    #define DEFAULT_VERTICES_SIZE   2048
-    #define DEFAULT_INDICES_SIZE    2048
 #endif
 
+#define DEFAULT_VERTICES_SIZE   2048
+#define DEFAULT_INDICES_SIZE    2048
+
+#include <shaderc/shaderc.hpp>
 #include <VulkanHelpers.h>
 #include <VulkanInstanceCreator.h>
 #include <VulkanSwapchainCreator.h>
@@ -52,13 +54,22 @@
 
 namespace DENG {
 
+    namespace Vulkan {
+        struct TextureData {
+            VkImage image = VK_NULL_HANDLE;
+            VkDeviceMemory memory = VK_NULL_HANDLE;
+            VkImageView image_view = VK_NULL_HANDLE;
+            VkSampler sampler = VK_NULL_HANDLE;
+        };
+    }
+
     class DENG_API VulkanRenderer : public Renderer {
         private:
             Vulkan::InstanceCreator *mp_instance_creator;
             Vulkan::SwapchainCreator *mp_swapchain_creator;
             Vulkan::PipelineCreator *mp_pipeline_creator;
-            std::vector<Vulkan::DescriptorPoolCreator*> m_descriptor_pool_creators;
-            std::vector<Vulkan::DescriptorSetsCreator*> m_descriptor_sets_creators;
+            std::vector<Vulkan::DescriptorPoolCreator> m_descriptor_pool_creators;
+            std::vector<Vulkan::DescriptorSetsCreator> m_descriptor_sets_creators;
             Vulkan::UniformBufferAllocator *mp_ubo_allocator;
             Vulkan::DescriptorSetLayoutCreator *mp_descriptor_set_layout_creator;
             Vulkan::DescriptorSetsCreator *mp_descriptor_sets_creator;
@@ -76,7 +87,7 @@ namespace DENG {
             std::vector<VkFence> m_flight_fences;
             std::vector<VkCommandBuffer> m_cmd_buffers;
 
-            // framebuffers and command buffers
+            // color and depth image resources
             VkImage m_color_image = VK_NULL_HANDLE;
             VkDeviceMemory m_color_image_memory = VK_NULL_HANDLE;
             VkImageView m_color_image_view = VK_NULL_HANDLE;
@@ -85,9 +96,12 @@ namespace DENG {
             VkDeviceMemory m_depth_image_memory = VK_NULL_HANDLE;
             VkImageView m_depth_image_view = VK_NULL_HANDLE;
 
+            // framebuffers and command buffers
             std::vector<VkFramebuffer> m_framebuffers;
             std::vector<VkCommandBuffer> m_command_buffers;
             uint32_t m_current_frame = 0;
+
+            std::vector<Vulkan::TextureData> m_vulkan_texture_handles;
 
         private:
             void _CreateCommandPool();
@@ -99,11 +113,16 @@ namespace DENG {
             void _CreateFrameBuffers();
             void _AllocateCommandBuffers();
             void _RecordCommandBuffers();
+            void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels);
+            void _CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels);
 
 
         public:
             VulkanRenderer(const Window &_win);
             ~VulkanRenderer();
+
+            virtual uint32_t PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) override;
+            virtual uint32_t PushTextureFromMemory(DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
 
             virtual void LoadShaders() override;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
@@ -112,81 +131,6 @@ namespace DENG {
             virtual void ClearFrame() override;
             virtual void RenderFrame() override;
     };
-        
-#if 0
-        /// Main renderer class for Vulkan API
-        class Renderer : private RendererInitialiser,
-                         public RuntimeUpdater 
-        {
-        private:
-            void *m_udata;
-            __vk_ConfigVars m_config;
-            dengMath::vec2<deng_i32_t> m_prev_size;
-            deng_bool_t m_is_init = false;
-            deng_bool_t m_is_idle = true;
-
-        private:
-
-            /// Free and destroy all active Vulkan API specific instances
-            void __cleanup();
-
-
-            /// Additional cleanup methods
-            void __cleanRendImgResources();
-            void __cleanDrawCommands();
-            void __cleanTextures();
-            void __cleanAssets();
-            void __cleanPipelines();
-            void __cleanDescPools();
-            void __cleanDescSetLayouts();
-            void __freeBuffers();
-            void __cleanSemaphores();
-            void __cleanDevice();
-            void __swapChainRecreationCheck();
-
-            void __makeFrame();
-
-        public:
-            __vk_Renderer(__vk_ConfigVars &cnf, deng::Registry &reg,
-                std::vector<deng_Id> &assets, std::vector<deng_Id> &textures);
-
-
-            ~__vk_Renderer();
-
-            /// Prepare assets for rendering
-            void prepareAsset(deng_Id id);
-
-
-            /// Prepare textures for binding them with assets
-            void prepareTexture(deng_Id id);
-
-            
-            /// Update all currently available light sources
-            void setLighting(std::array<deng_Id, __DENG_MAX_LIGHT_SRC_COUNT> &light_srcs);
-
-            
-            /// Submit new draw call
-            void makeFrame();
-
-
-            /// Setup the renderer, create descriptor sets, allocate buffers
-            /// and record command buffers
-            void setup();
-
-
-            /// Wait for any queue operation to finish
-            /// This method needs to be called whenever any 
-            /// command or data buffers need to be updated
-            void idle();
-
-        // Setter and getter methods
-        public:
-            void setUIDataPtr(__ImGuiData *p_data);
-            const deng_bool_t isInit();
-            const __vk_BufferData &getBufferData();
-        };
-
-#endif
 }
 
 #endif
