@@ -8,7 +8,6 @@
 
 
 namespace DENG {
-
     namespace Vulkan {
 
         PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, const std::vector<VkDescriptorSetLayout> &_desc_set_layouts, const std::vector<ShaderModule*> &_modules) :

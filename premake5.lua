@@ -47,6 +47,10 @@ newoption {
     }
 }
 
+newoption {
+    trigger = "deps",
+    description = "Build DENG dependencies"
+}
 
 newoption {
     trigger = "redist",
@@ -62,10 +66,6 @@ newoption {
 
 -- Dependency build is not working due to some linker problems with shaderc 
 -- Use VulkanSDK for now
---newoption {
-    --trigger = "no-deps",
-    --description = "Do not build dependencies from git submodules (do not use it on Windows)"
---}
 
 
 -- Check if given operating system is even supported
@@ -96,21 +96,18 @@ end
 
 -- Check which modules to build
 function LoadModuleConfs()
-    require "deps/nekowin/premake/libnwin-static"
-    require "deps/libdas/premake/libdas-static"
-	require "deps/libdas/premake/DASTool"
-	
-	-- Check if static or dynamic runtime library should be built
-	if not _OPTIONS["static"] then
-		require "premake/libdeng-shared"
-	else
-		require "premake/libdeng-static"
-	end
+    require "premake/ShaderC"
+
+    -- They should build anyways --
+    --require "deps/nekowin/premake/libnwin-static"
+    --require "deps/libdas/premake/libdas-static"
+    --require "premake/libdeng-static"
+	--require "deps/libdas/premake/DASTool"
 end
 
 
 -- Setup build destinations
-function LoadTestConfs()
+function LoadBuildConfs()
     if _OPTIONS["tests"] == "all" or _OPTIONS["tests"] == "OpenGLTriangle" then
         require "premake/tests/OpenGLTriangle"
     end
@@ -125,6 +122,9 @@ end
 if not _OPTIONS["help"] and not _OPTIONS["shaderc-only"] then
     OsCheck()
     CheckForCleaning()
-    LoadModuleConfs()
-    LoadTestConfs()
+    if _OPTIONS["deps"] then
+        LoadModuleConfs()
+    else
+        LoadBuildConfs()
+    end
 end

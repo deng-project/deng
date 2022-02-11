@@ -78,8 +78,8 @@ int main() {
     module.ubo_data_layouts.insert(module.ubo_data_layouts.end(), layouts.begin(), layouts.end());
     module.load_shaders_from_file = true;
 
-    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "OpenGLTriangle");
-    DENG::VulkanRenderer renderer(window);
+    DENG::Window window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "OpenGLTriangle");
+    DENG::OpenGLRenderer renderer(window);
     
     // rotate the triangle 60 degrees along x axis
     const float u_rotation = PI / 3;

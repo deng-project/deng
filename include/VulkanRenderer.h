@@ -19,6 +19,7 @@
     #include <iostream>
 #endif
     #include <vulkan/vulkan.h>
+    #include <shaderc/shaderc.hpp>
 
     #include <libdas/include/Api.h>
     #include <libdas/include/Vector.h>
@@ -34,13 +35,11 @@
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
-
 #endif
 
 #define DEFAULT_VERTICES_SIZE   2048
 #define DEFAULT_INDICES_SIZE    2048
 
-#include <shaderc/shaderc.hpp>
 #include <VulkanHelpers.h>
 #include <VulkanInstanceCreator.h>
 #include <VulkanSwapchainCreator.h>
