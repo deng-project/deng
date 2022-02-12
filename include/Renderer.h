@@ -32,6 +32,7 @@ namespace DENG {
     struct TextureReference {
         std::string name = "Texture";
         uint32_t shader_module_id = 0;
+        uint32_t shader_sampler_id = 0;
         uint32_t r_identifier = UINT32_MAX;      // leave it as blank, used by renderer for referencing
     };
 

@@ -30,6 +30,7 @@ namespace DENG {
         class ShaderLoader {
             private:
                 std::vector<GLuint> m_programs;
+                std::vector<std::pair<std::string, GLuint>> m_ubo_name_list;
 
             private:
                 std::string _ReadShaderSource(const std::string &_file_name);
@@ -39,8 +40,9 @@ namespace DENG {
 
             public:
                 inline void LoadShaders(const std::vector<ShaderModule*> &_modules) {
-                    for(ShaderModule *p_module : _modules)
+                    for(ShaderModule *p_module : _modules) {
                         _CompileShadersToProgram(p_module);
+                    }
                 }
 
                 inline GLuint &GetShaderProgramById(uint32_t _id) {

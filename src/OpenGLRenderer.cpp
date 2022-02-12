@@ -75,6 +75,10 @@ namespace DENG {
 
 
     OpenGLRenderer::~OpenGLRenderer() {
+        // delete texture objects
+        for(auto it = m_textures.begin(); it != m_textures.end(); it++)
+            glDeleteTextures(1, &it->r_identifier);
+
         delete mp_shader_loader;
         delete mp_buffer_loader;
     }
@@ -314,24 +318,26 @@ namespace DENG {
             _BindVertexAttributes(i);
             
             // for each shader and its uniform objects bind appropriate uniform buffer ranges
+            GLuint ubo_i = 0;
             for (size_t j = 0; j < m_shaders[shader]->ubo_data_layouts.size(); j++) {
                 if (m_shaders[shader]->ubo_data_layouts[j].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
                     const GLuint binding = static_cast<GLuint>(m_shaders[shader]->ubo_data_layouts[j].binding);
-                    const GLuint index = static_cast<GLuint> (m_shaders[shader]->ubo_data_layouts.size() - j - 1);
                     const GLintptr offset = static_cast<GLintptr>(m_shaders[shader]->ubo_data_layouts[j].offset);
                     const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader]->ubo_data_layouts[j].ubo_size);
 
-                    glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), 0, 0);
+                    glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), ubo_i, binding);
                     glErrorCheck("glUniformBlockBinding");
-                    glBindBufferRange(GL_UNIFORM_BUFFER, index, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
+                    glBindBufferRange(GL_UNIFORM_BUFFER, ubo_i, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                     glErrorCheck("glBindBufferRange");
+                    ubo_i++;
                 }
             }
 
             // check if texture should be bound
             if (m_meshes[i].texture_id != UINT32_MAX) {
+                const uint32_t sampler_id = m_textures[m_meshes[i].texture_id].shader_sampler_id;
                 const uint32_t tex_id = m_textures[m_meshes[i].texture_id].r_identifier;
-                glActiveTexture(_TextureIdToUnit(tex_id));
+                glActiveTexture(GL_TEXTURE0 + sampler_id);
                 glErrorCheck("glActiveTexture");
                 glBindTexture(GL_TEXTURE_2D, tex_id);
                 glErrorCheck("glBindTexture");

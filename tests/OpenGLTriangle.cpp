@@ -115,6 +115,7 @@ int main() {
     DENG::TextureReference tex;
     tex.name = "Texture";
     tex.shader_module_id = 0;
+    tex.shader_sampler_id = 2;
 
     renderer.PushMeshReference(mesh);
     renderer.PushTextureFromFile(tex, "OpenGLTriangleData/felix_texture.png");
