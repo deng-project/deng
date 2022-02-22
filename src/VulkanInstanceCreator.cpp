@@ -12,7 +12,6 @@ namespace DENG {
 
         InstanceCreator::InstanceCreator(const Window &_win) : m_window(_win) {
             // needed for swapchain creation later
-            m_required_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
             _CreateInstance();
             if(m_window.InitVkSurface(m_instance, m_surface) != VK_SUCCESS)
                 VK_INSTANCE_ERR("failed to create a window surface!");
@@ -176,6 +175,7 @@ namespace DENG {
 
             std::vector<VkPhysicalDevice> devices(device_count);
             std::multimap<uint32_t, VkPhysicalDevice> device_candidates;
+            std::unordered_map<VkPhysicalDevice, std::vector<VkPresentModeKHR>> present_modes;
  
             VkResult result = vkEnumeratePhysicalDevices(m_instance, &device_count, devices.data());
             
@@ -187,13 +187,17 @@ namespace DENG {
                 score = _ScoreDevice(devices[i]);
                 _FindPhysicalDeviceSurfaceProperties(devices[i]);
                 
-                if(!m_present_modes.empty() && !m_surface_formats.empty())
+                if(!m_present_modes.empty() && !m_surface_formats.empty()) {
                     device_candidates.insert(std::make_pair(score, devices[i]));
+                    present_modes[devices[i]] = std::move(m_present_modes);
+                }
             }
 
+            // found suitable device
             if(!device_candidates.empty() && device_candidates.rbegin()->first > 0) {
                 m_gpu = device_candidates.rbegin()->second;
                 vkGetPhysicalDeviceProperties(m_gpu, &m_gpu_properties);
+                m_present_modes = present_modes[m_gpu];
             }
 
             else VK_INSTANCE_ERR("failed to find suitable GPU!");

@@ -56,11 +56,11 @@ namespace DENG {
         while(m_descriptor_pool_creators.size())
             m_descriptor_pool_creators.erase(m_descriptor_pool_creators.end() - 1);
 
-        m_descriptor_sets_creators.clear();
-        m_descriptor_pool_creators.clear();
+        while(m_pipeline_creators.size())
+            m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
 
-        delete mp_pipeline_creator;
-        delete mp_descriptor_set_layout_creator;
+        while(m_descriptor_set_layout_creators.size())
+            m_descriptor_set_layout_creators.erase(m_descriptor_set_layout_creators.end() - 1);
 
         for(size_t i = 0; i < mp_swapchain_creator->GetSwapchainImages().size(); i++) {
             vkDestroySemaphore(mp_instance_creator->GetDevice(), m_render_finished_semaphores[i], NULL);
@@ -79,7 +79,7 @@ namespace DENG {
     }
 
 
-    uint32_t VulkanRenderer::PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) {
+    uint32_t VulkanRenderer::PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) {
         Libdas::TextureReader reader(_file_name, true);
         int x, y;
         size_t len;
@@ -89,11 +89,11 @@ namespace DENG {
     }
     
 
-    uint32_t VulkanRenderer::PushTextureFromMemory(DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+    uint32_t VulkanRenderer::PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
         // image data size
         const VkDeviceSize size = static_cast<VkDeviceSize>(_width * _height * _bit_depth);
-        _tex.r_identifier = static_cast<uint32_t>(m_vulkan_texture_handles.size());
         m_textures.push_back(_tex);
+        m_textures.back().r_identifier = static_cast<uint32_t>(m_vulkan_texture_handles.size());
 
         VkBuffer staging_buffer = VK_NULL_HANDLE;
         VkDeviceMemory staging_memory = VK_NULL_HANDLE;
@@ -108,26 +108,28 @@ namespace DENG {
         Vulkan::TextureData texture_data;
 
         uint32_t mip_levels = static_cast<uint32_t>(log2l(static_cast<double>(std::max<uint32_t>(_width, _height))));
-        mem_req = Vulkan::_CreateImage(mp_instance_creator->GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_B8G8R8A8_SRGB, 
+        mem_req = Vulkan::_CreateImage(mp_instance_creator->GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_R8G8B8A8_SRGB, 
                                        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                                        VK_SAMPLE_COUNT_1_BIT);
 
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, texture_data.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         vkBindImageMemory(mp_instance_creator->GetDevice(), texture_data.image, texture_data.memory, 0);
-        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(), VK_FORMAT_B8G8R8A8_SRGB, 
+        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(), VK_FORMAT_R8G8B8A8_SRGB, 
                                        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
 
-        Vulkan::_CopyBufferToImage(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, 
-                                   texture_data.image, _width, _height);
+        Vulkan::_CopyBufferToImage(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, texture_data.image, _width, _height);
 
         vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, nullptr);
         vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, nullptr);
 
-        // generate mipmaps
-        _CreateMipmaps(texture_data.image, _width, _height, mip_levels);
+        // Either create mipmaps or transition the layout
+        //_CreateMipmaps(texture_data.image, _width, _height, mip_levels);
+
+        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(), VK_FORMAT_R8G8B8A8_SRGB,
+                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
 
         // create texture image view
-        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
         if(vkCreateImageView(mp_instance_creator->GetDevice(), &image_view_info, nullptr, &texture_data.image_view) != VK_SUCCESS)
             VK_RES_ERR("Failed to create texture image view");
 
@@ -307,16 +309,20 @@ namespace DENG {
 
                 // Iterate through every mesh, bind resources and issue an index draw to commandbuffer
                 for(size_t j = 0; j < m_meshes.size(); j++) {
-                    vkCmdBindPipeline(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineById(m_meshes[j].shader_module_id));
+                    vkCmdBindPipeline(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipeline());
                     VkDeviceSize offset = m_meshes[j].vertices_offset;
                     vkCmdBindVertexBuffers(m_command_buffers[i], 0, 1, &m_main_buffer, &offset);
                     offset = m_vertices_size + m_meshes[j].indices_offset;
                     vkCmdBindIndexBuffer(m_command_buffers[i], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
                     // check if descriptor sets should be bound
-                    if(m_shaders[m_meshes[j].shader_module_id]->ubo_data_layouts.size())
-                        vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mp_pipeline_creator->GetPipelineLayoutById(m_meshes[j].shader_module_id), 0, 1, 
-                                                m_descriptor_sets_creators[m_meshes[j].shader_module_id].GetDescriptorSetsById(i).data(), 0, NULL);
+                    if(m_shaders[m_meshes[j].shader_module_id]->ubo_data_layouts.size()) {
+                        uint32_t descriptor_set_index = m_meshes[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(i) : m_meshes[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(i);
+                        VkPipelineLayout playout = m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout();
+                        VkDescriptorSet desc_set = m_descriptor_sets_creators[m_meshes[j].shader_module_id].GetDescriptorSetById(descriptor_set_index);
+
+                        vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
+                    }
                     vkCmdDrawIndexed(m_command_buffers[i], m_meshes[j].indices_count, 1, 0, 0, 0);
                 }
 
@@ -440,7 +446,7 @@ namespace DENG {
         sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         sampler_info.mipLodBias = 0.0f;
         sampler_info.minLod = 0.0f;
-        sampler_info.maxLod = static_cast<float>(_mip_levels);
+        sampler_info.maxLod = 0.0f;
 
         if(vkCreateSampler(mp_instance_creator->GetDevice(), &sampler_info, nullptr, &_tex.sampler) != VK_SUCCESS)
             VK_RES_ERR("Failed to create a texture sampler");
@@ -448,21 +454,24 @@ namespace DENG {
 
 
     void VulkanRenderer::LoadShaders() {
-        mp_descriptor_set_layout_creator = new Vulkan::DescriptorSetLayoutCreator(mp_instance_creator->GetDevice(), m_shaders);
-        mp_pipeline_creator = new Vulkan::PipelineCreator(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count,
-                                                          mp_descriptor_set_layout_creator->GetLayouts(), m_shaders);
+        //mp_pipeline_creator = new Vulkan::PipelineCreator(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count,
+                                                          //mp_descriptor_set_layout_creator->GetLayouts(), m_shaders);
         mp_ubo_allocator = new Vulkan::UniformBufferAllocator(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mp_instance_creator->GetGraphicsQueue(),
                                                               m_command_pool, mp_instance_creator->GetMinimalUniformBufferAlignment(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders);
 
         // for each shader module create descriptor pool creators
         m_descriptor_pool_creators.reserve(m_shaders.size());
         m_descriptor_sets_creators.reserve(m_shaders.size());
+        m_descriptor_set_layout_creators.reserve(m_shaders.size());
+        m_pipeline_creators.reserve(m_shaders.size());
         for(size_t i = 0; i < m_shaders.size(); i++) {
+            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
+            m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
+                                                 m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
             if(m_shaders[i]->ubo_data_layouts.size()) {
-                m_descriptor_pool_creators.emplace_back(Vulkan::DescriptorPoolCreator(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), 
-                                                        m_shaders[i]->ubo_data_layouts));
-                m_descriptor_sets_creators.emplace_back(Vulkan::DescriptorSetsCreator(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), 
-                                                        mp_ubo_allocator, m_descriptor_pool_creators.back(), mp_descriptor_set_layout_creator));
+                m_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), static_cast<uint32_t>(m_textures.size()), m_shaders[i]->ubo_data_layouts);
+                m_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders[i], i, mp_ubo_allocator, m_descriptor_pool_creators[i].GetDescriptorPool(),
+                                                        m_descriptor_set_layout_creators[i].GetDescriptorSetLayout(), m_vulkan_texture_handles);
             }
             else {
                 m_descriptor_pool_creators.emplace_back();
@@ -476,12 +485,10 @@ namespace DENG {
 
     void VulkanRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
         UniformDataLayout &layout = m_shaders[_shader_id]->ubo_data_layouts[_ubo_id];
-
-        // not implemented yet
     }
 
 
-    void VulkanRenderer::UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset) {
+    void VulkanRenderer::UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_vertices_size) {
             VkDeviceSize old_size = m_vertices_size;
@@ -509,7 +516,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset) {
+    void VulkanRenderer::UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_indices_size) {
             VkDeviceSize old_size = m_indices_size;

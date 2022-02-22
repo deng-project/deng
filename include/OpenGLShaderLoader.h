@@ -30,6 +30,7 @@ namespace DENG {
         class ShaderLoader {
             private:
                 std::vector<GLuint> m_programs;
+                std::vector<size_t> m_strides;
                 std::vector<std::pair<std::string, GLuint>> m_ubo_name_list;
 
             private:
@@ -37,17 +38,19 @@ namespace DENG {
                 void _CompileShadersToProgram(ShaderModule *_p_module);
                 void _CheckCompileStatus(uint32_t _shader_id, const std::string &_shader);
                 void _CheckLinkingStatus(uint32_t _program_id);
+                void _CalculateStride(ShaderModule const *_p_module);
 
             public:
-                inline void LoadShaders(const std::vector<ShaderModule*> &_modules) {
-                    for(ShaderModule *p_module : _modules) {
-                        _CompileShadersToProgram(p_module);
-                    }
-                }
+                void LoadShaders(const std::vector<ShaderModule*> &_modules);
 
                 inline GLuint &GetShaderProgramById(uint32_t _id) {
-                    DENG_ASSERT(static_cast<uint32_t>(_id) < m_programs.size());
+                    DENG_ASSERT(static_cast<size_t>(_id) < m_programs.size());
                     return m_programs[_id];
+                }
+
+                inline size_t GetVertexStrideById(uint32_t _id) {
+                    DENG_ASSERT(static_cast<size_t>(_id) < m_programs.size());
+                    return m_strides[_id];
                 }
         };
 

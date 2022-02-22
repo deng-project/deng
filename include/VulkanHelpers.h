@@ -17,6 +17,13 @@
 namespace DENG {
     namespace Vulkan {
 
+        struct TextureData {
+            VkImage image = VK_NULL_HANDLE;
+            VkDeviceMemory memory = VK_NULL_HANDLE;
+            VkImageView image_view = VK_NULL_HANDLE;
+            VkSampler sampler = VK_NULL_HANDLE;
+        };
+
         struct HardwareInfo {
             uint32_t driver_version;
             uint32_t api_version;

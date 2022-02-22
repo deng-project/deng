@@ -14,6 +14,7 @@
     #include <array>
     #include <vector>
     #include <map>
+    #include <unordered_map>
     #include <vulkan/vulkan.h>
 
     #include <libdas/include/Vector.h>
@@ -40,7 +41,10 @@ namespace DENG {
                 VkSurfaceKHR m_surface = {};
                 VkSurfaceCapabilitiesKHR m_surface_capabilities = {};
                 VkPhysicalDeviceProperties m_gpu_properties = {};
-                std::vector<std::string> m_required_extensions;
+                std::vector<std::string> m_required_extensions = {
+                    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                    "VK_KHR_maintenance1"
+                };
 
                 // details needed for swapchain creation
                 std::vector<VkSurfaceFormatKHR> m_surface_formats;

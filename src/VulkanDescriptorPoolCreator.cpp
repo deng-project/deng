@@ -11,21 +11,51 @@ namespace DENG {
 
     namespace Vulkan {
 
-        DescriptorPoolCreator::DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, const std::vector<UniformDataLayout> &_ubo_layouts) : 
-            m_device(_dev), m_swapchain_image_count(_swapchain_image_c), m_is_init(true)
+        DescriptorPoolCreator::DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, uint32_t _texture_count, const std::vector<UniformDataLayout> &_ubo_layouts) : 
+            m_device(_dev), m_swapchain_image_count(_swapchain_image_c), m_texture_count(_texture_count)
         {
             _LoadUniformsForShader(_ubo_layouts);
         }
 
 
-        DescriptorPoolCreator::~DescriptorPoolCreator() {
-            for(std::pair<VkDescriptorPool, uint32_t> &pool : m_descriptor_pools)
-                vkDestroyDescriptorPool(m_device, pool.first, NULL);
+        DescriptorPoolCreator::DescriptorPoolCreator(DescriptorPoolCreator && _dpc) : m_device(_dpc.m_device), m_swapchain_image_count(_dpc.m_swapchain_image_count), 
+            m_texture_count(_dpc.m_texture_count), m_descriptor_pool(_dpc.m_descriptor_pool)
+        {
+            m_descriptor_pool = VK_NULL_HANDLE;
         }
 
 
-        std::vector<VkDescriptorPoolSize> DescriptorPoolCreator::_FindDescriptorPoolSizes(const std::vector<UniformDataLayout> &_ubo_layouts, uint32_t _desc_c) {
+        DescriptorPoolCreator::~DescriptorPoolCreator() {
+            if(m_descriptor_pool != VK_NULL_HANDLE)
+                vkDestroyDescriptorPool(m_device, m_descriptor_pool, NULL);
+        }
+
+
+        DescriptorPoolCreator &DescriptorPoolCreator::operator=(const DescriptorPoolCreator &_dpc) {
+            m_device = _dpc.m_device;
+            m_swapchain_image_count = _dpc.m_swapchain_image_count;
+            m_texture_count = _dpc.m_texture_count;
+            m_descriptor_pool = _dpc.m_descriptor_pool;
+
+            return *this;
+        }
+
+
+        DescriptorPoolCreator &DescriptorPoolCreator::operator=(DescriptorPoolCreator &&_dpc) {
+            m_device = _dpc.m_device;
+            m_swapchain_image_count = _dpc.m_swapchain_image_count;
+            m_texture_count = _dpc.m_texture_count;
+            m_descriptor_pool = _dpc.m_descriptor_pool;
+
+            _dpc.m_descriptor_pool = VK_NULL_HANDLE;
+            
+            return *this;
+        }
+
+
+        std::vector<VkDescriptorPoolSize> DescriptorPoolCreator::_FindDescriptorPoolSizes(const std::vector<UniformDataLayout> &_ubo_layouts) {
             std::vector<VkDescriptorPoolSize> desc_sizes(_ubo_layouts.size());
+            const uint32_t desc_count = (m_texture_count == 0 ? 1 : m_texture_count) * m_swapchain_image_count;
 
             for(size_t i = 0; i < desc_sizes.size(); i++) {
                 switch(_ubo_layouts[i].type) {
@@ -38,7 +68,7 @@ namespace DENG {
                         break;
                 }
 
-                desc_sizes[i].descriptorCount = _desc_c;
+                desc_sizes[i].descriptorCount = desc_count;
             }
 
             return desc_sizes;
@@ -46,43 +76,40 @@ namespace DENG {
 
 
         void DescriptorPoolCreator::_LoadUniformsForShader(const std::vector<UniformDataLayout> &_ubo_layouts) {
-            std::vector<VkDescriptorPoolSize> desc_sizes = _FindDescriptorPoolSizes(_ubo_layouts, DEFAULT_DESCRIPTOR_POOL_CAP * m_swapchain_image_count);
+            std::vector<VkDescriptorPoolSize> desc_sizes = _FindDescriptorPoolSizes(_ubo_layouts);
 
             // set createinfo struct
             VkDescriptorPoolCreateInfo desc_pool_info = {};
             desc_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
             desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size());
             desc_pool_info.pPoolSizes = desc_sizes.data();
-            // desc_pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-            desc_pool_info.maxSets = DEFAULT_DESCRIPTOR_POOL_CAP * m_swapchain_image_count;
+            desc_pool_info.maxSets = m_texture_count * m_swapchain_image_count;
+            desc_pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-            VkDescriptorPool desc_pool = VK_NULL_HANDLE;
-            if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &desc_pool) != VK_SUCCESS)
+            if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &m_descriptor_pool) != VK_SUCCESS)
                 VK_DESC_ERR("failed to create descriptor pool");
-
-            m_descriptor_pools.push_back(std::make_pair(desc_pool, desc_pool_info.maxSets));
         }
 
 
-        void DescriptorPoolCreator::RecreateDescriptorPool(const std::vector<VkDescriptorSet> &_desc_sets, uint32_t _index, uint32_t _req_cap, 
-                                                           const std::vector<UniformDataLayout> &_ubo_layouts) 
-        {
-            m_descriptor_pools[_index].second = m_descriptor_pools[_index].second * 3 / 2 > _req_cap * 3 / 2 ? 
-                m_descriptor_pools[_index].second * 3 / 2 : _req_cap * 3 / 2;
+        //void DescriptorPoolCreator::RecreateDescriptorPool(const std::vector<VkDescriptorSet> &_desc_sets, uint32_t _index, uint32_t _req_cap, 
+                                                           //const std::vector<UniformDataLayout> &_ubo_layouts) 
+        //{
+            //m_descriptor_pools[_index].second = m_descriptor_pools[_index].second * 3 / 2 > _req_cap * 3 / 2 ? 
+                //m_descriptor_pools[_index].second * 3 / 2 : _req_cap * 3 / 2;
 
-            vkFreeDescriptorSets(m_device, m_descriptor_pools[_index].first, static_cast<uint32_t>(_desc_sets.size()), _desc_sets.data());
-            vkDestroyDescriptorPool(m_device, m_descriptor_pools[_index].first, NULL);
+            //vkFreeDescriptorSets(m_device, m_descriptor_pools[_index].first, static_cast<uint32_t>(_desc_sets.size()), _desc_sets.data());
+            //vkDestroyDescriptorPool(m_device, m_descriptor_pools[_index].first, NULL);
 
-            std::vector<VkDescriptorPoolSize> desc_sizes = _FindDescriptorPoolSizes(_ubo_layouts, m_descriptor_pools[_index].second);
-            VkDescriptorPoolCreateInfo desc_pool_info = {};
+            //std::vector<VkDescriptorPoolSize> desc_sizes = _FindDescriptorPoolSizes(_ubo_layouts, m_descriptor_pools[_index].second);
+            //VkDescriptorPoolCreateInfo desc_pool_info = {};
 
-            desc_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size()) * m_swapchain_image_count;
-            desc_pool_info.pPoolSizes = desc_sizes.data();
-            desc_pool_info.maxSets = m_descriptor_pools[_index].second;
+            //desc_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            //desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size()) * m_swapchain_image_count;
+            //desc_pool_info.pPoolSizes = desc_sizes.data();
+            //desc_pool_info.maxSets = m_descriptor_pools[_index].second;
 
-            if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &m_descriptor_pools[_index].first))
-                VK_DESC_ERR("failed to create a descriptor pool");
-        }
+            //if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &m_descriptor_pools[_index].first))
+                //VK_DESC_ERR("failed to create a descriptor pool");
+        //}
     }
 }

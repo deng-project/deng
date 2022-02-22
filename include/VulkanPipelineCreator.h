@@ -36,7 +36,6 @@ namespace DENG {
                 std::vector<VkVertexInputBindingDescription> m_input_binding_desc = {};
                 std::vector<VkVertexInputAttributeDescription> m_input_attr_descs = {};
 
-
                 VkPipelineVertexInputStateCreateInfo    m_vert_input_create_info = {};
                 VkPipelineInputAssemblyStateCreateInfo  m_input_asm_createinfo = {};
                 VkPipelineViewportStateCreateInfo       m_viewport_state_createinfo = {};
@@ -53,9 +52,9 @@ namespace DENG {
                 std::vector<uint32_t> m_geometry_bin;
                 std::vector<uint32_t> m_fragment_bin;
 
-                std::vector<VkPipelineLayout> m_pipeline_layouts;
-                std::vector<VkPipeline> m_pipelines;
-                VkRenderPass m_render_pass = {};
+                VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
+                VkPipeline m_pipeline = VK_NULL_HANDLE;
+                VkRenderPass m_render_pass = VK_NULL_HANDLE;
 
             private:
                 void _FindInputBindingDescriptions(ShaderModule *_module);
@@ -68,15 +67,15 @@ namespace DENG {
 #endif
                 void _CheckAndCompileShaderSources(ShaderModule *_module);
                 std::string _ReadShaderSource(const std::string &_file_name);
-                void _CreatePipelineLayouts(const std::vector<VkDescriptorSetLayout> &_desc_set_layouts);
-                VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(ShaderModule *_module, VkPipelineLayout &_layout);
+                void _CreatePipelineLayout(VkDescriptorSetLayout _desc_set_layout);
+                VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(ShaderModule *_module);
 
             public:
-                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, const std::vector<VkDescriptorSetLayout> &_desc_set_layouts, const std::vector<ShaderModule*> &_modules);
+                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, VkDescriptorSetLayout _desc_set_layout, ShaderModule *_module);
                 ~PipelineCreator();
 
-                inline VkPipelineLayout GetPipelineLayoutById(uint32_t _id) { return m_pipeline_layouts[_id]; }
-                inline VkPipeline GetPipelineById(uint32_t _id) { return m_pipelines[_id]; }
+                inline VkPipelineLayout GetPipelineLayout() { return m_pipeline_layout; }
+                inline VkPipeline GetPipeline() { return m_pipeline; }
         };
     }
 }

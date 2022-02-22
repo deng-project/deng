@@ -10,20 +10,17 @@
 namespace DENG {
     namespace Vulkan {
 
-        PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, const std::vector<VkDescriptorSetLayout> &_desc_set_layouts, const std::vector<ShaderModule*> &_modules) :
+        PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, VkDescriptorSetLayout _desc_set_layout, ShaderModule *_module) :
             m_device(_dev), m_render_pass(_render_pass), m_ext(_ext), m_samples(_samples)
         {
-            _CreatePipelineLayouts(_desc_set_layouts);
+            _CreatePipelineLayout(_desc_set_layout);
 
             // for each shader module create a VkPipeline instance
-            for(size_t i = 0; i < _modules.size(); i++) {
-                VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = _GeneratePipelineCreateInfo(_modules[i], m_pipeline_layouts[i]);
-                
-                // create a pipeline
-                m_pipelines.push_back(VkPipeline{});
-                if(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, NULL, &m_pipelines.back()) != VK_SUCCESS)
-                    VK_PIPELINEC_ERR("failed to create a pipeline");
-            }
+            VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = _GeneratePipelineCreateInfo(_module);
+            
+            // create a pipeline
+            if(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, NULL, &m_pipeline) != VK_SUCCESS)
+                VK_PIPELINEC_ERR("failed to create a pipeline");
         }
 
 
@@ -49,12 +46,10 @@ namespace DENG {
 
 
         void PipelineCreator::_FindInputBindingDescriptions(ShaderModule *_module) {
-            for(uint32_t i = 0; i < static_cast<uint32_t>(_module->strides.size()); i++) {
-                m_input_binding_desc.push_back(VkVertexInputBindingDescription{});
-                m_input_binding_desc.back().binding = i;
-                m_input_binding_desc.back().stride = _module->strides[i];
-                m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            }
+            m_input_binding_desc.emplace_back();
+            m_input_binding_desc.back().binding = m_input_binding_desc.size() - 1;
+            m_input_binding_desc.back().stride = static_cast<uint32_t>(CalculateStride(_module));
+            m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         }
 
 
@@ -200,22 +195,19 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_CreatePipelineLayouts(const std::vector<VkDescriptorSetLayout> &_desc_set_layouts) {
-            for(const VkDescriptorSetLayout &layout : _desc_set_layouts) {
-                VkPipelineLayoutCreateInfo pipeline_layout_createinfo = {};
-                pipeline_layout_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-                pipeline_layout_createinfo.pushConstantRangeCount = 0;
-                pipeline_layout_createinfo.setLayoutCount = 1;
-                pipeline_layout_createinfo.pSetLayouts = &layout;
+        void PipelineCreator::_CreatePipelineLayout(VkDescriptorSetLayout _desc_set_layout) {
+            VkPipelineLayoutCreateInfo pipeline_layout_createinfo = {};
+            pipeline_layout_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipeline_layout_createinfo.pushConstantRangeCount = 0;
+            pipeline_layout_createinfo.setLayoutCount = 1;
+            pipeline_layout_createinfo.pSetLayouts = &_desc_set_layout;
 
-                m_pipeline_layouts.push_back(VkPipelineLayout{});
-                if(vkCreatePipelineLayout(m_device, &pipeline_layout_createinfo, NULL, &m_pipeline_layouts.back()) != VK_SUCCESS)
-                    VK_PIPELINEC_ERR("failed to create a pipeline layout");
-            }
+            if(vkCreatePipelineLayout(m_device, &pipeline_layout_createinfo, NULL, &m_pipeline_layout) != VK_SUCCESS)
+                VK_PIPELINEC_ERR("failed to create a pipeline layout");
         }
 
 
-        VkGraphicsPipelineCreateInfo PipelineCreator::_GeneratePipelineCreateInfo(ShaderModule *_module, VkPipelineLayout &_layout) {
+        VkGraphicsPipelineCreateInfo PipelineCreator::_GeneratePipelineCreateInfo(ShaderModule *_module) {
             _CheckAndCompileShaderSources(_module);
 
             // Create vertex and fragment shader modules
@@ -270,10 +262,10 @@ namespace DENG {
             m_input_asm_createinfo.primitiveRestartEnable = VK_FALSE;
 
             // Set viewport values
-            m_viewport.x = 0.0f;
-            m_viewport.y = 0.0f;
             m_viewport.width = static_cast<float>(m_ext.width);
-            m_viewport.height = static_cast<float>(m_ext.height);
+            m_viewport.height = -static_cast<float>(m_ext.height);
+            m_viewport.x = 0.0f;
+            m_viewport.y = -m_viewport.height;
             m_viewport.minDepth = 0.0f;
             m_viewport.maxDepth = 1.0f;
 
@@ -346,7 +338,7 @@ namespace DENG {
             graphics_pipeline_createinfo.pMultisampleState = &m_multisample_createinfo;
             graphics_pipeline_createinfo.pDepthStencilState = &m_depth_stencil;
             //graphics_pipeline_createinfo.pDynamicState = &m_dynamic_state_createinfo;
-            graphics_pipeline_createinfo.layout = _layout;
+            graphics_pipeline_createinfo.layout = m_pipeline_layout;
 
             graphics_pipeline_createinfo.renderPass = m_render_pass;
             // tmp

@@ -50,32 +50,32 @@ namespace DENG {
             for(const VkPresentModeKHR &presentation_mode : m_instance_creator->GetPresentationModes()) {
                 // Check which present modes are available
                 switch (presentation_mode) {
-                case VK_PRESENT_MODE_IMMEDIATE_KHR:
-                    LOG("VK_PRESENT_MODE_IMMEDIATE_KHR is available!");
-                    break;
+                    case VK_PRESENT_MODE_IMMEDIATE_KHR:
+                        LOG("VK_PRESENT_MODE_IMMEDIATE_KHR is available!");
+                        break;
 
-                case VK_PRESENT_MODE_MAILBOX_KHR:
-                    LOG("VK_PRESENT_MODE_MAILBOX_KHR is available!");
-                    break;
+                    case VK_PRESENT_MODE_MAILBOX_KHR:
+                        LOG("VK_PRESENT_MODE_MAILBOX_KHR is available!");
+                        break;
 
-                case VK_PRESENT_MODE_FIFO_KHR:
-                    LOG("VK_PRESENT_MODE_FIFO_KHR is available!");
-                    break;
+                    case VK_PRESENT_MODE_FIFO_KHR:
+                        LOG("VK_PRESENT_MODE_FIFO_KHR is available!");
+                        break;
 
-                case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
-                    LOG("VK_PRESENT_MODE_FIFO_KHR is available!");
-                    break;
+                    case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
+                        LOG("VK_PRESENT_MODE_FIFO_KHR is available!");
+                        break;
 
-                case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
-                    LOG("VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR is available!");
-                    break;
+                    case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
+                        LOG("VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR is available!");
+                        break;
 
-                case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR:
-                    LOG("VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR is available!");
-                    break;
+                    case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR:
+                        LOG("VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR is available!");
+                        break;
 
-                default:
-                    break;
+                    default:
+                        break;
                 }
 
                 if(presentation_mode == VK_PRESENT_MODE_MAILBOX_KHR) {

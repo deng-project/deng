@@ -53,25 +53,15 @@
 
 namespace DENG {
 
-    namespace Vulkan {
-        struct TextureData {
-            VkImage image = VK_NULL_HANDLE;
-            VkDeviceMemory memory = VK_NULL_HANDLE;
-            VkImageView image_view = VK_NULL_HANDLE;
-            VkSampler sampler = VK_NULL_HANDLE;
-        };
-    }
-
     class DENG_API VulkanRenderer : public Renderer {
         private:
             Vulkan::InstanceCreator *mp_instance_creator;
             Vulkan::SwapchainCreator *mp_swapchain_creator;
-            Vulkan::PipelineCreator *mp_pipeline_creator;
+            std::vector<Vulkan::PipelineCreator> m_pipeline_creators;
+            std::vector<Vulkan::DescriptorSetLayoutCreator> m_descriptor_set_layout_creators;
             std::vector<Vulkan::DescriptorPoolCreator> m_descriptor_pool_creators;
             std::vector<Vulkan::DescriptorSetsCreator> m_descriptor_sets_creators;
             Vulkan::UniformBufferAllocator *mp_ubo_allocator;
-            Vulkan::DescriptorSetLayoutCreator *mp_descriptor_set_layout_creator;
-            Vulkan::DescriptorSetsCreator *mp_descriptor_sets_creator;
             
             // locally managed vulkan resources
             VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT; // tmp
@@ -120,13 +110,13 @@ namespace DENG {
             VulkanRenderer(const Window &_win);
             ~VulkanRenderer();
 
-            virtual uint32_t PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) override;
-            virtual uint32_t PushTextureFromMemory(DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) override;
+            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
 
             virtual void LoadShaders() override;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
-            virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
-            virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;
             virtual void RenderFrame() override;
     };

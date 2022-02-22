@@ -8,7 +8,7 @@ project(deng)
 set(CXX_STANDARD C++17)
 set(C_STANDARD C99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-option(BUILD_DEPS "Build DENG dependencies only" OFF)
+option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
 option(BUILD_DENG "Build all DENG targets" ON)
 
@@ -21,6 +21,8 @@ endif()
 if(BUILD_DEPS OR BUILD_ALL)
     include(cmake/libdas.cmake)
     include(cmake/libnwin.cmake)
+
+    # Override some shaderc dependency options to avoid building tests
     add_subdirectory(deps/shaderc)
 endif()
 
@@ -31,5 +33,5 @@ endif()
 
 if(BUILD_TESTS)
     message(STATUS "Adding test build configurations")
-    include(cmake/tests/OpenGLTriangle.cmake)
+    include(cmake/tests/TriangleApp.cmake)
 endif()

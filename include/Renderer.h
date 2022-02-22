@@ -34,6 +34,15 @@ namespace DENG {
         uint32_t shader_module_id = 0;
         uint32_t shader_sampler_id = 0;
         uint32_t r_identifier = UINT32_MAX;      // leave it as blank, used by renderer for referencing
+
+        // compare by shader_sampler_id and shader_module_id
+        struct less {
+            bool operator()(const TextureReference &_t1, const TextureReference &_t2) {
+                if(_t1.shader_module_id == _t2.shader_module_id)
+                    return _t1.shader_sampler_id < _t2.shader_sampler_id;
+                else return _t1.shader_module_id < _t2.shader_module_id;
+            }
+        };
     };
 
 
@@ -53,13 +62,13 @@ namespace DENG {
                 return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
-            inline uint32_t PushShader(ShaderModule *_shader) {
-                m_shaders.push_back(_shader);
+            inline uint32_t PushShader(ShaderModule *_module) {
+               m_shaders.push_back(_module);
                 return static_cast<uint32_t>(m_shaders.size() - 1);
             }
 
-            virtual uint32_t PushTextureFromFile(DENG::TextureReference &_tex, const std::string &_file_name) = 0;
-            virtual uint32_t PushTextureFromMemory(DENG::TextureReference& _tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
+            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) = 0;
+            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
             // virtual void RemoveTextureById(uint32_t _id);
 
             inline void RemoveMeshReference(uint32_t _id) {
@@ -68,8 +77,8 @@ namespace DENG {
 
             virtual void LoadShaders() = 0;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
-            virtual void UpdateVertexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
-            virtual void UpdateIndexBuffer(std::pair<char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
+            virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
+            virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;
             virtual void RenderFrame() = 0;
     };

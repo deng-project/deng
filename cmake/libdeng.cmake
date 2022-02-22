@@ -53,8 +53,9 @@ set(DENG_HEADERS
 
 set(DENG_SOURCES
     src/OpenGLBufferLoader.cpp
-    src/OpenGLShaderLoader.cpp
     src/OpenGLRenderer.cpp
+    src/OpenGLShaderLoader.cpp
+    src/ShaderDefinitions.cpp
     src/VulkanDescriptorPoolCreator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
     src/VulkanDescriptorSetsCreator.cpp

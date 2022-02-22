@@ -25,17 +25,22 @@ namespace DENG {
         class DescriptorSetLayoutCreator {
             private:
                 VkDevice m_device;
-                std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
+                ShaderModule const *m_shader_module;
+                VkDescriptorSetLayout m_descriptor_set_layout = VK_NULL_HANDLE;
 
             private:
-                void _CreateDescriptorSetLayout(const std::vector<UniformDataLayout> &_layouts);
+                void _CreateDescriptorSetLayout();
 
             public:
-                DescriptorSetLayoutCreator(VkDevice _dev, const std::vector<ShaderModule*> &_modules);
+                DescriptorSetLayoutCreator(VkDevice _dev, ShaderModule const *_module);
+                DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = default;
+                DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc);
                 ~DescriptorSetLayoutCreator();
 
-                inline VkDescriptorSetLayout GetLayoutSetById(uint32_t _id) { return m_descriptor_set_layouts[_id]; }
-                inline std::vector<VkDescriptorSetLayout> &GetLayouts() { return m_descriptor_set_layouts; }
+                DescriptorSetLayoutCreator &operator=(const DescriptorSetLayoutCreator &_dslc);
+                DescriptorSetLayoutCreator &operator=(DescriptorSetLayoutCreator &&_dslc);
+
+                inline VkDescriptorSetLayout GetDescriptorSetLayout() { return m_descriptor_set_layout; }
         };
 
 #if 0

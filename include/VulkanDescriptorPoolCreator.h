@@ -16,7 +16,7 @@
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
 
-    #define DEFAULT_DESCRIPTOR_POOL_CAP     16
+    //#define DEFAULT_DESCRIPTOR_POOL_CAP     16
 #endif
 
 
@@ -25,40 +25,32 @@ namespace DENG {
 
         class DescriptorPoolCreator {
             private:
-                // first: descriptor pool handle
-                // second: descriptor pool capacity
                 VkDevice m_device;
                 uint32_t m_swapchain_image_count;
-                std::vector<std::pair<VkDescriptorPool, uint32_t>> m_descriptor_pools;
-                bool m_is_init = false;
+                uint32_t m_texture_count;
+                VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
 
             private:
-                std::vector<VkDescriptorPoolSize> _FindDescriptorPoolSizes(const std::vector<UniformDataLayout> &_ubo_layouts, uint32_t _desc_c);
+                std::vector<VkDescriptorPoolSize> _FindDescriptorPoolSizes(const std::vector<UniformDataLayout> &_ubo_layouts);
                 void _LoadUniformsForShader(const std::vector<UniformDataLayout> &_ubo_layouts);
                 
 
             public:
                 DescriptorPoolCreator() = default;
                 DescriptorPoolCreator(const DescriptorPoolCreator &_dpc) = default;
-                DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, const std::vector<UniformDataLayout> &_ubo_layouts);
+                DescriptorPoolCreator(DescriptorPoolCreator &&_dpc);
+                DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, uint32_t _texture_count, const std::vector<UniformDataLayout> &_ubo_layouts);
                 ~DescriptorPoolCreator();
 
+                DescriptorPoolCreator &operator=(const DescriptorPoolCreator &_dpc);
+                DescriptorPoolCreator &operator=(DescriptorPoolCreator &&_dpc);
+
                 /// NOTE: recreating descriptor pool frees all associated descriptor sets
-                void RecreateDescriptorPool(const std::vector<VkDescriptorSet> &_desc_sets, uint32_t _index, uint32_t _req_cap, 
-                                            const std::vector<UniformDataLayout> &_ubo_layouts);
+                //void RecreateDescriptorPool(const std::vector<VkDescriptorSet> &_desc_sets, uint32_t _index, uint32_t _req_cap, 
+                                            //const std::vector<UniformDataLayout> &_ubo_layouts);
 
-                inline std::pair<VkDescriptorPool, uint32_t> &GetDescriptorPoolById(uint32_t _id) {
-                    return m_descriptor_pools[_id];
-                }
-
-
-                inline uint32_t GetDescriptorPoolCount() {
-                    return static_cast<uint32_t>(m_descriptor_pools.size());
-                }
-
-
-                inline bool IsInit() {
-                    return m_is_init;
+                inline VkDescriptorPool GetDescriptorPool() {
+                    return m_descriptor_pool;
                 }
         };
     }

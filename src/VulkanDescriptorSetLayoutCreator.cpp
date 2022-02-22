@@ -11,26 +11,51 @@ namespace DENG {
 
     namespace Vulkan {
         
-        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(VkDevice _dev, const std::vector<ShaderModule*> &_modules) : m_device(_dev) {
-            for(size_t i = 0; i < _modules.size(); i++)
-                _CreateDescriptorSetLayout(_modules[i]->ubo_data_layouts);
+        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(VkDevice _dev, ShaderModule const *_module) : m_device(_dev), m_shader_module(_module) {
+            _CreateDescriptorSetLayout();
+        }
+
+
+        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc) : m_device(_dslc.m_device),
+            m_shader_module(_dslc.m_shader_module), m_descriptor_set_layout(_dslc.m_descriptor_set_layout)
+        {
+            _dslc.m_descriptor_set_layout = VK_NULL_HANDLE;
         }
 
 
         DescriptorSetLayoutCreator::~DescriptorSetLayoutCreator() {
-            for(VkDescriptorSetLayout &layout : m_descriptor_set_layouts)
-                vkDestroyDescriptorSetLayout(m_device, layout, NULL);
+            if(m_descriptor_set_layout != VK_NULL_HANDLE)
+                vkDestroyDescriptorSetLayout(m_device, m_descriptor_set_layout, NULL);
         }
 
 
-        void DescriptorSetLayoutCreator::_CreateDescriptorSetLayout(const std::vector<UniformDataLayout> &_layouts) {
-            std::vector<VkDescriptorSetLayoutBinding> bindings(_layouts.size());
+        DescriptorSetLayoutCreator &DescriptorSetLayoutCreator::operator=(const DescriptorSetLayoutCreator &_dslc) {
+            m_device = _dslc.m_device;
+            m_shader_module = _dslc.m_shader_module;
+            m_descriptor_set_layout = _dslc.m_descriptor_set_layout;
+
+            return *this;
+        }
+
+
+        DescriptorSetLayoutCreator &DescriptorSetLayoutCreator::operator=(DescriptorSetLayoutCreator &&_dslc) {
+            m_device = _dslc.m_device;
+            m_shader_module = _dslc.m_shader_module;
+            m_descriptor_set_layout = _dslc.m_descriptor_set_layout;
+
+            _dslc.m_descriptor_set_layout = VK_NULL_HANDLE;
+            return *this;
+        }
+
+
+        void DescriptorSetLayoutCreator::_CreateDescriptorSetLayout() {
+            std::vector<VkDescriptorSetLayoutBinding> bindings(m_shader_module->ubo_data_layouts.size());
 
             for(size_t i = 0; i < bindings.size(); i++) {
-                bindings[i].binding = _layouts[i].binding;
+                bindings[i].binding = m_shader_module->ubo_data_layouts[i].binding;
                 bindings[i].descriptorCount = 1;
 
-                switch(_layouts[i].type) {
+                switch(m_shader_module->ubo_data_layouts[i].type) {
                     case UNIFORM_DATA_TYPE_BUFFER:
                         bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                         break;
@@ -43,11 +68,11 @@ namespace DENG {
                 bindings[i].pImmutableSamplers = NULL;
                 bindings[i].stageFlags = 0;
 
-                if(_layouts[i].stage & SHADER_STAGE_VERTEX)
+                if(m_shader_module->ubo_data_layouts[i].stage & SHADER_STAGE_VERTEX)
                     bindings[i].stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-                if(_layouts[i].stage & SHADER_STAGE_GEOMETRY)
+                if(m_shader_module->ubo_data_layouts[i].stage & SHADER_STAGE_GEOMETRY)
                     bindings[i].stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-                if(_layouts[i].stage & SHADER_STAGE_FRAGMENT)
+                if(m_shader_module->ubo_data_layouts[i].stage & SHADER_STAGE_FRAGMENT)
                     bindings[i].stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
             }
 
@@ -56,11 +81,8 @@ namespace DENG {
             desc_set_layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
             desc_set_layout_info.pBindings = bindings.data();
 
-            VkDescriptorSetLayout desc_set_layout;
-            if(vkCreateDescriptorSetLayout(m_device, &desc_set_layout_info, NULL, &desc_set_layout) != VK_SUCCESS)
+            if(vkCreateDescriptorSetLayout(m_device, &desc_set_layout_info, NULL, &m_descriptor_set_layout) != VK_SUCCESS)
                 VK_DESC_ERR("failed to create descriptor set layout");
-
-            m_descriptor_set_layouts.push_back(desc_set_layout);
         }
     }
 }

@@ -139,5 +139,14 @@ namespace DENG {
                 exit(EXIT_FAILURE);
             }
         }
+
+
+        void ShaderLoader::LoadShaders(const std::vector<ShaderModule*> &_modules) {
+            m_strides.reserve(_modules.size());
+            for(ShaderModule *p_module : _modules) {
+                _CompileShadersToProgram(p_module);
+                m_strides.push_back(CalculateStride(p_module));
+            }
+        }
     }
 }
