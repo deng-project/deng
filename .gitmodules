@@ -10,3 +10,9 @@
 [submodule "deps/shaderc"]
 	path = deps/shaderc
 	url = https://github.com/google/shaderc
+[submodule "deps/Vulkan-Headers"]
+	path = deps/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers
+[submodule "deps/Vulkan-ValidationLayers"]
+	path = deps/Vulkan-ValidationLayers
+	url = https://github.com/KhronosGroup/Vulkan-ValidationLayers
