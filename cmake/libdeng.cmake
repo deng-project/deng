@@ -109,7 +109,7 @@ target_include_directories(${DENG_SHARED_TARGET}
 )
 
 target_link_libraries(${DENG_SHARED_TARGET}
-    PRIVATE shaderc
+    PRIVATE shaderc_combined
     PRIVATE nwin
     PRIVATE das
 )

@@ -15,7 +15,7 @@ The goal of the current animations branch is following:
 
 ## Building
 
-DENG uses CMake as its build environment, so make sure that CMake is installed on your system.
+DENG uses CMake as its build environment, so make sure that CMake as well as Vulkan SDK is installed on your system.
 
 On Debian based distributions you can install following packages that are required for building DENG  
 ```
