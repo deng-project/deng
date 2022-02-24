@@ -11,7 +11,7 @@ namespace DENG {
 
     namespace Vulkan {
         
-        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(VkDevice _dev, ShaderModule const *_module) : m_device(_dev), m_shader_module(_module) {
+        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module) : m_device(_dev), m_shader_module(&_module) {
             _CreateDescriptorSetLayout();
         }
 

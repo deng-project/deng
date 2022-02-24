@@ -32,7 +32,7 @@ namespace DENG {
                 void _CreateDescriptorSetLayout();
 
             public:
-                DescriptorSetLayoutCreator(VkDevice _dev, ShaderModule const *_module);
+                DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module);
                 DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = default;
                 DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc);
                 ~DescriptorSetLayoutCreator();
@@ -42,40 +42,6 @@ namespace DENG {
 
                 inline VkDescriptorSetLayout GetDescriptorSetLayout() { return m_descriptor_set_layout; }
         };
-
-#if 0
-        class DescriptorSetLayoutCreator {
-        private:
-            VkDescriptorSetLayout m_vu2d_layout;
-            VkDescriptorSetLayout m_vm2d_layout;
-            VkDescriptorSetLayout m_vu3d_layout;
-            VkDescriptorSetLayout m_vm3d_layout;
-            VkDescriptorSetLayout m_ui_layout;
-            void *m_udata;
-
-        private:
-            /// Find the binding data according to the asset mode
-            std::vector<VkDescriptorSetLayoutBinding> __findBindings(deng_PipelineType pl_type);
-
-            /// Create new descriptor set layout
-            void __mkGenericDescSetLayout(VkDevice device, std::vector<VkDescriptorSetLayoutBinding> &bindings, 
-                VkDescriptorSetLayout *p_layout);
-            
-            /// Create descriptor set layouts for different asset types
-            void __mkVu2DLayout(VkDevice device);
-            void __mkVm2DLayout(VkDevice device);
-            void __mkVu3DLayout(VkDevice device);
-            void __mkVm3DLayout(VkDevice device);
-            void __mkUILayout(VkDevice device);
-
-        public:
-            __vk_DescriptorSetLayoutCreator(VkDevice device, void *udata);
-
-        /// Layout getter
-        public:
-            VkDescriptorSetLayout &getLayout(deng_PipelineType pl_type);
-        };
-#endif
     }
 }
 

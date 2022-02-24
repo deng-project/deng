@@ -10,9 +10,9 @@ namespace DENG {
 
     namespace Vulkan {
 
-        DescriptorSetsCreator::DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, ShaderModule const* _module, uint32_t _mod_id, UniformBufferAllocator *_ubo_allocator, VkDescriptorPool _desc_pool, 
+        DescriptorSetsCreator::DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, const ShaderModule &_module, uint32_t _mod_id, UniformBufferAllocator *_ubo_allocator, VkDescriptorPool _desc_pool, 
                                                      VkDescriptorSetLayout _desc_set_layout, std::vector<Vulkan::TextureData> &_textures) : m_device(_dev), m_swapchain_images_count(_sc_img_count), mp_ubo_allocator(_ubo_allocator),
-                                                     m_descriptor_pool(_desc_pool), m_descriptor_set_layout(_desc_set_layout), m_shader_module(_module), m_textures(&_textures), m_mod_id(_mod_id)
+                                                     m_descriptor_pool(_desc_pool), m_descriptor_set_layout(_desc_set_layout), m_shader_module(&_module), m_textures(&_textures), m_mod_id(_mod_id)
         {
             _CreateDescriptorSets();
         }

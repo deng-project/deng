@@ -12,6 +12,8 @@
     #include <string>
     #include <vector>
     #include <array>
+    #include <thread>
+    #include <chrono>
     #include <cstring>
     #include <cmath>
     #include <utility>
@@ -101,9 +103,10 @@ namespace DENG {
             void _CreateDepthResources();
             void _CreateFrameBuffers();
             void _AllocateCommandBuffers();
-            void _RecordCommandBuffers();
+            void _RecordCommandBuffer(uint32_t _imgi);
             void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels);
             void _CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels);
+            void _Resize();
 
 
         public:

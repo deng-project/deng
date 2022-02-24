@@ -49,7 +49,7 @@ namespace DENG {
                 DescriptorSetsCreator() = default;
                 DescriptorSetsCreator(const DescriptorSetsCreator &_dsc) = default;
                 DescriptorSetsCreator(DescriptorSetsCreator &&_dsc);
-                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, ShaderModule const *_module, uint32_t _mod_id, UniformBufferAllocator *_ubo_allocator, 
+                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, const ShaderModule &_module, uint32_t _mod_id, UniformBufferAllocator *_ubo_allocator, 
                                       VkDescriptorPool _desc_pool, VkDescriptorSetLayout _dest_set_layout, std::vector<Vulkan::TextureData> &_textures);
                 ~DescriptorSetsCreator() = default;
 

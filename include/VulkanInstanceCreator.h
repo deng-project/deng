@@ -124,6 +124,10 @@ namespace DENG {
                     return m_present_modes;
                 }
 
+                inline void UpdateSurfaceProperties() {
+                    _FindPhysicalDeviceSurfaceProperties(m_gpu);
+                }
+
                 inline VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() {
                     return m_surface_capabilities;
                 }

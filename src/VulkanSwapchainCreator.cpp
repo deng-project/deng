@@ -11,7 +11,7 @@ namespace DENG {
     namespace Vulkan {
 
         SwapchainCreator::SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c) : 
-            m_instance_creator(_instance_creator), m_window_size(_win_size), m_sample_c(_sample_c)
+            mp_instance_creator(_instance_creator), m_window_size(_win_size), m_sample_c(_sample_c)
         {
             _ConfigureSwapchainSettings();
             _CreateSwapchain();
@@ -22,9 +22,26 @@ namespace DENG {
 
         SwapchainCreator::~SwapchainCreator() {
             for(auto it = m_swapchain_imageviews.begin(); it != m_swapchain_imageviews.end(); it++)
-                vkDestroyImageView(m_instance_creator->GetDevice(), *it, NULL);
+                vkDestroyImageView(mp_instance_creator->GetDevice(), *it, nullptr);
 
-            vkDestroySwapchainKHR(m_instance_creator->GetDevice(), m_swapchain, NULL);
+            vkDestroySwapchainKHR(mp_instance_creator->GetDevice(), m_swapchain, nullptr);
+        }
+
+
+        void SwapchainCreator::RecreateSwapchain(Libdas::Point2D<int32_t> _new_win_size) {
+            m_window_size = _new_win_size;
+
+            // cleanup the previous swapchain
+            vkDestroyRenderPass(mp_instance_creator->GetDevice(), m_renderpass, nullptr);
+            for(auto it = m_swapchain_imageviews.begin(); it != m_swapchain_imageviews.end(); it++)
+                vkDestroyImageView(mp_instance_creator->GetDevice(), *it, nullptr);
+
+            vkDestroySwapchainKHR(mp_instance_creator->GetDevice(), m_swapchain, nullptr);
+
+            mp_instance_creator->UpdateSurfaceProperties();
+            _CreateSwapchain();
+            _CreateSwapchainImageViews();
+            _CreateRenderPass();
         }
 
 
@@ -32,7 +49,7 @@ namespace DENG {
             bool found_suitable_format = false;
 
             // check if found surface formats support SRGB coloring and nonlinear color space
-            for(const VkSurfaceFormatKHR &sformat : m_instance_creator->GetSurfaceFormats()) {
+            for(const VkSurfaceFormatKHR &sformat : mp_instance_creator->GetSurfaceFormats()) {
                 if(sformat.format == VK_FORMAT_B8G8R8A8_SRGB && sformat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                     m_selected_surface_format = sformat;
                     found_suitable_format = true;
@@ -42,12 +59,12 @@ namespace DENG {
 
             if(!found_suitable_format) {
                 WARNME("Could not find suitable surface format! Trying to use first one available!");
-                m_selected_surface_format = m_instance_creator->GetSurfaceFormats()[0];
+                m_selected_surface_format = mp_instance_creator->GetSurfaceFormats()[0];
             }
 
 
             bool found_presentation_mode = false;
-            for(const VkPresentModeKHR &presentation_mode : m_instance_creator->GetPresentationModes()) {
+            for(const VkPresentModeKHR &presentation_mode : mp_instance_creator->GetPresentationModes()) {
                 // Check which present modes are available
                 switch (presentation_mode) {
                     case VK_PRESENT_MODE_IMMEDIATE_KHR:
@@ -91,23 +108,21 @@ namespace DENG {
 
 
         void SwapchainCreator::_CreateSwapchain() {
-            uint32_t min_image_count = m_instance_creator->GetSurfaceCapabilities().minImageCount + 1;
-            
+            uint32_t min_image_count = mp_instance_creator->GetSurfaceCapabilities().minImageCount + 1;
+
             // Verify that the maximum image count is not exceeded
-            if(m_instance_creator->GetSurfaceCapabilities().maxImageCount > 0 && 
-               min_image_count > m_instance_creator->GetSurfaceCapabilities().maxImageCount) 
-                min_image_count = m_instance_creator->GetSurfaceCapabilities().maxImageCount;
+            if(mp_instance_creator->GetSurfaceCapabilities().maxImageCount > 0 && min_image_count > mp_instance_creator->GetSurfaceCapabilities().maxImageCount) 
+                min_image_count = mp_instance_creator->GetSurfaceCapabilities().maxImageCount;
 
 
             VkSwapchainCreateInfoKHR swapchain_createinfo = {};
             swapchain_createinfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-            swapchain_createinfo.surface = m_instance_creator->GetSurface();
+            swapchain_createinfo.surface = mp_instance_creator->GetSurface();
             swapchain_createinfo.minImageCount = min_image_count;
             swapchain_createinfo.imageFormat = m_selected_surface_format.format;
             swapchain_createinfo.imageColorSpace = m_selected_surface_format.colorSpace;
 
-            // Check if the retrieved extent is valid
-            VkExtent2D ext = m_instance_creator->GetSurfaceCapabilities().currentExtent;
+            VkExtent2D ext = mp_instance_creator->GetSurfaceCapabilities().currentExtent;
             if(ext.width != UINT32_MAX && ext.height != UINT32_MAX)
                 swapchain_createinfo.imageExtent = ext;
             else {
@@ -115,12 +130,12 @@ namespace DENG {
                 swapchain_createinfo.imageExtent.height = m_window_size.y;
             }
 
-            m_extent = VkExtent2D{ swapchain_createinfo.imageExtent.width, swapchain_createinfo.imageExtent.height };
+            m_extent = { swapchain_createinfo.imageExtent.width, swapchain_createinfo.imageExtent.height };
             swapchain_createinfo.imageArrayLayers = 1;
             swapchain_createinfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
             // Check if present queue and graphics queue are the same and necessary synchronise the image sharing mode
-            std::array<uint32_t, 2> queue_families = { m_instance_creator->GetGraphicsFamilyIndex(), m_instance_creator->GetPresentationFamilyIndex() };
+            std::array<uint32_t, 2> queue_families = { mp_instance_creator->GetGraphicsFamilyIndex(), mp_instance_creator->GetPresentationFamilyIndex() };
             if(queue_families[0] != queue_families[1]) {
                 swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 swapchain_createinfo.queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size());
@@ -130,27 +145,27 @@ namespace DENG {
             else swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             
 
-            swapchain_createinfo.preTransform = m_instance_creator->GetSurfaceCapabilities().currentTransform;
+            swapchain_createinfo.preTransform = mp_instance_creator->GetSurfaceCapabilities().currentTransform;
 
             // Check, which composite alpha mode is supported
-            if(m_instance_creator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) 
+            if(mp_instance_creator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) 
                 swapchain_createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
-            else if(m_instance_creator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+            else if(mp_instance_creator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
                 swapchain_createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
-            else if(m_instance_creator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+            else if(mp_instance_creator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                 swapchain_createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-            else RUN_ERR("__mkSwapChain", "Could not select correct VK_COMPOSITE_ALPHA_BIT that is supported by DENG");
+            else RUN_ERR("_CreateSwapchain", "Could not select correct VK_COMPOSITE_ALPHA_BIT that is supported by DENG");
 
             swapchain_createinfo.presentMode = m_selected_present_mode;
             swapchain_createinfo.clipped = VK_TRUE;
 
-            if(vkCreateSwapchainKHR(m_instance_creator->GetDevice(), &swapchain_createinfo, NULL, &m_swapchain) != VK_SUCCESS)
+            if(vkCreateSwapchainKHR(mp_instance_creator->GetDevice(), &swapchain_createinfo, nullptr, &m_swapchain) != VK_SUCCESS)
                 VK_SWAPCHAIN_ERR("failed to create create a swap chain!");
 
             uint32_t image_count;
-            vkGetSwapchainImagesKHR(m_instance_creator->GetDevice(), m_swapchain, &image_count, NULL);
+            vkGetSwapchainImagesKHR(mp_instance_creator->GetDevice(), m_swapchain, &image_count, nullptr);
             m_swapchain_images.resize(image_count);
-            vkGetSwapchainImagesKHR(m_instance_creator->GetDevice(), m_swapchain, &image_count, m_swapchain_images.data());
+            vkGetSwapchainImagesKHR(mp_instance_creator->GetDevice(), m_swapchain, &image_count, m_swapchain_images.data());
         }
 
 
@@ -160,7 +175,7 @@ namespace DENG {
             for(uint32_t i = 0; i < static_cast<uint32_t>(m_swapchain_imageviews.size()); i++) {
                 VkImageViewCreateInfo iview_info = _GetImageViewInfo(m_swapchain_images[i], m_selected_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-                if(vkCreateImageView(m_instance_creator->GetDevice(), &iview_info, NULL, &m_swapchain_imageviews[i]) != VK_SUCCESS)
+                if(vkCreateImageView(mp_instance_creator->GetDevice(), &iview_info, nullptr, &m_swapchain_imageviews[i]) != VK_SUCCESS)
                     VK_SWAPCHAIN_ERR("failed to create image views!");
             }
         }
@@ -224,7 +239,7 @@ namespace DENG {
             subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
             std::array<VkAttachmentDescription, 3> attachments = { color_attachment, depth_attachment, color_attachment_resolve };
-            VkRenderPassCreateInfo renderpass_createinfo{};
+            VkRenderPassCreateInfo renderpass_createinfo = {};
             renderpass_createinfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
             renderpass_createinfo.attachmentCount = static_cast<uint32_t>(attachments.size());
             renderpass_createinfo.pAttachments = attachments.data();
@@ -234,7 +249,7 @@ namespace DENG {
             renderpass_createinfo.pDependencies = &subpass_dependency;
 
 
-            if(vkCreateRenderPass(m_instance_creator->GetDevice(), &renderpass_createinfo, NULL, &m_renderpass) != VK_SUCCESS)
+            if(vkCreateRenderPass(mp_instance_creator->GetDevice(), &renderpass_createinfo, nullptr, &m_renderpass) != VK_SUCCESS)
                 VK_SWAPCHAIN_ERR("failed to create render pass!");
         }
     }

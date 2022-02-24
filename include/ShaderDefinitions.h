@@ -82,7 +82,7 @@ namespace DENG {
         bool load_shaders_from_file = false;
     };
 
-    std::size_t CalculateStride(ShaderModule const *_p_module);
+    std::size_t CalculateStride(const ShaderModule &_module);
 }
 
 #endif

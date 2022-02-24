@@ -32,7 +32,7 @@ namespace DENG {
         }
 
 
-        void ShaderLoader::_CompileShadersToProgram(ShaderModule *_p_module) {
+        void ShaderLoader::_CompileShadersToProgram(ShaderModule &_module) {
             // 0: vertex shader
             // 1: geometry shader
             // 2: fragment shader
@@ -46,25 +46,25 @@ namespace DENG {
             glErrorCheck("glCreateShader");
 
             // Load shader resources if needed
-            if(_p_module->load_shaders_from_file) {
-                _p_module->vertex_shader_src = _ReadShaderSource(_p_module->vertex_shader_file);
-                if(_p_module->geometry_shader_file != "")
-                    _p_module->geometry_shader_src = _ReadShaderSource(_p_module->geometry_shader_file);
-                _p_module->fragment_shader_src = _ReadShaderSource(_p_module->fragment_shader_file);
+            if(_module.load_shaders_from_file) {
+                _module.vertex_shader_src = _ReadShaderSource(_module.vertex_shader_file);
+                if(_module.geometry_shader_file != "")
+                    _module.geometry_shader_src = _ReadShaderSource(_module.geometry_shader_file);
+                _module.fragment_shader_src = _ReadShaderSource(_module.fragment_shader_file);
             }
 
-            GLint vlen = static_cast<GLint>(_p_module->vertex_shader_src.size());
-            GLint glen = static_cast<GLint>(_p_module->geometry_shader_src.size());
-            GLint flen = static_cast<GLint>(_p_module->fragment_shader_src.size());
+            GLint vlen = static_cast<GLint>(_module.vertex_shader_src.size());
+            GLint glen = static_cast<GLint>(_module.geometry_shader_src.size());
+            GLint flen = static_cast<GLint>(_module.fragment_shader_src.size());
 
-            GLchar *varr = const_cast<GLchar*>(_p_module->vertex_shader_src.c_str());
-            GLchar *garr = const_cast<GLchar*>(_p_module->geometry_shader_src.c_str());
-            GLchar *farr = const_cast<GLchar*>(_p_module->fragment_shader_src.c_str());
+            GLchar *varr = const_cast<GLchar*>(_module.vertex_shader_src.c_str());
+            GLchar *garr = const_cast<GLchar*>(_module.geometry_shader_src.c_str());
+            GLchar *farr = const_cast<GLchar*>(_module.fragment_shader_src.c_str());
             
             // set shader source code
             glShaderSource(shaders[0], 1, &varr, &vlen);
             glErrorCheck("glShaderSource");
-            if(_p_module->geometry_shader_src.size()) {
+            if(_module.geometry_shader_src.size()) {
                 glShaderSource(shaders[1], 1, &garr, &glen);
                 glErrorCheck("glShaderSource");
             }
@@ -79,7 +79,7 @@ namespace DENG {
             // attempt to compile shaders
             glCompileShader(shaders[0]);
             _CheckCompileStatus(shaders[0], "vertex shader");
-            if(_p_module->geometry_shader_src.size()) {
+            if(_module.geometry_shader_src.size()) {
                 glCompileShader(shaders[1]);
                 _CheckCompileStatus(shaders[1], "geometry shader");
                 glAttachShader(program, shaders[1]);
@@ -102,7 +102,7 @@ namespace DENG {
             // delete shader objects
             glDeleteShader(shaders[0]);
             glErrorCheck("glDeleteShader");
-            if(_p_module->geometry_shader_src.size()) {
+            if(_module.geometry_shader_src.size()) {
                 glDeleteShader(shaders[1]);
                 glErrorCheck("glDeleteShader");
             }
@@ -141,11 +141,11 @@ namespace DENG {
         }
 
 
-        void ShaderLoader::LoadShaders(const std::vector<ShaderModule*> &_modules) {
+        void ShaderLoader::LoadShaders(std::vector<ShaderModule> &_modules) {
             m_strides.reserve(_modules.size());
-            for(ShaderModule *p_module : _modules) {
-                _CompileShadersToProgram(p_module);
-                m_strides.push_back(CalculateStride(p_module));
+            for(ShaderModule &module : _modules) {
+                _CompileShadersToProgram(module);
+                m_strides.push_back(CalculateStride(module));
             }
         }
     }

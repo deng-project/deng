@@ -21,8 +21,6 @@ namespace DENG {
 #endif
             _PickPhysicalDevice();
             _CreateLogicalDeviceHandle();
-
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_gpu, m_surface, &m_surface_capabilities);
         }
 
 
@@ -123,15 +121,14 @@ namespace DENG {
         }
 
 
-        VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, 
-                                                                       const CallbackData *_callback_data, void *_user) {
+        VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, const CallbackData *_callback_data, void *_user) {
             VK_VAL_LAYER(_callback_data->pMessage);
 
             // throw an error if needed
-            if((_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) && (_type & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)) {
-                WARNME("Vulkan validation layer error");
-                std::abort();
-            }
+            //if((_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) && (_type & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)) {
+                //WARNME("Vulkan validation layer error");
+                //std::abort();
+            //}
 
             return VK_FALSE;
         }
@@ -140,8 +137,7 @@ namespace DENG {
 
         void InstanceCreator::_FindPhysicalDeviceSurfaceProperties(VkPhysicalDevice _gpu) {
             // Find device capabilities and formats
-            VkSurfaceCapabilitiesKHR capabilities;
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_gpu, m_surface, &capabilities);
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_gpu, m_surface, &m_surface_capabilities);
             uint32_t format_count;
             vkGetPhysicalDeviceSurfaceFormatsKHR(_gpu, m_surface, &format_count, NULL);
 
@@ -196,6 +192,7 @@ namespace DENG {
             // found suitable device
             if(!device_candidates.empty() && device_candidates.rbegin()->first > 0) {
                 m_gpu = device_candidates.rbegin()->second;
+                _FindPhysicalDeviceSurfaceProperties(m_gpu);
                 vkGetPhysicalDeviceProperties(m_gpu, &m_gpu_properties);
                 m_present_modes = present_modes[m_gpu];
             }

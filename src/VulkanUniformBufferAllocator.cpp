@@ -11,12 +11,12 @@ namespace DENG {
     namespace Vulkan {
 
         UniformBufferAllocator::UniformBufferAllocator(VkDevice _dev, VkPhysicalDevice _gpu, VkQueue _graphics_q, VkCommandPool _cmd_pool, 
-                                                       uint32_t _min_align, uint32_t _sc_img_count, const std::vector<ShaderModule*> &_modules) : 
+                                                       uint32_t _min_align, uint32_t _sc_img_count, const std::vector<ShaderModule> &_modules) : 
                                                        m_min_align(_min_align), m_swapchain_image_count(_sc_img_count), m_device(_dev), m_gpu(_gpu), 
                                                        m_graphics_queue(_graphics_q), m_cmd_pool(_cmd_pool) 
         {
             for(size_t i = 0; i < _modules.size(); i++)
-                _FindOffsets(_modules[i]->ubo_data_layouts);
+                _FindOffsets(_modules[i].ubo_data_layouts);
             m_offset = m_swapchain_image_count * m_min_align;
             _CreateUniformBuffer();
         }
@@ -47,7 +47,7 @@ namespace DENG {
         }
 
 
-        void UniformBufferAllocator::RecreateUniformBuffer(const std::vector<ShaderModule*> &_modules) {
+        void UniformBufferAllocator::RecreateUniformBuffer(const std::vector<ShaderModule> &_modules) {
             // free used resources
             vkFreeMemory(m_device, m_uniform_buffer_memory, NULL);
             vkDestroyBuffer(m_device, m_uniform_buffer, NULL);
@@ -55,7 +55,7 @@ namespace DENG {
             // find new offsets
             m_area_offsets.clear();
             for(size_t i = 0; i < _modules.size(); i++)
-                _FindOffsets(_modules[i]->ubo_data_layouts);
+                _FindOffsets(_modules[i].ubo_data_layouts);
 
             _CreateUniformBuffer();
         }

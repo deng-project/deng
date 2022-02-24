@@ -51,7 +51,7 @@ namespace DENG {
             const Window &m_window;
             std::vector<MeshReference> m_meshes;
             std::vector<TextureReference> m_textures;
-            std::vector<ShaderModule*> m_shaders;
+            std::vector<ShaderModule> m_shaders;
 
         public:
             Renderer(const Window &_win) : m_window(_win) {}
@@ -62,7 +62,7 @@ namespace DENG {
                 return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
-            inline uint32_t PushShader(ShaderModule *_module) {
+            inline uint32_t PushShader(ShaderModule &_module) {
                m_shaders.push_back(_module);
                 return static_cast<uint32_t>(m_shaders.size() - 1);
             }

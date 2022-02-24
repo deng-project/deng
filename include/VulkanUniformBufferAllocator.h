@@ -43,9 +43,9 @@ namespace DENG {
 
             public:
                 UniformBufferAllocator(VkDevice _dev, VkPhysicalDevice _gpu, VkQueue _graphics_q, VkCommandPool _cmd_pool, 
-                                       uint32_t _min_align, uint32_t _sc_img_count, const std::vector<ShaderModule*> &_modules);
+                                       uint32_t _min_align, uint32_t _sc_img_count, const std::vector<ShaderModule> &_modules);
                 ~UniformBufferAllocator();
-                void RecreateUniformBuffer(const std::vector<ShaderModule*> &_modules);
+                void RecreateUniformBuffer(const std::vector<ShaderModule> &_modules);
 
 
                 inline void UpdateDataAtIndex(uint32_t _index, uint32_t _frame, const std::vector<char> &_data) {

@@ -8,9 +8,9 @@
 
 namespace DENG {
 
-    std::size_t CalculateStride(ShaderModule const *_p_module) {
+    std::size_t CalculateStride(const ShaderModule &_module) {
         std::size_t stride = 0;
-        for(auto it = _p_module->attributes.begin(); it != _p_module->attributes.end(); it++) {
+        for(auto it = _module.attributes.begin(); it != _module.attributes.end(); it++) {
             switch(*it) {
                 case ATTRIBUTE_TYPE_SHORT:
                     stride += 2;

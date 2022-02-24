@@ -276,87 +276,85 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_RecordCommandBuffers() {
+    void VulkanRenderer::_RecordCommandBuffer(uint32_t _imgi) {
         // Record each command buffer
-        for(size_t i = 0; i < m_command_buffers.size(); i++) {
-            VkCommandBufferBeginInfo cmd_buf_info = {};
-            cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            cmd_buf_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+        VkCommandBufferBeginInfo cmd_buf_info = {};
+        cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        cmd_buf_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-            // Begin recording command buffer
-            if(vkBeginCommandBuffer(m_command_buffers[i], &cmd_buf_info) != VK_SUCCESS)
-                VK_DRAWCMD_ERR("failed to begin recording command buffers");
+        // Begin recording command buffer
+        if(vkBeginCommandBuffer(m_command_buffers[m_current_frame], &cmd_buf_info) != VK_SUCCESS)
+            VK_DRAWCMD_ERR("failed to begin recording command buffers");
 
-            // Set up renderpass begin info
-            VkRenderPassBeginInfo renderpass_begininfo = {};
-            renderpass_begininfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderpass_begininfo.renderPass = mp_swapchain_creator->GetRenderPass();
-            renderpass_begininfo.framebuffer = m_framebuffers[i];
-            renderpass_begininfo.renderArea.offset = { 0, 0 };
-            renderpass_begininfo.renderArea.extent = mp_swapchain_creator->GetExtent();
+        // Set up renderpass begin info
+        VkRenderPassBeginInfo renderpass_begininfo = {};
+        renderpass_begininfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderpass_begininfo.renderPass = mp_swapchain_creator->GetRenderPass();
+        renderpass_begininfo.framebuffer = m_framebuffers[_imgi];
+        renderpass_begininfo.renderArea.offset = { 0, 0 };
+        renderpass_begininfo.renderArea.extent = mp_swapchain_creator->GetExtent();
 
-            // Set up clear values
-            std::array<VkClearValue, 2> clear_values;
-            clear_values[0].color = {{ 0.0f, 0.0f, 0.0f, 0.0f }};
-            clear_values[1].depthStencil = { 1.0f, 0 };
+        // Set up clear values
+        std::array<VkClearValue, 2> clear_values;
+        clear_values[0].color = {{ 0.0f, 0.0f, 0.0f, 0.0f }};
+        clear_values[1].depthStencil = { 1.0f, 0 };
 
-            // Add clear values to renderpass begin info
-            renderpass_begininfo.clearValueCount = static_cast<uint32_t>(clear_values.size());
-            renderpass_begininfo.pClearValues = clear_values.data();
+        // Add clear values to renderpass begin info
+        renderpass_begininfo.clearValueCount = static_cast<uint32_t>(clear_values.size());
+        renderpass_begininfo.pClearValues = clear_values.data();
 
-            // Start a new render pass for recording asset draw commands
-            vkCmdBeginRenderPass(m_command_buffers[i], &renderpass_begininfo, VK_SUBPASS_CONTENTS_INLINE);
+        // Start a new render pass for recording asset draw commands
+        vkCmdBeginRenderPass(m_command_buffers[m_current_frame], &renderpass_begininfo, VK_SUBPASS_CONTENTS_INLINE);
 
-                // Iterate through every mesh, bind resources and issue an index draw to commandbuffer
-                for(size_t j = 0; j < m_meshes.size(); j++) {
-                    vkCmdBindPipeline(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipeline());
-                    VkDeviceSize offset = m_meshes[j].vertices_offset;
-                    vkCmdBindVertexBuffers(m_command_buffers[i], 0, 1, &m_main_buffer, &offset);
-                    offset = m_vertices_size + m_meshes[j].indices_offset;
-                    vkCmdBindIndexBuffer(m_command_buffers[i], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
+            // Iterate through every mesh, bind resources and issue an index draw to commandbuffer
+            for(size_t j = 0; j < m_meshes.size(); j++) {
+                vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipeline());
+                VkDeviceSize offset = m_meshes[j].vertices_offset;
+                vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, 1, &m_main_buffer, &offset);
+                offset = m_vertices_size + m_meshes[j].indices_offset;
+                vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
-                    // check if descriptor sets should be bound
-                    if(m_shaders[m_meshes[j].shader_module_id]->ubo_data_layouts.size()) {
-                        uint32_t descriptor_set_index = m_meshes[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(i) : m_meshes[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(i);
-                        VkPipelineLayout playout = m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout();
-                        VkDescriptorSet desc_set = m_descriptor_sets_creators[m_meshes[j].shader_module_id].GetDescriptorSetById(descriptor_set_index);
+                // check if descriptor sets should be bound
+                if(m_shaders[m_meshes[j].shader_module_id].ubo_data_layouts.size()) {
+                    uint32_t descriptor_set_index = m_meshes[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(m_current_frame) : m_meshes[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(m_current_frame);
+                    VkPipelineLayout playout = m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout();
+                    VkDescriptorSet desc_set = m_descriptor_sets_creators[m_meshes[j].shader_module_id].GetDescriptorSetById(descriptor_set_index);
 
-                        vkCmdBindDescriptorSets(m_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
-                    }
-                    vkCmdDrawIndexed(m_command_buffers[i], m_meshes[j].indices_count, 1, 0, 0, 0);
+                    vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
                 }
+                vkCmdDrawIndexed(m_command_buffers[m_current_frame], m_meshes[j].indices_count, 1, 0, 0, 0);
+            }
 
 #if 0
-                // Check if ui elements should be drawn
-                if(m_p_ui_data) {
-                    for(deng_i64_t j = 0; j < m_p_ui_data->entities.size(); j++) {
-                        __bindUIElementResources(&m_p_ui_data->entities[j], m_cmd_bufs[i], bd, buf_sec);
+            // Check if ui elements should be drawn
+            if(m_p_ui_data) {
+                for(deng_i64_t j = 0; j < m_p_ui_data->entities.size(); j++) {
+                    __bindUIElementResources(&m_p_ui_data->entities[j], m_cmd_bufs[m_current_frame], bd, buf_sec);
 
-                        vkCmdBindPipeline(m_cmd_bufs[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            m_p_pl_data->at(UI_I).pipeline);
+                    vkCmdBindPipeline(m_cmd_bufs[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        m_p_pl_data->at(UI_I).pipeline);
 
-                        vkCmdBindDescriptorSets(m_cmd_bufs[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            *m_p_pl_data->at(UI_I).p_pipeline_layout, 0, 1, &m_ui_sets[i], 0, NULL);
+                    vkCmdBindDescriptorSets(m_cmd_bufs[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        *m_p_pl_data->at(UI_I).p_pipeline_layout, 0, 1, &m_ui_sets[m_current_frame], 0, NULL);
 
-                        // Convert scissor coordinates to VkRect2D structure
-                        const VkRect2D sc_rect = VkRect2D {
-                            VkOffset2D { m_p_ui_data->entities.at(j).sc_rec_offset.first, m_p_ui_data->entities.at(j).sc_rec_offset.second },
-                            VkExtent2D { m_p_ui_data->entities.at(j).sc_rec_size.first, m_p_ui_data->entities.at(j).sc_rec_size.second }
-                        };
+                    // Convert scissor coordinates to VkRect2D structure
+                    const VkRect2D sc_rect = VkRect2D {
+                        VkOffset2D { m_p_ui_data->entities.at(j).sc_rec_offset.first, m_p_ui_data->entities.at(j).sc_rec_offset.second },
+                        VkExtent2D { m_p_ui_data->entities.at(j).sc_rec_size.first, m_p_ui_data->entities.at(j).sc_rec_size.second }
+                    };
 
-                        vkCmdSetScissor(m_cmd_bufs[i], 0, 1, &sc_rect);
-                        vkCmdDrawIndexed(m_cmd_bufs[i], m_p_ui_data->entities[j].ind_c, 1, 0, 0, 0);
-                    }
+                    vkCmdSetScissor(m_cmd_bufs[m_current_frame], 0, 1, &sc_rect);
+                    vkCmdDrawIndexed(m_cmd_bufs[m_current_frame], m_p_ui_data->entities[j].ind_c, 1, 0, 0, 0);
                 }
+            }
 #endif
 
-            // End render pass
-            vkCmdEndRenderPass(m_command_buffers[i]);
-            
-            // Stop recording commandbuffer
-            if(vkEndCommandBuffer(m_command_buffers[i]) != VK_SUCCESS)
-                VK_DRAWCMD_ERR("failed to end recording command buffer");
-        }
+        // End render pass
+        vkCmdEndRenderPass(m_command_buffers[m_current_frame]);
+        
+        // Stop recording commandbuffer
+        if(vkEndCommandBuffer(m_command_buffers[m_current_frame]) != VK_SUCCESS)
+            VK_DRAWCMD_ERR("failed to end recording command buffer");
     }
 
 
@@ -453,9 +451,48 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::_Resize() {
+        while(m_window.IsResized())
+            m_window.Update();
+
+        vkDeviceWaitIdle(mp_instance_creator->GetDevice());
+
+        // destroy color and depth resources
+        vkDestroyImageView(mp_instance_creator->GetDevice(), m_color_image_view, nullptr);
+        vkDestroyImage(mp_instance_creator->GetDevice(), m_color_image, nullptr);
+        vkFreeMemory(mp_instance_creator->GetDevice(), m_color_image_memory, nullptr);
+
+        vkDestroyImageView(mp_instance_creator->GetDevice(), m_depth_image_view, nullptr);
+        vkDestroyImage(mp_instance_creator->GetDevice(), m_depth_image, nullptr);
+        vkFreeMemory(mp_instance_creator->GetDevice(), m_depth_image_memory, nullptr);
+
+        // free framebuffers
+        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++)
+            vkDestroyFramebuffer(mp_instance_creator->GetDevice(), *it, nullptr);
+
+        // destroy all previously created pipelines 
+        vkResetCommandPool(mp_instance_creator->GetDevice(), m_command_pool, 0);
+
+        // remove shader pipeline resources
+        for(auto &pc : m_pipeline_creators)
+            pc.DestroyPipelineData();
+
+        mp_swapchain_creator->RecreateSwapchain(m_window.GetSize());
+
+        _CreateColorResources();
+        _CreateDepthResources();
+
+        // create new pipelines
+        for(auto &pc : m_pipeline_creators)
+            pc.RecreatePipeline(mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent());
+
+        _CreateFrameBuffers();
+
+        vkDeviceWaitIdle(mp_instance_creator->GetDevice());
+    }
+
+
     void VulkanRenderer::LoadShaders() {
-        //mp_pipeline_creator = new Vulkan::PipelineCreator(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count,
-                                                          //mp_descriptor_set_layout_creator->GetLayouts(), m_shaders);
         mp_ubo_allocator = new Vulkan::UniformBufferAllocator(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mp_instance_creator->GetGraphicsQueue(),
                                                               m_command_pool, mp_instance_creator->GetMinimalUniformBufferAlignment(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders);
 
@@ -468,8 +505,8 @@ namespace DENG {
             m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
             m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
                                                  m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
-            if(m_shaders[i]->ubo_data_layouts.size()) {
-                m_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), static_cast<uint32_t>(m_textures.size()), m_shaders[i]->ubo_data_layouts);
+            if(m_shaders[i].ubo_data_layouts.size()) {
+                m_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), static_cast<uint32_t>(m_textures.size()), m_shaders[i].ubo_data_layouts);
                 m_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders[i], i, mp_ubo_allocator, m_descriptor_pool_creators[i].GetDescriptorPool(),
                                                         m_descriptor_set_layout_creators[i].GetDescriptorSetLayout(), m_vulkan_texture_handles);
             }
@@ -478,13 +515,11 @@ namespace DENG {
                 m_descriptor_sets_creators.emplace_back();
             }
         }
-
-        _RecordCommandBuffers();
     }
 
 
     void VulkanRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        UniformDataLayout &layout = m_shaders[_shader_id]->ubo_data_layouts[_ubo_id];
+        UniformDataLayout &layout = m_shaders[_shader_id].ubo_data_layouts[_ubo_id];
     }
 
 
@@ -552,15 +587,21 @@ namespace DENG {
     void VulkanRenderer::RenderFrame() {
         // acquire next images to draw
         uint32_t imgi;
-        VkResult res = vkAcquireNextImageKHR(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetSwapchain(), UINT64_MAX, 
-                                             m_image_available_semaphores[m_current_frame], VK_NULL_HANDLE, &imgi);
+        VkResult res = vkAcquireNextImageKHR(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetSwapchain(), UINT64_MAX, m_image_available_semaphores[m_current_frame], VK_NULL_HANDLE, &imgi);
 
-        if(res == VK_ERROR_OUT_OF_DATE_KHR)
-            VK_FRAME_ERR("image acquisition timed out");
+        if(res == VK_ERROR_OUT_OF_DATE_KHR) {
+            _Resize();
+            return;
+        }
         else if(res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR)
             VK_FRAME_ERR("failed to acquire next swapchain image");
 
-        VkSubmitInfo submitinfo{};
+        vkResetFences(mp_instance_creator->GetDevice(), 1, &m_flight_fences[m_current_frame]);
+
+        vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
+        _RecordCommandBuffer(imgi);
+
+        VkSubmitInfo submitinfo = {};
         submitinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
         VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -571,8 +612,6 @@ namespace DENG {
         submitinfo.pCommandBuffers = &m_command_buffers[m_current_frame];
         submitinfo.signalSemaphoreCount = 1;
         submitinfo.pSignalSemaphores = &m_render_finished_semaphores[m_current_frame];
-
-        vkResetFences(mp_instance_creator->GetDevice(), 1, &m_flight_fences[m_current_frame]);
 
         if(vkQueueSubmit(mp_instance_creator->GetGraphicsQueue(), 1, &submitinfo, m_flight_fences[m_current_frame]) != VK_SUCCESS) 
             VK_FRAME_ERR("failed to submit draw command; error code: " + std::to_string(res));
@@ -586,7 +625,12 @@ namespace DENG {
         present_info.swapchainCount = 1;
         present_info.pSwapchains = &mp_swapchain_creator->GetSwapchain();
 
-        vkQueuePresentKHR(mp_instance_creator->GetPresentationQueue(), &present_info);
+        res = vkQueuePresentKHR(mp_instance_creator->GetPresentationQueue(), &present_info);
+
+        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || m_window.IsResized())
+            _Resize();
+        else if(res != VK_SUCCESS)
+            VK_FRAME_ERR("Failed to present swapchain image");
 
         m_current_frame = (m_current_frame + 1) % static_cast<size_t>(mp_swapchain_creator->GetSwapchainImages().size());
     }

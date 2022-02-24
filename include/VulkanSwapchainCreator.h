@@ -27,7 +27,7 @@ namespace DENG {
 
         class SwapchainCreator {
         private:
-            InstanceCreator *m_instance_creator = nullptr;
+            InstanceCreator *mp_instance_creator = nullptr;
             Libdas::Point2D<int32_t> m_window_size;
 
 
@@ -50,8 +50,11 @@ namespace DENG {
             SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c);
             ~SwapchainCreator();
 
-            /// Create new swapchain according to specified new window size
-            void RecreateSwapchain(Libdas::Point2D<float> _new_win_size);
+            /**
+             * Create new swapchain according to specified new window size
+             * NOTE: Pipelines, pipeline layouts and renderpasses must be destroyed beforehand
+             **/
+            void RecreateSwapchain(Libdas::Point2D<int32_t> _new_win_size);
 
             inline VkRenderPass GetRenderPass() { return m_renderpass; }
             inline VkSwapchainKHR &GetSwapchain() { return m_swapchain; }
