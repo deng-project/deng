@@ -91,6 +91,7 @@ target_link_libraries(${DENG_STATIC_TARGET}
     PUBLIC shaderc
     PUBLIC nwin
     PUBLIC das
+    PUBLIC imgui
 )
 
 
@@ -106,12 +107,14 @@ target_include_directories(${DENG_SHARED_TARGET}
     PRIVATE deps
     PRIVATE deps/nekowin/include/third_party
     PRIVATE deps/shaderc/libshaderc/include
+    PRIVATE deps/imgui
 )
 
 target_link_libraries(${DENG_SHARED_TARGET}
-    PRIVATE shaderc_combined
-    PRIVATE nwin
-    PRIVATE das
+    PUBLIC shaderc_combined
+    PUBLIC nwin
+    PUBLIC das
+    PUBLIC imgui
 )
 
 # Check if debug mode is used

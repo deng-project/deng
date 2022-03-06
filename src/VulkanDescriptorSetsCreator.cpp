@@ -12,7 +12,7 @@ namespace DENG {
 
         DescriptorSetsCreator::DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, const ShaderModule &_module, uint32_t _mod_id, UniformBufferAllocator *_ubo_allocator, VkDescriptorPool _desc_pool, 
                                                      VkDescriptorSetLayout _desc_set_layout, std::vector<Vulkan::TextureData> &_textures) : m_device(_dev), m_swapchain_images_count(_sc_img_count), mp_ubo_allocator(_ubo_allocator),
-                                                     m_descriptor_pool(_desc_pool), m_descriptor_set_layout(_desc_set_layout), m_shader_module(&_module), m_textures(&_textures), m_mod_id(_mod_id)
+                                                     m_textures(&_textures), m_descriptor_pool(_desc_pool), m_descriptor_set_layout(_desc_set_layout), m_shader_module(&_module), m_mod_id(_mod_id)
         {
             _CreateDescriptorSets();
         }
@@ -68,9 +68,9 @@ namespace DENG {
             if(vkAllocateDescriptorSets(m_device, &allocation_info, m_descriptor_sets.data()))
                 VK_DESC_ERR("failed to allocate descriptor sets");
 
-            std::vector<VkDescriptorBufferInfo> buffer_infos(std::move(_FindBufferInfos()));
-            std::vector<VkDescriptorImageInfo> img_infos(std::move(_FindImageInfos()));
-            std::vector<VkWriteDescriptorSet> write_descs(std::move(_FindWriteDescriptorInfos(buffer_infos, img_infos)));
+            std::vector<VkDescriptorBufferInfo> buffer_infos(_FindBufferInfos());
+            std::vector<VkDescriptorImageInfo> img_infos(_FindImageInfos());
+            std::vector<VkWriteDescriptorSet> write_descs(_FindWriteDescriptorInfos(buffer_infos, img_infos));
 
             vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(write_descs.size()), write_descs.data(), 0, nullptr);
         }

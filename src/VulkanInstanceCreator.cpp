@@ -54,7 +54,6 @@ namespace DENG {
             instance_createinfo.ppEnabledExtensionNames = extensions;
             LOG("Required extensions count is: " + std::to_string(instance_createinfo.enabledExtensionCount));
 
-            VkDebugUtilsMessengerCreateInfoEXT debug_createinfo = {};
             
             // Check for validatation layer support
 #ifdef _DEBUG
@@ -62,6 +61,8 @@ namespace DENG {
                 VK_INSTANCE_ERR("validation layers usage specified, but none are available!");
 
             else if(_CheckValidationLayerSupport()) {
+                VkDebugUtilsMessengerCreateInfoEXT debug_createinfo = {};
+
                 // Set up instance info to support validation layers
                 instance_createinfo.enabledLayerCount = 1;
                 instance_createinfo.ppEnabledLayerNames = &m_validation_layer;
@@ -122,13 +123,10 @@ namespace DENG {
 
 
         VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, const CallbackData *_callback_data, void *_user) {
-            VK_VAL_LAYER(_callback_data->pMessage);
-
-            // throw an error if needed
-            //if((_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) && (_type & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)) {
-                //WARNME("Vulkan validation layer error");
-                //std::abort();
-            //}
+            if(_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT && _type != VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
+                VK_VAL_LAYER(_callback_data->pMessage);
+                DENG_ASSERT(false);
+            }
 
             return VK_FALSE;
         }

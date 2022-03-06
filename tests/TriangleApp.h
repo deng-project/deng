@@ -77,7 +77,7 @@ class TriangleApp {
         DENG::Renderer &m_renderer;
 
         // mesh and texture references to use
-        const DENG::MeshReference m_mesh = { MESH_NAME, 0, 0, 3, 0, 0 };
+        DENG::MeshReference m_mesh;
         const DENG::TextureReference m_tex = { TEXTURE_NAME, 0, 2, UINT32_MAX };
 
     public:
@@ -101,12 +101,23 @@ class TriangleApp {
             m_module.ubo_data_layouts.push_back(m_sampler_layout);
             m_module.load_shaders_from_file = true;
 
+
             m_renderer.ClearFrame();
-            m_renderer.PushShader(m_module);
             m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))));
             m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))));
+            uint32_t shader_id = m_renderer.PushShader(m_module);
+            uint32_t tex_id = m_renderer.PushTextureFromFile(m_tex, TEXTURE_FILE);
+
+            // create the mesh object
+            m_mesh.commands.emplace_back();
+            m_mesh.commands.back().vertices_offset = 0;
+            m_mesh.commands.back().indices_offset = 0;
+            m_mesh.commands.back().indices_count = 3;
+            m_mesh.commands.back().texture_id = tex_id;
+            m_mesh.shader_module_id = shader_id;
+            m_mesh.name = MESH_NAME;
+
             m_renderer.PushMeshReference(m_mesh);
-            m_renderer.PushTextureFromFile(m_tex, TEXTURE_FILE);
             m_renderer.LoadShaders();
         }
 
@@ -116,7 +127,6 @@ class TriangleApp {
                 m_renderer.ClearFrame();
                 m_renderer.RenderFrame();
                 m_window.Update();
-                std::this_thread::sleep_for(std::chrono::milliseconds(16));
             }
         }
 };

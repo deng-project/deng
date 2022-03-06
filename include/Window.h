@@ -78,16 +78,16 @@ namespace DENG {
         }
 
         /// Check if the current window is still active and running
-        inline const bool IsRunning() const {
+        inline bool IsRunning() const {
             return neko_IsRunning(m_surface);
         }
 
         /// Check if virtual cursor mode is enabled
-        inline const bool IsVirtualCursor() const {
+        inline bool IsVirtualCursor() const {
             return neko_IsVCMode(m_surface);
         }
 
-        inline const bool IsResized() const {
+        inline bool IsResized() const {
             return neko_ResizeNotify(m_surface);
         }
 
@@ -96,8 +96,7 @@ namespace DENG {
             return neko_InitVKSurface(m_surface, instance, &surface);
         }
 
-
-        inline const WindowHint GetHints() const {
+        inline WindowHint GetHints() const {
             neko_Hint hints;
             neko_GetWindowHints(m_surface, &hints);
             return hints;
@@ -107,16 +106,24 @@ namespace DENG {
             return std::string(neko_GetTitle(m_surface));
         }
 
-        inline Libdas::Point2D<int32_t> GetSize() const {
+        inline const Libdas::Point2D<int32_t> GetSize() const {
             Libdas::Point2D<int32_t> pos;
             neko_GetWindowSize(m_surface, &pos.x, &pos.y);
             return pos;
         }
 
-        inline Libdas::Point2D<float> GetPixelSize() const {
+        inline const Libdas::Point2D<float> GetPixelSize() const {
             Libdas::Point2D<float> pix;
             neko_GetPixelSize(m_surface, &pix.x, &pix.y);
             return pix;
+        }
+
+        inline bool IsKeyPressed(neko_HidEvent _hid) const {
+            return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_ACTIVE);
+        }
+
+        inline bool IsKeyReleased(neko_HidEvent _hid) const {
+            return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_RELEASED);
         }
     };
 }

@@ -107,7 +107,7 @@ namespace DENG {
         // create texture image instances
         Vulkan::TextureData texture_data;
 
-        uint32_t mip_levels = static_cast<uint32_t>(log2l(static_cast<double>(std::max<uint32_t>(_width, _height))));
+        uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
         mem_req = Vulkan::_CreateImage(mp_instance_creator->GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_R8G8B8A8_SRGB, 
                                        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                                        VK_SAMPLE_COUNT_1_BIT);
@@ -123,10 +123,7 @@ namespace DENG {
         vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, nullptr);
 
         // Either create mipmaps or transition the layout
-        //_CreateMipmaps(texture_data.image, _width, _height, mip_levels);
-
-        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(), VK_FORMAT_R8G8B8A8_SRGB,
-                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
+        _CreateMipmaps(texture_data.image, _width, _height, mip_levels);
 
         // create texture image view
         VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
@@ -134,10 +131,179 @@ namespace DENG {
             VK_RES_ERR("Failed to create texture image view");
 
         _CreateTextureSampler(texture_data, mip_levels);
-
+        m_textures.back().r_identifier = static_cast<uint32_t>(m_vulkan_texture_handles.size());
         m_vulkan_texture_handles.push_back(texture_data);
 
-        return _tex.r_identifier;
+        return m_textures.back().r_identifier;
+    }
+
+
+    void VulkanRenderer::ShrinkTextures() {
+        std::vector<bool> shrink_table;
+        shrink_table.resize(m_vulkan_texture_handles.size());
+        std::fill(shrink_table.begin(), shrink_table.end(), true);
+
+        for(size_t i = 0; i < m_textures.size(); i++)
+            shrink_table[m_textures[i].r_identifier] = false;
+
+        size_t delta_shrink = 0;
+        for(size_t i = 0; i < shrink_table.size(); i++) {
+            if(shrink_table[i]) {
+                vkDestroySampler(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].sampler, nullptr);
+                vkDestroyImageView(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].image_view, nullptr);
+                vkDestroyImage(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].image, nullptr);
+                vkFreeMemory(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].memory, nullptr);
+                delta_shrink++;
+                m_vulkan_texture_handles.erase(m_vulkan_texture_handles.begin() + (i - delta_shrink));
+            }
+        }
+    }
+
+
+    void VulkanRenderer::LoadShaders() {
+        mp_ubo_allocator = new Vulkan::UniformBufferAllocator(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mp_instance_creator->GetGraphicsQueue(),
+                                                              m_command_pool, mp_instance_creator->GetMinimalUniformBufferAlignment(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders);
+
+        // for each shader module create descriptor pool creators
+        m_descriptor_pool_creators.reserve(m_shaders.size());
+        m_descriptor_sets_creators.reserve(m_shaders.size());
+        m_descriptor_set_layout_creators.reserve(m_shaders.size());
+        m_pipeline_creators.reserve(m_shaders.size());
+        for(size_t i = 0; i < m_shaders.size(); i++) {
+            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
+            m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
+                                                 m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
+            if(m_shaders[i].ubo_data_layouts.size()) {
+                m_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), static_cast<uint32_t>(m_textures.size()), m_shaders[i].ubo_data_layouts);
+                m_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders[i], i, mp_ubo_allocator, m_descriptor_pool_creators[i].GetDescriptorPool(),
+                                                        m_descriptor_set_layout_creators[i].GetDescriptorSetLayout(), m_vulkan_texture_handles);
+            }
+            else {
+                m_descriptor_pool_creators.emplace_back();
+                m_descriptor_sets_creators.emplace_back();
+            }
+        }
+    }
+
+
+    void VulkanRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
+        UniformDataLayout &layout = m_shaders[_shader_id].ubo_data_layouts[_ubo_id];
+        DENG_ASSERT(layout.type == UNIFORM_DATA_TYPE_BUFFER);
+
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(layout.ubo_size), _raw_data, mp_ubo_allocator->GetUniformMemory(), static_cast<VkDeviceSize>(layout.offset));
+    }
+
+
+    void VulkanRenderer::UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
+        // check if reallocation should occur
+        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_vertices_size) {
+            VkDeviceSize old_size = m_vertices_size;
+            m_vertices_size = (_raw_data.second + _offset) * 3 / 2;
+            _ReallocateBufferResources(old_size, m_indices_size);
+        }
+
+        // create a staging buffer to hold data in
+        VkBuffer staging_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
+        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
+                                staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, static_cast<VkDeviceSize>(_offset));
+
+        // copy data from staging buffer to main buffer
+        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
+                                    static_cast<VkDeviceSize>(_raw_data.second), 0, static_cast<VkDeviceSize>(_offset));
+
+        // destroy the staging buffer
+        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);
+        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, NULL);
+    }
+
+
+    void VulkanRenderer::UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
+        // check if reallocation should occur
+        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_indices_size) {
+            VkDeviceSize old_size = m_indices_size;
+            m_indices_size = (_raw_data.second + _offset) * 3 / 2;
+            _ReallocateBufferResources(m_vertices_size, old_size);
+        }
+
+        // create a staging buffer to hold data in
+        VkBuffer staging_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
+        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
+                                staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, static_cast<VkDeviceSize>(_offset));
+
+        // copy data from staging buffer to main buffer
+        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
+                                    static_cast<VkDeviceSize>(_raw_data.second), 0, m_vertices_size + static_cast<VkDeviceSize>(_offset));
+
+        // destroy the staging buffer
+        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);
+        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, NULL);
+    }
+
+
+    void VulkanRenderer::ClearFrame() {
+        vkWaitForFences(mp_instance_creator->GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
+    }
+
+
+    void VulkanRenderer::RenderFrame() {
+        // acquire next images to draw
+        uint32_t imgi;
+        VkResult res = vkAcquireNextImageKHR(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetSwapchain(), UINT64_MAX, m_image_available_semaphores[m_current_frame], VK_NULL_HANDLE, &imgi);
+
+        if(res == VK_ERROR_OUT_OF_DATE_KHR) {
+            _Resize();
+            return;
+        }
+        else if(res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR)
+            VK_FRAME_ERR("failed to acquire next swapchain image");
+
+        vkResetFences(mp_instance_creator->GetDevice(), 1, &m_flight_fences[m_current_frame]);
+
+        vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
+        _RecordCommandBuffer(imgi);
+
+        VkSubmitInfo submitinfo = {};
+        submitinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        submitinfo.waitSemaphoreCount = 1;
+        submitinfo.pWaitSemaphores = &m_image_available_semaphores[m_current_frame];
+        submitinfo.pWaitDstStageMask = wait_stages;
+        submitinfo.commandBufferCount = 1;
+        submitinfo.pCommandBuffers = &m_command_buffers[m_current_frame];
+        submitinfo.signalSemaphoreCount = 1;
+        submitinfo.pSignalSemaphores = &m_render_finished_semaphores[m_current_frame];
+
+        if(vkQueueSubmit(mp_instance_creator->GetGraphicsQueue(), 1, &submitinfo, m_flight_fences[m_current_frame]) != VK_SUCCESS) 
+            VK_FRAME_ERR("failed to submit draw command; error code: " + std::to_string(res));
+
+        VkPresentInfoKHR present_info = {};
+        present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores = &m_render_finished_semaphores[m_current_frame];
+        present_info.pImageIndices = &imgi;
+        
+        present_info.swapchainCount = 1;
+        present_info.pSwapchains = &mp_swapchain_creator->GetSwapchain();
+
+        res = vkQueuePresentKHR(mp_instance_creator->GetPresentationQueue(), &present_info);
+
+        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || m_window.IsResized())
+            _Resize();
+        else if(res != VK_SUCCESS)
+            VK_FRAME_ERR("Failed to present swapchain image");
+
+        m_current_frame = (m_current_frame + 1) % static_cast<size_t>(mp_swapchain_creator->GetSwapchainImages().size());
     }
 
 
@@ -307,47 +473,26 @@ namespace DENG {
         vkCmdBeginRenderPass(m_command_buffers[m_current_frame], &renderpass_begininfo, VK_SUBPASS_CONTENTS_INLINE);
 
             // Iterate through every mesh, bind resources and issue an index draw to commandbuffer
-            for(size_t j = 0; j < m_meshes.size(); j++) {
-                vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipeline());
-                VkDeviceSize offset = m_meshes[j].vertices_offset;
-                vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, 1, &m_main_buffer, &offset);
-                offset = m_vertices_size + m_meshes[j].indices_offset;
-                vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
+            for(size_t i = 0; i < m_meshes.size(); i++) {
+                const uint32_t shader_id = m_meshes[i].shader_module_id;
+                for(size_t j = 0; j < m_meshes[i].commands.size(); j++) {
+                    vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipeline());
+                    VkDeviceSize offset = m_meshes[i].commands[j].vertices_offset;
+                    vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, 1, &m_main_buffer, &offset);
+                    offset = m_vertices_size + m_meshes[i].commands[j].indices_offset;
+                    vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
-                // check if descriptor sets should be bound
-                if(m_shaders[m_meshes[j].shader_module_id].ubo_data_layouts.size()) {
-                    uint32_t descriptor_set_index = m_meshes[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(m_current_frame) : m_meshes[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(m_current_frame);
-                    VkPipelineLayout playout = m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout();
-                    VkDescriptorSet desc_set = m_descriptor_sets_creators[m_meshes[j].shader_module_id].GetDescriptorSetById(descriptor_set_index);
+                    // check if descriptor sets should be bound
+                    if(m_shaders[shader_id].ubo_data_layouts.size()) {
+                        uint32_t descriptor_set_index = m_meshes[i].commands[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(m_current_frame) : m_meshes[i].commands[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(m_current_frame);
+                        VkDescriptorSet desc_set = m_descriptor_sets_creators[shader_id].GetDescriptorSetById(descriptor_set_index);
 
-                    vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_meshes[j].shader_module_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
-                }
-                vkCmdDrawIndexed(m_command_buffers[m_current_frame], m_meshes[j].indices_count, 1, 0, 0, 0);
-            }
+                        vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
+                    }
 
-#if 0
-            // Check if ui elements should be drawn
-            if(m_p_ui_data) {
-                for(deng_i64_t j = 0; j < m_p_ui_data->entities.size(); j++) {
-                    __bindUIElementResources(&m_p_ui_data->entities[j], m_cmd_bufs[m_current_frame], bd, buf_sec);
-
-                    vkCmdBindPipeline(m_cmd_bufs[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_p_pl_data->at(UI_I).pipeline);
-
-                    vkCmdBindDescriptorSets(m_cmd_bufs[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        *m_p_pl_data->at(UI_I).p_pipeline_layout, 0, 1, &m_ui_sets[m_current_frame], 0, NULL);
-
-                    // Convert scissor coordinates to VkRect2D structure
-                    const VkRect2D sc_rect = VkRect2D {
-                        VkOffset2D { m_p_ui_data->entities.at(j).sc_rec_offset.first, m_p_ui_data->entities.at(j).sc_rec_offset.second },
-                        VkExtent2D { m_p_ui_data->entities.at(j).sc_rec_size.first, m_p_ui_data->entities.at(j).sc_rec_size.second }
-                    };
-
-                    vkCmdSetScissor(m_cmd_bufs[m_current_frame], 0, 1, &sc_rect);
-                    vkCmdDrawIndexed(m_cmd_bufs[m_current_frame], m_p_ui_data->entities[j].ind_c, 1, 0, 0, 0);
+                    vkCmdDrawIndexed(m_command_buffers[m_current_frame], m_meshes[i].commands[j].indices_count, 1, 0, 0, 0);
                 }
             }
-#endif
 
         // End render pass
         vkCmdEndRenderPass(m_command_buffers[m_current_frame]);
@@ -359,11 +504,16 @@ namespace DENG {
 
 
     void VulkanRenderer::_CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels) {
+        // OPTIONAL:
+        // check if image format supports linear blitting
+        VkFormatProperties format_props;
+        vkGetPhysicalDeviceFormatProperties(mp_instance_creator->GetPhysicalDevice(), VK_FORMAT_R8G8B8A8_SRGB, &format_props);
+        DENG_ASSERT(format_props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
+
         VkCommandBuffer cmd_buf = VK_NULL_HANDLE;
         Vulkan::_BeginCommandBufferSingleCommand(mp_instance_creator->GetDevice(), m_command_pool, cmd_buf);
 
         VkImageMemoryBarrier mem_barrier = {};
-        VkImageBlit blit = {};
         mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         mem_barrier.image = _img;
         mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -372,9 +522,6 @@ namespace DENG {
         mem_barrier.subresourceRange.baseArrayLayer = 0;
         mem_barrier.subresourceRange.layerCount = 1;
         mem_barrier.subresourceRange.levelCount = 1;
-
-        uint32_t mip_width = _width;
-        uint32_t mip_height = _height;
 
         for(uint32_t i = 1; i < _mip_levels; i++) {
             // set pipeline ready for transfer processing
@@ -386,16 +533,17 @@ namespace DENG {
             vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
             
             // set up image blit structure
-            blit.srcOffsets[0] = {0, 0, 0};
-            blit.srcOffsets[1] = { static_cast<int32_t>(mip_width), static_cast<int32_t>(mip_height), 1 };
+            VkImageBlit blit = {};
+            blit.srcOffsets[0] = { 0, 0, 0 };
+            blit.srcOffsets[1] = { static_cast<int32_t>(_width), static_cast<int32_t>(_height), 1 };
             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.srcSubresource.baseArrayLayer = 0;
             blit.srcSubresource.mipLevel = i - 1;
             blit.srcSubresource.layerCount = 1;
             blit.dstOffsets[0] = { 0, 0, 0 };
             blit.dstOffsets[1] = { 
-                static_cast<int32_t>(mip_width) > 1 ? static_cast<int32_t>(mip_width) / 2 : 1, 
-                static_cast<int32_t>(mip_height) > 1 ? static_cast<int32_t>(mip_height) / 2 : 1,
+                static_cast<int32_t>(_width) > 1 ? static_cast<int32_t>(_width) / 2 : 1, 
+                static_cast<int32_t>(_height) > 1 ? static_cast<int32_t>(_height) / 2 : 1,
                 1
             };
             blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -407,13 +555,13 @@ namespace DENG {
 
             // set pipeline ready for final transfer into fragment shader
             mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            mem_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            mem_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
             mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
 
-            if(mip_width > 1) mip_width >>= 1;
-            if(mip_height > 1) mip_height >>= 1;
+            if(_width > 1) _width /= 2;
+            if(_height > 1) _height /= 2;
         }
 
         // final mip level transitioning
@@ -437,14 +585,15 @@ namespace DENG {
         sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         sampler_info.anisotropyEnable = VK_TRUE;
-        sampler_info.maxAnisotropy = 16.0f;
+        sampler_info.maxAnisotropy = mp_instance_creator->GetMaxSamplerAnisotropy();
         sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         sampler_info.unnormalizedCoordinates = VK_FALSE;
         sampler_info.compareEnable = VK_FALSE;
+        sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
         sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        sampler_info.mipLodBias = 0.0f;
         sampler_info.minLod = 0.0f;
-        sampler_info.maxLod = 0.0f;
+        sampler_info.maxLod = static_cast<float>(_mip_levels);
+        sampler_info.mipLodBias = 0.0f;
 
         if(vkCreateSampler(mp_instance_creator->GetDevice(), &sampler_info, nullptr, &_tex.sampler) != VK_SUCCESS)
             VK_RES_ERR("Failed to create a texture sampler");
@@ -489,149 +638,5 @@ namespace DENG {
         _CreateFrameBuffers();
 
         vkDeviceWaitIdle(mp_instance_creator->GetDevice());
-    }
-
-
-    void VulkanRenderer::LoadShaders() {
-        mp_ubo_allocator = new Vulkan::UniformBufferAllocator(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mp_instance_creator->GetGraphicsQueue(),
-                                                              m_command_pool, mp_instance_creator->GetMinimalUniformBufferAlignment(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders);
-
-        // for each shader module create descriptor pool creators
-        m_descriptor_pool_creators.reserve(m_shaders.size());
-        m_descriptor_sets_creators.reserve(m_shaders.size());
-        m_descriptor_set_layout_creators.reserve(m_shaders.size());
-        m_pipeline_creators.reserve(m_shaders.size());
-        for(size_t i = 0; i < m_shaders.size(); i++) {
-            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
-            m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
-                                                 m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
-            if(m_shaders[i].ubo_data_layouts.size()) {
-                m_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), static_cast<uint32_t>(m_textures.size()), m_shaders[i].ubo_data_layouts);
-                m_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders[i], i, mp_ubo_allocator, m_descriptor_pool_creators[i].GetDescriptorPool(),
-                                                        m_descriptor_set_layout_creators[i].GetDescriptorSetLayout(), m_vulkan_texture_handles);
-            }
-            else {
-                m_descriptor_pool_creators.emplace_back();
-                m_descriptor_sets_creators.emplace_back();
-            }
-        }
-    }
-
-
-    void VulkanRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        UniformDataLayout &layout = m_shaders[_shader_id].ubo_data_layouts[_ubo_id];
-    }
-
-
-    void VulkanRenderer::UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_vertices_size) {
-            VkDeviceSize old_size = m_vertices_size;
-            m_vertices_size = (_raw_data.second + _offset) * 3 / 2;
-            _ReallocateBufferResources(old_size, m_indices_size);
-        }
-
-        // create a staging buffer to hold data in
-        VkBuffer staging_buffer = VK_NULL_HANDLE;
-        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
-        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
-                                staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, static_cast<VkDeviceSize>(_offset));
-
-        // copy data from staging buffer to main buffer
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
-                                    static_cast<VkDeviceSize>(_raw_data.second), 0, static_cast<VkDeviceSize>(_offset));
-
-        // destroy the staging buffer
-        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);
-        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, NULL);
-    }
-
-
-    void VulkanRenderer::UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_indices_size) {
-            VkDeviceSize old_size = m_indices_size;
-            m_indices_size = (_raw_data.second + _offset) * 3 / 2;
-            _ReallocateBufferResources(m_vertices_size, old_size);
-        }
-
-        // create a staging buffer to hold data in
-        VkBuffer staging_buffer = VK_NULL_HANDLE;
-        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
-        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
-                                staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, static_cast<VkDeviceSize>(_offset));
-
-        // copy data from staging buffer to main buffer
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
-                                    static_cast<VkDeviceSize>(_raw_data.second), 0, m_vertices_size + static_cast<VkDeviceSize>(_offset));
-
-        // destroy the staging buffer
-        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);
-        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, NULL);
-    }
-
-
-    void VulkanRenderer::ClearFrame() {
-        vkWaitForFences(mp_instance_creator->GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
-    }
-
-
-    void VulkanRenderer::RenderFrame() {
-        // acquire next images to draw
-        uint32_t imgi;
-        VkResult res = vkAcquireNextImageKHR(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetSwapchain(), UINT64_MAX, m_image_available_semaphores[m_current_frame], VK_NULL_HANDLE, &imgi);
-
-        if(res == VK_ERROR_OUT_OF_DATE_KHR) {
-            _Resize();
-            return;
-        }
-        else if(res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR)
-            VK_FRAME_ERR("failed to acquire next swapchain image");
-
-        vkResetFences(mp_instance_creator->GetDevice(), 1, &m_flight_fences[m_current_frame]);
-
-        vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
-        _RecordCommandBuffer(imgi);
-
-        VkSubmitInfo submitinfo = {};
-        submitinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-        VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-        submitinfo.waitSemaphoreCount = 1;
-        submitinfo.pWaitSemaphores = &m_image_available_semaphores[m_current_frame];
-        submitinfo.pWaitDstStageMask = wait_stages;
-        submitinfo.commandBufferCount = 1;
-        submitinfo.pCommandBuffers = &m_command_buffers[m_current_frame];
-        submitinfo.signalSemaphoreCount = 1;
-        submitinfo.pSignalSemaphores = &m_render_finished_semaphores[m_current_frame];
-
-        if(vkQueueSubmit(mp_instance_creator->GetGraphicsQueue(), 1, &submitinfo, m_flight_fences[m_current_frame]) != VK_SUCCESS) 
-            VK_FRAME_ERR("failed to submit draw command; error code: " + std::to_string(res));
-
-        VkPresentInfoKHR present_info = {};
-        present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores = &m_render_finished_semaphores[m_current_frame];
-        present_info.pImageIndices = &imgi;
-        
-        present_info.swapchainCount = 1;
-        present_info.pSwapchains = &mp_swapchain_creator->GetSwapchain();
-
-        res = vkQueuePresentKHR(mp_instance_creator->GetPresentationQueue(), &present_info);
-
-        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || m_window.IsResized())
-            _Resize();
-        else if(res != VK_SUCCESS)
-            VK_FRAME_ERR("Failed to present swapchain image");
-
-        m_current_frame = (m_current_frame + 1) % static_cast<size_t>(mp_swapchain_creator->GetSwapchainImages().size());
     }
 }

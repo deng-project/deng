@@ -221,8 +221,20 @@ namespace DENG {
                         m_input_attr_descs.back().format = VK_FORMAT_R64_SFLOAT;
                         break;
 
+                    case ATTRIBUTE_TYPE_BYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8_SINT;
+                        break;
+
+                    case ATTRIBUTE_TYPE_UBYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8_UINT;
+                        break;
+
                     case ATTRIBUTE_TYPE_SHORT:
                         m_input_attr_descs.back().format = VK_FORMAT_R16_SINT;
+                        break;
+                    
+                    case ATTRIBUTE_TYPE_USHORT:
+                        m_input_attr_descs.back().format = VK_FORMAT_R16_UINT;
                         break;
 
                     case ATTRIBUTE_TYPE_UINT:
@@ -242,8 +254,20 @@ namespace DENG {
                         m_input_attr_descs.back().format = VK_FORMAT_R64G64_SFLOAT;
                         break;
 
+                    case ATTRIBUTE_TYPE_VEC2_BYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8_SINT;
+                        break;
+
+                    case ATTRIBUTE_TYPE_VEC2_UBYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8_UINT;
+                        break;
+
                     case ATTRIBUTE_TYPE_VEC2_SHORT:
                         m_input_attr_descs.back().format = VK_FORMAT_R16G16_SINT;
+                        break;
+                    
+                    case ATTRIBUTE_TYPE_VEC2_USHORT:
+                        m_input_attr_descs.back().format = VK_FORMAT_R16G16_UINT;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC2_UINT:
@@ -263,8 +287,20 @@ namespace DENG {
                         m_input_attr_descs.back().format = VK_FORMAT_R64G64B64_SFLOAT;
                         break;
 
+                    case ATTRIBUTE_TYPE_VEC3_BYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8_SINT;
+                        break;
+
+                    case ATTRIBUTE_TYPE_VEC3_UBYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8_UINT;
+                        break;
+
                     case ATTRIBUTE_TYPE_VEC3_SHORT:
                         m_input_attr_descs.back().format = VK_FORMAT_R16G16B16_SINT;
+                        break;
+                    
+                    case ATTRIBUTE_TYPE_VEC3_USHORT:
+                        m_input_attr_descs.back().format = VK_FORMAT_R16G16B16_UINT;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC3_UINT:
@@ -284,8 +320,20 @@ namespace DENG {
                         m_input_attr_descs.back().format = VK_FORMAT_R64G64B64A64_SFLOAT;
                         break;
 
+                    case ATTRIBUTE_TYPE_VEC4_BYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8A8_SINT;
+                        break;
+
+                    case ATTRIBUTE_TYPE_VEC4_UBYTE:
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8A8_UINT;
+                        break;
+
                     case ATTRIBUTE_TYPE_VEC4_SHORT:
                         m_input_attr_descs.back().format = VK_FORMAT_R16G16B16A16_SINT;
+                        break;
+                    
+                    case ATTRIBUTE_TYPE_VEC4_USHORT:
+                        m_input_attr_descs.back().format = VK_FORMAT_R16G16B16A16_UINT;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC4_UINT:

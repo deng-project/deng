@@ -47,11 +47,6 @@ namespace DENG {
                 ~UniformBufferAllocator();
                 void RecreateUniformBuffer(const std::vector<ShaderModule> &_modules);
 
-
-                inline void UpdateDataAtIndex(uint32_t _index, uint32_t _frame, const std::vector<char> &_data) {
-                    Vulkan::_CopyToBufferMemory(m_device, _data.size(), _data.data(), m_uniform_buffer_memory, static_cast<VkDeviceSize>(_frame) * _data.size());
-                }
-
                 inline VkDeviceSize GetAreaOffset(uint32_t _mod_id, uint32_t _ubo_id) {
                     DENG_ASSERT(static_cast<size_t>(_mod_id) >= m_area_offsets.size());
                     DENG_ASSERT(static_cast<size_t>(_ubo_id) >= m_area_offsets[_mod_id].size());
@@ -59,6 +54,7 @@ namespace DENG {
                 }
 
                 inline VkBuffer GetUniformBuffer() { return m_uniform_buffer; }
+                inline VkDeviceMemory GetUniformMemory() { return m_uniform_buffer_memory; }
         };
     }
 }

@@ -135,6 +135,10 @@ namespace DENG {
                 inline uint32_t GetMinimalUniformBufferAlignment() {
                     return m_gpu_properties.limits.minUniformBufferOffsetAlignment;
                 }
+
+                inline float GetMaxSamplerAnisotropy() {
+                    return m_gpu_properties.limits.maxSamplerAnisotropy;
+                }
         };
 
     }

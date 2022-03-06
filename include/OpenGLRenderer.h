@@ -57,6 +57,7 @@ namespace DENG {
             OpenGL::ShaderLoader *mp_shader_loader = nullptr;
             OpenGL::BufferLoader *mp_buffer_loader = nullptr;
             uint32_t m_high_ubo_offset = 0;
+            std::vector<GLuint> m_opengl_textures;
 
         private:
             inline GLenum _TextureIdToUnit(uint32_t _id) {
@@ -70,9 +71,10 @@ namespace DENG {
             OpenGLRenderer(const Window &_win);
             ~OpenGLRenderer();
             
-            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string& _file_name);
-            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth);
+            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string& _file_name) override;
+            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
 
+            virtual void ShrinkTextures() override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;

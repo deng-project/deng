@@ -31,22 +31,7 @@ target_include_directories(${VK_TRIANGLE_TARGET}
 
 target_link_libraries(${VK_TRIANGLE_TARGET} deng-shared)
 
-# Check if build dependencies should be built
-if(BUILD_DEPS)
-    target_link_directories(${OGL_TRIANGLE_TARGET}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/deps/shaderc/libshaderc
-    )
-
-    target_link_directories(${VK_TRIANGLE_TARGET}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/deps/shaderc/libshaderc
-    )
-else()
-    target_link_directories(${OGL_TRIANGLE_TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_directories(${VK_TRIANGLE_TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-endif()
-
+# Custom commands regarding runtime data
 add_custom_command(TARGET ${OGL_TRIANGLE_TARGET}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}

@@ -48,7 +48,10 @@ namespace DENG {
     OpenGLRenderer::OpenGLRenderer(const Window &_win) : Renderer(_win) {
         // Load all OpenGL functions
         int status = deng_LoadGL();
-        DENG_ASSERT(status);
+        if(!status) {
+            std::cerr << "Unexpected error occured, when loading OpenGL functions" << std::endl;
+            std::exit(-1);
+        }
 
         // Enable some OpenGL features
         glEnable(GL_PROGRAM_POINT_SIZE);
@@ -102,8 +105,23 @@ namespace DENG {
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
+                case ATTRIBUTE_TYPE_BYTE:
+                    glVertexAttribPointer(i, 1, GL_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_UBYTE:
+                    glVertexAttribPointer(i, 1, GL_UNSIGNED_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
                 case ATTRIBUTE_TYPE_SHORT:
                     glVertexAttribPointer(i, 1, GL_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_USHORT:
+                    glVertexAttribPointer(i, 1, GL_UNSIGNED_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
@@ -128,8 +146,23 @@ namespace DENG {
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
+                case ATTRIBUTE_TYPE_VEC2_BYTE:
+                    glVertexAttribPointer(i, 2, GL_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC2_UBYTE:
+                    glVertexAttribPointer(i, 2, GL_UNSIGNED_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
                 case ATTRIBUTE_TYPE_VEC2_SHORT:
                     glVertexAttribPointer(i, 2, GL_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC2_USHORT:
+                    glVertexAttribPointer(i, 2, GL_UNSIGNED_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
@@ -154,8 +187,23 @@ namespace DENG {
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
+                case ATTRIBUTE_TYPE_VEC3_BYTE:
+                    glVertexAttribPointer(i, 3, GL_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_UBYTE:
+                    glVertexAttribPointer(i, 3, GL_UNSIGNED_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
                 case ATTRIBUTE_TYPE_VEC3_SHORT:
                     glVertexAttribPointer(i, 3, GL_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_USHORT:
+                    glVertexAttribPointer(i, 3, GL_UNSIGNED_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
@@ -180,8 +228,23 @@ namespace DENG {
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
+                case ATTRIBUTE_TYPE_VEC4_BYTE:
+                    glVertexAttribPointer(i, 4, GL_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC4_UBYTE:
+                    glVertexAttribPointer(i, 4, GL_UNSIGNED_BYTE, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
                 case ATTRIBUTE_TYPE_VEC4_SHORT:
                     glVertexAttribPointer(i, 4, GL_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
+                    glErrorCheck("glVertexAttribPointer");
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC4_USHORT:
+                    glVertexAttribPointer(i, 4, GL_UNSIGNED_SHORT, GL_TRUE, mp_shader_loader->GetVertexStrideById(_shader_id), reinterpret_cast<const void*>(m_shaders[_shader_id].offsets[i]));
                     glErrorCheck("glVertexAttribPointer");
                     break;
 
@@ -225,14 +288,27 @@ namespace DENG {
         glBindTexture(GL_TEXTURE_2D, tex);
         glErrorCheck("glBindTexture");
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(_width), static_cast<GLsizei>(_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, _raw_data);
+        switch(_bit_depth) {
+            case 3:
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, static_cast<GLsizei>(_width), static_cast<GLsizei>(_height), 0, GL_RGB, GL_UNSIGNED_BYTE, _raw_data);
+                break;
+
+            case 4:
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(_width), static_cast<GLsizei>(_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, _raw_data);
+                break;
+
+            default:
+                DENG_ASSERT(false);
+                break;
+        }
         glErrorCheck("glTexImage2D");
 
         glGenerateMipmap(GL_TEXTURE_2D);
         glErrorCheck("glGenerateMipmap");
         
         m_textures.push_back(_tex);
-        m_textures.back().r_identifier = tex;
+        m_textures.back().r_identifier = static_cast<uint32_t>(m_opengl_textures.size());
+        m_opengl_textures.push_back(tex);
         
         return static_cast<uint32_t>(m_textures.size() - 1);
     }
@@ -244,6 +320,25 @@ namespace DENG {
         int x, y;
         const char *buf = reader.GetRawBuffer(x, y, len);
         return PushTextureFromMemory(_tex, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
+    }
+
+
+    void OpenGLRenderer::ShrinkTextures() {
+        if(m_textures.size() != m_opengl_textures.size()) {
+            std::vector<bool> shrink_table(m_opengl_textures.size());
+            std::fill(shrink_table.begin(), shrink_table.end(), true);
+
+            for(size_t i = 0; i < m_textures.size(); i++)
+                shrink_table[m_textures[i].r_identifier] = false;
+
+            size_t delta_shrink = 0;
+            for(size_t i = 0; i < shrink_table.size(); i++) {
+                if(shrink_table[i]) {
+                    glDeleteTextures(1, &m_opengl_textures[i - delta_shrink]);
+                    m_opengl_textures.erase(m_opengl_textures.begin() + (i - delta_shrink));
+                }
+            }
+        }
     }
 
 
@@ -312,41 +407,43 @@ namespace DENG {
         // draw each mesh to the screen
         for(uint32_t i = 0; i < static_cast<uint32_t>(m_meshes.size()); i++) {
             uint32_t shader = m_meshes[i].shader_module_id;
-            glUseProgram(mp_shader_loader->GetShaderProgramById(shader));
-            glErrorCheck("glUseProgram");
+            for(uint32_t j = 0; j < static_cast<uint32_t>(m_meshes[i].commands.size()); j++) {
+                glUseProgram(mp_shader_loader->GetShaderProgramById(shader));
+                glErrorCheck("glUseProgram");
 
-            _BindVertexAttributes(i);
-            
-            // for each shader and its uniform objects bind appropriate uniform buffer ranges
-            GLuint ubo_i = 0;
-            for (size_t j = 0; j < m_shaders[shader].ubo_data_layouts.size(); j++) {
-                if (m_shaders[shader].ubo_data_layouts[j].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
-                    const GLuint binding = static_cast<GLuint>(m_shaders[shader].ubo_data_layouts[j].binding);
-                    const GLintptr offset = static_cast<GLintptr>(m_shaders[shader].ubo_data_layouts[j].offset);
-                    const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader].ubo_data_layouts[j].ubo_size);
+                _BindVertexAttributes(i);
+                
+                // for each shader and its uniform objects bind appropriate uniform buffer ranges
+                GLuint ubo_i = 0;
+                for (size_t j = 0; j < m_shaders[shader].ubo_data_layouts.size(); j++) {
+                    if (m_shaders[shader].ubo_data_layouts[j].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
+                        const GLuint binding = static_cast<GLuint>(m_shaders[shader].ubo_data_layouts[j].binding);
+                        const GLintptr offset = static_cast<GLintptr>(m_shaders[shader].ubo_data_layouts[j].offset);
+                        const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader].ubo_data_layouts[j].ubo_size);
 
-                    glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), ubo_i, binding);
-                    glErrorCheck("glUniformBlockBinding");
-                    glBindBufferRange(GL_UNIFORM_BUFFER, ubo_i, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
-                    glErrorCheck("glBindBufferRange");
-                    ubo_i++;
+                        glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), ubo_i, binding);
+                        glErrorCheck("glUniformBlockBinding");
+                        glBindBufferRange(GL_UNIFORM_BUFFER, ubo_i, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
+                        glErrorCheck("glBindBufferRange");
+                        ubo_i++;
+                    }
                 }
-            }
 
-            // check if texture should be bound
-            if (m_meshes[i].texture_id != UINT32_MAX) {
-                const uint32_t sampler_id = m_textures[m_meshes[i].texture_id].shader_sampler_id;
-                const uint32_t tex_id = m_textures[m_meshes[i].texture_id].r_identifier;
-                glActiveTexture(GL_TEXTURE0 + sampler_id);
-                glErrorCheck("glActiveTexture");
-                glBindTexture(GL_TEXTURE_2D, tex_id);
-                glErrorCheck("glBindTexture");
-            }
-            
-            glDrawElements(GL_TRIANGLES, m_meshes[i].indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(m_meshes[i].indices_offset));
-            glErrorCheck("glDrawElements");
+                // check if texture should be bound
+                if (m_meshes[i].commands[j].texture_id != UINT32_MAX) {
+                    const uint32_t sampler_id = m_textures[m_meshes[i].commands[j].texture_id].shader_sampler_id;
+                    const uint32_t tex_id = m_textures[m_meshes[i].commands[j].texture_id].r_identifier;
+                    glActiveTexture(GL_TEXTURE0 + sampler_id);
+                    glErrorCheck("glActiveTexture");
+                    glBindTexture(GL_TEXTURE_2D, tex_id);
+                    glErrorCheck("glBindTexture");
+                }
+                
+                glDrawElements(GL_TRIANGLES, m_meshes[i].commands[j].indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(m_meshes[i].commands[j].indices_offset));
+                glErrorCheck("glDrawElements");
 
-            _UnbindVertexAttributes(i);
+                _UnbindVertexAttributes(i);
+            }
         }
     }
 }

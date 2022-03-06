@@ -19,13 +19,19 @@ namespace DENG {
     };
 
 
-    struct MeshReference {
-        std::string name = "Mesh";
+    struct DrawCommand {
         uint32_t vertices_offset = 0;
         uint32_t indices_offset = 0;
         uint32_t indices_count = 0;
         uint32_t texture_id = UINT32_MAX;
+        Libdas::Point2D<uint32_t> scissor_rect = { UINT32_MAX, UINT32_MAX };
+    };
+
+
+    struct MeshReference {
+        std::string name = "Mesh";
         uint32_t shader_module_id = 0;
+        std::vector<DrawCommand> commands;
     };
 
 
@@ -62,19 +68,27 @@ namespace DENG {
                 return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
-            inline uint32_t PushShader(ShaderModule &_module) {
-               m_shaders.push_back(_module);
+            inline uint32_t PushShader(const ShaderModule &_module) {
+                m_shaders.push_back(_module);
                 return static_cast<uint32_t>(m_shaders.size() - 1);
             }
 
             virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) = 0;
             virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
-            // virtual void RemoveTextureById(uint32_t _id);
 
-            inline void RemoveMeshReference(uint32_t _id) {
-                m_meshes.erase(m_meshes.begin() + _id);
+            std::vector<MeshReference> &GetMeshes() {
+                return m_meshes;
             }
 
+            std::vector<ShaderModule> &GetShaderModules() {
+                return m_shaders;
+            }
+
+            std::vector<TextureReference> &GetTextures() {
+                return m_textures;
+            }
+
+            virtual void ShrinkTextures() = 0;
             virtual void LoadShaders() = 0;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
