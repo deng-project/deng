@@ -114,11 +114,9 @@ namespace DENG {
             std::vector<VkWriteDescriptorSet> write_sets;
             write_sets.reserve(m_descriptor_sets.size() * m_shader_module->ubo_data_layouts.size());
 
-            uint32_t sc_lap = 0;
-            uint32_t used_buffers = 0, used_imgs = 0;
-
             // for each ubo data layout fill write descriptor set struct
             for(auto desc_it = m_descriptor_sets.begin(); desc_it != m_descriptor_sets.end(); desc_it++) {
+                uint32_t used_buffers = 0, used_imgs = 0;
                 for(auto ubo_it = m_shader_module->ubo_data_layouts.begin(); ubo_it != m_shader_module->ubo_data_layouts.end(); ubo_it++) {
                     write_sets.emplace_back();
                     write_sets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -131,17 +129,17 @@ namespace DENG {
                         case UNIFORM_DATA_TYPE_BUFFER:
                             write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                             write_sets.back().pBufferInfo = &_buf_infos[used_buffers];
+                            write_sets.back().pImageInfo = nullptr;
 
-                            if((++sc_lap) % m_swapchain_images_count == 0)
-                                used_buffers++;
+                            used_buffers++;
                             break;
 
                         case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
                             write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                             write_sets.back().pImageInfo = &_img_infos[used_imgs];
+                            write_sets.back().pBufferInfo = nullptr;
 
-                            if((++sc_lap) % m_swapchain_images_count == 0)
-                                used_imgs++;
+                            used_imgs++;
                             break;
 
                         default:

@@ -24,18 +24,18 @@ namespace DENG {
 
         class UniformBufferAllocator {
             private:
-                VkDeviceSize m_offset;
+                VkDeviceSize m_offset = 0;
                 std::vector<std::vector<VkDeviceSize>> m_area_offsets;
                 const uint32_t m_min_align;
                 const uint32_t m_swapchain_image_count;
 
-                // vulkan stuff
+                // vulkan handles
                 VkDevice m_device;
                 VkPhysicalDevice m_gpu;
                 VkQueue m_graphics_queue;
                 VkCommandPool m_cmd_pool;
-                VkBuffer m_uniform_buffer;
-                VkDeviceMemory m_uniform_buffer_memory;
+                VkBuffer m_uniform_buffer = VK_NULL_HANDLE;
+                VkDeviceMemory m_uniform_buffer_memory = VK_NULL_HANDLE;
 
             private:
                 void _FindOffsets(const std::vector<UniformDataLayout> &_layouts);
@@ -48,8 +48,8 @@ namespace DENG {
                 void RecreateUniformBuffer(const std::vector<ShaderModule> &_modules);
 
                 inline VkDeviceSize GetAreaOffset(uint32_t _mod_id, uint32_t _ubo_id) {
-                    DENG_ASSERT(static_cast<size_t>(_mod_id) >= m_area_offsets.size());
-                    DENG_ASSERT(static_cast<size_t>(_ubo_id) >= m_area_offsets[_mod_id].size());
+                    DENG_ASSERT(static_cast<size_t>(_mod_id) < m_area_offsets.size());
+                    DENG_ASSERT(static_cast<size_t>(_ubo_id) < m_area_offsets[_mod_id].size());
                     return m_area_offsets[_mod_id][_ubo_id];
                 }
 

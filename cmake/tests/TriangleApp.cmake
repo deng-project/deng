@@ -1,6 +1,6 @@
 # DENG: dynamic engine - powerful 3D game engine
 # licence: Apache, see LICENCE file
-# file: OpenGLTriangle.txt - OpenGLTriangle test application CMake configuration file
+# file: TriangleApp.cmake - TriangleApp test application CMake configuration file
 # author: Karl-Mihkel Ott
 
 # OpenGLTriangle application

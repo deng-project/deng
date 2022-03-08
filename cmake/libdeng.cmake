@@ -81,10 +81,8 @@ target_compile_definitions(${DENG_STATIC_TARGET}
 )
 
 target_include_directories(${DENG_STATIC_TARGET}
-    PRIVATE include
-    PRIVATE deps
-    PRIVATE deps/nekowin/include/third_party
-    PRIVATE deps/shaderc/libshaderc/include
+    PUBLIC include
+    PUBLIC deps
 )
 
 target_link_libraries(${DENG_STATIC_TARGET}
@@ -103,11 +101,8 @@ add_library(${DENG_SHARED_TARGET} SHARED
 
 target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE DENG_EXPORT_LIBRARY)
 target_include_directories(${DENG_SHARED_TARGET} 
-    PRIVATE include
-    PRIVATE deps
-    PRIVATE deps/nekowin/include/third_party
-    PRIVATE deps/shaderc/libshaderc/include
-    PRIVATE deps/imgui
+    PUBLIC include
+    PUBLIC deps
 )
 
 target_link_libraries(${DENG_SHARED_TARGET}
@@ -121,21 +116,4 @@ target_link_libraries(${DENG_SHARED_TARGET}
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE _DEBUG)
     target_compile_definitions(${DENG_STATIC_TARGET} PRIVATE _DEBUG)
-endif()
-
-
-# Check if build dependencies should be built
-if(BUILD_DEPS)
-    target_link_directories(${DENG_SHARED_TARGET}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/deps/shaderc/libshaderc
-    )
-    
-    target_link_directories(${DENG_STATIC_TARGET}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/deps/shaderc/libshaderc
-    )
-else()
-    target_link_directories(${DENG_SHARED_TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_directories(${DENG_STATIC_TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 endif()

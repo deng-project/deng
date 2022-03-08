@@ -11,7 +11,7 @@ namespace DENG {
     namespace Vulkan {
 
         PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, VkDescriptorSetLayout _desc_set_layout, ShaderModule &_module) :
-            m_device(_dev), m_desc_set_layout(_desc_set_layout), m_render_pass(_render_pass), m_ext(_ext), m_samples(_samples), m_module(_module)
+            m_device(_dev), m_desc_set_layout(_desc_set_layout), m_ext(_ext), m_samples(_samples), m_module(_module), m_render_pass(_render_pass)
         {
             _CreatePipelineLayout();
 
@@ -184,7 +184,7 @@ namespace DENG {
 
         std::string PipelineCreator::_ReadShaderSource(const std::string &_file_name) {
             std::ifstream file(_file_name, std::ios_base::binary);
-            if(!file.good()) FILE_ERR(_file_name);
+            if(!file.good() || file.bad()) FILE_ERR(_file_name);
 
             file.seekg(0, std::ios_base::end);
             size_t len = file.tellg();
@@ -255,11 +255,11 @@ namespace DENG {
                         break;
 
                     case ATTRIBUTE_TYPE_VEC2_BYTE:
-                        m_input_attr_descs.back().format = VK_FORMAT_R8G8_SINT;
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8_SNORM;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC2_UBYTE:
-                        m_input_attr_descs.back().format = VK_FORMAT_R8G8_UINT;
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8_UNORM;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC2_SHORT:
@@ -288,11 +288,11 @@ namespace DENG {
                         break;
 
                     case ATTRIBUTE_TYPE_VEC3_BYTE:
-                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8_SINT;
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8_SNORM;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC3_UBYTE:
-                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8_UINT;
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8_UNORM;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC3_SHORT:
@@ -321,11 +321,11 @@ namespace DENG {
                         break;
 
                     case ATTRIBUTE_TYPE_VEC4_BYTE:
-                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8A8_SINT;
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8A8_SNORM;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC4_UBYTE:
-                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8A8_UINT;
+                        m_input_attr_descs.back().format = VK_FORMAT_R8G8B8A8_UNORM;
                         break;
 
                     case ATTRIBUTE_TYPE_VEC4_SHORT:
@@ -516,10 +516,10 @@ namespace DENG {
             m_depth_stencil.stencilTestEnable = VK_FALSE;
 
             // Check if the dynamic pipeline state createinfo should be created
-            //m_dynamic_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-            //m_dynamic_states.push_back(VK_DYNAMIC_STATE_SCISSOR);
-            //m_dynamic_state_createinfo.dynamicStateCount = static_cast<uint32_t>(m_dynamic_states.size());
-            //m_dynamic_state_createinfo.pDynamicStates = m_dynamic_states.data();
+            m_dynamic_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            m_dynamic_states.push_back(VK_DYNAMIC_STATE_SCISSOR);
+            m_dynamic_state_createinfo.dynamicStateCount = static_cast<uint32_t>(m_dynamic_states.size());
+            m_dynamic_state_createinfo.pDynamicStates = m_dynamic_states.data();
             
             // Set up colorblend state createinfo
             m_colorblend_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

@@ -27,4 +27,9 @@ add_library(${IMGUI_TARGET} STATIC
     ${IMGUI_SOURCES}
 )
 
-target_include_directories(${IMGUI_TARGET} PUBLIC deps/imgui)
+# Make sure that imgui index type corresponds to uint32_t
+target_compile_definitions(${IMGUI_TARGET}
+    PUBLIC ImDrawIdx=unsigned\ int)
+
+target_include_directories(${IMGUI_TARGET} 
+    PUBLIC deps/imgui)

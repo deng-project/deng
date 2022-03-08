@@ -12,6 +12,10 @@ option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
 option(BUILD_DENG "Build all DENG targets" ON)
 
+# Experimental options
+option(EXPERIMENTAL_BUILD_IMGUI_VULKAN "Build ImGui application with Vulkan backend" OFF)
+option(EXPERIMENTAL_BUILD_IMGUI_OPENGL "Build ImGui application with OpenGL backend" OFF)
+
 # Set appropriate compiler flags
 if(MSVC)
     add_compile_options(/W4 /WX)
@@ -81,8 +85,28 @@ if(BUILD_DENG)
 endif()
 
 
+# Non-experimental tests
 if(BUILD_TESTS)
     message(STATUS "Adding test build configurations")
     include(cmake/tests/TriangleApp.cmake)
-    #include(cmake/tests/ImGuiTest.cmake)
+endif()
+
+# Experimental tests
+if(EXPERIMENTAL_BUILD_IMGUI_VULKAN OR EXPERIMENTAL_BUILD_IMGUI_OPENGL)
+    if(EXPERIMENTAL_BUILD_IMGUI_VULKAN)
+        message(STATUS "Adding Vulkan ImGui application test build config")
+        include(cmake/tests/VulkanImGui.cmake)
+    endif()
+
+    if(EXPERIMENTAL_BUILD_IMGUI_OPENGL)
+        message(STATUS "Adding OpenGL ImGui application test build config")
+        include(cmake/tests/OpenGLImGui.cmake)
+    endif()
+
+    add_custom_command(TARGET ${OGL_IMGUI_APP_TARGET} ${VK_IMGUI_APP_TARGET} POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/ImGuiTestAppData
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy_directory ${CMAKE_SOURCE_DIR}/tests/ImGuiTestAppData ${CMAKE_CURRENT_BINARY_DIR}/ImGuiTestAppData
+    )
 endif()

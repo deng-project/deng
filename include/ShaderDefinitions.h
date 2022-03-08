@@ -75,7 +75,7 @@ namespace DENG {
         uint32_t binding = 0;
         ShaderStage stage;
         uint32_t ubo_size;
-        uint32_t offset = UINT32_MAX; // reserved value meaning no offset is bound
+        uint32_t offset = UINT32_MAX; // deprecated
     };
 
 

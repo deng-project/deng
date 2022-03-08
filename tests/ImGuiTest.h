@@ -6,7 +6,6 @@
 #ifndef IMGUI_TEST_H
 #define IMGUI_TEST_H
 
-#include "imgui_internal.h"
 #if defined(_WIN32) && !defined(_DEBUG)
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 #endif
@@ -14,6 +13,7 @@
 #include <string>
 #include <chrono>
 #include <vector>
+#include <cstring>
 
 #ifdef _DEBUG
     #include <iostream>
@@ -39,8 +39,8 @@
 #include <imgui.h>
 
 // Shader definitions
-#define VERTEX_SHADER_SRC       "ImGuiAppData/VertexShader.glsl"
-#define FRAGMENT_SHADER_SRC     "ImGuiAppData/FragmentShader.glsl"
+#define VERTEX_SHADER_FILE       "ImGuiTestAppData/VertexShader.glsl"
+#define FRAGMENT_SHADER_FILE     "ImGuiTestAppData/FragmentShader.glsl"
 
 // Mesh and texture definitions
 #define MESH_NAME               "ImGui windows"
@@ -80,6 +80,8 @@ class ImGuiApp {
                         // update the mesh instance for new draw calls
                         mesh.commands.emplace_back();
                         mesh.commands.back().vertices_offset = vert_offset;
+                        mesh.commands.back().scissor_rect = static_cast<uint32_t>(pos.x);
+                        mesh.commands.back().scissor_rect = static_cast<uint32_t>(pos.y);
                     }
                 }
             }
@@ -95,14 +97,26 @@ class ImGuiApp {
             m_io->Fonts->GetTexDataAsRGBA32(&pix, &width, &height);
 
             DENG::ShaderModule module = {};
-            module.fragment_shader_file = FRAGMENT_SHADER_SRC;
-            module.vertex_shader_file  = VERTEX_SHADER_SRC;
+            module.vertex_shader_file  = VERTEX_SHADER_FILE;
+            module.fragment_shader_file = FRAGMENT_SHADER_FILE;
             module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
+            module.offsets.push_back(offsetof(ImDrawVert, pos));
             module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
-            module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_SHORT);
+            module.offsets.push_back(offsetof(ImDrawVert, uv));
+            module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_UBYTE);
+            module.offsets.push_back(offsetof(ImDrawVert, col));
+            module.load_shaders_from_file = true;
 
+            module.ubo_data_layouts.reserve(2);
             module.ubo_data_layouts.emplace_back();
             module.ubo_data_layouts.back().binding = 0;
+            module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+            module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
+            module.ubo_data_layouts.back().ubo_size = sizeof(Libdas::Point2D<float>);
+            module.ubo_data_layouts.back().offset = 0;
+
+            module.ubo_data_layouts.emplace_back();
+            module.ubo_data_layouts.back().binding = 1;
             module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
             module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
@@ -113,16 +127,22 @@ class ImGuiApp {
             m_texmap_ref.name = "Texture map";
 
             // retrive texture map data
+            m_renderer.PushMeshReference(DENG::MeshReference());
             m_renderer.PushTextureFromMemory(m_texmap_ref, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
             m_io->Fonts->SetTexID((void*) &m_texmap_ref);
+            m_renderer.LoadShaders();
         }
 
 
         void Run() {
             auto beg = std::chrono::steady_clock::now();
             auto end = std::chrono::steady_clock::now();
+            float delta_time = 1.0f; // default value
+            Libdas::Point2D<float> push_constant = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
+
             while(m_window.IsRunning()) {
-                m_io->DeltaTime = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - beg).count()) / 1000;
+                beg = std::chrono::steady_clock::now();
+                m_io->DeltaTime = delta_time;
                 m_io->DisplaySize.x = m_window.GetSize().x;
                 m_io->DisplaySize.y = m_window.GetSize().y;
                 m_io->MousePos.x = static_cast<float>(m_window.GetMousePosition().x);
@@ -131,12 +151,26 @@ class ImGuiApp {
                 m_io->MouseDown[1] = m_window.IsKeyPressed(NEKO_MOUSE_BTN_2);
 
                 ImGui::NewFrame();
-                ImGui::ShowDemoWindow();
+                    ImGui::ShowDemoWindow();
                 ImGui::EndFrame();
 
                 ImGui::Render();
                 ImDrawData *draw_data = ImGui::GetDrawData();
                 _CreateDrawCommands(draw_data);
+                end = std::chrono::steady_clock::now();
+                //delta_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - beg).count()) / 1000;
+
+                Libdas::Point2D<float> new_pc = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
+                m_renderer.ClearFrame();
+
+                // check if uniform update is necessary
+                if(new_pc != push_constant) {
+                    push_constant = new_pc;
+                    m_renderer.UpdateUniform(reinterpret_cast<char*>(&push_constant), 0, 0);
+                }
+
+                m_renderer.RenderFrame();
+                m_window.Update();
             }
         }
 };

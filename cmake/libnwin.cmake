@@ -38,7 +38,7 @@ add_library(${LIBNWIN_TARGET} STATIC
 
 target_include_directories(${LIBNWIN_TARGET}
     PRIVATE deps/nekowin/include
-    PRIVATE deps/nekowin/include/third_party
+    PUBLIC deps/nekowin/include/third_party
 )
 
 target_compile_definitions(${LIBNWIN_TARGET}

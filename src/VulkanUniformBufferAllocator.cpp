@@ -17,7 +17,6 @@ namespace DENG {
         {
             for(size_t i = 0; i < _modules.size(); i++)
                 _FindOffsets(_modules[i].ubo_data_layouts);
-            m_offset = m_swapchain_image_count * m_min_align;
             _CreateUniformBuffer();
         }
 
@@ -29,10 +28,13 @@ namespace DENG {
 
 
         void UniformBufferAllocator::_FindOffsets(const std::vector<UniformDataLayout> &_layouts) {
-            m_area_offsets.push_back(std::vector<VkDeviceSize>());
-            for(size_t i = 0; i < _layouts.size(); i++) {
-                m_area_offsets.back().push_back(m_offset);
-                m_offset += m_swapchain_image_count * AlignData(_layouts[i].ubo_size, m_min_align);
+            m_area_offsets.emplace_back();
+            m_offset = m_min_align;
+            for(auto it = _layouts.begin(); it < _layouts.end(); it++) {
+                if(it->type == UNIFORM_DATA_TYPE_BUFFER) {
+                    m_area_offsets.back().push_back(m_offset);
+                    m_offset += AlignData(it->ubo_size, m_min_align);
+                }
             }
         }
 

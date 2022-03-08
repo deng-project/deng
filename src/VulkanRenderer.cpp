@@ -210,7 +210,7 @@ namespace DENG {
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
                                 staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
         vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, static_cast<VkDeviceSize>(_offset));
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, 0);
 
         // copy data from staging buffer to main buffer
         Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
@@ -238,7 +238,7 @@ namespace DENG {
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
                                 staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
         vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, static_cast<VkDeviceSize>(_offset));
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, 0);
 
         // copy data from staging buffer to main buffer
         Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
@@ -342,8 +342,8 @@ namespace DENG {
 
 
     void VulkanRenderer::_AllocateBufferResources() {
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_vertices_size + m_indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | 
-                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_main_buffer);
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_vertices_size + m_indices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
+                                                             VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_main_buffer);
 
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_main_memory, 
                                 mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -355,7 +355,7 @@ namespace DENG {
         // step 1: create staging buffer
         VkBuffer staging_buffer;
         VkDeviceMemory staging_memory;
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), _old_vert_size + _old_ind_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), _old_vert_size + _old_ind_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, staging_buffer);
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, staging_memory, mem_req.memoryTypeBits, 
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
@@ -462,7 +462,7 @@ namespace DENG {
 
         // Set up clear values
         std::array<VkClearValue, 2> clear_values;
-        clear_values[0].color = {{ 0.0f, 0.0f, 0.0f, 0.0f }};
+        clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
         clear_values[1].depthStencil = { 1.0f, 0 };
 
         // Add clear values to renderpass begin info
