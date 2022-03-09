@@ -117,3 +117,17 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE _DEBUG)
     target_compile_definitions(${DENG_STATIC_TARGET} PRIVATE _DEBUG)
 endif()
+
+# Check if VulkanSDK path was explicitly specified
+if(NOT VULKAN_SDK_PATH STREQUAL "")
+    message(STATUS "Using Vulkan SDK from path ${VULKAN_SDK_PATH}")
+    if(UNIX AND NOT APPLE)
+        target_include_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/include)
+        target_include_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/include)
+
+        target_link_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
+        target_link_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
+    elseif(WIN32)
+        message(FATAL_ERROR "Please add Vulkan SDK path linking and include directories in libdeng.cmake")
+    endif()
+endif()
