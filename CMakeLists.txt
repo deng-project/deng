@@ -5,9 +5,14 @@
 
 cmake_minimum_required(VERSION 3.10)
 project(deng LANGUAGES CXX C)
+
+# Constant config values
 set(CXX_STANDARD C++17)
 set(C_STANDARD C99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(VULKAN_SDK_PATH CACHE STRING "")
 option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
 option(BUILD_DENG "Build all DENG targets" ON)
@@ -36,27 +41,6 @@ else()
     endif()
 endif()
 
-
-# Search for Vulkan SDK
-if(NOT VULKAN_PATH)
-    message(STATUS "Attempting to find Vulkan SDK using cmake ...")
-    find_package(Vulkan)
-
-    if(NOT ${Vulkan_INCLUDE_DIRS} STREQUAL "")
-        set(VULKAN_PATH ${Vulkan_INCLUDE_DIRS})
-        STRING(REGEX REPLACE "/Include" "" VULKAN_PATH ${VULKAN_PATH})
-        message(STATUS "Found Vulkan SDK at: ${VULKAN_PATH}")
-    else()
-        message(STATUS "Could not find Vulkan SDK path using find_package module, reattempting ...")
-        if(EXISTS "${VULKAN_PATH}")
-            message(STATUS "Found Vulkan SDK path: ${VULKAN_PATH}")
-        else()
-            message(FATAL_ERROR "Could not find Vulkan SDK, please specify the SDK path manually using VULKAN_PATH variable")
-        endif()
-    endif()
-else()
-    message(STATUS "Using VulkanSDK from path: ${VULKAN_PATH}")
-endif()
 
 # Set appropriate include and linking directories
 if(UNIX AND NOT APPLE)

@@ -35,96 +35,96 @@ typedef neko_Window deng_Window;
 namespace DENG {   
     
     class DENG_API Window {
-    private:
-        neko_Window m_surface;
-        Libdas::Point2D<uint64_t> m_prev_vc_pos;
+        private:
+            neko_Window m_surface;
+            Libdas::Point2D<uint64_t> m_prev_vc_pos;
 
-    public:
-        Window(int32_t width, int32_t height, WindowHint hints, const char *title);
-        ~Window();
-
-
-        /// Toggle virtual cursor mode
-        void ToggleVCMode();
+        public:
+            Window(int32_t width, int32_t height, WindowHint hints, const char *title);
+            ~Window();
 
 
-        /// Search for all required vulkan extensions
-        char **FindVulkanSurfaceExtensions(size_t *p_ext_c) const;
+            /// Toggle virtual cursor mode
+            void ToggleVCMode();
 
 
-        /// Get the current mouse position
-        Libdas::Point2D<uint64_t> GetMousePosition() const;
+            /// Search for all required vulkan extensions
+            char **FindVulkanSurfaceExtensions(size_t *p_ext_c) const;
 
 
-        /// Get the mouse delta compared to previous frame mouse position
-        Libdas::Point2D<uint64_t> GetMouseDelta() const;
+            /// Get the current mouse position
+            Libdas::Point2D<uint64_t> GetMousePosition() const;
 
 
-    // inlined methods
-    public:
-        /// Explicitly change virtual cursor mode
-        inline void ChangeVCMode(const bool is_vcp) {
-            neko_ChangeVCMode(is_vcp, m_surface);
-        }
+            /// Get the mouse delta compared to previous frame mouse position
+            Libdas::Point2D<uint64_t> GetMouseDelta() const;
 
-        /// Change DENG cursor mode
-        inline void ChangeCursor(CursorMode cur) {
-            neko_SetMouseCursorMode(m_surface, cur);
-        }
 
-        /// Update window and input devices data
-        inline void Update() const {
-            neko_UpdateWindow(m_surface);
-        }
+        // inlined methods
+        public:
+            /// Explicitly change virtual cursor mode
+            inline void ChangeVCMode(const bool is_vcp) {
+                neko_ChangeVCMode(is_vcp, m_surface);
+            }
 
-        /// Check if the current window is still active and running
-        inline bool IsRunning() const {
-            return neko_IsRunning(m_surface);
-        }
+            /// Change DENG cursor mode
+            inline void ChangeCursor(CursorMode cur) {
+                neko_SetMouseCursorMode(m_surface, cur);
+            }
 
-        /// Check if virtual cursor mode is enabled
-        inline bool IsVirtualCursor() const {
-            return neko_IsVCMode(m_surface);
-        }
+            /// Update window and input devices data
+            inline void Update() const {
+                neko_UpdateWindow(m_surface);
+            }
 
-        inline bool IsResized() const {
-            return neko_ResizeNotify(m_surface);
-        }
+            /// Check if the current window is still active and running
+            inline bool IsRunning() const {
+                return neko_IsRunning(m_surface);
+            }
 
-        /// Create new vulkan surface instance
-        inline VkResult InitVkSurface(VkInstance &instance, VkSurfaceKHR &surface) const {
-            return neko_InitVKSurface(m_surface, instance, &surface);
-        }
+            /// Check if virtual cursor mode is enabled
+            inline bool IsVirtualCursor() const {
+                return neko_IsVCMode(m_surface);
+            }
 
-        inline WindowHint GetHints() const {
-            neko_Hint hints;
-            neko_GetWindowHints(m_surface, &hints);
-            return hints;
-        }
+            inline bool IsResized() const {
+                return neko_ResizeNotify(m_surface);
+            }
 
-        inline const std::string GetTitle() const {
-            return std::string(neko_GetTitle(m_surface));
-        }
+            /// Create new vulkan surface instance
+            inline VkResult InitVkSurface(VkInstance &instance, VkSurfaceKHR &surface) const {
+                return neko_InitVKSurface(m_surface, instance, &surface);
+            }
 
-        inline const Libdas::Point2D<int32_t> GetSize() const {
-            Libdas::Point2D<int32_t> pos;
-            neko_GetWindowSize(m_surface, &pos.x, &pos.y);
-            return pos;
-        }
+            inline WindowHint GetHints() const {
+                neko_Hint hints;
+                neko_GetWindowHints(m_surface, &hints);
+                return hints;
+            }
 
-        inline const Libdas::Point2D<float> GetPixelSize() const {
-            Libdas::Point2D<float> pix;
-            neko_GetPixelSize(m_surface, &pix.x, &pix.y);
-            return pix;
-        }
+            inline const std::string GetTitle() const {
+                return std::string(neko_GetTitle(m_surface));
+            }
 
-        inline bool IsKeyPressed(neko_HidEvent _hid) const {
-            return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_ACTIVE);
-        }
+            inline const Libdas::Point2D<int32_t> GetSize() const {
+                Libdas::Point2D<int32_t> pos;
+                neko_GetWindowSize(m_surface, &pos.x, &pos.y);
+                return pos;
+            }
 
-        inline bool IsKeyReleased(neko_HidEvent _hid) const {
-            return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_RELEASED);
-        }
+            inline const Libdas::Point2D<float> GetPixelSize() const {
+                Libdas::Point2D<float> pix;
+                neko_GetPixelSize(m_surface, &pix.x, &pix.y);
+                return pix;
+            }
+
+            inline bool IsKeyPressed(neko_HidEvent _hid) const {
+                return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_ACTIVE);
+            }
+
+            inline bool IsKeyReleased(neko_HidEvent _hid) const {
+                return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_RELEASED);
+            }
     };
 }
 

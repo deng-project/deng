@@ -221,8 +221,7 @@ namespace DENG {
                 // check if presentation is supported
                 VkBool32 presentation_supported;
                 vkGetPhysicalDeviceSurfaceSupportKHR(m_gpu, i, m_surface, &presentation_supported);
-                if(presentation_supported && m_graphics_family_index != i)
-                    m_presentation_family_index = i;
+                if(presentation_supported) m_presentation_family_index = i;
             }
 
             return m_presentation_family_index != UINT32_MAX && m_graphics_family_index != UINT32_MAX;
@@ -233,29 +232,33 @@ namespace DENG {
             if (!_FindQueueFamilies()) 
                 VK_INSTANCE_ERR("queue supporting GPU not found!");
 
-            std::array<VkDeviceQueueCreateInfo, 2> queue_createinfos;
-            std::array<uint32_t, 2> queue_family_indices = { m_graphics_family_index, m_presentation_family_index };
+            uint32_t unique_queue_c;
+            VkDeviceQueueCreateInfo queue_create_infos[2] = {};
+            uint32_t queue_family_indices[2] = { m_graphics_family_index, m_presentation_family_index };
+            const float queue_priority = 1.0f;
 
-            float queue_priority = 1.0f;
+            queue_create_infos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queue_create_infos[0].queueFamilyIndex = queue_family_indices[0];
+            queue_create_infos[0].queueCount = 1;
+            queue_create_infos[0].pQueuePriorities = &queue_priority;
 
-            // Create device queue creatinfos for present and graphics queues
-            for(uint32_t i = 0; i < static_cast<uint32_t>(queue_family_indices.size()); i++) {
-                VkDeviceQueueCreateInfo dev_queue_createinfo{};
-                dev_queue_createinfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-                dev_queue_createinfo.queueFamilyIndex = queue_family_indices[i];
-                dev_queue_createinfo.queueCount = 1;
-                dev_queue_createinfo.pQueuePriorities = &queue_priority;
-                queue_createinfos[i] = dev_queue_createinfo;                
-            } 
+            queue_create_infos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queue_create_infos[1].queueFamilyIndex = queue_family_indices[1];
+            queue_create_infos[1].queueCount = 1;
+            queue_create_infos[1].pQueuePriorities = &queue_priority;
 
-            VkPhysicalDeviceFeatures device_features{};
+            if(m_graphics_family_index != m_presentation_family_index)
+                unique_queue_c = 2;
+            else unique_queue_c = 1;
+
+            VkPhysicalDeviceFeatures device_features = {};
             device_features.samplerAnisotropy = VK_TRUE;
 
             // Create device createinfo
-            VkDeviceCreateInfo logical_device_createinfo{};
+            VkDeviceCreateInfo logical_device_createinfo = {};
             logical_device_createinfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            logical_device_createinfo.queueCreateInfoCount = static_cast<uint32_t>(queue_createinfos.size());
-            logical_device_createinfo.pQueueCreateInfos = queue_createinfos.data();
+            logical_device_createinfo.queueCreateInfoCount = unique_queue_c;
+            logical_device_createinfo.pQueueCreateInfos = queue_create_infos;
             logical_device_createinfo.pEnabledFeatures = &device_features;
 
             // construct a temporary vector object holding required extension names as pointers
@@ -310,6 +313,7 @@ namespace DENG {
             vkGetPhysicalDeviceFeatures(_gpu, &device_features);
 
             if(device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+            else return 0;
             if(device_features.fillModeNonSolid) score += 500;
 
             score += device_properties.limits.maxImageDimension2D;

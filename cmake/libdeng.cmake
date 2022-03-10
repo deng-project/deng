@@ -86,7 +86,7 @@ target_include_directories(${DENG_STATIC_TARGET}
 )
 
 target_link_libraries(${DENG_STATIC_TARGET}
-    PUBLIC shaderc
+    PUBLIC shaderc_combined
     PUBLIC nwin
     PUBLIC das
     PUBLIC imgui

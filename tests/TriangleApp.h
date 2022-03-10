@@ -17,6 +17,8 @@
 #include <iostream>
 #endif
 
+#include <chrono>
+#include <thread>
 #include <vector>
 #include <thread>
 #include <chrono>
@@ -127,6 +129,9 @@ class TriangleApp {
                 m_renderer.ClearFrame();
                 m_renderer.RenderFrame();
                 m_window.Update();
+                
+                if(m_window.IsKeyPressed(NEKO_KEY_Q))
+                    break;
             }
         }
 };
