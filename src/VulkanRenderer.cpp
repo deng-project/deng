@@ -190,7 +190,8 @@ namespace DENG {
         UniformDataLayout &layout = m_shaders[_shader_id].ubo_data_layouts[_ubo_id];
         DENG_ASSERT(layout.type == UNIFORM_DATA_TYPE_BUFFER);
 
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(layout.ubo_size), _raw_data, mp_ubo_allocator->GetUniformMemory(), static_cast<VkDeviceSize>(layout.offset));
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(layout.ubo_size), _raw_data, 
+                                    mp_ubo_allocator->GetUniformMemory(), mp_ubo_allocator->GetAreaOffset(_shader_id, _ubo_id));
     }
 
 

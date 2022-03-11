@@ -10,5 +10,5 @@ layout(location = 1) in vec4 col_mul;
 layout(location = 0) out vec4 color;
 
 void main() {
-    color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    color = texture(tex_sampler, uv) * col_mul;
 }

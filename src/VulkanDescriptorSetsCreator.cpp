@@ -64,7 +64,7 @@ namespace DENG {
             allocation_info.descriptorSetCount = m_swapchain_images_count;
             allocation_info.pSetLayouts = layouts.data();
 
-            m_descriptor_sets.resize((m_textures->size() > 0 ? m_textures->size() : 1) * static_cast<size_t>(m_swapchain_images_count));
+            m_descriptor_sets.resize((m_textures->size() > 1 ? m_textures->size() : 1) * static_cast<size_t>(m_swapchain_images_count));
             if(vkAllocateDescriptorSets(m_device, &allocation_info, m_descriptor_sets.data()))
                 VK_DESC_ERR("failed to allocate descriptor sets");
 

@@ -3,12 +3,11 @@
 
 // input
 layout(location = 0) in vec2 tex_coord;
-layout(binding = 0) uniform sampler2D tex_sampler;
+layout(binding = 1) uniform sampler2D tex_sampler;
 
 // output
 layout(location = 0) out vec4 color;
 
 void main() {
 	color = texture(tex_sampler, tex_coord);
-	// color = vec4(0.8f, 0.2f, 0.1f, 1.0f);
 }

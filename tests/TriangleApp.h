@@ -74,7 +74,6 @@ const static uint32_t g_indices[] = { 0, 1, 2 };
 class TriangleApp {
     private:
         DENG::ShaderModule m_module;
-        DENG::UniformDataLayout m_sampler_layout;
         DENG::Window &m_window;
         DENG::Renderer &m_renderer;
 
@@ -95,12 +94,19 @@ class TriangleApp {
             m_module.offsets.push_back(sizeof(float) * 3);
 
             // setup sampler layout specification
-            m_sampler_layout.binding = 0;
-            m_sampler_layout.stage = SHADER_STAGE_FRAGMENT;
-            m_sampler_layout.type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
+            m_module.ubo_data_layouts.emplace_back();
+            m_module.ubo_data_layouts.back().binding = 0;
+            m_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+            m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
+            m_module.ubo_data_layouts.back().ubo_size = sizeof(Libdas::Matrix4<float>);
+            m_module.ubo_data_layouts.back().offset = 0;
+
+            m_module.ubo_data_layouts.emplace_back();
+            m_module.ubo_data_layouts.back().binding = 1;
+            m_module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
+            m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
             // specify uniform sampler layout
-            m_module.ubo_data_layouts.push_back(m_sampler_layout);
             m_module.load_shaders_from_file = true;
 
 
@@ -127,11 +133,14 @@ class TriangleApp {
         void Run() {
             while(m_window.IsRunning()) {
                 m_renderer.ClearFrame();
-                m_renderer.RenderFrame();
-                m_window.Update();
+                Libdas::Matrix4<float> mat;
+                m_renderer.UpdateUniform(reinterpret_cast<char*>(&mat), 0, 0);
                 
                 if(m_window.IsKeyPressed(NEKO_KEY_Q))
                     break;
+
+                m_renderer.RenderFrame();
+                m_window.Update();
             }
         }
 };

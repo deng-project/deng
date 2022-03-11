@@ -17,6 +17,7 @@ namespace DENG {
         {
             for(size_t i = 0; i < _modules.size(); i++)
                 _FindOffsets(_modules[i].ubo_data_layouts);
+
             _CreateUniformBuffer();
         }
 

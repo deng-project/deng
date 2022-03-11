@@ -46,6 +46,7 @@
 #define MESH_NAME               "ImGui windows"
 #define TEXTURE_NAME            "ImGui window textures"
 
+
 class ImGuiApp {
     private:
         DENG::Window &m_window;
@@ -53,11 +54,12 @@ class ImGuiApp {
         DENG::TextureReference m_texmap_ref = {};
         ImGuiIO *m_io = nullptr;
         DENG::MeshReference m_window_items = {};
+        uint32_t m_tex_id = 0;
 
     private:
         void _CreateDrawCommands(ImDrawData *_draw_data) {
-            uint32_t vert_offset = 0;
-            uint32_t idx_offset = 0;
+            uint32_t cmd_vert_offset = 0;
+            uint32_t cmd_idx_offset = 0;
             DENG::MeshReference &mesh = m_renderer.GetMeshes().front();
             mesh.commands.clear();
 
@@ -66,24 +68,29 @@ class ImGuiApp {
                 const ImDrawVert *vert_buffer = cmd_list->VtxBuffer.Data;
                 const ImDrawIdx *idx_buffer = cmd_list->IdxBuffer.Data;
 
+                m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(vert_buffer), static_cast<uint32_t>(cmd_list->VtxBuffer.Size) * sizeof(ImDrawVert)), cmd_vert_offset);
+                m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(idx_buffer), static_cast<uint32_t>(cmd_list->IdxBuffer.Size) * sizeof(ImDrawIdx)), cmd_idx_offset);
+
                 for(int j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                     const ImDrawCmd *pcmd = &cmd_list->CmdBuffer[j];
                     if(pcmd->UserCallback)
                         pcmd->UserCallback(cmd_list, pcmd);
                     else {
                         ImVec2 pos = _draw_data->DisplayPos;
-                        m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(vert_buffer), static_cast<uint32_t>(cmd_list->VtxBuffer.Size) * sizeof(ImDrawVert)), vert_offset);
-                        m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(idx_buffer), static_cast<uint32_t>(cmd_list->IdxBuffer.Size) * sizeof(ImDrawIdx)), idx_offset);
-                        vert_offset += static_cast<uint32_t>(cmd_list->VtxBuffer.Size) * sizeof(ImDrawVert);
-                        idx_offset += static_cast<uint32_t>(cmd_list->IdxBuffer.Size) * sizeof(ImDrawIdx);
 
                         // update the mesh instance for new draw calls
                         mesh.commands.emplace_back();
-                        mesh.commands.back().vertices_offset = vert_offset;
+                        mesh.commands.back().vertices_offset = cmd_vert_offset + pcmd->VtxOffset * sizeof(ImDrawVert);
+                        mesh.commands.back().indices_offset = cmd_vert_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
+                        mesh.commands.back().indices_count = pcmd->ElemCount;
+                        mesh.commands.back().texture_id = m_tex_id;
                         mesh.commands.back().scissor_rect = static_cast<uint32_t>(pos.x);
                         mesh.commands.back().scissor_rect = static_cast<uint32_t>(pos.y);
                     }
                 }
+
+                cmd_vert_offset += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
+                cmd_idx_offset += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
             }
         }
 
@@ -128,7 +135,7 @@ class ImGuiApp {
 
             // retrive texture map data
             m_renderer.PushMeshReference(DENG::MeshReference());
-            m_renderer.PushTextureFromMemory(m_texmap_ref, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
+            m_tex_id = m_renderer.PushTextureFromMemory(m_texmap_ref, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
             m_io->Fonts->SetTexID((void*) &m_texmap_ref);
             m_renderer.LoadShaders();
         }
@@ -138,7 +145,7 @@ class ImGuiApp {
             auto beg = std::chrono::steady_clock::now();
             auto end = std::chrono::steady_clock::now();
             float delta_time = 1.0f; // default value
-            Libdas::Point2D<float> push_constant = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
+            Libdas::Point2D<float> wsize = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
 
             while(m_window.IsRunning()) {
                 beg = std::chrono::steady_clock::now();
@@ -159,16 +166,11 @@ class ImGuiApp {
                 _CreateDrawCommands(draw_data);
                 end = std::chrono::steady_clock::now();
                 //delta_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - beg).count()) / 1000;
-
-                Libdas::Point2D<float> new_pc = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
+                wsize = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
                 m_renderer.ClearFrame();
 
                 // check if uniform update is necessary
-                if(new_pc != push_constant) {
-                    push_constant = new_pc;
-                    m_renderer.UpdateUniform(reinterpret_cast<char*>(&push_constant), 0, 0);
-                }
-
+                m_renderer.UpdateUniform(reinterpret_cast<char*>(&wsize), 0, 0);
                 m_renderer.RenderFrame();
                 m_window.Update();
             }
