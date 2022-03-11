@@ -74,8 +74,8 @@ namespace DENG {
         UniformDataType type;
         uint32_t binding = 0;
         ShaderStage stage;
-        uint32_t ubo_size;
-        uint32_t offset = UINT32_MAX; // deprecated
+        uint32_t ubo_size = 0;
+        uint32_t offset = 0;
     };
 
 

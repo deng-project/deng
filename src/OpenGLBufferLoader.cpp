@@ -41,7 +41,6 @@ namespace DENG {
         }
 
 
-
         void BufferLoader::_AllocateBufferMemory() {
             // Allocate memory for vertex buffer
             glBufferData(GL_ARRAY_BUFFER, m_mesh_cap, NULL, GL_STATIC_DRAW);
@@ -52,7 +51,7 @@ namespace DENG {
             glErrorCheck("glBufferData");
 
             // Allocate memory for uniforms
-            glBufferData(GL_UNIFORM_BUFFER, m_ubo_cap, NULL, GL_STATIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, m_ubo_cap, NULL, GL_DYNAMIC_DRAW);
             glErrorCheck("glBufferData");
         }
 
@@ -82,7 +81,7 @@ namespace DENG {
             size_t len = _supplement;
             char *buffer = reinterpret_cast<char*>(malloc(len));
 
-            void *cp_data = glMapBufferRange(_buffer, (GLintptr)0, (GLsizeiptr)len, GL_MAP_READ_BIT);
+            void *cp_data = glMapBufferRange(_buffer, (GLintptr) 0, (GLsizeiptr) len, GL_MAP_READ_BIT);
             glErrorCheck("glMapBufferRange");
             std::memcpy(buffer, cp_data, len);
             glUnmapBuffer(_buffer);

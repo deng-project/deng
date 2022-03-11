@@ -56,7 +56,7 @@ namespace DENG {
         private:
             OpenGL::ShaderLoader *mp_shader_loader = nullptr;
             OpenGL::BufferLoader *mp_buffer_loader = nullptr;
-            uint32_t m_high_ubo_offset = 0;
+            std::vector<std::vector<uint32_t>> m_ubo_offsets;
             std::vector<GLuint> m_opengl_textures;
 
         private:

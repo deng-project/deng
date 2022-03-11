@@ -69,8 +69,8 @@ namespace DENG {
         glErrorCheck("glTexParameteri");
 
         // Load all shaders into OpenGL and intialise buffer
-        mp_shader_loader = new OpenGL::ShaderLoader();
         mp_buffer_loader = new OpenGL::BufferLoader();
+        mp_shader_loader = new OpenGL::ShaderLoader();
 
         glDepthFunc(GL_LESS);
         glErrorCheck("glDepthFunc");
@@ -301,6 +301,7 @@ namespace DENG {
                 DENG_ASSERT(false);
                 break;
         }
+
         glErrorCheck("glTexImage2D");
 
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -343,23 +344,27 @@ namespace DENG {
 
 
     void OpenGLRenderer::LoadShaders() {
+        m_ubo_offsets.reserve(m_shaders.size());
+
+        uint32_t offset = mp_buffer_loader->GetUniformBufferOffsetAlignment();
+        for(auto shader_it = m_shaders.begin(); shader_it != m_shaders.end(); shader_it++) {
+            m_ubo_offsets.emplace_back();
+
+            for(auto ubo_it = shader_it->ubo_data_layouts.begin(); ubo_it != shader_it->ubo_data_layouts.end(); ubo_it++) {
+                m_ubo_offsets.back().push_back(offset);
+                offset += AlignData(ubo_it->ubo_size, mp_buffer_loader->GetUniformBufferOffsetAlignment());
+            }
+        }
+
         mp_shader_loader->LoadShaders(m_shaders);
     }
 
 
     void OpenGLRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        uint32_t &offset = m_shaders[_shader_id].ubo_data_layouts[_ubo_id].offset;
+        const uint32_t offset = m_ubo_offsets[_shader_id][_ubo_id];
         const uint32_t size = m_shaders[_shader_id].ubo_data_layouts[_ubo_id].ubo_size;
-        const uint32_t aligned_size = AlignData(size, mp_buffer_loader->GetUniformBufferOffsetAlignment());
-        
-        // check if new offsets need to be pushed back
-        if (offset == UINT32_MAX) {
-            offset = m_high_ubo_offset;
-            m_high_ubo_offset += aligned_size;
-            mp_buffer_loader->RequestMemory(offset + aligned_size, GL_UNIFORM_BUFFER);
-        }
 
-        void *data = glMapBufferRange(GL_UNIFORM_BUFFER, (GLintptr) offset, (GLsizeiptr) size, GL_MAP_WRITE_BIT);
+        void *data = glMapNamedBufferRange(mp_buffer_loader->GetBufferData().ubo_buffer, (GLintptr) offset, (GLsizeiptr) size, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
         std::memcpy(data, _raw_data, static_cast<size_t>(size));
         glUnmapBuffer(GL_UNIFORM_BUFFER);
@@ -368,6 +373,8 @@ namespace DENG {
 
 
     void OpenGLRenderer::UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
+        glBindVertexArray(mp_buffer_loader->GetBufferData().vert_array);
+
         mp_buffer_loader->RequestMemory(_offset + _raw_data.second, 0);
         void *data = glMapBufferRange(GL_ARRAY_BUFFER, (GLintptr) _offset, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
@@ -414,31 +421,27 @@ namespace DENG {
                 _BindVertexAttributes(i);
                 
                 // for each shader and its uniform objects bind appropriate uniform buffer ranges
-                GLuint ubo_i = 0;
-                for (size_t j = 0; j < m_shaders[shader].ubo_data_layouts.size(); j++) {
-                    if (m_shaders[shader].ubo_data_layouts[j].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
-                        const GLuint binding = static_cast<GLuint>(m_shaders[shader].ubo_data_layouts[j].binding);
-                        const GLintptr offset = static_cast<GLintptr>(m_shaders[shader].ubo_data_layouts[j].offset);
-                        const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader].ubo_data_layouts[j].ubo_size);
+                for (size_t k = 0; k < m_shaders[shader].ubo_data_layouts.size(); k++) {
+                    const GLuint binding = static_cast<GLuint>(m_shaders[shader].ubo_data_layouts[k].binding);
 
-                        glUniformBlockBinding(mp_shader_loader->GetShaderProgramById(i), ubo_i, binding);
-                        glErrorCheck("glUniformBlockBinding");
-                        glBindBufferRange(GL_UNIFORM_BUFFER, ubo_i, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
+                    if (m_shaders[shader].ubo_data_layouts[k].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
+                        const GLintptr offset = static_cast<GLintptr>(m_ubo_offsets[shader][k]);
+                        const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader].ubo_data_layouts[k].ubo_size);
+
+                        glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");
-                        ubo_i++;
+                    }
+
+                    else if(m_meshes[i].commands[j].texture_id != UINT32_MAX) {
+                        const GLuint tex_id = m_opengl_textures[m_meshes[i].commands[j].texture_id];
+
+                        glActiveTexture(GL_TEXTURE0 + binding);
+                        glErrorCheck("glActiveTexture");
+                        glBindTexture(GL_TEXTURE_2D, tex_id);
+                        glErrorCheck("glBindTexture");
                     }
                 }
 
-                // check if texture should be bound
-                if (m_meshes[i].commands[j].texture_id != UINT32_MAX) {
-                    const uint32_t sampler_id = m_textures[m_meshes[i].commands[j].texture_id].shader_sampler_id;
-                    const uint32_t tex_id = m_textures[m_meshes[i].commands[j].texture_id].r_identifier;
-                    glActiveTexture(GL_TEXTURE0 + sampler_id);
-                    glErrorCheck("glActiveTexture");
-                    glBindTexture(GL_TEXTURE_2D, tex_id);
-                    glErrorCheck("glBindTexture");
-                }
-                
                 glDrawElements(GL_TRIANGLES, m_meshes[i].commands[j].indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(m_meshes[i].commands[j].indices_offset));
                 glErrorCheck("glDrawElements");
 

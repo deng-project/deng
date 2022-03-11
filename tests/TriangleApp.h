@@ -109,8 +109,6 @@ class TriangleApp {
             // specify uniform sampler layout
             m_module.load_shaders_from_file = true;
 
-
-            m_renderer.ClearFrame();
             m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))));
             m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))));
             uint32_t shader_id = m_renderer.PushShader(m_module);
