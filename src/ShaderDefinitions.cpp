@@ -12,18 +12,35 @@ namespace DENG {
         std::size_t stride = 0;
         for(auto it = _module.attributes.begin(); it != _module.attributes.end(); it++) {
             switch(*it) {
+                case ATTRIBUTE_TYPE_UBYTE:
+                case ATTRIBUTE_TYPE_BYTE:
+                    stride++;
+                    break;
+
                 case ATTRIBUTE_TYPE_SHORT:
+                case ATTRIBUTE_TYPE_USHORT:
+                case ATTRIBUTE_TYPE_VEC2_BYTE:
+                case ATTRIBUTE_TYPE_VEC2_UBYTE:
                     stride += 2;
+                    break;
+
+                case ATTRIBUTE_TYPE_VEC3_BYTE:
+                case ATTRIBUTE_TYPE_VEC3_UBYTE:
+                    stride += 3;
                     break;
 
                 case ATTRIBUTE_TYPE_FLOAT:
                 case ATTRIBUTE_TYPE_UINT:
                 case ATTRIBUTE_TYPE_INT:
                 case ATTRIBUTE_TYPE_VEC2_SHORT:
+                case ATTRIBUTE_TYPE_VEC2_USHORT:
+                case ATTRIBUTE_TYPE_VEC4_BYTE:
+                case ATTRIBUTE_TYPE_VEC4_UBYTE:
                     stride += 4;
                     break;
 
                 case ATTRIBUTE_TYPE_VEC3_SHORT:
+                case ATTRIBUTE_TYPE_VEC3_USHORT:
                     stride += 6;
                     break;
 
@@ -32,6 +49,7 @@ namespace DENG {
                 case ATTRIBUTE_TYPE_VEC2_UINT:
                 case ATTRIBUTE_TYPE_VEC2_INT:
                 case ATTRIBUTE_TYPE_VEC4_SHORT:
+                case ATTRIBUTE_TYPE_VEC4_USHORT:
                     stride += 8;
                     break;
 
@@ -57,6 +75,7 @@ namespace DENG {
                     break;
 
                 default:
+                    DENG_ASSERT(false);
                     break;
             }
         }

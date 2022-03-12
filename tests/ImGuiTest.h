@@ -77,19 +77,21 @@ class ImGuiApp {
                         pcmd->UserCallback(cmd_list, pcmd);
                     else {
                         ImVec2 pos = _draw_data->DisplayPos;
+                        ImVec4 clip = pcmd->ClipRect;
 
                         // update the mesh instance for new draw calls
                         mesh.commands.emplace_back();
                         mesh.commands.back().vertices_offset = cmd_vert_offset + pcmd->VtxOffset * sizeof(ImDrawVert);
-                        mesh.commands.back().indices_offset = cmd_vert_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
+                        mesh.commands.back().indices_offset = cmd_idx_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
                         mesh.commands.back().indices_count = pcmd->ElemCount;
                         mesh.commands.back().texture_id = m_tex_id;
-                        mesh.commands.back().scissor_rect = static_cast<uint32_t>(pos.x);
-                        mesh.commands.back().scissor_rect = static_cast<uint32_t>(pos.y);
+                        mesh.commands.back().scissor.offset = { static_cast<int32_t>(clip.x - pos.x), static_cast<int32_t>(clip.y - pos.y) };
+                        mesh.commands.back().scissor.ext = { static_cast<uint32_t>(clip.z - clip.x), static_cast<uint32_t>(clip.w - clip.y) };
+                        mesh.commands.back().scissor.enabled = true;
                     }
                 }
 
-                cmd_vert_offset += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
+                cmd_vert_offset +=  cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
                 cmd_idx_offset += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
             }
         }

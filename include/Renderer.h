@@ -24,7 +24,12 @@ namespace DENG {
         uint32_t indices_offset = 0;
         uint32_t indices_count = 0;
         uint32_t texture_id = UINT32_MAX;
-        Libdas::Point2D<uint32_t> scissor_rect = { UINT32_MAX, UINT32_MAX };
+
+        struct {
+            Libdas::Point2D<int32_t> offset = { INT32_MAX, INT32_MAX };
+            Libdas::Point2D<uint32_t> ext = { INT32_MAX, INT32_MAX };
+            bool enabled = false;
+        } scissor;
     };
 
 

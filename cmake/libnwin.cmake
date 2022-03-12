@@ -10,7 +10,6 @@ set(LIBNWIN_HEADERS
     deps/nekowin/include/napi.h
     deps/nekowin/include/nekodll.h
     deps/nekowin/include/nwin.h
-    deps/nekowin/include/third_party
     deps/nekowin/include/win32_window.h
     deps/nekowin/include/window.h
     deps/nekowin/include/x11_window.h

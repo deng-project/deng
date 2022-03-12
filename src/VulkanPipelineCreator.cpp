@@ -508,15 +508,23 @@ namespace DENG {
             m_colorblend_attachment.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
             
             // Check if depth stencil is enabled and if it is set the createinfo accordingly
+            //m_depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            //m_depth_stencil.depthTestEnable = VK_TRUE;
+            //m_depth_stencil.depthWriteEnable = VK_TRUE;
+            //m_depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+            //m_depth_stencil.depthBoundsTestEnable = VK_FALSE;
+            //m_depth_stencil.stencilTestEnable = VK_FALSE;
+            
             m_depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-            m_depth_stencil.depthTestEnable = VK_TRUE;
-            m_depth_stencil.depthWriteEnable = VK_TRUE;
-            m_depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+            m_depth_stencil.depthTestEnable = VK_FALSE;
+            m_depth_stencil.depthWriteEnable = VK_FALSE;
+            //m_depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
             m_depth_stencil.depthBoundsTestEnable = VK_FALSE;
             m_depth_stencil.stencilTestEnable = VK_FALSE;
 
             // Check if the dynamic pipeline state createinfo should be created
             m_dynamic_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            m_dynamic_states.clear();
             m_dynamic_states.push_back(VK_DYNAMIC_STATE_SCISSOR);
             m_dynamic_state_createinfo.dynamicStateCount = static_cast<uint32_t>(m_dynamic_states.size());
             m_dynamic_state_createinfo.pDynamicStates = m_dynamic_states.data();
@@ -539,7 +547,7 @@ namespace DENG {
             graphics_pipeline_createinfo.pRasterizationState = &m_rasterization_createinfo;
             graphics_pipeline_createinfo.pMultisampleState = &m_multisample_createinfo;
             graphics_pipeline_createinfo.pDepthStencilState = &m_depth_stencil;
-            //graphics_pipeline_createinfo.pDynamicState = &m_dynamic_state_createinfo;
+            graphics_pipeline_createinfo.pDynamicState = &m_dynamic_state_createinfo;
             graphics_pipeline_createinfo.layout = m_pipeline_layout;
 
             graphics_pipeline_createinfo.renderPass = m_render_pass;
