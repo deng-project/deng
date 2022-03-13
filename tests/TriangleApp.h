@@ -29,6 +29,7 @@
 #include <libdas/include/Points.h>
 #include <libdas/include/Vector.h>
 #include <libdas/include/Matrix.h>
+#include <libdas/include/Quaternion.h>
 
 #include <Api.h>
 #include <ErrorDefinitions.h>
@@ -53,14 +54,17 @@
 const static float g_verts[] = {
     -0.5f, -0.5f, 0.0f,
     0.0f, 1.0f,
+
     0.0f, 0.5f, 0.0f,
     0.5f, 0.0f,
+
     0.5f, -0.5f, 0.0f,
-    1.0f, 1.0f
+    1.0f, 1.0f,
 };
 
 
 const static uint32_t g_indices[] = { 0, 1, 2 };
+
 
 // App data definitions
 #define VERTEX_SHADER   "TriangleAppData/VertexShader.glsl"
@@ -92,13 +96,15 @@ class TriangleApp {
             m_module.offsets.push_back(0);
             m_module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
             m_module.offsets.push_back(sizeof(float) * 3);
+            m_module.enable_scissor = false;
+            m_module.enable_depth_testing = true;
 
             // setup sampler layout specification
             m_module.ubo_data_layouts.emplace_back();
             m_module.ubo_data_layouts.back().binding = 0;
             m_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
             m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
-            m_module.ubo_data_layouts.back().ubo_size = sizeof(Libdas::Matrix4<float>);
+            m_module.ubo_data_layouts.back().ubo_size = sizeof(float);
             m_module.ubo_data_layouts.back().offset = 0;
 
             m_module.ubo_data_layouts.emplace_back();
@@ -131,9 +137,7 @@ class TriangleApp {
         void Run() {
             while(m_window.IsRunning()) {
                 m_renderer.ClearFrame();
-                Libdas::Matrix4<float> mat;
-                m_renderer.UpdateUniform(reinterpret_cast<char*>(&mat), 0, 0);
-                
+
                 if(m_window.IsKeyPressed(NEKO_KEY_Q))
                     break;
 

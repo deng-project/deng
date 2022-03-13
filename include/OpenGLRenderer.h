@@ -60,11 +60,7 @@ namespace DENG {
             std::vector<GLuint> m_opengl_textures;
 
         private:
-            inline GLenum _TextureIdToUnit(uint32_t _id) {
-                return GL_TEXTURE0 + (GLenum) _id;
-            }
-
-            void _BindVertexAttributes(uint32_t _shader_id);
+            void _BindVertexAttributes(uint32_t _shader_id, uint32_t _base_offset);
             void _UnbindVertexAttributes(uint32_t _shader_id);
 
         public:

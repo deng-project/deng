@@ -114,6 +114,7 @@ class ImGuiApp {
             module.offsets.push_back(offsetof(ImDrawVert, uv));
             module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_UBYTE);
             module.offsets.push_back(offsetof(ImDrawVert, col));
+            module.enable_scissor = true;
             module.load_shaders_from_file = true;
 
             module.ubo_data_layouts.reserve(2);
@@ -150,6 +151,8 @@ class ImGuiApp {
             Libdas::Point2D<float> wsize = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
 
             while(m_window.IsRunning()) {
+                m_renderer.ClearFrame();
+
                 beg = std::chrono::steady_clock::now();
                 m_io->DeltaTime = delta_time;
                 m_io->DisplaySize.x = m_window.GetSize().x;
@@ -158,6 +161,15 @@ class ImGuiApp {
                 m_io->MousePos.y = static_cast<float>(m_window.GetMousePosition().y);
                 m_io->MouseDown[0] = m_window.IsKeyPressed(NEKO_MOUSE_BTN_1);
                 m_io->MouseDown[1] = m_window.IsKeyPressed(NEKO_MOUSE_BTN_2);
+                if(m_window.IsKeyPressed(NEKO_MOUSE_SCROLL_UP)) {
+                    m_io->MouseWheel = 1.5f;
+                    std::cout << "Scrolling up" << std::endl;
+                }
+                else if(m_window.IsKeyPressed(NEKO_MOUSE_SCROLL_DOWN)) {
+                    m_io->MouseWheel = -1.5f;
+                    std::cout << "Scrolling down" << std::endl;
+                }
+                else m_io->MouseWheel = 0;
 
                 ImGui::NewFrame();
                     ImGui::ShowDemoWindow();
@@ -169,7 +181,6 @@ class ImGuiApp {
                 end = std::chrono::steady_clock::now();
                 //delta_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - beg).count()) / 1000;
                 wsize = { static_cast<float>(m_window.GetSize().x), static_cast<float>(m_window.GetSize().y) };
-                m_renderer.ClearFrame();
 
                 // check if uniform update is necessary
                 m_renderer.UpdateUniform(reinterpret_cast<char*>(&wsize), 0, 0);

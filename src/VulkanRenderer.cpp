@@ -491,12 +491,18 @@ namespace DENG {
                         vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
                     }
 
-                    if(m_meshes[i].commands[j].scissor.enabled) {
+                    if(m_shaders[shader_id].enable_scissor) {
                         VkRect2D rect = {};
-                        rect.offset = VkOffset2D { m_meshes[i].commands[j].scissor.offset.x, m_meshes[i].commands[j].scissor.offset.y };
-                        rect.extent = VkExtent2D { m_meshes[i].commands[j].scissor.ext.x, m_meshes[i].commands[j].scissor.ext.y };
+                        if(m_meshes[i].commands[j].scissor.enabled) {
+                            rect.offset = VkOffset2D { m_meshes[i].commands[j].scissor.offset.x, m_meshes[i].commands[j].scissor.offset.y };
+                            rect.extent = VkExtent2D { m_meshes[i].commands[j].scissor.ext.x, m_meshes[i].commands[j].scissor.ext.y };
+                        } else {
+                            rect.offset = { 0, 0 };
+                            rect.extent = { static_cast<uint32_t>(m_window.GetSize().x), static_cast<uint32_t>(m_window.GetSize().y) };
+                        }
                         vkCmdSetScissor(m_command_buffers[m_current_frame], 0, 1, &rect);
                     }
+
                     vkCmdDrawIndexed(m_command_buffers[m_current_frame], m_meshes[i].commands[j].indices_count, 1, 0, 0, 0);
                 }
             }

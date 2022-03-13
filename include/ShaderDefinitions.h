@@ -93,6 +93,8 @@ namespace DENG {
         std::string geometry_shader_src;
         std::string fragment_shader_src;
         bool load_shaders_from_file = false;
+        bool enable_scissor = false;
+        bool enable_depth_testing = false;
     };
 
     std::size_t CalculateStride(const ShaderModule &_module);
