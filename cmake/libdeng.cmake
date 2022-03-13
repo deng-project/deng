@@ -17,7 +17,7 @@ set(DENG_HEADERS
     include/ErrorDefinitions.h
     include/FirstPersonCamera.h
     include/HidEventManager.h
-    include/ImGuiEntity.h
+    include/ImGuiLayer.h
     include/LightManager.h
     include/LightSources.h
     include/OpenGLBufferLoader.h
@@ -52,6 +52,7 @@ set(DENG_HEADERS
 )
 
 set(DENG_SOURCES
+    src/ImGuiLayer.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp

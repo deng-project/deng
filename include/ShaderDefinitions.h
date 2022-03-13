@@ -79,6 +79,12 @@ namespace DENG {
         uint32_t offset = 0;
     };
 
+    enum CullMode {
+        CULL_MODE_NONE,
+        CULL_MODE_COUNTER_CLOCKWISE,
+        CULL_MODE_CLOCKWISE
+    };
+
 
     // this structure defines shaders that should be used in a pipeline
     // NOTE: geometry shaders are completely optional and not required
@@ -95,6 +101,9 @@ namespace DENG {
         bool load_shaders_from_file = false;
         bool enable_scissor = false;
         bool enable_depth_testing = false;
+        bool enable_stencil_testing = false;
+        bool enable_blend = false;
+        CullMode cull_mode = CULL_MODE_NONE;
     };
 
     std::size_t CalculateStride(const ShaderModule &_module);

@@ -1,7 +1,7 @@
-/// DENG: dynamic engine - small but powerful 2D and 3D game engine
-/// licence: Apache, see LICENCE file
-/// file: Window.cpp - Nekowin library abstraction class implementation for DENG
-/// author: Karl-Mihkel Ott
+// DENG: dynamic engine - small but powerful 2D and 3D game engine
+// licence: Apache, see LICENCE file
+// file: Window.cpp - Nekowin library abstraction class implementation for DENG
+// author: Karl-Mihkel Ott
 
 
 #define WINDOW_CPP
@@ -9,7 +9,7 @@
 
 namespace DENG {
 
-    Window::Window(int32_t x, int32_t y, WindowHint hints, const char *title) {
+    Window::Window(int32_t x, int32_t y, neko_Hint hints, const char *title) {
         neko_InitAPI();
         m_surface = neko_NewWindow(x, y, hints, title);
         neko_SetMouseCursorMode(m_surface, NEKO_CURSOR_MODE_STANDARD);

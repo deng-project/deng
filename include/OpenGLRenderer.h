@@ -62,6 +62,7 @@ namespace DENG {
         private:
             void _BindVertexAttributes(uint32_t _shader_id, uint32_t _base_offset);
             void _UnbindVertexAttributes(uint32_t _shader_id);
+            void _SetRenderState(uint32_t _shader_id);
 
         public:
             OpenGLRenderer(const Window &_win);

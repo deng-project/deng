@@ -40,7 +40,7 @@ namespace DENG {
             Libdas::Point2D<uint64_t> m_prev_vc_pos;
 
         public:
-            Window(int32_t width, int32_t height, WindowHint hints, const char *title);
+            Window(int32_t width, int32_t height, neko_Hint hints, const char *title);
             ~Window();
 
 
@@ -68,7 +68,7 @@ namespace DENG {
             }
 
             /// Change DENG cursor mode
-            inline void ChangeCursor(CursorMode cur) {
+            inline void ChangeCursor(neko_CursorMode cur) {
                 neko_SetMouseCursorMode(m_surface, cur);
             }
 
@@ -96,7 +96,7 @@ namespace DENG {
                 return neko_InitVKSurface(m_surface, instance, &surface);
             }
 
-            inline WindowHint GetHints() const {
+            inline neko_Hint GetHints() const {
                 neko_Hint hints;
                 neko_GetWindowHints(m_surface, &hints);
                 return hints;

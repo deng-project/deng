@@ -7,7 +7,7 @@
 #include "ImGuiTest.h"
 
 int main() {
-    DENG::Window win = DENG::Window(1280, 720, DENG_WINDOW_HINT_API_VULKAN | DENG_WINDOW_HINT_RESIZEABLE, "VulkanImGui");
+    DENG::Window win = DENG::Window(1280, 720, NEKO_HINT_API_VULKAN | NEKO_HINT_RESIZEABLE, "VulkanImGui");
     DENG::VulkanRenderer renderer = DENG::VulkanRenderer(win);
     ImGuiApp app(win, renderer);
     app.Run();

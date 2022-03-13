@@ -7,7 +7,7 @@
 #include "ImGuiTest.h"
 
 int main() {
-    DENG::Window win = DENG::Window(1280, 720, DENG_WINDOW_HINT_API_OPENGL | DENG_WINDOW_HINT_RESIZEABLE, "OpenGLImGui");
+    DENG::Window win = DENG::Window(1280, 720, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "OpenGLImGui");
     DENG::OpenGLRenderer renderer = DENG::OpenGLRenderer(win);
     ImGuiApp app(win, renderer);
     app.Run();

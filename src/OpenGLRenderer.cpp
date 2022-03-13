@@ -53,16 +53,6 @@ namespace DENG {
             std::exit(-1);
         }
 
-        // Enable some OpenGL features
-        glEnable(GL_PROGRAM_POINT_SIZE);
-        glErrorCheck("glEnable");
-        glEnable(GL_DEPTH_TEST);
-        glErrorCheck("glEnable");
-        glEnable(GL_STENCIL_TEST);
-        glErrorCheck("glEnable");
-        glEnable(GL_SCISSOR_TEST);
-        glErrorCheck("glEnable");
-
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
@@ -73,9 +63,6 @@ namespace DENG {
         // Load all shaders into OpenGL and intialise buffer
         mp_buffer_loader = new OpenGL::BufferLoader();
         mp_shader_loader = new OpenGL::ShaderLoader();
-
-        glDepthFunc(GL_LESS);
-        glErrorCheck("glDepthFunc");
     }
 
 
@@ -276,6 +263,77 @@ namespace DENG {
     }
 
 
+    void OpenGLRenderer::_SetRenderState(uint32_t _shader_id) {
+        // scissor test
+        if(m_shaders[_shader_id].enable_scissor) {
+            glEnable(GL_SCISSOR_TEST);
+            glErrorCheck("glEnable");
+        } else {
+            glDisable(GL_SCISSOR_TEST);
+            glErrorCheck("glDisable");
+        }
+
+        // depth test
+        if(m_shaders[_shader_id].enable_depth_testing) {
+            glEnable(GL_DEPTH_TEST);
+            glErrorCheck("glEnable");
+            glDepthFunc(GL_LESS);
+            glErrorCheck("glDepthFunc");
+        } else {
+            glDisable(GL_DEPTH_TEST);
+            glErrorCheck("glDisable");
+        }
+
+        // stencil testing
+        if(m_shaders[_shader_id].enable_stencil_testing) {
+            glEnable(GL_STENCIL_TEST);
+            glErrorCheck("glEnable");
+        } else {
+            glDisable(GL_STENCIL_TEST);
+            glErrorCheck("glDisable");
+        }
+
+        // blending
+        if(m_shaders[_shader_id].enable_blend) {
+            glEnable(GL_BLEND);
+            glErrorCheck("glEnable");
+            glBlendEquation(GL_FUNC_ADD);
+            glErrorCheck("glBlendEquation");
+            glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            glErrorCheck("glBlendFuncSeparate");
+        } else {
+            glDisable(GL_BLEND);
+            glErrorCheck("glBlend");
+        }
+
+        // culling
+        switch(m_shaders[_shader_id].cull_mode) {
+            case CULL_MODE_NONE:
+                glDisable(GL_CULL_FACE);
+                glErrorCheck("glDisable");
+                break;
+
+            case CULL_MODE_COUNTER_CLOCKWISE:
+                glEnable(GL_CULL_FACE);
+                glErrorCheck("glEnable");
+                glCullFace(GL_FRONT);
+                glErrorCheck("glCullFace");
+                glFrontFace(GL_CCW);
+                glErrorCheck("glFrontFace");
+                break;
+
+            case CULL_MODE_CLOCKWISE:
+                glEnable(GL_CULL_FACE);
+                glErrorCheck("glEnable");
+                glCullFace(GL_FRONT);
+                glErrorCheck("glCullFace");
+                glFrontFace(GL_CW);
+                glErrorCheck("glFrontFace");
+                break;
+        }
+    }
+
+
     uint32_t OpenGLRenderer::PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
         // check if there are any texture units available
         GLint max_units;
@@ -412,10 +470,15 @@ namespace DENG {
 
 
     void OpenGLRenderer::RenderFrame() {
+        GLint last_scissor_box[4];
+        glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
+        glErrorCheck("glGetIntegerv");
+
         // draw each mesh to the screen
         for(auto mesh_it = m_meshes.begin(); mesh_it < m_meshes.end(); mesh_it++) {
             const uint32_t shader_i = mesh_it->shader_module_id;
 
+            _SetRenderState(shader_i);
             glUseProgram(mp_shader_loader->GetShaderProgramById(shader_i));
             glErrorCheck("glUseProgram");
 
@@ -446,9 +509,11 @@ namespace DENG {
 
                 // check if scissoring was required
                 if(cmd_it->scissor.enabled) {
-                    glScissor((GLint) cmd_it->scissor.offset.x, (GLint) cmd_it->scissor.offset.y, (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
+                    glScissor((GLint) cmd_it->scissor.offset.x, (GLint) (m_window.GetSize().y - cmd_it->scissor.ext.y), (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
+                    glErrorCheck("glScissor");
                 } else {
                     glScissor(0, 0, (GLsizei) m_window.GetSize().x, (GLsizei) m_window.GetSize().y);
+                    glErrorCheck("glScissor");
                 }
 
                 //glDrawElementsBaseVertex(GL_TRIANGLES, cmd_it->indices_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(cmd_it->indices_offset), (GLint) cmd_it->vertices_offset);
@@ -458,5 +523,8 @@ namespace DENG {
                 _UnbindVertexAttributes(shader_i);
             }
         }
+
+        glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3]);
+        glErrorCheck("glScissor");
     }
 }
