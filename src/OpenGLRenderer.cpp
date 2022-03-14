@@ -509,7 +509,7 @@ namespace DENG {
 
                 // check if scissoring was required
                 if(cmd_it->scissor.enabled) {
-                    glScissor((GLint) cmd_it->scissor.offset.x, (GLint) (m_window.GetSize().y - cmd_it->scissor.ext.y), (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
+                    glScissor((GLint) cmd_it->scissor.offset.x, (GLint) (m_window.GetSize().y - (cmd_it->scissor.ext.y + cmd_it->scissor.offset.y)), (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
                     glErrorCheck("glScissor");
                 } else {
                     glScissor(0, 0, (GLsizei) m_window.GetSize().x, (GLsizei) m_window.GetSize().y);
