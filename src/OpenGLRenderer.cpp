@@ -474,6 +474,10 @@ namespace DENG {
         glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
         glErrorCheck("glGetIntegerv");
 
+        GLint last_viewport[4];
+        glGetIntegerv(GL_VIEWPORT, last_viewport);
+        glErrorCheck("glGetIntegerv");
+
         // draw each mesh to the screen
         for(auto mesh_it = m_meshes.begin(); mesh_it < m_meshes.end(); mesh_it++) {
             const uint32_t shader_i = mesh_it->shader_module_id;
@@ -526,5 +530,8 @@ namespace DENG {
 
         glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3]);
         glErrorCheck("glScissor");
+
+        glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
+        glErrorCheck("glViewport");
     }
 }
