@@ -17,8 +17,8 @@ The goal of the current animations branch is following:
 
 ### Windows
 
-** NOTE: Building DENG on Windows requires you to build shaderc library from source. Using shaderc provided in Vulkan SDK gives you a really really bad time. Shaderc library building is managed by CMake. **  
-** Windows support is still not complete and thus unexpected bugs might occur that would otherwise not be present in GNU/Linux systems! **  
+**NOTE: Building DENG on Windows requires you to build shaderc library from source. Using shaderc provided in Vulkan SDK gives you a really really bad time. Shaderc library building is managed by CMake.**  
+**Windows support is still not complete and thus unexpected bugs might occur that would otherwise not be present in GNU/Linux systems!**  
 
 Make sure that Vulkan SDK is installed and all necessary Vulkan capable drivers are installed. You can check this by running vkcube.exe provided in the SDK.
 For building DENG you will need Visual Studio with Microsoft Visual C++ toolchain (tested on VS2022), Python, Git and CMake. Following commands assume that you are using Powershell.  
