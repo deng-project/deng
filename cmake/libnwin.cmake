@@ -42,8 +42,9 @@ target_include_directories(${LIBNWIN_TARGET}
 
 target_compile_definitions(${LIBNWIN_TARGET}
     PRIVATE LIBNWIN_EXPORT_LIBRARY
-    PRIVATE LIBNWIN_STATIC
+    PUBLIC LIBNWIN_STATIC
 )
+
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${LIBNWIN_TARGET} PRIVATE _DEBUG)
@@ -66,3 +67,14 @@ elseif(WIN32)
     )
 endif()
 
+# Check if Vulkan SDK was explicitly specified
+if(NOT VULKAN_SDK_PATH STREQUAL "")
+    message(STATUS "Using Vulkan SDK from path ${VULKAN_SDK_PATH}")
+    if(UNIX AND NOT APPLE)
+        target_include_directories(${LIBNWIN_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/include)
+        target_link_directories(${LIBNWIN_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
+    elseif(WIN32)
+		target_include_directories(${LIBNWIN_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Include)
+		target_link_directories(${LIBNWIN_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
+	endif()
+endif()

@@ -12,6 +12,10 @@ namespace DENG {
         m_beg = std::chrono::system_clock::now();
         m_end = std::chrono::system_clock::now();
     }
+
+    ImGuiLayer::~ImGuiLayer() {
+        ImGui::DestroyContext();
+    }
     
     void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data, uint32_t _vertex_offset, uint32_t _index_offset) {
         uint32_t cmd_vert_offset = _vertex_offset;

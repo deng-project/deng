@@ -83,6 +83,7 @@ namespace DENG {
 
         public:
             ImGuiLayer();
+            ~ImGuiLayer();
             void Attach(Window &_win, Renderer &_rend, uint32_t _ubo_offset, PFN_ImGuiDrawCallback _callback, void *_user_data);
             void Update(uint32_t _vertex_offset, uint32_t _index_offset);
     };

@@ -14,4 +14,8 @@ target_include_directories(${VK_IMGUI_APP_TARGET}
     PRIVATE deps/nekowin/include/third_party
 )
 
-target_link_libraries(${VK_IMGUI_APP_TARGET} deng-shared)
+if(WIN32)
+	target_link_libraries(${VK_IMGUI_APP_TARGET} ${DENG_STATIC_TARGET})
+else()
+	target_link_libraries(${VK_IMGUI_APP_TARGET} ${DENG_SHARED_TARGET})
+endif()

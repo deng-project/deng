@@ -7,3 +7,6 @@
 [submodule "deps/imgui"]
 	path = deps/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "deps/shaderc"]
+	path = deps/shaderc
+	url = https://github.com/google/shaderc

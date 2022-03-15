@@ -87,7 +87,6 @@ target_include_directories(${DENG_STATIC_TARGET}
 )
 
 target_link_libraries(${DENG_STATIC_TARGET}
-    PUBLIC shaderc_combined
     PUBLIC nwin
     PUBLIC das
     PUBLIC imgui
@@ -107,11 +106,23 @@ target_include_directories(${DENG_SHARED_TARGET}
 )
 
 target_link_libraries(${DENG_SHARED_TARGET}
-    PUBLIC shaderc_combined
     PUBLIC nwin
     PUBLIC das
     PUBLIC imgui
 )
+
+# Link either shaderc_combined if on Linux or shaderc if building for windows platform
+if(WIN32)
+	target_link_libraries(${DENG_SHARED_TARGET} 
+		PUBLIC shaderc)
+	target_link_libraries(${DENG_STATIC_TARGET} 
+		PUBLIC shaderc)
+else()
+	target_link_libraries(${DENG_SHARED_TARGET} 
+		PUBLIC shaderc_combined)
+	target_link_libraries(${DENG_STATIC_TARGET} 
+		PUBLIC shaderc_combined)
+endif()
 
 # Check if debug mode is used
 if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -129,6 +140,10 @@ if(NOT VULKAN_SDK_PATH STREQUAL "")
         target_link_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
         target_link_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
     elseif(WIN32)
-        message(FATAL_ERROR "Please add Vulkan SDK path linking and include directories in libdeng.cmake")
-    endif()
+		target_include_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Include)
+		target_include_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Include)
+		
+		target_link_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
+		target_link_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
+	endif()
 endif()

@@ -13,4 +13,8 @@ target_include_directories(${OGL_TRIANGLE_TARGET}
     PRIVATE deps/nekowin/include/third_party
 )
 
-target_link_libraries(${OGL_TRIANGLE_TARGET} deng-shared)
+if(WIN32)
+	target_link_libraries(${OGL_TRIANGLE_TARGET} ${DENG_STATIC_TARGET})
+else()
+	target_link_libraries(${OGL_TRIANGLE_TARGET} ${DENG_SHARED_TARGET})
+endif()

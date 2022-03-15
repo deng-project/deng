@@ -8,9 +8,9 @@
 
 #ifdef _MSC_BUILD
     #ifdef DENG_EXPORT_LIBRARY
-        #define DENG_API _declspec(dllexport)
+        #define DENG_API __declspec(dllexport)
     #else 
-        #define DENG_API _declspec(dllimport)
+        #define DENG_API __declspec(dllimport)
     #endif
 #else
     #define DENG_API

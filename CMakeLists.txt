@@ -7,10 +7,11 @@ cmake_minimum_required(VERSION 3.10)
 project(deng LANGUAGES CXX C)
 
 # Constant config values
-set(CXX_STANDARD C++17)
+set(CMAKE_CXX_STANDARD 17)
 set(C_STANDARD C99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_GENERATOR_PLATFORM x64)
 
 set(VULKAN_SDK_PATH CACHE STRING "")
 option(BUILD_DEPS "Build DENG dependencies" OFF)
@@ -19,7 +20,8 @@ option(BUILD_DENG "Build all DENG targets" ON)
 
 # Set appropriate compiler flags
 if(MSVC)
-    add_compile_options(/W4 /WX)
+    add_compile_options(/W4)
+	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH)
 
     # Set correct optimisation flags
     if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -58,10 +60,34 @@ if(BUILD_DEPS OR BUILD_ALL)
     include(cmake/libdas.cmake)
     include(cmake/libnwin.cmake)
     include(cmake/imgui.cmake)
+	
+	if(WIN32)
+		set(SHADERC_ENABLE_SHARED_CRT ON)
+		set(SHADERC_SKIP_TESTS ON)
+		set(SHADERC_SKIP_EXAMPLES ON)
+		set(SHADERC_SKIP_COPYRIGHT_CHECK ON)
+		add_subdirectory(deps/shaderc)
+	endif()
 endif()
 
 if(BUILD_DENG)
     include(cmake/libdeng.cmake)
+	add_dependencies(${DENG_STATIC_TARGET}
+		${LIBDAS_TARGET}
+		${IMGUI_TARGET}
+		${LIBNWIN_TARGET}
+	)
+	
+	add_dependencies(${DENG_SHARED_TARGET}
+		${LIBDAS_TARGET}
+		${IMGUI_TARGET}
+		${LIBNWIN_TARGET}
+	)
+	
+	if(WIN32)
+		add_dependencies(${DENG_STATIC_TARGET} shaderc)
+		add_dependencies(${DENG_SHARED_TARGET} shaderc)
+	endif()
 endif()
 
 

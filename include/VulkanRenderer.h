@@ -17,6 +17,10 @@
     #include <cstring>
     #include <cmath>
     #include <utility>
+    
+    #define NOMINMAX
+    #include <algorithm>
+
 #ifdef _DEBUG
     #include <iostream>
 #endif
