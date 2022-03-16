@@ -496,18 +496,18 @@ namespace DENG {
             m_multisample_createinfo.rasterizationSamples = m_samples;
 
             // Set colorblend options if required
-            //if(m_module.enable_blend) {
-            m_colorblend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-            m_colorblend_attachment.blendEnable = VK_TRUE;
-            m_colorblend_attachment.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
-            m_colorblend_attachment.blendEnable = VK_TRUE;
-            m_colorblend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            m_colorblend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            m_colorblend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-            m_colorblend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            m_colorblend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            m_colorblend_attachment.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
-            //}
+            if(m_module.enable_blend) {
+                m_colorblend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+                m_colorblend_attachment.blendEnable = VK_TRUE;
+                m_colorblend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+                m_colorblend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                m_colorblend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                m_colorblend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+                m_colorblend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                m_colorblend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            } else {
+                m_colorblend_attachment.blendEnable = VK_FALSE;
+            }
             
             // Check if depth stencil is enabled and if it is set the createinfo accordingly
             if(m_module.enable_depth_testing) {

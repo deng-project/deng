@@ -60,6 +60,7 @@ if(BUILD_DEPS OR BUILD_ALL)
     include(cmake/libdas.cmake)
     include(cmake/libnwin.cmake)
     include(cmake/imgui.cmake)
+    include(cmake/lua.cmake)
 	
 	if(WIN32)
 		set(SHADERC_ENABLE_SHARED_CRT ON)
