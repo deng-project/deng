@@ -17,6 +17,7 @@ set(VULKAN_SDK_PATH CACHE STRING "")
 option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
 option(BUILD_DENG "Build all DENG targets" ON)
+option(EXPERIMENTAL_BUILD_LUA_TESTS "Build lua testing applications" OFF)
 
 # Set appropriate compiler flags
 if(MSVC)
@@ -77,12 +78,14 @@ if(BUILD_DENG)
 		${LIBDAS_TARGET}
 		${IMGUI_TARGET}
 		${LIBNWIN_TARGET}
+        ${LIBLUA_TARGET}
 	)
 	
 	add_dependencies(${DENG_SHARED_TARGET}
 		${LIBDAS_TARGET}
 		${IMGUI_TARGET}
 		${LIBNWIN_TARGET}
+        ${LIBLUA_TARGET}
 	)
 	
 	if(WIN32)
@@ -98,4 +101,8 @@ if(BUILD_TESTS)
     include(cmake/tests/TriangleApp.cmake)
     include(cmake/tests/VulkanImGui.cmake)
     include(cmake/tests/OpenGLImGui.cmake)
+
+    if(EXPERIMENTAL_BUILD_LUA_TESTS)
+        include(cmake/tests/LuaTest.cmake)
+    endif()
 endif()

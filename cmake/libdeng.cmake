@@ -84,12 +84,14 @@ target_compile_definitions(${DENG_STATIC_TARGET}
 target_include_directories(${DENG_STATIC_TARGET}
     PUBLIC include
     PUBLIC deps
+    PUBLIC deps/${LIBLUA_DEP_DIR}/src
 )
 
 target_link_libraries(${DENG_STATIC_TARGET}
-    PUBLIC nwin
-    PUBLIC das
-    PUBLIC imgui
+    PUBLIC ${LIBNWIN_TARGET}
+    PUBLIC ${LIBDAS_TARGET}
+    PUBLIC ${IMGUI_TARGET}
+    PUBLIC ${LIBLUA_TARGET}
 )
 
 
@@ -103,12 +105,14 @@ target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE DENG_EXPORT_LIBRARY)
 target_include_directories(${DENG_SHARED_TARGET} 
     PUBLIC include
     PUBLIC deps
+    PUBLIC deps/${LIBLUA_DEP_DIR}/src
 )
 
 target_link_libraries(${DENG_SHARED_TARGET}
-    PUBLIC nwin
-    PUBLIC das
-    PUBLIC imgui
+    PUBLIC ${LIBNWIN_TARGET}
+    PUBLIC ${LIBDAS_TARGET}
+    PUBLIC ${IMGUI_TARGET}
+    PUBLIC ${LIBLUA_TARGET}
 )
 
 # Link either shaderc_combined if on Linux or shaderc if building for windows platform

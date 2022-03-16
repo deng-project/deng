@@ -23,12 +23,17 @@ The goal of the current animations branch is following:
 Make sure that Vulkan SDK is installed with all necessary Vulkan capable drivers. You can check this by running vkcube.exe provided by the SDK.
 In order to build DENG you will need Visual Studio with Microsoft Visual C++ toolchain (tested on VS2022), Python, Git and CMake.  
 
-Clone the repository and all of its submodules using following command:
+Clone the repository using following command:
 ```
-PS > git clone --recursive https://github.com/inugami-dev64/deng
+PS > git clone https://github.com/inugami-dev64/deng -b animations
 ```
 
-Generate build files using CMake
+Fetch all required dependencies:  
+```
+PS > python FetchDependencies.py
+```
+
+Generate build files using CMake:  
 ```
 PS > New-Item build
 PS > Set-Location build
@@ -46,12 +51,17 @@ On Debian based distributions you can install following packages that are requir
 $ sudo apt install cmake libx11-6 libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
 ```
 
-Clone the repository and all of its submodules with following command:  
+Clone the repository with following command:  
 ```
-$ git clone --recursive https://github.com/inugami-dev64/deng
+$ git clone https://github.com/inugami-dev64/deng
 ```
 
-Generate build files using CMake
+Fetch all required dependencies:  
+```
+$ python FetchDependencies.py
+```
+
+Generate build files using CMake:  
 ```
 $ mkdir build
 $ cd build
