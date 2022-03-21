@@ -6,6 +6,7 @@
 set(DENG_SHARED_TARGET deng-shared)
 set(DENG_STATIC_TARGET deng-static)
 set(DENG_HEADERS
+    include/AnimationSampler.h
     include/Api.h
     include/BaseTypes.h
     include/BufferAlignment.h
@@ -18,41 +19,30 @@ set(DENG_HEADERS
     include/FirstPersonCamera.h
     include/HidEventManager.h
     include/ImGuiLayer.h
-    include/LightManager.h
-    include/LightSources.h
+    include/Interpolation.h
+    include/MeshLoader.h
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
     include/Renderer.h
     include/ShaderDefinitions.h
-    include/UniformData.h
-    include/VertexAttributes.h
-    include/VulkanAssetCopy.h
-    include/VulkanAssets.h
-    include/VulkanBufferManager.h
     include/VulkanDescriptorPoolCreator.h
     include/VulkanDescriptorSetLayoutCreator.h
     include/VulkanDescriptorSetsCreator.h
-    include/VulkanDrawCaller.h
     include/VulkanHelpers.h
     include/VulkanInstanceCreator.h
-    include/VulkanPipelineCreationHelper.h
     include/VulkanPipelineCreator.h
-    include/VulkanPipelineData.h
-    include/VulkanQueueManager.h
     include/VulkanRenderer.h
-    include/VulkanRendererInitialiser.h
-    include/VulkanResourceManager.h
-    include/VulkanResources.h
-    include/VulkanRuntimeUpdater.h
     include/VulkanSwapchainCreator.h
-    include/VulkanTextureManager.h
     include/VulkanUniformBufferAllocator.h
     include/Window.h
 )
 
 set(DENG_SOURCES
+    src/AnimationSampler.cpp
     src/ImGuiLayer.cpp
+    src/Interpolation.cpp
+    src/MeshLoader.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
@@ -150,4 +140,26 @@ if(NOT VULKAN_SDK_PATH STREQUAL "")
 		target_link_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
 		target_link_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
 	endif()
+endif()
+
+
+if(BUILD_DEPS)
+    add_dependencies(${DENG_STATIC_TARGET}
+        ${LIBDAS_TARGET}
+        ${IMGUI_TARGET}
+        ${LIBNWIN_TARGET}
+        ${LIBLUA_TARGET}
+    )
+    
+    add_dependencies(${DENG_SHARED_TARGET}
+        ${LIBDAS_TARGET}
+        ${IMGUI_TARGET}
+        ${LIBNWIN_TARGET}
+        ${LIBLUA_TARGET}
+    )
+    
+    if(WIN32)
+        add_dependencies(${DENG_STATIC_TARGET} shaderc)
+        add_dependencies(${DENG_SHARED_TARGET} shaderc)
+    endif()
 endif()

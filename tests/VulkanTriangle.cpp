@@ -8,7 +8,8 @@
 
 int main() {
     DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_VULKAN | NEKO_HINT_RESIZEABLE, "VulkanTriangle");
-    DENG::VulkanRenderer renderer = DENG::VulkanRenderer(win);
+    DENG::RendererConfig conf = {};
+    DENG::VulkanRenderer renderer = DENG::VulkanRenderer(win, conf);
     TriangleApp app = TriangleApp(win, renderer);
     app.Run();
     return 0;

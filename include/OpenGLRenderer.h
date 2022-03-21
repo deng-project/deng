@@ -36,8 +36,6 @@
     #include <Window.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
-    #include <UniformData.h>
-    #include <VertexAttributes.h>
 #endif
 
 #include <OpenGLShaderLoader.h>
@@ -65,7 +63,7 @@ namespace DENG {
             void _SetRenderState(uint32_t _shader_id);
 
         public:
-            OpenGLRenderer(const Window &_win);
+            OpenGLRenderer(const Window &_win, const RendererConfig &_conf);
             ~OpenGLRenderer();
             
             virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string& _file_name) override;
@@ -74,6 +72,7 @@ namespace DENG {
             virtual void ShrinkTextures() override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

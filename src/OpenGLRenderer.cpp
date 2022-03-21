@@ -45,7 +45,8 @@ namespace DENG {
     }
 #endif
 
-    OpenGLRenderer::OpenGLRenderer(const Window &_win) : Renderer(_win) {
+    OpenGLRenderer::OpenGLRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
+        m_window.SetVSync(m_conf.enable_vsync);
         // Load all OpenGL functions
         int status = deng_LoadGL();
         if(!status) {
@@ -433,6 +434,10 @@ namespace DENG {
         std::memcpy(data, _raw_data, static_cast<size_t>(size));
         glUnmapBuffer(GL_UNIFORM_BUFFER);
         glErrorCheck("glUnmapBuffer");
+    }
+
+
+    void OpenGLRenderer::UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
     }
 
 

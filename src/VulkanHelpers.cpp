@@ -212,6 +212,28 @@ namespace DENG {
         }
 
 
+        void _ImplicitDataToBufferCopy(VkDevice _dev, VkPhysicalDevice _gpu, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkDeviceSize _size, const void *_src, 
+                                       VkBuffer _dst, VkDeviceSize _offset) 
+        {
+            // create a staging buffer to hold all data in
+            VkBuffer staging_buffer = VK_NULL_HANDLE;
+            VkDeviceMemory staging_buffer_memory = VK_NULL_HANDLE;
+
+            VkMemoryRequirements mem_req = _CreateBuffer(_dev, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
+            _AllocateMemory(_dev, _gpu, mem_req.size, staging_buffer_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            vkBindBufferMemory(_dev, staging_buffer, staging_buffer_memory, 0);
+
+            // FIRST: copy data to staging buffer memory
+            // SECOND: copy data from staging buffer memory into main memory buffer
+            _CopyToBufferMemory(_dev, _size, _src, staging_buffer_memory, 0);
+            _CopyBufferToBuffer(_dev, _cmd_pool, _graphics_queue, staging_buffer, _dst, _size, 0, _offset);
+
+            // destroy staging buffer instances
+            vkFreeMemory(_dev, staging_buffer_memory, nullptr);
+            vkDestroyBuffer(_dev, staging_buffer, nullptr);
+        }
+
+
         void _BeginCommandBufferSingleCommand(VkDevice _dev, VkCommandPool _cmd_pool, VkCommandBuffer &_cmd_buf) {
             // Set up cmd_buf allocation info
             VkCommandBufferAllocateInfo cmd_buf_allocinfo{};

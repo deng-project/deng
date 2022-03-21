@@ -9,7 +9,7 @@
 
 namespace DENG {
 
-    VulkanRenderer::VulkanRenderer(const Window &_win) : Renderer(_win) {
+    VulkanRenderer::VulkanRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
         mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count);
         _CreateCommandPool();
@@ -195,59 +195,49 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
+        // check if reallocation should occur
+        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_combined_size) {
+            VkDeviceSize old_size = m_combined_size;
+            m_combined_size = (_raw_data.second + _offset) * 3 / 2;
+            m_vertices_size = m_combined_size / 2;
+            m_indices_size = m_combined_size - m_vertices_size;
+            _ReallocateBufferResources(old_size);
+        }
+
+        Vulkan::_ImplicitDataToBufferCopy(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
+                                          reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, static_cast<VkDeviceSize>(_offset));
+    }
+
+
     void VulkanRenderer::UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_vertices_size) {
-            VkDeviceSize old_size = m_vertices_size;
+            const VkDeviceSize old_size = m_combined_size;
+            const VkDeviceSize old_idx_offset = m_vertices_size;
             m_vertices_size = (_raw_data.second + _offset) * 3 / 2;
-            _ReallocateBufferResources(old_size, m_indices_size);
+            m_combined_size = m_vertices_size + m_indices_size;
+            _ReallocateBufferResources(old_size, m_indices_size, old_idx_offset);
         }
 
-        // create a staging buffer to hold data in
-        VkBuffer staging_buffer = VK_NULL_HANDLE;
-        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
-        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
-                                staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, 0);
-
-        // copy data from staging buffer to main buffer
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
-                                    static_cast<VkDeviceSize>(_raw_data.second), 0, static_cast<VkDeviceSize>(_offset));
-
-        // destroy the staging buffer
-        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);
-        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, NULL);
+        Vulkan::_ImplicitDataToBufferCopy(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
+                                          reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, static_cast<VkDeviceSize>(_offset));
     }
 
 
     void VulkanRenderer::UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_indices_size) {
-            VkDeviceSize old_size = m_indices_size;
+            const VkDeviceSize old_size = m_combined_size;
+            const VkDeviceSize old_idx_size = m_indices_size;
+            const VkDeviceSize old_idx_offset = m_vertices_size;
             m_indices_size = (_raw_data.second + _offset) * 3 / 2;
-            _ReallocateBufferResources(m_vertices_size, old_size);
+            m_combined_size = m_vertices_size + m_indices_size;
+            _ReallocateBufferResources(old_size, old_idx_size, old_idx_offset);
         }
 
-        // create a staging buffer to hold data in
-        VkBuffer staging_buffer = VK_NULL_HANDLE;
-        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
-        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, 
-                                staging_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-        vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_raw_data.second), _raw_data.first, staging_memory, 0);
-
-        // copy data from staging buffer to main buffer
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, 
-                                    static_cast<VkDeviceSize>(_raw_data.second), 0, m_vertices_size + static_cast<VkDeviceSize>(_offset));
-
-        // destroy the staging buffer
-        vkFreeMemory(mp_instance_creator->GetDevice(), staging_memory, NULL);
-        vkDestroyBuffer(mp_instance_creator->GetDevice(), staging_buffer, NULL);
+        Vulkan::_ImplicitDataToBufferCopy(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
+                                          reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, m_vertices_size + static_cast<VkDeviceSize>(_offset));
     }
 
 
@@ -343,7 +333,7 @@ namespace DENG {
 
 
     void VulkanRenderer::_AllocateBufferResources() {
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_vertices_size + m_indices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_combined_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
                                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_main_buffer);
 
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_main_memory, 
@@ -352,16 +342,16 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_vert_size, VkDeviceSize _old_ind_size) {
+    void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_size, VkDeviceSize _old_index_size, VkDeviceSize _old_index_offset) {
         // step 1: create staging buffer
-        VkBuffer staging_buffer;
-        VkDeviceMemory staging_memory;
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), _old_vert_size + _old_ind_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, staging_buffer);
+        VkBuffer staging_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), _old_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, staging_buffer);
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, staging_memory, mem_req.memoryTypeBits, 
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         vkBindBufferMemory(mp_instance_creator->GetDevice(), staging_buffer, staging_memory, 0);
 
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), m_main_buffer, staging_buffer, _old_vert_size + _old_ind_size, 0, 0);
+        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), m_main_buffer, staging_buffer, _old_size, 0, 0);
 
         // step 2: free to old buffer instance and allocate new resources
         // NOTE: new supported sizes must be calculated beforehand
@@ -370,8 +360,11 @@ namespace DENG {
         _AllocateBufferResources();
 
         // step 3: copy data to new offsets in new buffer
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_vert_size, 0, 0);
-        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_ind_size, _old_vert_size, m_vertices_size);
+        Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_size, 0, 0);
+
+        // attempt to copy indices over to the new reallocated buffer
+        if(_old_index_offset)
+            Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_index_size, _old_index_offset, m_vertices_size);
     }
 
 

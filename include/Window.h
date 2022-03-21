@@ -11,7 +11,6 @@
     #include <vector>
     #include <string>
     #include <vulkan/vulkan.h>
-
 #endif
 
 #include <nekowin/include/nwin.h>
@@ -100,6 +99,10 @@ namespace DENG {
                 neko_Hint hints;
                 neko_GetWindowHints(m_surface, &hints);
                 return hints;
+            }
+
+            inline void SetVSync(bool _on) const {
+                neko_SetVSync(m_surface, _on);
             }
 
             inline const std::string GetTitle() const {

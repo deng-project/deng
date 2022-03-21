@@ -47,9 +47,14 @@ namespace DENG {
         void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkFormat _format, VkImageLayout _old, 
                                     VkImageLayout _new, uint32_t _mip_l);
         void _CopyBufferToImage(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkBuffer _src, VkImage _dst, uint32_t _width, uint32_t _height);
+
         void _CopyToBufferMemory(VkDevice _dev, VkDeviceSize _size, const void *_src, VkDeviceMemory _dst, VkDeviceSize _offset);
         void _CopyBufferToBuffer(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size, 
                                  VkDeviceSize _src_offset, VkDeviceSize _dst_offset);
+        
+        // Similar _CopyToBufferMemory(), except using staging buffer for intermediate data storage
+        void _ImplicitDataToBufferCopy(VkDevice _dev, VkPhysicalDevice _gpu, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkDeviceSize _size, const void *_src, 
+                                       VkBuffer _dst, VkDeviceSize _offset);
 
         /////////////////////////////////////////////////////////////
         // ***** Universal temporary commandbuffer recording ***** //

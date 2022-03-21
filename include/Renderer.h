@@ -57,15 +57,22 @@ namespace DENG {
     };
 
 
+    struct RendererConfig {
+        bool enable_vsync = false;
+        bool share_buffers = false;
+    };
+
+
     class Renderer {
         protected:
             const Window &m_window;
             std::vector<MeshReference> m_meshes;
             std::vector<TextureReference> m_textures;
             std::vector<ShaderModule> m_shaders;
+            const RendererConfig &m_conf;
 
         public:
-            Renderer(const Window &_win) : m_window(_win) {}
+            Renderer(const Window &_win, const RendererConfig &_conf) : m_window(_win), m_conf(_conf) {}
             ~Renderer() {}
 
             inline uint32_t PushMeshReference(const MeshReference &_mesh) {
@@ -96,6 +103,7 @@ namespace DENG {
             virtual void ShrinkTextures() = 0;
             virtual void LoadShaders() = 0;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
+            virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;

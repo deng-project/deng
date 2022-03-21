@@ -97,18 +97,11 @@ class TriangleApp {
             m_module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
             m_module.offsets.push_back(sizeof(float) * 3);
             m_module.enable_scissor = false;
-            m_module.enable_depth_testing = true;
+            m_module.enable_depth_testing = false;
 
             // setup sampler layout specification
             m_module.ubo_data_layouts.emplace_back();
             m_module.ubo_data_layouts.back().binding = 0;
-            m_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-            m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
-            m_module.ubo_data_layouts.back().ubo_size = sizeof(float);
-            m_module.ubo_data_layouts.back().offset = 0;
-
-            m_module.ubo_data_layouts.emplace_back();
-            m_module.ubo_data_layouts.back().binding = 1;
             m_module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
             m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 

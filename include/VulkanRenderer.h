@@ -73,6 +73,10 @@ namespace DENG {
             VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT; // tmp
             VkDeviceSize m_vertices_size = DEFAULT_VERTICES_SIZE;
             VkDeviceSize m_indices_size = DEFAULT_INDICES_SIZE;
+            VkDeviceSize m_combined_size = m_vertices_size + m_indices_size;
+
+            //  Main memory is usually splitted into vertex regions and index regions, but not always
+            //  [ [ VERTICES ] [ INDICES ] ]
             VkBuffer m_main_buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_main_memory = VK_NULL_HANDLE;
 
@@ -102,7 +106,7 @@ namespace DENG {
             void _CreateCommandPool();
             void _CreateSemaphores();
             void _AllocateBufferResources();
-            void _ReallocateBufferResources(VkDeviceSize _old_vert_size, VkDeviceSize _old_ind_size);
+            void _ReallocateBufferResources(VkDeviceSize _old_size, VkDeviceSize _old_index_size = 0, VkDeviceSize _old_index_offset = 0);
             void _CreateColorResources();
             void _CreateDepthResources();
             void _CreateFrameBuffers();
@@ -114,7 +118,7 @@ namespace DENG {
 
 
         public:
-            VulkanRenderer(const Window &_win);
+            VulkanRenderer(const Window &_win, const RendererConfig &_conf);
             ~VulkanRenderer();
 
             virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) override;
@@ -123,6 +127,7 @@ namespace DENG {
             virtual void ShrinkTextures() override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

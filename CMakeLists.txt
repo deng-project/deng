@@ -7,8 +7,6 @@ cmake_minimum_required(VERSION 3.10)
 project(deng LANGUAGES CXX C)
 
 # Constant config values
-set(CMAKE_CXX_STANDARD 17)
-set(C_STANDARD C99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_GENERATOR_PLATFORM x64)
@@ -18,10 +16,12 @@ option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
 option(BUILD_DENG "Build all DENG targets" ON)
 option(EXPERIMENTAL_BUILD_LUA_TESTS "Build lua testing applications" OFF)
+option(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS "Build cubic spline interpolation tests" OFF)
+option(EXPERIMENTAL_BUILD_MATRIX_TESTS "Build matrix tests" OFF)
 
 # Set appropriate compiler flags
 if(MSVC)
-    add_compile_options(/W4)
+    add_compile_options(/W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c99>)
 	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH)
 
     # Set correct optimisation flags
@@ -31,7 +31,7 @@ if(MSVC)
         add_compile_options(/O2)
     endif()
 else()
-    add_compile_options(-Wall -Wextra)
+    add_compile_options(-Wall -Wextra $<$<COMPILE_LANGUAGE:CXX>:-std=c++17> $<$<COMPILE_LANGUAGE:C>:-std=c99>)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
         add_compile_options(-O0)
@@ -57,7 +57,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 # Check if current operating system is supported
-if(BUILD_DEPS OR BUILD_ALL)
+if(BUILD_DEPS)
     include(cmake/libdas.cmake)
     include(cmake/libnwin.cmake)
     include(cmake/imgui.cmake)
@@ -74,24 +74,7 @@ endif()
 
 if(BUILD_DENG)
     include(cmake/libdeng.cmake)
-	add_dependencies(${DENG_STATIC_TARGET}
-		${LIBDAS_TARGET}
-		${IMGUI_TARGET}
-		${LIBNWIN_TARGET}
-        ${LIBLUA_TARGET}
-	)
-	
-	add_dependencies(${DENG_SHARED_TARGET}
-		${LIBDAS_TARGET}
-		${IMGUI_TARGET}
-		${LIBNWIN_TARGET}
-        ${LIBLUA_TARGET}
-	)
-	
-	if(WIN32)
-		add_dependencies(${DENG_STATIC_TARGET} shaderc)
-		add_dependencies(${DENG_SHARED_TARGET} shaderc)
-	endif()
+    include(cmake/TextureDump.cmake)
 endif()
 
 
@@ -104,5 +87,13 @@ if(BUILD_TESTS)
 
     if(EXPERIMENTAL_BUILD_LUA_TESTS)
         include(cmake/tests/LuaTest.cmake)
+    endif()
+
+    if(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS)
+        include(cmake/tests/CubicsInterp.cmake)
+    endif()
+
+    if(EXPERIMENTAL_BUILD_MATRIX_TESTS)
+        include(cmake/tests/MatrixTest.cmake)
     endif()
 endif()

@@ -192,6 +192,7 @@ namespace DENG {
 
             std::vector<char> data(len);
             file.read(data.data(), data.size());
+            file.close();
 
             return std::string(data.data(), data.size());
         }
@@ -488,7 +489,26 @@ namespace DENG {
             m_rasterization_createinfo.rasterizerDiscardEnable = VK_FALSE;
             m_rasterization_createinfo.polygonMode = VK_POLYGON_MODE_FILL;
             m_rasterization_createinfo.lineWidth = 1.0f;
-            m_rasterization_createinfo.cullMode = VK_CULL_MODE_NONE;
+
+            // set up culling mode
+            switch(m_module.cull_mode) {
+                case CULL_MODE_NONE:
+                    m_rasterization_createinfo.cullMode = VK_CULL_MODE_NONE;
+                    break;
+
+                case CULL_MODE_COUNTER_CLOCKWISE:
+                    m_rasterization_createinfo.cullMode = VK_CULL_MODE_BACK_BIT;
+                    m_rasterization_createinfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+                    break;
+
+                case CULL_MODE_CLOCKWISE:
+                    m_rasterization_createinfo.cullMode = VK_CULL_MODE_BACK_BIT;
+                    m_rasterization_createinfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+                    break;
+
+                default:
+                    break;
+            }
 
             // Set up multisampling createinfo
             m_multisample_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
