@@ -10,5 +10,5 @@ layout (location = 0) out vec2 o_uv;
 
 void main() {
     gl_Position = vec4(i_pos, 1.0f);
-	o_uv = i_uv;
+    o_uv = i_uv;
 }

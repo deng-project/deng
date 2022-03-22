@@ -446,7 +446,7 @@ namespace DENG {
         if(vkBeginCommandBuffer(m_command_buffers[m_current_frame], &cmd_buf_info) != VK_SUCCESS)
             VK_DRAWCMD_ERR("failed to begin recording command buffers");
 
-        // Set up renderpass begin info
+        // set up renderpass begin info
         VkRenderPassBeginInfo renderpass_begininfo = {};
         renderpass_begininfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderpass_begininfo.renderPass = mp_swapchain_creator->GetRenderPass();
@@ -454,16 +454,16 @@ namespace DENG {
         renderpass_begininfo.renderArea.offset = { 0, 0 };
         renderpass_begininfo.renderArea.extent = mp_swapchain_creator->GetExtent();
 
-        // Set up clear values
+        // set up clear values
         std::array<VkClearValue, 2> clear_values;
         clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
         clear_values[1].depthStencil = { 1.0f, 0 };
 
-        // Add clear values to renderpass begin info
+        // add clear values to renderpass begin info
         renderpass_begininfo.clearValueCount = static_cast<uint32_t>(clear_values.size());
         renderpass_begininfo.pClearValues = clear_values.data();
 
-        // Start a new render pass for recording asset draw commands
+        // start a new render pass for recording asset draw commands
         vkCmdBeginRenderPass(m_command_buffers[m_current_frame], &renderpass_begininfo, VK_SUBPASS_CONTENTS_INLINE);
 
             // Iterate through every mesh, bind resources and issue an index draw to commandbuffer

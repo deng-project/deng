@@ -83,7 +83,7 @@ class TriangleApp {
 
         // mesh and texture references to use
         DENG::MeshReference m_mesh;
-        const DENG::TextureReference m_tex = { TEXTURE_NAME, 0, 2, UINT32_MAX };
+        const DENG::TextureReference m_tex = { TEXTURE_NAME, 0, 0, UINT32_MAX };
 
     public:
         TriangleApp(DENG::Window &_win, DENG::Renderer &_rend) : m_window(_win), m_renderer(_rend) {
@@ -108,8 +108,8 @@ class TriangleApp {
             // specify uniform sampler layout
             m_module.load_shaders_from_file = true;
 
-            m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))));
-            m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))));
+            m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))), 0);
+            m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))), 0);
             uint32_t shader_id = m_renderer.PushShader(m_module);
             uint32_t tex_id = m_renderer.PushTextureFromFile(m_tex, TEXTURE_FILE);
 
