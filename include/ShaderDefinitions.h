@@ -91,7 +91,7 @@ namespace DENG {
     struct ShaderModule {
         std::vector<AttributeType> attributes;
         std::vector<std::size_t> offsets;
-        std::vector<UniformDataLayout> ubo_data_layouts;
+        std::vector<UniformDataLayout> ubo_data_layouts; // per shader uniforms
         std::string vertex_shader_file = "";
         std::string geometry_shader_file = "";
         std::string fragment_shader_file = "";

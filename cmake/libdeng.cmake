@@ -19,8 +19,9 @@ set(DENG_HEADERS
     include/FirstPersonCamera.h
     include/HidEventManager.h
     include/ImGuiLayer.h
-    include/Interpolation.h
     include/MeshLoader.h
+    include/ModelLoader.h
+    include/ModelShaderManager.h
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
@@ -34,7 +35,6 @@ set(DENG_HEADERS
     include/VulkanPipelineCreator.h
     include/VulkanRenderer.h
     include/VulkanSwapchainCreator.h
-    include/VulkanUniformBufferAllocator.h
     include/Window.h
 )
 
@@ -43,6 +43,8 @@ set(DENG_SOURCES
     src/ImGuiLayer.cpp
     src/Interpolation.cpp
     src/MeshLoader.cpp
+    src/ModelLoader.cpp
+    src/ModelShaderManager.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
@@ -55,7 +57,6 @@ set(DENG_SOURCES
     src/VulkanPipelineCreator.cpp
     src/VulkanRenderer.cpp
     src/VulkanSwapchainCreator.cpp
-    src/VulkanUniformBufferAllocator.cpp
     src/Window.cpp
 )
 

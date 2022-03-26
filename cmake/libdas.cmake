@@ -81,6 +81,18 @@ target_compile_definitions(${LIBDAS_TARGET}
     PUBLIC LIBDAS_STATIC
 )
 
+
+# DASTool build config
+set(DASTOOL_TARGET dastool)
+set(DASTOOL_SOURCES 
+    deps/libdas/include/DASTool.h
+    deps/libdas/src/DASTool.cpp
+)
+
+add_executable(${DASTOOL_TARGET} ${DASTOOL_SOURCES})
+add_dependencies(${DASTOOL_TARGET} ${LIBDAS_TARGET})
+target_link_libraries(${DASTOOL_TARGET} PRIVATE ${LIBDAS_TARGET})
+
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${LIBDAS_TARGET} PRIVATE _DEBUG)
 endif()

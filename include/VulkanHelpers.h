@@ -10,6 +10,9 @@
 #ifdef VULKAN_HELPERS_CPP
     #include <cstdint>
     #include <cstring>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
     #include <vulkan/vulkan.h>
     #include <ErrorDefinitions.h>
 #endif
@@ -49,6 +52,8 @@ namespace DENG {
         void _CopyBufferToImage(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkBuffer _src, VkImage _dst, uint32_t _width, uint32_t _height);
 
         void _CopyToBufferMemory(VkDevice _dev, VkDeviceSize _size, const void *_src, VkDeviceMemory _dst, VkDeviceSize _offset);
+        // using malloc
+        void *_CopyToDeviceMemory(VkDevice _dev, VkDeviceSize _size, VkDeviceMemory _src, VkDeviceSize _offset);
         void _CopyBufferToBuffer(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size, 
                                  VkDeviceSize _src_offset, VkDeviceSize _dst_offset);
         

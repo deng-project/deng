@@ -42,20 +42,35 @@ namespace DENG {
 
     class MeshLoader {
         private:
-            MeshReference m_mesh_ref;
-            std::string m_name;
+            uint32_t m_mesh_ref_id = UINT32_MAX;
             Libdas::DasParser &m_parser;
+            Libdas::DasMesh &m_mesh;
             Renderer &m_renderer;
             const uint32_t m_shader_id;
-
-        private:
-            uint32_t _CalculateAbsoluteOffset(uint32_t _buffer_id, uint32_t _buffer_offset);
+            const uint32_t m_ubo_offset;
 
         public:
-            MeshLoader(Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id);
+            MeshLoader(Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset);
             void Attach();
-            MeshReference &GetMeshReference();
-            std::string &GetName();
+            void UseTexture(uint32_t _texture_id);
+
+            inline uint32_t GetModelUboOffset() {
+                return m_ubo_offset;
+            }
+
+            inline uint32_t &GetMeshReferenceId() {
+                return m_mesh_ref_id;
+            }
+
+            inline uint32_t GetShaderId() {
+                return m_shader_id;
+            }
+
+            inline const std::string &GetName() {
+                return m_mesh.name;
+            }
+
+            static uint32_t CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset);
 
     };
 }

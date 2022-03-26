@@ -37,12 +37,14 @@
 
     #include <Api.h>
     #include <BaseTypes.h>
+    #include <BufferAlignment.h>
     #include <Window.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
 #endif
 
+#define DEFAULT_UNIFORM_SIZE    1024
 #define DEFAULT_VERTICES_SIZE   2048
 #define DEFAULT_INDICES_SIZE    2048
 
@@ -52,7 +54,6 @@
 #include <VulkanPipelineCreator.h>
 #include <VulkanDescriptorPoolCreator.h>
 #include <VulkanDescriptorSetLayoutCreator.h>
-#include <VulkanUniformBufferAllocator.h>
 #include <VulkanDescriptorSetsCreator.h>
 
 
@@ -65,12 +66,20 @@ namespace DENG {
             Vulkan::SwapchainCreator *mp_swapchain_creator;
             std::vector<Vulkan::PipelineCreator> m_pipeline_creators;
             std::vector<Vulkan::DescriptorSetLayoutCreator> m_descriptor_set_layout_creators;
-            std::vector<Vulkan::DescriptorPoolCreator> m_descriptor_pool_creators;
-            std::vector<Vulkan::DescriptorSetsCreator> m_descriptor_sets_creators;
-            Vulkan::UniformBufferAllocator *mp_ubo_allocator;
+
+            // per shader descriptor pools / sets creators
+            std::vector<Vulkan::DescriptorPoolCreator> m_shader_descriptor_pool_creators;
+            std::vector<Vulkan::DescriptorSetsCreator> m_shader_descriptor_sets_creators;
+            std::vector<uint32_t> m_shader_descriptor_set_index_table;
+
+            // per mesh descriptor pools / sets creators
+            std::vector<Vulkan::DescriptorPoolCreator> m_mesh_descriptor_pool_creators;
+            std::vector<Vulkan::DescriptorSetsCreator> m_mesh_descriptor_sets_creators;
+            std::vector<uint32_t> m_mesh_descriptor_set_index_table;
             
             // locally managed vulkan resources
             VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT; // tmp
+            VkDeviceSize m_uniform_size = DEFAULT_UNIFORM_SIZE;
             VkDeviceSize m_vertices_size = DEFAULT_VERTICES_SIZE;
             VkDeviceSize m_indices_size = DEFAULT_INDICES_SIZE;
             VkDeviceSize m_combined_size = m_vertices_size + m_indices_size;
@@ -79,6 +88,10 @@ namespace DENG {
             //  [ [ VERTICES ] [ INDICES ] ]
             VkBuffer m_main_buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_main_memory = VK_NULL_HANDLE;
+
+            // uniform buffer
+            VkBuffer m_uniform_buffer = VK_NULL_HANDLE;
+            VkDeviceMemory m_uniform_memory = VK_NULL_HANDLE;
 
             VkCommandPool m_command_pool = VK_NULL_HANDLE;
             std::vector<VkSemaphore> m_render_finished_semaphores;
@@ -106,6 +119,7 @@ namespace DENG {
             void _CreateCommandPool();
             void _CreateSemaphores();
             void _AllocateBufferResources();
+            void _AllocateUniformBuffer();
             void _ReallocateBufferResources(VkDeviceSize _old_size, VkDeviceSize _old_index_size = 0, VkDeviceSize _old_index_offset = 0);
             void _CreateColorResources();
             void _CreateDepthResources();
@@ -124,9 +138,10 @@ namespace DENG {
             virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) override;
             virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
 
+            virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
             virtual void ShrinkTextures() override;
             virtual void LoadShaders() override;
-            virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) override;
+            virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;

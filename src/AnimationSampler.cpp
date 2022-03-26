@@ -8,35 +8,13 @@
 
 namespace DENG {
 
-    AnimationSampler::AnimationSampler(Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser, uint32_t _shader_id, uint32_t _ubo_id) : 
-        m_channel(_channel), m_shader_id(_shader_id), m_ubo_id(_ubo_id) 
+    AnimationSampler::AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser, const std::vector<uint32_t> &_ubo_offsets) : 
+        m_channel(_channel), m_parser(_parser), m_ubo_offsets(_ubo_offsets)
     {
-        // select appropriate target
-        switch(_channel.target) {
-            case LIBDAS_ANIMATION_TARGET_WEIGHTS:
-                m_animation_ubo.target_mask = TARGET_MASK_WEIGHT;
-                break;
-
-            case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                m_animation_ubo.target_mask = TARGET_MASK_TRANSLATION;
-                break;
-
-            case LIBDAS_ANIMATION_TARGET_ROTATION:
-                m_animation_ubo.target_mask = TARGET_MASK_ROTATION;
-                break;
-
-            case LIBDAS_ANIMATION_TARGET_SCALE:
-                m_animation_ubo.target_mask = TARGET_MASK_SCALE;
-                break;
-
-            default:
-                break;
-        }
-
         // write targets from buffer to target vector
         size_t current_buffer_offset = 0;
         size_t relative_offset = 0;
-        Libdas::DasBuffer &buffer = _parser.AccessBuffer(m_channel.target_value_buffer_id);
+        const Libdas::DasBuffer &buffer = m_parser.AccessBuffer(m_channel.target_value_buffer_id);
 
         for(auto buffer_it = buffer.data_ptrs.begin(); buffer_it != buffer.data_ptrs.end(); buffer_it++) {
             if(current_buffer_offset + buffer_it->second < m_channel.target_value_buffer_offset) {
@@ -77,45 +55,6 @@ namespace DENG {
     }
 
 
-    void AnimationSampler::_InterpolateWeights(DENG::Renderer &_renderer, float _delta_time) {
-        std::cerr << "Morph target animations are not supported by current implementation" << std::endl;
-        DENG_ASSERT(false);
-    }
-
-
-    void AnimationSampler::_InterpolateTranslation(DENG::Renderer &_renderer, float _delta_time) {
-        const float start = m_timestamps[m_active_timestamp_index], end = m_timestamps[m_active_timestamp_index + 1];
-        auto val = LinearInterpolator::ArithmeticInterp(start, _delta_time, end, *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]), 
-                                                        *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index + 1]));
-
-        m_animation_ubo.translation_target = Libdas::Vector4<float>(val.first, val.second, val.third, 1.0f);
-        m_animation_ubo.target_mask = TARGET_MASK_TRANSLATION;
-        _renderer.UpdateUniform(reinterpret_cast<char*>(&m_animation_ubo), m_shader_id, m_ubo_id);
-    }
-
-
-    void AnimationSampler::_InterpolateRotation(DENG::Renderer &_renderer, float _delta_time) {
-        const float start = m_timestamps[m_active_timestamp_index], end = m_timestamps[m_active_timestamp_index + 1];
-        auto val = LinearInterpolator::InterpolateQuaternionRotation(start, _delta_time, end, *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]), 
-                                                                     *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]));
-
-        m_animation_ubo.rotation = val;
-        m_animation_ubo.target_mask = TARGET_MASK_ROTATION;
-        _renderer.UpdateUniform(reinterpret_cast<char*>(&m_animation_ubo), m_shader_id, m_ubo_id);
-    }
-
-
-    void AnimationSampler::_InterpolateScale(DENG::Renderer &_renderer, float _delta_time) {
-        const float start = m_timestamps[m_active_timestamp_index], end = m_timestamps[m_active_timestamp_index + 1];
-        float val = LinearInterpolator::ArithmeticInterp(start, _delta_time, end, std::get<float>(m_interp_values[m_active_timestamp_index]),
-                                                       std::get<float>(m_interp_values[m_active_timestamp_index + 1]));
-
-        m_animation_ubo.uniform_scale = val;
-        m_animation_ubo.target_mask = TARGET_MASK_SCALE;
-        _renderer.UpdateUniform(reinterpret_cast<char*>(&m_animation_ubo), m_shader_id, m_ubo_id);
-    }
-
-
     void AnimationSampler::Update(DENG::Renderer &_renderer) {
         // calculate delta time
         m_active_time = std::chrono::system_clock::now();
@@ -124,31 +63,50 @@ namespace DENG {
         // check the current timestamp against keyframe values
         if(delta_time.count() / 1000.0f >= m_timestamps[m_active_timestamp_index + 1]) {
             m_active_timestamp_index++;
-            if(m_active_timestamp_index >= m_timestamps.size() - 1)
+            if(m_active_timestamp_index >= m_timestamps.size() - 1 && m_repeat && m_animate)
                 m_active_timestamp_index = 0;
+            else m_ubo.animate = static_cast<uint32_t>(m_animate);
         }
 
-        // check the animation target type
-        switch(m_channel.target) {
-            case LIBDAS_ANIMATION_TARGET_WEIGHTS:
-                _InterpolateWeights(_renderer, delta_time.count() / 1000);
+        // set correct interpolation values
+        switch(m_interp_values[m_active_timestamp_index].index()) {
+            case 0:
+                m_ubo.target_mask = TARGET_MASK_WEIGHT;
+                // incomplete
                 break;
 
-            case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                _InterpolateTranslation(_renderer, delta_time.count() / 1000);
+            case 1:
+                m_ubo.target_mask = TARGET_MASK_TRANSLATION;
+                m_ubo.translation[0] = *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]);
+                m_ubo.translation[1] = *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index + 1]);
                 break;
 
-            case LIBDAS_ANIMATION_TARGET_ROTATION:
-                _InterpolateRotation(_renderer, delta_time.count() / 1000);
+            case 2:
+                m_ubo.target_mask = TARGET_MASK_ROTATION;
+                m_ubo.rotation[0] = *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]);
+                m_ubo.rotation[1] = *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index + 1]);
                 break;
 
-            case LIBDAS_ANIMATION_TARGET_SCALE:
-                _InterpolateScale(_renderer, delta_time.count() / 1000);
+            case 3:
+                m_ubo.target_mask = TARGET_MASK_SCALE;
+                m_ubo.scales[0] = std::get<float>(m_interp_values[m_active_timestamp_index]);
+                m_ubo.scales[1] = std::get<float>(m_interp_values[m_active_timestamp_index]);
                 break;
 
             default:
                 DENG_ASSERT(false);
                 break;
         }
+
+        m_ubo.timestamps[0] = m_timestamps[m_active_timestamp_index];
+        m_ubo.timestamps[1] = m_timestamps[m_active_timestamp_index + 1];
+        m_ubo.current_time = delta_time.count() / 1000;
+
+        // set correct interpolation method
+        m_ubo.interpolation_mode = static_cast<uint32_t>(m_channel.interpolation);
+
+        // submit uniform data to renderer
+        for(uint32_t offset : m_ubo_offsets)
+            _renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), sizeof(ModelAnimationUbo), offset);
     }
 }

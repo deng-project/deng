@@ -50,11 +50,19 @@ namespace DENG {
         vkFreeCommandBuffers(mp_instance_creator->GetDevice(), m_command_pool, static_cast<uint32_t>(m_command_buffers.size()), m_command_buffers.data());
 
         // free all allocated descriptor sets and pools
-        while(m_descriptor_sets_creators.size())
-            m_descriptor_sets_creators.erase(m_descriptor_sets_creators.end() - 1);
+        // per shader descriptors
+        while(m_shader_descriptor_sets_creators.size())
+            m_shader_descriptor_sets_creators.erase(m_shader_descriptor_sets_creators.end() - 1);
 
-        while(m_descriptor_pool_creators.size())
-            m_descriptor_pool_creators.erase(m_descriptor_pool_creators.end() - 1);
+        while(m_shader_descriptor_pool_creators.size())
+            m_shader_descriptor_pool_creators.erase(m_shader_descriptor_pool_creators.end() - 1);
+
+        // per mesh descriptors
+        while(m_mesh_descriptor_sets_creators.size())
+            m_mesh_descriptor_sets_creators.erase(m_mesh_descriptor_sets_creators.end() - 1);
+
+        while(m_mesh_descriptor_pool_creators.size())
+            m_mesh_descriptor_pool_creators.erase(m_mesh_descriptor_pool_creators.end() - 1);
 
         while(m_pipeline_creators.size())
             m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
@@ -68,11 +76,13 @@ namespace DENG {
             vkDestroyFence(mp_instance_creator->GetDevice(), m_flight_fences[i], NULL);
         }
 
-        delete mp_ubo_allocator;
-
         // free main buffers
         vkDestroyBuffer(mp_instance_creator->GetDevice(), m_main_buffer, NULL);
         vkFreeMemory(mp_instance_creator->GetDevice(), m_main_memory, NULL);
+
+        // free uniform buffers
+        vkDestroyBuffer(mp_instance_creator->GetDevice(), m_uniform_buffer, nullptr);
+        vkFreeMemory(mp_instance_creator->GetDevice(), m_uniform_memory, nullptr);
 
         delete mp_swapchain_creator;
         delete mp_instance_creator;
@@ -138,6 +148,11 @@ namespace DENG {
     }
 
 
+    uint32_t VulkanRenderer::AlignUniformBufferOffset(uint32_t _req) {
+        return AlignData(_req, mp_instance_creator->GetMinimalUniformBufferAlignment());
+    }
+
+
     void VulkanRenderer::ShrinkTextures() {
         std::vector<bool> shrink_table;
         shrink_table.resize(m_vulkan_texture_handles.size());
@@ -161,37 +176,75 @@ namespace DENG {
 
 
     void VulkanRenderer::LoadShaders() {
-        mp_ubo_allocator = new Vulkan::UniformBufferAllocator(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mp_instance_creator->GetGraphicsQueue(),
-                                                              m_command_pool, mp_instance_creator->GetMinimalUniformBufferAlignment(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders);
+        _AllocateUniformBuffer();
 
         // for each shader module create descriptor pool creators
-        m_descriptor_pool_creators.reserve(m_shaders.size());
-        m_descriptor_sets_creators.reserve(m_shaders.size());
+        m_shader_descriptor_pool_creators.reserve(m_shaders.size());
+        m_shader_descriptor_sets_creators.reserve(m_shaders.size());
         m_descriptor_set_layout_creators.reserve(m_shaders.size());
         m_pipeline_creators.reserve(m_shaders.size());
+
+        const uint32_t texture_count = static_cast<uint32_t>(m_textures.size());
+        const uint32_t sc_img_count = static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size());
+
+        // for each shader create pipelines
         for(size_t i = 0; i < m_shaders.size(); i++) {
             m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
             m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
-                                                 m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
+                                             m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
             if(m_shaders[i].ubo_data_layouts.size()) {
-                m_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), static_cast<uint32_t>(m_textures.size()), m_shaders[i].ubo_data_layouts);
-                m_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()), m_shaders[i], i, mp_ubo_allocator, m_descriptor_pool_creators[i].GetDescriptorPool(),
-                                                        m_descriptor_set_layout_creators[i].GetDescriptorSetLayout(), m_vulkan_texture_handles);
+                m_shader_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, texture_count, m_shaders[i].ubo_data_layouts);
+
+                const VkDescriptorPool pool = m_shader_descriptor_pool_creators.back().GetDescriptorPool();
+                const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
+
+                m_shader_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_shaders[i], m_uniform_buffer, pool, layout, m_vulkan_texture_handles);
+                m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_descriptor_sets_creators.size() - 1));
             }
             else {
-                m_descriptor_pool_creators.emplace_back();
-                m_descriptor_sets_creators.emplace_back();
+                m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
+            }
+        }
+
+        // for each mesh create descriptor sets if required
+        for(size_t i = 0; i < m_meshes.size(); i++) {
+            if(m_meshes[i].ubo_data_layouts.size()) {
+                m_mesh_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, 0, m_meshes[i].ubo_data_layouts);
+
+                const VkDescriptorPool pool = m_mesh_descriptor_pool_creators.back().GetDescriptorPool();
+                const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[m_meshes[i].shader_module_id].GetDescriptorSetLayout();
+
+                m_mesh_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_meshes[i], m_uniform_buffer, pool, layout);
+                m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_descriptor_sets_creators.size() - 1));
+            } else {
+                m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
             }
         }
     }
 
 
-    void VulkanRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        UniformDataLayout &layout = m_shaders[_shader_id].ubo_data_layouts[_ubo_id];
-        DENG_ASSERT(layout.type == UNIFORM_DATA_TYPE_BUFFER);
+    void VulkanRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
+        // check if reallocation should occur
+        if(static_cast<VkDeviceSize>(_size + _offset) >= m_uniform_size) {
+            const VkDeviceSize old_size = m_uniform_size;
+            m_uniform_size = (_size + _offset) * 3 / 2;
+            void *data = Vulkan::_CopyToDeviceMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(old_size), m_uniform_memory, 0);
 
-        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(layout.ubo_size), _raw_data, 
-                                    mp_ubo_allocator->GetUniformMemory(), mp_ubo_allocator->GetAreaOffset(_shader_id, _ubo_id));
+            // free the current uniform buffer instance
+            vkFreeMemory(mp_instance_creator->GetDevice(), m_uniform_memory, nullptr);
+            vkDestroyBuffer(mp_instance_creator->GetDevice(), m_uniform_buffer, nullptr);
+
+            // allocate new uniform buffer instances
+            VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
+            Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            vkBindBufferMemory(mp_instance_creator->GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
+
+            Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_size), data, m_uniform_memory, 0);
+
+            std::free(data);
+        }
+
+        Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_size), _raw_data, m_uniform_memory, static_cast<VkDeviceSize>(_offset));
     }
 
 
@@ -342,6 +395,33 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::_AllocateUniformBuffer() {
+        uint32_t max_size = 0;
+
+        // find the maximum offset and size uniform block
+        for(auto shader = m_shaders.begin(); shader != m_shaders.end(); shader++) {
+            for(auto ubo = shader->ubo_data_layouts.begin(); ubo != shader->ubo_data_layouts.end(); ubo++) {
+                if(ubo->ubo_size + ubo->offset > max_size)
+                    max_size = ubo->ubo_size + ubo->offset;
+            }
+        }
+
+        for(auto mesh = m_meshes.begin(); mesh != m_meshes.end(); mesh++) {
+            for(auto ubo = mesh->ubo_data_layouts.begin(); ubo != mesh->ubo_data_layouts.end(); ubo++) {
+                if(ubo->ubo_size + ubo->offset > max_size)
+                    max_size = ubo->ubo_size + ubo->offset;
+            }
+        }
+
+        m_uniform_size = DEFAULT_UNIFORM_SIZE > max_size ? DEFAULT_UNIFORM_SIZE : max_size;
+
+        // create and allocate uniform buffer resourses
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
+        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vkBindBufferMemory(mp_instance_creator->GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
+    }
+
+
     void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_size, VkDeviceSize _old_index_size, VkDeviceSize _old_index_offset) {
         // step 1: create staging buffer
         VkBuffer staging_buffer = VK_NULL_HANDLE;
@@ -477,12 +557,27 @@ namespace DENG {
                     vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
                     // check if descriptor sets should be bound
-                    if(m_shaders[shader_id].ubo_data_layouts.size()) {
-                        uint32_t descriptor_set_index = m_meshes[i].commands[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(m_current_frame) : m_meshes[i].commands[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(m_current_frame);
-                        VkDescriptorSet desc_set = m_descriptor_sets_creators[shader_id].GetDescriptorSetById(descriptor_set_index);
+                    std::array<VkDescriptorSet, 2> desc_sets;
+                    uint32_t used_desc_sets = 0;
 
-                        vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, 1, &desc_set, 0, NULL);
+                    // per shader descriptor sets
+                    if(m_shaders[shader_id].ubo_data_layouts.size()) {
+                        const uint32_t descriptor_set_index = m_meshes[i].commands[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(m_current_frame) : m_meshes[i].commands[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(m_current_frame);
+                        desc_sets[0] = m_shader_descriptor_sets_creators[shader_id].GetDescriptorSetById(descriptor_set_index);
+                        used_desc_sets++;
                     }
+
+                    // per mesh descriptor sets
+                    if(m_meshes[i].ubo_data_layouts.size()) {
+                        const uint32_t descriptor_set_index = static_cast<uint32_t>(m_current_frame);
+                        if(used_desc_sets == 1)
+                            desc_sets[1] = m_mesh_descriptor_sets_creators[i].GetDescriptorSetById(descriptor_set_index);
+                        else desc_sets[0] = m_mesh_descriptor_sets_creators[i].GetDescriptorSetById(descriptor_set_index);
+                        used_desc_sets++;
+                    }
+
+                    if(used_desc_sets)
+                        vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, used_desc_sets, desc_sets.data(), 0, nullptr);
 
                     if(m_shaders[shader_id].enable_scissor) {
                         VkRect2D rect = {};

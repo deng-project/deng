@@ -80,6 +80,7 @@ namespace DENG {
 
 
     void ImGuiLayer::Attach(Window &_win, Renderer &_rend, uint32_t _ubo_offset, PFN_ImGuiDrawCallback _callback, void *_user_data) {
+        m_ubo_offset = _ubo_offset;
         mp_window = &_win;
         mp_renderer = &_rend;
         m_callback = _callback;
@@ -112,7 +113,7 @@ namespace DENG {
         module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
         module.ubo_data_layouts.back().ubo_size = sizeof(Libdas::Point2D<float>);
-        module.ubo_data_layouts.back().offset = _ubo_offset;
+        module.ubo_data_layouts.back().offset = m_ubo_offset;
 
         module.ubo_data_layouts.emplace_back();
         module.ubo_data_layouts.back().binding = 1;
@@ -146,6 +147,6 @@ namespace DENG {
         _CreateDrawCommands(draw_data, _vertex_offset, _index_offset);
 
         Libdas::Point2D<float> wsize = { static_cast<float>(mp_window->GetSize().x), static_cast<float>(mp_window->GetSize().y) };
-        mp_renderer->UpdateUniform(reinterpret_cast<char*>(&wsize), m_shader_id, 0);
+        mp_renderer->UpdateUniform(reinterpret_cast<char*>(&wsize), sizeof(Libdas::Point2D<float>), m_ubo_offset);
     }
 }

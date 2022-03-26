@@ -11,15 +11,23 @@
     #include <vector>
     #include <string>
     #include <vulkan/vulkan.h>
+    #include <cstring>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
 
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
     #include <libdas/include/Points.h>
 
+    #include <Api.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <VulkanHelpers.h>
-    #include <VulkanUniformBufferAllocator.h>
     #include <VulkanDescriptorPoolCreator.h>
     #include <VulkanDescriptorSetLayoutCreator.h>
+    #include <Window.h>
+    #include <Renderer.h>
 #endif
 
 namespace DENG {
@@ -31,13 +39,13 @@ namespace DENG {
                 std::vector<VkDescriptorSet> m_descriptor_sets;
 
                 VkDevice m_device;
-                uint32_t m_swapchain_images_count;
-                UniformBufferAllocator *mp_ubo_allocator = nullptr;
+                VkBuffer &m_uniform_buffer;
                 std::vector<Vulkan::TextureData> *m_textures = nullptr;
                 VkDescriptorPool m_descriptor_pool;
                 VkDescriptorSetLayout m_descriptor_set_layout;
-                ShaderModule const *m_shader_module;
-                uint32_t m_mod_id = 0;
+                ShaderModule const *m_shader_module = nullptr;
+                MeshReference const *m_mesh_module = nullptr;
+                uint32_t m_swapchain_images_count;
 
             private:
                 void _CreateDescriptorSets();
@@ -49,12 +57,18 @@ namespace DENG {
                 DescriptorSetsCreator() = default;
                 DescriptorSetsCreator(const DescriptorSetsCreator &_dsc) = default;
                 DescriptorSetsCreator(DescriptorSetsCreator &&_dsc);
-                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, const ShaderModule &_module, uint32_t _mod_id, UniformBufferAllocator *_ubo_allocator, 
-                                      VkDescriptorPool _desc_pool, VkDescriptorSetLayout _dest_set_layout, std::vector<Vulkan::TextureData> &_textures);
+
+                // shader descriptor set creator
+                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, const ShaderModule &_module, VkBuffer &_ubo_buffer, VkDescriptorPool _desc_pool, VkDescriptorSetLayout _dest_set_layout, std::vector<Vulkan::TextureData> &_textures);
+
+                // mesh descriptor set creator
+                DescriptorSetsCreator(VkDevice _dev, uint32_t _sc_img_count, const MeshReference &_mesh, VkBuffer &_ubo_buffer, VkDescriptorPool _desc_pool, VkDescriptorSetLayout _desc_set_layout);
                 ~DescriptorSetsCreator() = default;
 
                 DescriptorSetsCreator &operator=(const DescriptorSetsCreator &_dc);
                 DescriptorSetsCreator &operator=(DescriptorSetsCreator &&_dc);
+
+                void UpdateDescriptorSets();
 
                 //void RecreateDescriptorSets(const Libdas::Point2D<uint32_t> &_bounds, std::vector<ShaderModule*> &_modules);
                 

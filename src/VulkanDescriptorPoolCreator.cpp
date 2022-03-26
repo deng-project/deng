@@ -83,33 +83,11 @@ namespace DENG {
             desc_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
             desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size());
             desc_pool_info.pPoolSizes = desc_sizes.data();
-            desc_pool_info.maxSets = m_texture_count * m_swapchain_image_count;
+            desc_pool_info.maxSets = (m_texture_count == 0 ? 1 : m_texture_count) * m_swapchain_image_count;
             desc_pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
             if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &m_descriptor_pool) != VK_SUCCESS)
                 VK_DESC_ERR("failed to create descriptor pool");
         }
-
-
-        //void DescriptorPoolCreator::RecreateDescriptorPool(const std::vector<VkDescriptorSet> &_desc_sets, uint32_t _index, uint32_t _req_cap, 
-                                                           //const std::vector<UniformDataLayout> &_ubo_layouts) 
-        //{
-            //m_descriptor_pools[_index].second = m_descriptor_pools[_index].second * 3 / 2 > _req_cap * 3 / 2 ? 
-                //m_descriptor_pools[_index].second * 3 / 2 : _req_cap * 3 / 2;
-
-            //vkFreeDescriptorSets(m_device, m_descriptor_pools[_index].first, static_cast<uint32_t>(_desc_sets.size()), _desc_sets.data());
-            //vkDestroyDescriptorPool(m_device, m_descriptor_pools[_index].first, NULL);
-
-            //std::vector<VkDescriptorPoolSize> desc_sizes = _FindDescriptorPoolSizes(_ubo_layouts, m_descriptor_pools[_index].second);
-            //VkDescriptorPoolCreateInfo desc_pool_info = {};
-
-            //desc_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            //desc_pool_info.poolSizeCount = static_cast<uint32_t>(desc_sizes.size()) * m_swapchain_image_count;
-            //desc_pool_info.pPoolSizes = desc_sizes.data();
-            //desc_pool_info.maxSets = m_descriptor_pools[_index].second;
-
-            //if(vkCreateDescriptorPool(m_device, &desc_pool_info, NULL, &m_descriptor_pools[_index].first))
-                //VK_DESC_ERR("failed to create a descriptor pool");
-        //}
     }
 }

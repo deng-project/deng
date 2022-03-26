@@ -72,6 +72,7 @@ namespace DENG {
             uint32_t m_tex_id = UINT32_MAX;
             uint32_t m_shader_id = UINT32_MAX;
             void *m_user_data = nullptr;
+            uint32_t m_ubo_offset = 0;
             Libdas::Point2D<float> m_ubo;
             float m_delta_time = 1.0f;
             std::chrono::time_point<std::chrono::system_clock> m_beg;

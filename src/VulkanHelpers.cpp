@@ -96,7 +96,7 @@ namespace DENG {
             _BeginCommandBufferSingleCommand(_dev, _cmd_pool, tmp_cmd_buf);
 
             // Set up image memory barrier struct
-            VkImageMemoryBarrier memory_barrier{};
+            VkImageMemoryBarrier memory_barrier = {};
             memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             memory_barrier.oldLayout = _old;
             memory_barrier.newLayout = _new;
@@ -110,8 +110,8 @@ namespace DENG {
             memory_barrier.subresourceRange.layerCount = 1;
 
             // Set up pipeline stage flags
-            VkPipelineStageFlags src_stage;
-            VkPipelineStageFlags dst_stage;
+            VkPipelineStageFlags src_stage = 0;
+            VkPipelineStageFlags dst_stage = 0;
                     
             if(_old == VK_IMAGE_LAYOUT_UNDEFINED && _new == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
                 memory_barrier.srcAccessMask = 0;
@@ -186,8 +186,20 @@ namespace DENG {
         void _CopyToBufferMemory(VkDevice _dev, VkDeviceSize _size, const void *_src, VkDeviceMemory _dst, VkDeviceSize _offset) {
             void *buf;
             vkMapMemory(_dev, _dst, _offset, _size, 0, &buf);
-                memcpy(buf, _src, _size);
+                std::memcpy(buf, _src, _size);
             vkUnmapMemory(_dev, _dst);
+        }
+
+
+        void *_CopyToDeviceMemory(VkDevice _dev, VkDeviceSize _size, VkDeviceMemory _src, VkDeviceSize _offset) {
+            void *device_data = std::malloc(_size);
+            void *data = nullptr;
+
+            vkMapMemory(_dev, _src, _offset, _size, 0, &data);
+                std::memcpy(device_data, data, _size);
+            vkUnmapMemory(_dev, _src);
+
+            return device_data;
         }
 
 

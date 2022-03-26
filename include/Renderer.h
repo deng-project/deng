@@ -37,6 +37,7 @@ namespace DENG {
         std::string name = "Mesh";
         uint32_t shader_module_id = 0;
         std::vector<DrawCommand> commands;
+        std::vector<UniformDataLayout> ubo_data_layouts;    // per mesh uniforms
     };
 
 
@@ -80,6 +81,11 @@ namespace DENG {
                 return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
+            inline uint32_t NewMeshReference() {
+                m_meshes.emplace_back();
+                return static_cast<uint32_t>(m_meshes.size() - 1);
+            }
+
             inline uint32_t PushShader(const ShaderModule &_module) {
                 m_shaders.push_back(_module);
                 return static_cast<uint32_t>(m_shaders.size() - 1);
@@ -100,9 +106,10 @@ namespace DENG {
                 return m_textures;
             }
 
+            virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;
             virtual void ShrinkTextures() = 0;
             virtual void LoadShaders() = 0;
-            virtual void UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) = 0;
+            virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) = 0;
             virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;

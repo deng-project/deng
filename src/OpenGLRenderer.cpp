@@ -389,6 +389,11 @@ namespace DENG {
     }
 
 
+    uint32_t OpenGLRenderer::AlignUniformBufferOffset(uint32_t _req) {
+        return AlignData(_req, mp_buffer_loader->GetUniformBufferOffsetAlignment());
+    }
+
+
     void OpenGLRenderer::ShrinkTextures() {
         if(m_textures.size() != m_opengl_textures.size()) {
             std::vector<bool> shrink_table(m_opengl_textures.size());
@@ -425,13 +430,11 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::UpdateUniform(char *_raw_data, uint32_t _shader_id, uint32_t _ubo_id) {
-        const uint32_t offset = m_ubo_offsets[_shader_id][_ubo_id];
-        const uint32_t size = m_shaders[_shader_id].ubo_data_layouts[_ubo_id].ubo_size;
-
-        void *data = glMapNamedBufferRange(mp_buffer_loader->GetBufferData().ubo_buffer, (GLintptr) offset, (GLsizeiptr) size, GL_MAP_WRITE_BIT);
+    void OpenGLRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
+        mp_buffer_loader->RequestMemory(_offset + _size, GL_UNIFORM_BUFFER);
+        void *data = glMapNamedBufferRange(mp_buffer_loader->GetBufferData().ubo_buffer, (GLintptr) _offset, (GLsizeiptr) _size, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
-        std::memcpy(data, _raw_data, static_cast<size_t>(size));
+        std::memcpy(data, _raw_data, static_cast<size_t>(_size));
         glUnmapBuffer(GL_UNIFORM_BUFFER);
         glErrorCheck("glUnmapBuffer");
     }
@@ -493,20 +496,29 @@ namespace DENG {
 
             for(auto cmd_it = mesh_it->commands.begin(); cmd_it < mesh_it->commands.end(); cmd_it++) {
                 _BindVertexAttributes(shader_i, cmd_it->vertices_offset);
-                
-                // for each shader and its uniform objects bind appropriate uniform buffer ranges
-                for (size_t i = 0; i < m_shaders[shader_i].ubo_data_layouts.size(); i++) {
-                    const GLuint binding = static_cast<GLuint>(m_shaders[shader_i].ubo_data_layouts[i].binding);
 
-                    if (m_shaders[shader_i].ubo_data_layouts[i].type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
-                        const GLintptr offset = static_cast<GLintptr>(m_ubo_offsets[shader_i][i]);
-                        const GLsizeiptr size = static_cast<GLsizeiptr>(m_shaders[shader_i].ubo_data_layouts[i].ubo_size);
+                // for each mesh uniform object bind appropriate buffer ranges
+                for(auto ubo = mesh_it->ubo_data_layouts.begin(); ubo != mesh_it->ubo_data_layouts.begin(); ubo++) {
+                    DENG_ASSERT(ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER);
+                    const GLuint binding = static_cast<GLuint>(ubo->binding);
+                    const GLintptr offset = static_cast<GLintptr>(ubo->offset);
+                    const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->ubo_size);
+
+                    glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
+                    glErrorCheck("glBindBufferRange");
+                }
+
+                // for each shader uniform object bind appropriate uniform buffer ranges
+                for(auto ubo = m_shaders[shader_i].ubo_data_layouts.begin(); ubo != m_shaders[shader_i].ubo_data_layouts.end(); ubo++) {
+                    const GLuint binding = static_cast<GLuint>(ubo->binding);
+
+                    if (ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
+                        const GLintptr offset = static_cast<GLintptr>(ubo->offset);
+                        const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->ubo_size);
 
                         glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");
-                    }
-
-                    else if(cmd_it->texture_id != UINT32_MAX) {
+                    } else if(cmd_it->texture_id != UINT32_MAX) {
                         const GLuint tex_id = m_opengl_textures[cmd_it->texture_id];
 
                         glActiveTexture(GL_TEXTURE0 + binding);
