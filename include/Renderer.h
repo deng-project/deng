@@ -6,6 +6,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <Missing.h>
+
 namespace DENG {
 
     struct CameraComponent {
@@ -23,7 +25,7 @@ namespace DENG {
         uint32_t vertices_offset = 0;
         uint32_t indices_offset = 0;
         uint32_t indices_count = 0;
-        uint32_t texture_id = UINT32_MAX;
+        std::string texture_name = MISSING_TEXTURE_NAME;
 
         struct {
             Libdas::Point2D<int32_t> offset = { INT32_MAX, INT32_MAX };
@@ -41,21 +43,22 @@ namespace DENG {
     };
 
 
-    struct TextureReference {
-        std::string name = "Texture";
-        uint32_t shader_module_id = 0;
-        uint32_t shader_sampler_id = 0;
-        uint32_t r_identifier = UINT32_MAX;      // leave it as blank, used by renderer for referencing
+    // *** DEPRECATED *** //
+    //struct TextureReference {
+        //std::string name = "Texture";
+        //uint32_t shader_module_id = 0;
+        //uint32_t shader_sampler_id = 0;
+        //uint32_t r_identifier = UINT32_MAX;      // leave it as blank, used by renderer for referencing
 
-        // compare by shader_sampler_id and shader_module_id
-        struct less {
-            bool operator()(const TextureReference &_t1, const TextureReference &_t2) {
-                if(_t1.shader_module_id == _t2.shader_module_id)
-                    return _t1.shader_sampler_id < _t2.shader_sampler_id;
-                else return _t1.shader_module_id < _t2.shader_module_id;
-            }
-        };
-    };
+        //// compare by shader_sampler_id and shader_module_id
+        //struct less {
+            //bool operator()(const TextureReference &_t1, const TextureReference &_t2) {
+                //if(_t1.shader_module_id == _t2.shader_module_id)
+                    //return _t1.shader_sampler_id < _t2.shader_sampler_id;
+                //else return _t1.shader_module_id < _t2.shader_module_id;
+            //}
+        //};
+    //};
 
 
     struct RendererConfig {
@@ -68,7 +71,6 @@ namespace DENG {
         protected:
             const Window &m_window;
             std::vector<MeshReference> m_meshes;
-            std::vector<TextureReference> m_textures;
             std::vector<ShaderModule> m_shaders;
             const RendererConfig &m_conf;
 
@@ -91,8 +93,9 @@ namespace DENG {
                 return static_cast<uint32_t>(m_shaders.size() - 1);
             }
 
-            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) = 0;
-            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
+            virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) = 0;
+            virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
+            virtual void RemoveTexture(const std::string &_name) = 0;
 
             std::vector<MeshReference> &GetMeshes() {
                 return m_meshes;
@@ -102,12 +105,10 @@ namespace DENG {
                 return m_shaders;
             }
 
-            std::vector<TextureReference> &GetTextures() {
-                return m_textures;
-            }
+            // slow
+            virtual std::vector<std::string> GetTextureNames() = 0;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;
-            virtual void ShrinkTextures() = 0;
             virtual void LoadShaders() = 0;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) = 0;
             virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;

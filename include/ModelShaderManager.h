@@ -79,6 +79,11 @@
 
 namespace DENG {
 
+    struct ModelCameraUbo {
+        Libdas::Matrix4<float> projection_matrix;
+        Libdas::Matrix4<float> view_matrix;
+    };
+
     struct ModelAnimationUbo {
         // animated properties
         Libdas::Quaternion rotation[2];
@@ -93,13 +98,7 @@ namespace DENG {
         // timestamp data in seconds
         float timestamps[2] = {};
         float current_time = 0;
-    };
-
-    struct ModelCameraUbo {
-        Libdas::Matrix4<float> perspective_projection;
-        Libdas::Matrix4<float> ortho_projection;
-        Libdas::Matrix4<float> view_matrix;
-        uint32_t projection_mode = 0; // 0: perspective, 1: orthographic
+        uint32_t used_weights = 0;
     };
 
     struct ModelUbo {
@@ -115,12 +114,12 @@ namespace DENG {
 
         private:
             static void _GetAttributesByType(const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _id, ShaderModule &_module, uint32_t _base_offset);
-            static void _GetUniforms(Renderer &_rend, uint32_t _id, ShaderModule &_module, const uint32_t _camera_ubo_offset, uint32_t &_base_offset);
+            static void _GetUniforms(ShaderModule &_module, const uint32_t _camera_ubo_offset, const uint32_t _id);
             static uint32_t _ResolveMask(uint32_t _mask);
 
         public:
             static uint32_t RequestShaderModule(Renderer &_rend, const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_mesh, 
-                                                const uint32_t _base_offset, const uint32_t _camera_ubo_offset, uint32_t &_base_ubo_offset);
+                                                const uint32_t _base_offset, const uint32_t _camera_ubo_offset);
     };
 }
 

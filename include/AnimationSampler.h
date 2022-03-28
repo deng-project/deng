@@ -19,6 +19,7 @@
     #include <iostream>
     #include <any>
 
+    #include <libdas/include/Iterators.h>
     #include <libdas/include/Points.h>
     #include <libdas/include/Quaternion.h>
     #include <libdas/include/Vector.h>
@@ -51,11 +52,13 @@ namespace DENG {
             ModelAnimationUbo m_ubo;
             const Libdas::DasAnimationChannel &m_channel;
             Libdas::DasParser &m_parser;
-            const std::vector<uint32_t> &m_ubo_offsets;
+            const std::vector<uint32_t> m_ubo_offsets;
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> m_active_time = std::chrono::system_clock::now();
             std::vector<float> m_timestamps;
-            uint32_t m_weight_target_count = 0;
+
+            // needs some fixes later
+            const uint32_t m_weight_target_count = 1;
 
             // weight, translation, rotation and scale
             std::vector<std::variant<float*, Libdas::Vector3<float>*, Libdas::Quaternion*, float>> m_interp_values;

@@ -25,6 +25,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <unordered_map>
 
 #include <libdas/include/Points.h>
 #include <libdas/include/Vector.h>
@@ -36,6 +37,7 @@
 #include <BaseTypes.h>
 #include <Window.h>
 #include <ShaderDefinitions.h>
+#include <Missing.h>
 #include <Renderer.h>
 
 // backend specific includes
@@ -83,7 +85,6 @@ class TriangleApp {
 
         // mesh and texture references to use
         DENG::MeshReference m_mesh;
-        const DENG::TextureReference m_tex = { TEXTURE_NAME, 0, 0, UINT32_MAX };
 
     public:
         TriangleApp(DENG::Window &_win, DENG::Renderer &_rend) : m_window(_win), m_renderer(_rend) {
@@ -105,20 +106,20 @@ class TriangleApp {
             m_module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
             m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
-            // specify uniform sampler layout
             m_module.load_shaders_from_file = true;
+            m_module.use_texture_mapping = true;
 
             m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))), 0);
             m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))), 0);
             uint32_t shader_id = m_renderer.PushShader(m_module);
-            uint32_t tex_id = m_renderer.PushTextureFromFile(m_tex, TEXTURE_FILE);
+            m_renderer.PushTextureFromFile(TEXTURE_NAME, TEXTURE_FILE);
 
             // create the mesh object
             m_mesh.commands.emplace_back();
             m_mesh.commands.back().vertices_offset = 0;
             m_mesh.commands.back().indices_offset = 0;
             m_mesh.commands.back().indices_count = 3;
-            m_mesh.commands.back().texture_id = tex_id;
+            m_mesh.commands.back().texture_name = TEXTURE_NAME;
             m_mesh.shader_module_id = shader_id;
             m_mesh.name = MESH_NAME;
 

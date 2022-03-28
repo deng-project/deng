@@ -36,6 +36,7 @@
     #include <Window.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
+    #include <ModelShaderManager.h>
 #endif
 
 namespace DENG {
@@ -44,15 +45,15 @@ namespace DENG {
         private:
             uint32_t m_mesh_ref_id = UINT32_MAX;
             Libdas::DasParser &m_parser;
-            Libdas::DasMesh &m_mesh;
+            const Libdas::DasMesh &m_mesh;
             Renderer &m_renderer;
             const uint32_t m_shader_id;
             const uint32_t m_ubo_offset;
 
         public:
-            MeshLoader(Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset);
+            MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset);
             void Attach();
-            void UseTexture(uint32_t _texture_id);
+            void UseTexture(const std::string &_name);
 
             inline uint32_t GetModelUboOffset() {
                 return m_ubo_offset;

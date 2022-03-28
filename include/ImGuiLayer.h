@@ -54,6 +54,8 @@
                             "void main() {\n" \
                             "    color = texture(tex_sampler, uv) * col_mul;\n" \
                             "}\n"
+
+    #define IMGUI_TEXTURE_NAME "__imgui__"
 #endif
 
 #include <imgui.h>
@@ -69,7 +71,6 @@ namespace DENG {
             ImGuiIO *m_io = nullptr;
             PFN_ImGuiDrawCallback m_callback = nullptr;
             uint32_t m_mesh_id = UINT32_MAX;
-            uint32_t m_tex_id = UINT32_MAX;
             uint32_t m_shader_id = UINT32_MAX;
             void *m_user_data = nullptr;
             uint32_t m_ubo_offset = 0;

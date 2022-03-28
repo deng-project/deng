@@ -10,6 +10,8 @@
     #include <cstdint>
 #endif
 
+#define MISSING_TEXTURE_NAME    "__none__"
+
 namespace DENG {
     const char *GetMissingTexture(int &_x, int &_y, int &_size);
 }

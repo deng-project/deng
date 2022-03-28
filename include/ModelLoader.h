@@ -57,9 +57,10 @@ namespace DENG {
         private:
             Libdas::DasParser m_parser;
             Renderer &m_renderer;
+            std::vector<uint32_t> m_mesh_ubo_offsets;
             std::vector<MeshLoader> m_mesh_loaders;
             std::vector<ModelAnimation> m_animations;
-            std::vector<uint32_t> m_texture_ids;
+            std::vector<std::string> m_texture_names;
             uint32_t m_texture_bookmark = 0;
             const uint32_t m_base_buffer_offset;
             const uint32_t m_base_ubo_offset;
@@ -67,14 +68,15 @@ namespace DENG {
         private:
             void _AttachBuffersAndTextures();
             void _CheckMeshPrimitives(const Libdas::DasMesh &_mesh); // mesh primitives should all have the same vertex attributes
+            std::vector<uint32_t> _GetMeshUboOffsetsFromNodeId(uint32_t _node_id);
 
         public:
             ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset);
             void Attach();
             void Update(const ModelCameraUbo &_camera);
 
-            inline std::vector<uint32_t> &GetAttachedTextures() {
-                return m_texture_ids;
+            inline std::vector<std::string> &GetAttachedTextures() {
+                return m_texture_names;
             }
     };
 }

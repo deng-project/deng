@@ -41,6 +41,7 @@
     #include <Window.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
+    #include <Missing.h>
     #include <Renderer.h>
 #endif
 
@@ -52,9 +53,10 @@
 #include <VulkanInstanceCreator.h>
 #include <VulkanSwapchainCreator.h>
 #include <VulkanPipelineCreator.h>
-#include <VulkanDescriptorPoolCreator.h>
+//#include <VulkanDescriptorPoolCreator.h>
 #include <VulkanDescriptorSetLayoutCreator.h>
-#include <VulkanDescriptorSetsCreator.h>
+#include <VulkanDescriptorAllocator.h>
+//#include <VulkanDescriptorSetsCreator.h>
 
 
 
@@ -68,13 +70,15 @@ namespace DENG {
             std::vector<Vulkan::DescriptorSetLayoutCreator> m_descriptor_set_layout_creators;
 
             // per shader descriptor pools / sets creators
-            std::vector<Vulkan::DescriptorPoolCreator> m_shader_descriptor_pool_creators;
-            std::vector<Vulkan::DescriptorSetsCreator> m_shader_descriptor_sets_creators;
+            //std::vector<Vulkan::DescriptorPoolCreator> m_shader_descriptor_pool_creators;
+            //std::vector<Vulkan::DescriptorSetsCreator> m_shader_descriptor_sets_creators;
+            std::vector<Vulkan::DescriptorAllocator> m_shader_desc_allocators;
             std::vector<uint32_t> m_shader_descriptor_set_index_table;
 
             // per mesh descriptor pools / sets creators
-            std::vector<Vulkan::DescriptorPoolCreator> m_mesh_descriptor_pool_creators;
-            std::vector<Vulkan::DescriptorSetsCreator> m_mesh_descriptor_sets_creators;
+            //std::vector<Vulkan::DescriptorPoolCreator> m_mesh_descriptor_pool_creators;
+            //std::vector<Vulkan::DescriptorSetsCreator> m_mesh_descriptor_sets_creators;
+            std::vector<Vulkan::DescriptorAllocator> m_mesh_desc_allocators;
             std::vector<uint32_t> m_mesh_descriptor_set_index_table;
             
             // locally managed vulkan resources
@@ -113,7 +117,7 @@ namespace DENG {
             std::vector<VkCommandBuffer> m_command_buffers;
             uint32_t m_current_frame = 0;
 
-            std::vector<Vulkan::TextureData> m_vulkan_texture_handles;
+            std::unordered_map<std::string, Vulkan::TextureData> m_vulkan_texture_handles;
 
         private:
             void _CreateCommandPool();
@@ -135,11 +139,13 @@ namespace DENG {
             VulkanRenderer(const Window &_win, const RendererConfig &_conf);
             ~VulkanRenderer();
 
-            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) override;
-            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) override;
+            virtual void PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual void RemoveTexture(const std::string &_name) override;
+
+            virtual std::vector<std::string> GetTextureNames() override;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void ShrinkTextures() override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
@@ -147,6 +153,7 @@ namespace DENG {
             virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;
             virtual void RenderFrame() override;
+
     };
 }
 

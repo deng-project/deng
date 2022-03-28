@@ -20,7 +20,7 @@ namespace DENG {
     void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data, uint32_t _vertex_offset, uint32_t _index_offset) {
         uint32_t cmd_vert_offset = _vertex_offset;
         uint32_t cmd_idx_offset = _index_offset;
-        DENG::MeshReference &mesh = mp_renderer->GetMeshes()[m_tex_id];
+        DENG::MeshReference &mesh = mp_renderer->GetMeshes()[m_mesh_id];
         mesh.commands.clear();
 
         for(int i = 0; i < _draw_data->CmdListsCount; i++) {
@@ -55,7 +55,7 @@ namespace DENG {
                     mesh.commands.back().vertices_offset = cmd_vert_offset + pcmd->VtxOffset * sizeof(ImDrawVert);
                     mesh.commands.back().indices_offset = cmd_idx_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
                     mesh.commands.back().indices_count = pcmd->ElemCount;
-                    mesh.commands.back().texture_id = m_tex_id;
+                    mesh.commands.back().texture_name = IMGUI_TEXTURE_NAME;
                     mesh.commands.back().scissor.offset = { static_cast<int32_t>(clip.x), static_cast<int32_t>(clip.y) };
                     mesh.commands.back().scissor.ext = { static_cast<uint32_t>(clip.z - clip.x), static_cast<uint32_t>(clip.w - clip.y) };
                     mesh.commands.back().scissor.enabled = true;
@@ -106,6 +106,7 @@ namespace DENG {
         module.enable_blend = true;
         module.enable_scissor = true;
         module.load_shaders_from_file = false;
+        module.use_texture_mapping = true;
 
         module.ubo_data_layouts.reserve(2);
         module.ubo_data_layouts.emplace_back();
@@ -120,15 +121,11 @@ namespace DENG {
         module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
-        DENG::TextureReference tex_ref = {};
         m_shader_id = mp_renderer->PushShader(module);
-        tex_ref.shader_module_id = m_shader_id;
-        tex_ref.shader_sampler_id = 0;
-        tex_ref.name = TEXTURE_NAME;
 
-        mp_renderer->PushMeshReference(DENG::MeshReference());
-        m_tex_id = mp_renderer->PushTextureFromMemory(tex_ref, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
-        m_io->Fonts->SetTexID(reinterpret_cast<void*>(m_tex_id));
+        m_mesh_id = mp_renderer->PushMeshReference(DENG::MeshReference());
+        mp_renderer->PushTextureFromMemory(IMGUI_TEXTURE_NAME, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
+        m_io->Fonts->SetTexID(reinterpret_cast<void*>(0));
     }
 
 

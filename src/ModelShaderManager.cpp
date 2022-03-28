@@ -102,38 +102,36 @@ namespace DENG {
     }
 
 
-    void ModelShaderManager::_GetUniforms(Renderer &_rend, uint32_t _id, ShaderModule &_module, const uint32_t _camera_ubo_offset, uint32_t &_base_offset) {
-        // there are 3 types of uniform objects in each shader module
-        //   1. CameraUbo
-        //   2. AnimationUbo
-        //   3. ModelUbo
+    void ModelShaderManager::_GetUniforms(ShaderModule &_module, const uint32_t _camera_ubo_offset, const uint32_t _id) {
+        // there is a single camera ubo instance in each shader module
+        // AnimationUbo and ModelUbo are managed by meshes
 
         // CameraUbo data
         _module.ubo_data_layouts.emplace_back();
         _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().binding = 1;
+        _module.ubo_data_layouts.back().binding = 0;
         _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
         _module.ubo_data_layouts.back().ubo_size = sizeof(ModelCameraUbo);
         _module.ubo_data_layouts.back().offset = _camera_ubo_offset;
 
         // AnimationUbo data
-        _module.ubo_data_layouts.reserve(4);
-        _module.ubo_data_layouts.emplace_back();
-        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().binding = 0;
-        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        _module.ubo_data_layouts.back().ubo_size = sizeof(ModelAnimationUbo);
-        _module.ubo_data_layouts.back().offset = _base_offset;
-        _base_offset += static_cast<uint32_t>(sizeof(ModelAnimationUbo));
+        //_module.ubo_data_layouts.reserve(4);
+        //_module.ubo_data_layouts.emplace_back();
+        //_module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        //_module.ubo_data_layouts.back().binding = 0;
+        //_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+        //_module.ubo_data_layouts.back().ubo_size = sizeof(ModelAnimationUbo);
+        //_module.ubo_data_layouts.back().offset = _base_offset;
+        //_base_offset += static_cast<uint32_t>(sizeof(ModelAnimationUbo));
 
-        // ModelUbo
-        _module.ubo_data_layouts.emplace_back();
-        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().binding = 2;
-        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        _module.ubo_data_layouts.back().ubo_size = sizeof(ModelUbo);
-        _module.ubo_data_layouts.back().offset = _rend.AlignUniformBufferOffset(_base_offset);
-        _base_offset += static_cast<uint32_t>(sizeof(ModelUbo));
+        //// ModelUbo
+        //_module.ubo_data_layouts.emplace_back();
+        //_module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        //_module.ubo_data_layouts.back().binding = 2;
+        //_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+        //_module.ubo_data_layouts.back().ubo_size = sizeof(ModelUbo);
+        //_module.ubo_data_layouts.back().offset = _rend.AlignUniformBufferOffset(_base_offset);
+        //_base_offset += static_cast<uint32_t>(sizeof(ModelUbo));
             
         // check if uv attributes are present and if they are, add sampler
         if(_id == POS_UV_NORMAL_TANG || _id == POS_UV_NORMAL || _id == POS_UV_TANG || _id == POS_UV) {
@@ -146,7 +144,7 @@ namespace DENG {
 
 
     uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_mesh,
-                                                     const uint32_t _base_offset, const uint32_t _camera_ubo_offset, uint32_t &_base_ubo_offset) {
+                                                     const uint32_t _base_offset, const uint32_t _camera_ubo_offset) {
         if(!m_set_stage) {
             memset(m_shader_ids.data(), 0xff, sizeof(uint32_t) * 8);
             m_set_stage = true;
@@ -171,7 +169,12 @@ namespace DENG {
             else module.fragment_shader_file = COLORED_SHADER;
 
             _GetAttributesByType(_parser, _mesh, id, module, _base_offset);
-            _GetUniforms(_rend, id, module, _camera_ubo_offset, _base_ubo_offset);
+            _GetUniforms(module, _camera_ubo_offset, id);
+
+            module.vertex_shader_file = g_vertex_shader_files[id];
+            if(mask & UV_ATTR_MASK) module.fragment_shader_file = UV_FRAGMENT_SHADER;
+            else module.fragment_shader_file = COLORED_SHADER;
+            module.load_shaders_from_file = true;
             m_shader_ids[id] = _rend.PushShader(module);
         }
 

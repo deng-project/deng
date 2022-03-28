@@ -11,7 +11,11 @@ namespace DENG {
 
     namespace Vulkan {
         
-        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module) : m_device(_dev), m_shader_module(&_module) {
+        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module, const MeshReference &_mesh) : 
+            m_device(_dev), 
+            m_shader_module(&_module),
+            m_sample_mesh(&_mesh)
+        {
             _CreateDescriptorSetLayout();
         }
 
@@ -49,31 +53,65 @@ namespace DENG {
 
 
         void DescriptorSetLayoutCreator::_CreateDescriptorSetLayout() {
-            std::vector<VkDescriptorSetLayoutBinding> bindings(m_shader_module->ubo_data_layouts.size());
+            std::vector<VkDescriptorSetLayoutBinding> bindings;
+            bindings.reserve(m_shader_module->ubo_data_layouts.size() + m_sample_mesh->ubo_data_layouts.size());
 
-            for(size_t i = 0; i < bindings.size(); i++) {
-                bindings[i].binding = m_shader_module->ubo_data_layouts[i].binding;
-                bindings[i].descriptorCount = 1;
+            // for each shader ubo layout
+            for(size_t i = 0; i < m_shader_module->ubo_data_layouts.size(); i++) {
+                bindings.emplace_back();
+                bindings.back().binding = m_shader_module->ubo_data_layouts[i].binding;
+                bindings.back().descriptorCount = 1;
 
                 switch(m_shader_module->ubo_data_layouts[i].type) {
                     case UNIFORM_DATA_TYPE_BUFFER:
-                        bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                         break;
 
                     case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
-                        bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        break;
+
+                    default:
+                        DENG_ASSERT(false);
                         break;
                 }
 
-                bindings[i].pImmutableSamplers = NULL;
-                bindings[i].stageFlags = 0;
+                bindings.back().pImmutableSamplers = nullptr;
+                bindings.back().stageFlags = 0;
 
                 if(m_shader_module->ubo_data_layouts[i].stage & SHADER_STAGE_VERTEX)
-                    bindings[i].stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+                    bindings.back().stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
                 if(m_shader_module->ubo_data_layouts[i].stage & SHADER_STAGE_GEOMETRY)
-                    bindings[i].stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+                    bindings.back().stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
                 if(m_shader_module->ubo_data_layouts[i].stage & SHADER_STAGE_FRAGMENT)
-                    bindings[i].stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+                    bindings.back().stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+            }
+
+            // for each mesh ubo layout
+            for(size_t i = 0; i < m_sample_mesh->ubo_data_layouts.size(); i++) {
+                bindings.emplace_back();
+                bindings.back().binding = m_sample_mesh->ubo_data_layouts[i].binding;
+                bindings.back().descriptorCount = 1;
+
+                switch(m_sample_mesh->ubo_data_layouts[i].type) {
+                    case UNIFORM_DATA_TYPE_BUFFER:
+                        bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        break;
+
+                    default:
+                        DENG_ASSERT(false);
+                        break;
+                }
+
+                bindings.back().pImmutableSamplers = nullptr;
+                bindings.back().stageFlags = 0;
+
+                if(m_sample_mesh->ubo_data_layouts[i].stage & SHADER_STAGE_VERTEX)
+                    bindings.back().stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+                if(m_sample_mesh->ubo_data_layouts[i].stage & SHADER_STAGE_GEOMETRY)
+                    bindings.back().stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+                if(m_sample_mesh->ubo_data_layouts[i].stage & SHADER_STAGE_FRAGMENT)
+                    bindings.back().stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
             }
 
             VkDescriptorSetLayoutCreateInfo desc_set_layout_info = {};

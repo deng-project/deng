@@ -184,7 +184,7 @@ namespace DENG {
 
         std::string PipelineCreator::_ReadShaderSource(const std::string &_file_name) {
             std::ifstream file(_file_name, std::ios_base::binary);
-            if(!file.good() || file.bad()) FILE_ERR(_file_name);
+            if(!file) FILE_ERR(_file_name);
 
             file.seekg(0, std::ios_base::end);
             size_t len = file.tellg();
@@ -393,6 +393,10 @@ namespace DENG {
             if(_module.geometry_shader_src.size())
                 _CompileShader(m_geometry_bin, _module.geometry_shader_src, _module.geometry_shader_file, shaderc_glsl_geometry_shader);
             _CompileShader(m_fragment_bin, _module.fragment_shader_src, _module.fragment_shader_file, shaderc_glsl_fragment_shader);
+
+            _module.vertex_shader_src.reserve(1);
+            _module.geometry_shader_src.reserve(1);
+            _module.fragment_shader_src.reserve(1);
         }
 
 

@@ -12,6 +12,7 @@ namespace DENG {
     VulkanRenderer::VulkanRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
         mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count);
+
         _CreateCommandPool();
         _CreateSemaphores();
         _AllocateBufferResources();
@@ -19,6 +20,11 @@ namespace DENG {
         _CreateDepthResources();
         _CreateFrameBuffers();
         _AllocateCommandBuffers();
+
+        // push missing texture 
+        int x, y, size;
+        const char *data = GetMissingTexture(x, y, size);
+        PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
     }
 
 
@@ -36,10 +42,10 @@ namespace DENG {
 
         // destroy texture resources
         for(auto it = m_vulkan_texture_handles.begin(); it != m_vulkan_texture_handles.end(); it++) {
-            vkDestroySampler(mp_instance_creator->GetDevice(), it->sampler, nullptr);
-            vkDestroyImageView(mp_instance_creator->GetDevice(), it->image_view, nullptr);
-            vkDestroyImage(mp_instance_creator->GetDevice(), it->image, nullptr);
-            vkFreeMemory(mp_instance_creator->GetDevice(), it->memory, nullptr);
+            vkDestroySampler(mp_instance_creator->GetDevice(), it->second.sampler, nullptr);
+            vkDestroyImageView(mp_instance_creator->GetDevice(), it->second.image_view, nullptr);
+            vkDestroyImage(mp_instance_creator->GetDevice(), it->second.image, nullptr);
+            vkFreeMemory(mp_instance_creator->GetDevice(), it->second.memory, nullptr);
         }
 
 
@@ -51,18 +57,22 @@ namespace DENG {
 
         // free all allocated descriptor sets and pools
         // per shader descriptors
-        while(m_shader_descriptor_sets_creators.size())
-            m_shader_descriptor_sets_creators.erase(m_shader_descriptor_sets_creators.end() - 1);
+        while(m_shader_desc_allocators.size()) 
+            m_shader_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
+        //while(m_shader_descriptor_sets_creators.size())
+            //m_shader_descriptor_sets_creators.erase(m_shader_descriptor_sets_creators.end() - 1);
 
-        while(m_shader_descriptor_pool_creators.size())
-            m_shader_descriptor_pool_creators.erase(m_shader_descriptor_pool_creators.end() - 1);
+        //while(m_shader_descriptor_pool_creators.size())
+            //m_shader_descriptor_pool_creators.erase(m_shader_descriptor_pool_creators.end() - 1);
 
         // per mesh descriptors
-        while(m_mesh_descriptor_sets_creators.size())
-            m_mesh_descriptor_sets_creators.erase(m_mesh_descriptor_sets_creators.end() - 1);
+        while(m_mesh_desc_allocators.size()) 
+            m_mesh_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
+        //while(m_mesh_descriptor_sets_creators.size())
+            //m_mesh_descriptor_sets_creators.erase(m_mesh_descriptor_sets_creators.end() - 1);
 
-        while(m_mesh_descriptor_pool_creators.size())
-            m_mesh_descriptor_pool_creators.erase(m_mesh_descriptor_pool_creators.end() - 1);
+        //while(m_mesh_descriptor_pool_creators.size())
+            //m_mesh_descriptor_pool_creators.erase(m_mesh_descriptor_pool_creators.end() - 1);
 
         while(m_pipeline_creators.size())
             m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
@@ -89,21 +99,26 @@ namespace DENG {
     }
 
 
-    uint32_t VulkanRenderer::PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) {
+    void VulkanRenderer::PushTextureFromFile(const std::string &_name, const std::string &_file_name) {
         Libdas::TextureReader reader(_file_name, true);
         int x, y;
         size_t len;
         const char *raw = reader.GetRawBuffer(x, y, len);
 
-        return PushTextureFromMemory(_tex, raw, static_cast<uint32_t>(x), static_cast<uint32_t>(y), 4);
+        PushTextureFromMemory(_name, raw, static_cast<uint32_t>(x), static_cast<uint32_t>(y), 4);
     }
     
 
-    uint32_t VulkanRenderer::PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+    void VulkanRenderer::PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+        // check if texture with specified key already exists
+        if(m_vulkan_texture_handles.find(_name) != m_vulkan_texture_handles.end()) {
+            std::cerr << "Texture with name " << _name << " already exists" << std::endl;
+            DENG_ASSERT(false);
+            return;
+        }
+        
         // image data size
         const VkDeviceSize size = static_cast<VkDeviceSize>(_width * _height * _bit_depth);
-        m_textures.push_back(_tex);
-        m_textures.back().r_identifier = static_cast<uint32_t>(m_vulkan_texture_handles.size());
 
         VkBuffer staging_buffer = VK_NULL_HANDLE;
         VkDeviceMemory staging_memory = VK_NULL_HANDLE;
@@ -141,10 +156,37 @@ namespace DENG {
             VK_RES_ERR("Failed to create texture image view");
 
         _CreateTextureSampler(texture_data, mip_levels);
-        m_textures.back().r_identifier = static_cast<uint32_t>(m_vulkan_texture_handles.size());
-        m_vulkan_texture_handles.push_back(texture_data);
 
-        return m_textures.back().r_identifier;
+        m_vulkan_texture_handles[_name] = texture_data;
+    }
+
+
+    void VulkanRenderer::RemoveTexture(const std::string &_name) {
+        if(m_vulkan_texture_handles.find(_name) == m_vulkan_texture_handles.end()) {
+            std::cerr << "Texture with name " << _name << " does not exist" << std::endl;
+            DENG_ASSERT(false);
+            return;
+        }
+
+        Vulkan::TextureData &tex = m_vulkan_texture_handles[_name];
+
+        vkDestroySampler(mp_instance_creator->GetDevice(), tex.sampler, nullptr);
+        vkDestroyImageView(mp_instance_creator->GetDevice(), tex.image_view, nullptr);
+        vkDestroyImage(mp_instance_creator->GetDevice(), tex.image, nullptr);
+        vkFreeMemory(mp_instance_creator->GetDevice(), tex.memory, nullptr);
+
+        m_vulkan_texture_handles.erase(_name);
+    }
+
+
+    std::vector<std::string> VulkanRenderer::GetTextureNames() {
+        std::vector<std::string> names;
+        names.reserve(m_vulkan_texture_handles.size());
+
+        for(auto it = m_vulkan_texture_handles.begin(); it != m_vulkan_texture_handles.end(); it++)
+            names.push_back(it->first);
+
+        return names;
     }
 
 
@@ -153,53 +195,47 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::ShrinkTextures() {
-        std::vector<bool> shrink_table;
-        shrink_table.resize(m_vulkan_texture_handles.size());
-        std::fill(shrink_table.begin(), shrink_table.end(), true);
-
-        for(size_t i = 0; i < m_textures.size(); i++)
-            shrink_table[m_textures[i].r_identifier] = false;
-
-        size_t delta_shrink = 0;
-        for(size_t i = 0; i < shrink_table.size(); i++) {
-            if(shrink_table[i]) {
-                vkDestroySampler(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].sampler, nullptr);
-                vkDestroyImageView(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].image_view, nullptr);
-                vkDestroyImage(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].image, nullptr);
-                vkFreeMemory(mp_instance_creator->GetDevice(), m_vulkan_texture_handles[i - delta_shrink].memory, nullptr);
-                delta_shrink++;
-                m_vulkan_texture_handles.erase(m_vulkan_texture_handles.begin() + (i - delta_shrink));
-            }
-        }
-    }
-
-
     void VulkanRenderer::LoadShaders() {
         _AllocateUniformBuffer();
 
-        // for each shader module create descriptor pool creators
-        m_shader_descriptor_pool_creators.reserve(m_shaders.size());
-        m_shader_descriptor_sets_creators.reserve(m_shaders.size());
+        // reserve memory for shader descriptor set creators
+        //m_shader_descriptor_pool_creators.reserve(m_shaders.size());
+        //m_shader_descriptor_sets_creators.reserve(m_shaders.size());
+        m_shader_desc_allocators.reserve(m_shaders.size());
         m_descriptor_set_layout_creators.reserve(m_shaders.size());
         m_pipeline_creators.reserve(m_shaders.size());
 
-        const uint32_t texture_count = static_cast<uint32_t>(m_textures.size());
+        // reserve memory for mesh descriptor set creators 
+        m_mesh_desc_allocators.reserve(m_meshes.size());
+        //m_mesh_descriptor_pool_creators.reserve(m_meshes.size());
+        //m_mesh_descriptor_sets_creators.reserve(m_meshes.size());
+
         const uint32_t sc_img_count = static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size());
+        const Vulkan::TextureData &missing = m_vulkan_texture_handles[MISSING_TEXTURE_NAME];
 
         // for each shader create pipelines
         for(size_t i = 0; i < m_shaders.size(); i++) {
-            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
+            // check which mesh uses current shader 
+            MeshReference *mesh = nullptr;
+            for(size_t j = 0; j < m_meshes.size(); j++) {
+                if(m_meshes[j].shader_module_id == i) {
+                    mesh = &m_meshes[j];
+                    break;
+                }
+            }
+
+            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i], *mesh);
             m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
                                              m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
             if(m_shaders[i].ubo_data_layouts.size()) {
-                m_shader_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, texture_count, m_shaders[i].ubo_data_layouts);
-
-                const VkDescriptorPool pool = m_shader_descriptor_pool_creators.back().GetDescriptorPool();
                 const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
+                const uint32_t pool_cap = static_cast<uint32_t>(m_vulkan_texture_handles.size()) > 0 ? static_cast<uint32_t>(m_vulkan_texture_handles.size()) : 1;
 
-                m_shader_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_shaders[i], m_uniform_buffer, pool, layout, m_vulkan_texture_handles);
-                m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_descriptor_sets_creators.size() - 1));
+                //m_shader_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_shaders[i].ubo_data_layouts);
+                //m_shader_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_shaders[i], m_uniform_buffer, pool, layout, missing);
+                m_shader_desc_allocators.emplace_back(mp_instance_creator->GetDevice(), m_uniform_buffer, layout, m_shaders[i].ubo_data_layouts, 
+                                                      sc_img_count, missing, pool_cap);
+                m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
             }
             else {
                 m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
@@ -209,13 +245,12 @@ namespace DENG {
         // for each mesh create descriptor sets if required
         for(size_t i = 0; i < m_meshes.size(); i++) {
             if(m_meshes[i].ubo_data_layouts.size()) {
-                m_mesh_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, 0, m_meshes[i].ubo_data_layouts);
+                //m_mesh_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_meshes[i].ubo_data_layouts);
+                //m_mesh_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_meshes[i], m_uniform_buffer, pool, layout);
 
-                const VkDescriptorPool pool = m_mesh_descriptor_pool_creators.back().GetDescriptorPool();
                 const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[m_meshes[i].shader_module_id].GetDescriptorSetLayout();
-
-                m_mesh_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_meshes[i], m_uniform_buffer, pool, layout);
-                m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_descriptor_sets_creators.size() - 1));
+                m_mesh_desc_allocators.emplace_back(mp_instance_creator->GetDevice(), m_uniform_buffer, layout, m_meshes[i].ubo_data_layouts, sc_img_count, missing);
+                m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
             } else {
                 m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
             }
@@ -562,17 +597,23 @@ namespace DENG {
 
                     // per shader descriptor sets
                     if(m_shaders[shader_id].ubo_data_layouts.size()) {
-                        const uint32_t descriptor_set_index = m_meshes[i].commands[j].texture_id == UINT32_MAX ? static_cast<uint32_t>(m_current_frame) : m_meshes[i].commands[j].texture_id * static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size()) + static_cast<uint32_t>(m_current_frame);
-                        desc_sets[0] = m_shader_descriptor_sets_creators[shader_id].GetDescriptorSetById(descriptor_set_index);
+                        if(m_shaders[shader_id].use_texture_mapping) {
+                            DENG_ASSERT(m_vulkan_texture_handles.find(m_meshes[i].commands[j].texture_name) != m_vulkan_texture_handles.end());
+                            const Vulkan::TextureData &tex = m_vulkan_texture_handles[m_meshes[i].commands[j].texture_name];
+                            desc_sets[0] = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByTexture(m_meshes[i].commands[j].texture_name, tex, m_current_frame);
+                        } else {
+                            desc_sets[0] = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByFrame(m_current_frame);
+                        }
+
                         used_desc_sets++;
                     }
 
                     // per mesh descriptor sets
                     if(m_meshes[i].ubo_data_layouts.size()) {
-                        const uint32_t descriptor_set_index = static_cast<uint32_t>(m_current_frame);
                         if(used_desc_sets == 1)
-                            desc_sets[1] = m_mesh_descriptor_sets_creators[i].GetDescriptorSetById(descriptor_set_index);
-                        else desc_sets[0] = m_mesh_descriptor_sets_creators[i].GetDescriptorSetById(descriptor_set_index);
+                            desc_sets[1] = m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame);
+                        else desc_sets[0] = m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame);
+
                         used_desc_sets++;
                     }
 

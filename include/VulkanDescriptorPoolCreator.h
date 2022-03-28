@@ -27,19 +27,17 @@ namespace DENG {
             private:
                 VkDevice m_device;
                 uint32_t m_swapchain_image_count;
-                uint32_t m_texture_count;
                 VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
 
             private:
                 std::vector<VkDescriptorPoolSize> _FindDescriptorPoolSizes(const std::vector<UniformDataLayout> &_ubo_layouts);
-                void _LoadUniformsForShader(const std::vector<UniformDataLayout> &_ubo_layouts);
-                
+                void _CreateDescriptorPools(const std::vector<UniformDataLayout> &_ubo_layouts);
 
             public:
                 DescriptorPoolCreator() = default;
                 DescriptorPoolCreator(const DescriptorPoolCreator &_dpc) = default;
                 DescriptorPoolCreator(DescriptorPoolCreator &&_dpc);
-                DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, uint32_t _texture_count, const std::vector<UniformDataLayout> &_ubo_layouts);
+                DescriptorPoolCreator(VkDevice _dev, uint32_t _swapchain_image_c, const std::vector<UniformDataLayout> &_ubo_layouts);
                 ~DescriptorPoolCreator();
 
                 DescriptorPoolCreator &operator=(const DescriptorPoolCreator &_dpc);

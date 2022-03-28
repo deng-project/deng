@@ -36,10 +36,6 @@ add_custom_command(TARGET ${OGL_TRIANGLE_TARGET}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
     ARGS -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/TriangleAppData
-)
-
-add_custom_command(TARGET ${OGL_TRIANGLE_TARGET}
-    POST_BUILD 
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy_directory ${CMAKE_SOURCE_DIR}/tests/TriangleAppData/ ${CMAKE_CURRENT_BINARY_DIR}/TriangleAppData
 )

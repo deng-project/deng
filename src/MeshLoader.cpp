@@ -8,7 +8,7 @@
 
 namespace DENG {
 
-    MeshLoader::MeshLoader(Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset) : 
+    MeshLoader::MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset) : 
         m_parser(_parser), 
         m_mesh(_mesh),
         m_renderer(_renderer), 
@@ -36,6 +36,25 @@ namespace DENG {
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
 
+        // create mesh ubo data layouts
+        mesh.ubo_data_layouts.reserve(2);
+
+        // ModelAnimationUbo
+        mesh.ubo_data_layouts.emplace_back();
+        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        mesh.ubo_data_layouts.back().binding = 1;
+        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+        mesh.ubo_data_layouts.back().ubo_size = sizeof(ModelAnimationUbo);
+        mesh.ubo_data_layouts.back().offset = m_ubo_offset;
+        
+        // ModelUbo
+        mesh.ubo_data_layouts.emplace_back();
+        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        mesh.ubo_data_layouts.back().binding = 2;
+        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+        mesh.ubo_data_layouts.back().ubo_size = sizeof(ModelUbo);
+        mesh.ubo_data_layouts.back().offset = m_ubo_offset + m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelAnimationUbo)));
+
         // create mesh draw commands
         mesh.commands.reserve(m_mesh.primitive_count);
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
@@ -51,10 +70,10 @@ namespace DENG {
     }
 
 
-    void MeshLoader::UseTexture(uint32_t _texture_id) {
+    void MeshLoader::UseTexture(const std::string &_name) {
         MeshReference &mesh = m_renderer.GetMeshes()[m_mesh_ref_id];
 
         for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++)
-            cmd->texture_id = _texture_id;
+            cmd->texture_name = _name;
     }
 }

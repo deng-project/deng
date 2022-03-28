@@ -11,45 +11,57 @@ namespace DENG {
     AnimationSampler::AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser, const std::vector<uint32_t> &_ubo_offsets) : 
         m_channel(_channel), m_parser(_parser), m_ubo_offsets(_ubo_offsets)
     {
-        // write targets from buffer to target vector
-        size_t current_buffer_offset = 0;
-        size_t relative_offset = 0;
-        const Libdas::DasBuffer &buffer = m_parser.AccessBuffer(m_channel.target_value_buffer_id);
+        const Libdas::DasBuffer &kf_buffer = m_parser.AccessBuffer(m_channel.keyframe_buffer_id);
+        const Libdas::DasBuffer &target_buffer = m_parser.AccessBuffer(m_channel.target_value_buffer_id);
 
-        for(auto buffer_it = buffer.data_ptrs.begin(); buffer_it != buffer.data_ptrs.end(); buffer_it++) {
-            if(current_buffer_offset + buffer_it->second < m_channel.target_value_buffer_offset) {
-                current_buffer_offset += buffer_it->second;
-                continue;
-            } 
+        // get keyframe timestamps and target values
+        m_timestamps.reserve(m_channel.keyframe_count);
+        m_interp_values.reserve(m_channel.keyframe_count);
 
-            relative_offset = static_cast<size_t>(m_channel.target_value_buffer_offset) - current_buffer_offset;
-            const char *data_ptr = buffer.data_ptrs[relative_offset].first;
+        uint32_t rel_timestamp_offset = m_channel.keyframe_buffer_offset;
+        uint32_t rel_target_offset = m_channel.target_value_buffer_offset;
 
-            for(uint32_t i = 0; i < m_channel.keyframe_count; i++) {
-                switch(m_channel.target) {
-                    case LIBDAS_ANIMATION_TARGET_WEIGHTS:
-                        std::cerr << "Morph targets not yet implemented" << std::endl;
-                        DENG_ASSERT(false);
-                        break;
+        for(uint32_t i = 0; i < m_channel.keyframe_count; i++) {
+            DENG_ASSERT(kf_buffer.data_ptrs.size() == 1);
+            DENG_ASSERT(target_buffer.data_ptrs.size() == 1);
 
-                    case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                        m_interp_values.push_back(reinterpret_cast<Libdas::Vector3<float>*>(data_ptr[relative_offset]));
-                        relative_offset += static_cast<uint32_t>(sizeof(Libdas::Vector3<float>));
-                        break;
+            // push timestamps
+            m_timestamps.push_back(*reinterpret_cast<const float*>(kf_buffer.data_ptrs.back().first + rel_timestamp_offset));
+            rel_timestamp_offset += static_cast<uint32_t>(sizeof(float));
 
-                    case LIBDAS_ANIMATION_TARGET_ROTATION:
-                        m_interp_values.push_back(reinterpret_cast<Libdas::Quaternion*>(data_ptr[relative_offset]));
-                        relative_offset += static_cast<uint32_t>(sizeof(Libdas::Quaternion));
-                        break;
+            char *data_ptr = const_cast<char*>(target_buffer.data_ptrs.back().first);
 
-                    case LIBDAS_ANIMATION_TARGET_SCALE:
-                        m_interp_values.push_back(*reinterpret_cast<float*>(data_ptr[relative_offset]));
-                        relative_offset += static_cast<uint32_t>(sizeof(float));
-                        break;
+            // push target values
+            switch(m_channel.target) {
+                case LIBDAS_ANIMATION_TARGET_WEIGHTS:
+                    m_interp_values.push_back(reinterpret_cast<float*>(data_ptr + rel_target_offset));
+                    rel_target_offset += m_channel.weight_count * static_cast<uint32_t>(sizeof(float));
+                    break;
 
-                    default:
-                        break;
-                }
+                case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                    m_interp_values.push_back(reinterpret_cast<Libdas::Vector3<float>*>(data_ptr + rel_target_offset));
+                    rel_target_offset += static_cast<uint32_t>(sizeof(Libdas::Vector3<float>));
+                    break;
+
+                case LIBDAS_ANIMATION_TARGET_ROTATION:
+                    m_interp_values.push_back(reinterpret_cast<Libdas::Quaternion*>(data_ptr + rel_target_offset));
+                    std::cout << "Rotation quaternion: " << 
+                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->x << " " << 
+                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->y << " " << 
+                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->z << " " << 
+                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->w << std::endl;
+                                  
+                    rel_target_offset += static_cast<uint32_t>(sizeof(Libdas::Quaternion));
+                    break;
+
+                case LIBDAS_ANIMATION_TARGET_SCALE:
+                    m_interp_values.push_back(*reinterpret_cast<float*>(data_ptr + rel_target_offset));
+                    rel_target_offset += static_cast<uint32_t>(sizeof(float));
+                    break;
+
+                default:
+                    DENG_ASSERT(false);
+                    break;
             }
         }
     }
@@ -71,8 +83,25 @@ namespace DENG {
         // set correct interpolation values
         switch(m_interp_values[m_active_timestamp_index].index()) {
             case 0:
-                m_ubo.target_mask = TARGET_MASK_WEIGHT;
-                // incomplete
+                {
+                    m_ubo.target_mask = TARGET_MASK_WEIGHT;
+                    m_ubo.used_weights = m_weight_target_count;
+
+                    DENG_ASSERT(m_weight_target_count > 4);
+                    std::vector<float> weights[2];
+                    weights[0].resize(m_weight_target_count);
+                    weights[1].resize(m_weight_target_count);
+
+                    for(size_t i = 0; i < m_weight_target_count; i++) {
+                        weights[0][i] = std::get<float*>(m_interp_values[m_active_timestamp_index])[i];
+                        weights[1][i] = std::get<float*>(m_interp_values[m_active_timestamp_index + 1])[i];
+                    }
+
+                    for(struct { Libdas::Vector4<float>::iterator t1; Libdas::Vector4<float>::iterator t2; uint32_t i; } s = {m_ubo.weights[0].Begin(), m_ubo.weights[1].Begin(), 0}; s.i < m_weight_target_count; s.i++, s.t1++, s.t2++) {
+                        *s.t1 = weights[0][s.i];
+                        *s.t2 = weights[1][s.i];
+                    }
+                }
                 break;
 
             case 1:

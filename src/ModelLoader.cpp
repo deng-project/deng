@@ -13,6 +13,7 @@ namespace DENG {
         m_parser(_file_name), m_renderer(_rend), m_base_buffer_offset(_base_buffer_offset), m_base_ubo_offset(_base_ubo_offset)
     {
         // reserve enough memory for meshes and animation samplers
+        m_parser.Parse();
         m_mesh_loaders.reserve(m_parser.GetMeshCount());
         m_animations.reserve(m_parser.GetAnimationCount());
     }
@@ -32,18 +33,17 @@ namespace DENG {
                                             LIBDAS_BUFFER_TYPE_TEXTURE_RAW;
 
             if(buffer.type & texture_mask) {
-                DENG::TextureReference texture;
-                texture.name = m_parser.GetProperties().model + "_TEX" + std::to_string(m_texture_bookmark);
-                m_texture_bookmark++;
-                texture.shader_sampler_id = 4; // const value
+                const std::string texture_name = m_parser.GetProperties().model + "_TEX" + std::to_string(m_texture_names.size());
+                m_texture_names.push_back(texture_name);
 
                 // not raw texture data
                 if(!(buffer.type & LIBDAS_BUFFER_TYPE_TEXTURE_RAW)) {
-                    Libdas::TextureReader reader(buffer.data_ptrs.back().first, buffer.data_ptrs.back().second);
+                    Libdas::TextureReader reader(buffer.data_ptrs.back());
                     int x, y;
                     size_t len;
                     const char *data = reader.GetRawBuffer(x, y, len);
-                    m_texture_ids.push_back(m_renderer.PushTextureFromMemory(texture, data, static_cast<uint32_t>(x), static_cast<uint32_t>(y), 4));
+
+                    m_renderer.PushTextureFromMemory(texture_name, data, static_cast<uint32_t>(x), static_cast<uint32_t>(y), 4);
                 } 
                 // raw texture
                 else {
@@ -54,7 +54,8 @@ namespace DENG {
                     data += sizeof(uint32_t);
                     uint8_t bit_depth = *reinterpret_cast<const uint8_t*>(data);
                     data += sizeof(uint8_t);
-                    m_texture_ids.push_back(m_renderer.PushTextureFromMemory(texture, data, width, height, static_cast<uint32_t>(bit_depth)));
+
+                    m_renderer.PushTextureFromMemory(texture_name, data, width, height, static_cast<uint32_t>(bit_depth));
                 }
             } else {
                 m_renderer.UpdateCombinedBuffer(std::make_pair(buffer.data_ptrs.back().first, static_cast<uint32_t>(buffer.data_ptrs.back().second)), abs_offset);
@@ -94,9 +95,26 @@ namespace DENG {
     }
 
 
+    std::vector<uint32_t> ModelLoader::_GetMeshUboOffsetsFromNodeId(uint32_t _node_id) {
+        std::vector<uint32_t> offsets;
+        const Libdas::DasNode &node = m_parser.AccessNode(_node_id);
+        offsets.push_back(m_mesh_ubo_offsets[node.mesh]);
+
+        for(uint32_t i = 0; i < node.children_count; i++) {
+            std::vector<uint32_t> sub_node_offsets = _GetMeshUboOffsetsFromNodeId(node.children[i]);
+            offsets.insert(offsets.end(), sub_node_offsets.begin(), sub_node_offsets.end());
+        }
+
+        return offsets;
+    }
+
+
     void ModelLoader::Attach() {
         _AttachBuffersAndTextures();
-        //uint32_t rel_ubo_offset = m_base_ubo_offset;
+        uint32_t rel_ubo_offset = m_base_ubo_offset + m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelCameraUbo)));
+
+        const uint32_t aligned_model_ubo_size = m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelUbo)));
+        const uint32_t aligned_animation_ubo_size = m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelAnimationUbo)));
 
         // create mesh loader instances
         for(uint32_t i = 0; i < m_parser.GetMeshCount(); i++) {
@@ -104,15 +122,15 @@ namespace DENG {
             
             // only similar attributes per mesh across primitives are allowed
             _CheckMeshPrimitives(mesh);
-            //uint32_t shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, m_parser.AccessMeshPrimitive(mesh.primitives[0]), m_base_ubo_offset, );
+            uint32_t shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, m_parser.AccessMeshPrimitive(mesh.primitives[0]), m_base_buffer_offset, m_base_ubo_offset);
 
             // attach mesh
-            //m_mesh_loaders.emplace_back(mesh, m_parser, m_renderer, shader_id);
-            //m_mesh_loaders.back().Attach();
+            m_mesh_loaders.emplace_back(mesh, m_parser, m_renderer, shader_id, rel_ubo_offset);
+            m_mesh_loaders.back().Attach();
+            m_mesh_ubo_offsets.push_back(rel_ubo_offset);
+            rel_ubo_offset += aligned_model_ubo_size + aligned_animation_ubo_size;
         }
 
-        
-        uint32_t sample_shader_id = m_mesh_loaders.front().GetShaderId(); // sample dummy shader id to use for updating uniforms
         
         // create animation sampler instances
         for(uint32_t i = 0; i < m_parser.GetAnimationCount(); i++) {
@@ -121,16 +139,27 @@ namespace DENG {
             m_animations.back().samplers.reserve(ani.channel_count);
 
             for(uint32_t j = 0; j < ani.channel_count; j++) {
-                //const Libdas::DasAnimationChannel &channel = m_parser.AccessAnimationChannel(ani.channels[j]);
-                //m_animations.back().samplers.emplace_back(channel, m_parser, sample_shader_id, MODEL_SHADER_ANIMATION_UBO_BINDING);
+                const Libdas::DasAnimationChannel &channel = m_parser.AccessAnimationChannel(ani.channels[j]);
+                std::vector<uint32_t> offsets = _GetMeshUboOffsetsFromNodeId(channel.node_id);
+                m_animations.back().samplers.emplace_back(channel, m_parser, offsets);
             }
         }
     }
 
     
     void ModelLoader::Update(const ModelCameraUbo &_camera) { 
-        // i don't need another compiler warning with -Wall okay
-        DENG_ASSERT(_camera.projection_mode);
-        std::cout << "Empty update function body desu" << std::endl;
+        // update camera
+        m_renderer.UpdateUniform(reinterpret_cast<const char*>(&_camera), static_cast<uint32_t>(sizeof(ModelCameraUbo)), m_base_ubo_offset);
+
+        ModelUbo ubo;
+
+        for(uint32_t i = 0; i < m_parser.GetMeshCount(); i++)
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(&ubo), static_cast<uint32_t>(sizeof(ModelUbo)), m_mesh_ubo_offsets[i]);
+
+        // update animations
+        for(auto ani = m_animations.begin(); ani != m_animations.end(); ani++) {
+            for(auto smp = ani->samplers.begin(); smp != ani->samplers.end(); smp++)
+                smp->Update(m_renderer);
+        }
     }
 }

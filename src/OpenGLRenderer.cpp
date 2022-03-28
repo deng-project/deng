@@ -64,13 +64,18 @@ namespace DENG {
         // Load all shaders into OpenGL and intialise buffer
         mp_buffer_loader = new OpenGL::BufferLoader();
         mp_shader_loader = new OpenGL::ShaderLoader();
+
+        // load missing texture
+        int x, y, size;
+        const char *tex = GetMissingTexture(x, y, size);
+        PushTextureFromMemory(MISSING_TEXTURE_NAME, tex, x, y, 4);
     }
 
 
     OpenGLRenderer::~OpenGLRenderer() {
         // delete texture objects
-        for(auto it = m_textures.begin(); it != m_textures.end(); it++)
-            glDeleteTextures(1, &it->r_identifier);
+        for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
+            glDeleteTextures(1, &it->second);
 
         delete mp_shader_loader;
         delete mp_buffer_loader;
@@ -335,14 +340,21 @@ namespace DENG {
     }
 
 
-    uint32_t OpenGLRenderer::PushTextureFromMemory(const DENG::TextureReference &_tex, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+    void OpenGLRenderer::PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
+        // check if the named texture already exists in texture map
+        if(m_opengl_textures.find(_name) != m_opengl_textures.end()) {
+            std::cerr << "Texture with name '" << _name << "' already exists in texture map" << std::endl;
+            DENG_ASSERT(false);
+            return;
+        }
+
         // check if there are any texture units available
         GLint max_units;
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_units);
 
-        if (static_cast<GLint>(m_textures.size() + 1) >= max_units) {
+        if(static_cast<GLint>(m_opengl_textures.size() + 1) >= max_units) {
             std::cerr << "Current texture exceeds the maximum texture capacity\n"\
-                         "Requested " << m_textures.size() + 1 << ", avalilable" << max_units << std::endl;
+                         "Requested " << m_opengl_textures.size() + 1 << ", avalilable" << max_units << std::endl;
             std::exit(1);
         }
 
@@ -372,44 +384,43 @@ namespace DENG {
         glGenerateMipmap(GL_TEXTURE_2D);
         glErrorCheck("glGenerateMipmap");
         
-        m_textures.push_back(_tex);
-        m_textures.back().r_identifier = static_cast<uint32_t>(m_opengl_textures.size());
-        m_opengl_textures.push_back(tex);
-        
-        return static_cast<uint32_t>(m_textures.size() - 1);
+        m_opengl_textures[_name] = tex;
     }
 
 
-    uint32_t OpenGLRenderer::PushTextureFromFile(const DENG::TextureReference &_tex, const std::string &_file_name) {
+    void OpenGLRenderer::PushTextureFromFile(const std::string &_name, const std::string &_file_name) {
         Libdas::TextureReader reader(Libdas::Algorithm::RelativePathToAbsolute(_file_name));
         size_t len;
         int x, y;
         const char *buf = reader.GetRawBuffer(x, y, len);
-        return PushTextureFromMemory(_tex, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
+        PushTextureFromMemory(_name, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
+    }
+
+
+    void OpenGLRenderer::RemoveTexture(const std::string &_name) {
+        // check if texture does not exist in current hash map
+        if(m_opengl_textures.find(_name) == m_opengl_textures.end()) {
+            std::cerr << "Requested texture with name '" << _name << "' does not exist for removal" << std::endl;
+            DENG_ASSERT(false);
+            return;
+        }
+
+        glDeleteTextures(1, &m_opengl_textures[_name]);
+    }
+
+
+    std::vector<std::string> OpenGLRenderer::GetTextureNames() {
+        std::vector<std::string> names;
+
+        for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
+            names.push_back(it->first);
+
+        return names;
     }
 
 
     uint32_t OpenGLRenderer::AlignUniformBufferOffset(uint32_t _req) {
         return AlignData(_req, mp_buffer_loader->GetUniformBufferOffsetAlignment());
-    }
-
-
-    void OpenGLRenderer::ShrinkTextures() {
-        if(m_textures.size() != m_opengl_textures.size()) {
-            std::vector<bool> shrink_table(m_opengl_textures.size());
-            std::fill(shrink_table.begin(), shrink_table.end(), true);
-
-            for(size_t i = 0; i < m_textures.size(); i++)
-                shrink_table[m_textures[i].r_identifier] = false;
-
-            size_t delta_shrink = 0;
-            for(size_t i = 0; i < shrink_table.size(); i++) {
-                if(shrink_table[i]) {
-                    glDeleteTextures(1, &m_opengl_textures[i - delta_shrink]);
-                    m_opengl_textures.erase(m_opengl_textures.begin() + (i - delta_shrink));
-                }
-            }
-        }
     }
 
 
@@ -512,20 +523,21 @@ namespace DENG {
                 for(auto ubo = m_shaders[shader_i].ubo_data_layouts.begin(); ubo != m_shaders[shader_i].ubo_data_layouts.end(); ubo++) {
                     const GLuint binding = static_cast<GLuint>(ubo->binding);
 
-                    if (ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
+                    if(ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
                         const GLintptr offset = static_cast<GLintptr>(ubo->offset);
                         const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->ubo_size);
 
                         glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");
-                    } else if(cmd_it->texture_id != UINT32_MAX) {
-                        const GLuint tex_id = m_opengl_textures[cmd_it->texture_id];
+                    } else if(m_shaders[shader_i].use_texture_mapping) {
+                        const GLuint tex_id = m_opengl_textures[cmd_it->texture_name];
 
                         glActiveTexture(GL_TEXTURE0 + binding);
                         glErrorCheck("glActiveTexture");
                         glBindTexture(GL_TEXTURE_2D, tex_id);
                         glErrorCheck("glBindTexture");
                     }
+
                 }
 
                 // check if scissoring was required

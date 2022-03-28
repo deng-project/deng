@@ -14,7 +14,7 @@
     #include <cstring>
     #include <fstream>
     #include <cmath>
-
+    #include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -35,6 +35,7 @@
     #include <ErrorDefinitions.h>
     #include <Window.h>
     #include <ShaderDefinitions.h>
+    #include <Missing.h>
     #include <Renderer.h>
 #endif
 
@@ -55,7 +56,7 @@ namespace DENG {
             OpenGL::ShaderLoader *mp_shader_loader = nullptr;
             OpenGL::BufferLoader *mp_buffer_loader = nullptr;
             std::vector<std::vector<uint32_t>> m_ubo_offsets;
-            std::vector<GLuint> m_opengl_textures;
+            std::unordered_map<std::string, GLuint> m_opengl_textures;
 
         private:
             void _BindVertexAttributes(uint32_t _shader_id, uint32_t _base_offset);
@@ -66,11 +67,14 @@ namespace DENG {
             OpenGLRenderer(const Window &_win, const RendererConfig &_conf);
             ~OpenGLRenderer();
             
-            virtual uint32_t PushTextureFromFile(const DENG::TextureReference &_tex, const std::string& _file_name) override;
-            virtual uint32_t PushTextureFromMemory(const DENG::TextureReference &_tex, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual void PushTextureFromFile(const std::string &_name, const std::string& _file_name) override;
+            virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual void RemoveTexture(const std::string &_name) override;
+
+            // slow
+            virtual std::vector<std::string> GetTextureNames() override;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void ShrinkTextures() override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;

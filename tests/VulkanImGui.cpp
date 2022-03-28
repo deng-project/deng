@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: VulkanImGui.h - Vulkan ImGui application implementation
+// file: VulkanImGui.cpp - Vulkan ImGui application implementation
 // author: Karl-Mihkel Ott
 
 #define USE_VULKAN

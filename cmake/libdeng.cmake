@@ -20,6 +20,7 @@ set(DENG_HEADERS
     include/HidEventManager.h
     include/ImGuiLayer.h
     include/MeshLoader.h
+    include/Missing.h
     include/ModelLoader.h
     include/ModelShaderManager.h
     include/OpenGLBufferLoader.h
@@ -27,9 +28,8 @@ set(DENG_HEADERS
     include/OpenGLShaderLoader.h
     include/Renderer.h
     include/ShaderDefinitions.h
-    include/VulkanDescriptorPoolCreator.h
+    include/VulkanDescriptorAllocator.h
     include/VulkanDescriptorSetLayoutCreator.h
-    include/VulkanDescriptorSetsCreator.h
     include/VulkanHelpers.h
     include/VulkanInstanceCreator.h
     include/VulkanPipelineCreator.h
@@ -42,6 +42,7 @@ set(DENG_SOURCES
     src/AnimationSampler.cpp
     src/ImGuiLayer.cpp
     src/Interpolation.cpp
+    src/Missing.cpp
     src/MeshLoader.cpp
     src/ModelLoader.cpp
     src/ModelShaderManager.cpp
@@ -49,9 +50,8 @@ set(DENG_SOURCES
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/ShaderDefinitions.cpp
-    src/VulkanDescriptorPoolCreator.cpp
+    src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
-    src/VulkanDescriptorSetsCreator.cpp
     src/VulkanHelpers.cpp
     src/VulkanInstanceCreator.cpp
     src/VulkanPipelineCreator.cpp
@@ -164,3 +164,12 @@ if(BUILD_DEPS)
         add_dependencies(${DENG_SHARED_TARGET} shaderc)
     endif()
 endif()
+
+
+add_custom_command(TARGET ${DENG_SHARED_TARGET}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/ModelShaders
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy_directory ${CMAKE_SOURCE_DIR}/shaders/ModelShaders ${CMAKE_CURRENT_BINARY_DIR}/ModelShaders
+)
