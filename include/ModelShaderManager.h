@@ -38,20 +38,21 @@
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
     #include <MeshLoader.h>
+    #include <ModelShaderGenerator.h>
 
-    static const std::string g_vertex_shader_files[] = {
-        "ModelShaders/PosUVNormalTang.vert",
-        "ModelShaders/PosUVNormal.vert",
-        "ModelShaders/PosUVTang.vert",
-        "ModelShaders/PosNormalTang.vert",
-        "ModelShaders/PosUV.vert",
-        "ModelShaders/PosNormal.vert",
-        "ModelShaders/PosTang.vert",
-        "ModelShaders/Pos.vert"
-    };
+    //static const std::string g_vertex_shader_files[] = {
+        //"ModelShaders/PosUVNormalTang.vert",
+        //"ModelShaders/PosUVNormal.vert",
+        //"ModelShaders/PosUVTang.vert",
+        //"ModelShaders/PosNormalTang.vert",
+        //"ModelShaders/PosUV.vert",
+        //"ModelShaders/PosNormal.vert",
+        //"ModelShaders/PosTang.vert",
+        //"ModelShaders/Pos.vert"
+    //};
 
-    #define UV_FRAGMENT_SHADER  "ModelShaders/UVMapped.frag"
-    #define COLORED_SHADER      "ModelShaders/Colored.frag"
+    //#define UV_FRAGMENT_SHADER  "ModelShaders/UVMapped.frag"
+    //#define COLORED_SHADER      "ModelShaders/Colored.frag"
 
     #define POS_UV_NORMAL_TANG  0
     #define POS_UV_NORMAL       1
@@ -77,6 +78,7 @@
 #define MODEL_SHADER_MODEL_UBO_BINDING          2
 
 
+#ifndef DENG_DEFS_ONLY
 namespace DENG {
 
     struct ModelCameraUbo {
@@ -104,6 +106,7 @@ namespace DENG {
     struct ModelUbo {
         Libdas::Matrix4<float> node_transform;
         Libdas::Matrix4<float> skeleton_transform;
+        Libdas::Vector4<float> color;
     };
 
     class ModelShaderManager {
@@ -122,5 +125,6 @@ namespace DENG {
                                                 const uint32_t _base_offset, const uint32_t _camera_ubo_offset);
     };
 }
+#endif
 
 #endif

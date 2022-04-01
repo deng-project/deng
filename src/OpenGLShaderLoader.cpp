@@ -145,7 +145,7 @@ namespace DENG {
             m_strides.reserve(_modules.size());
             for(ShaderModule &module : _modules) {
                 _CompileShadersToProgram(module);
-                m_strides.push_back(CalculateStride(module));
+                m_strides.push_back(CalculatePackedStride(module));
             }
         }
     }

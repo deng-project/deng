@@ -109,36 +109,34 @@ namespace DENG {
         // CameraUbo data
         _module.ubo_data_layouts.emplace_back();
         _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().binding = 0;
+        _module.ubo_data_layouts.back().block.binding = 0;
         _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        _module.ubo_data_layouts.back().ubo_size = sizeof(ModelCameraUbo);
-        _module.ubo_data_layouts.back().offset = _camera_ubo_offset;
+        _module.ubo_data_layouts.back().block.size = sizeof(ModelCameraUbo);
+        _module.ubo_data_layouts.back().block.offset = _camera_ubo_offset;
+        _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
 
         // AnimationUbo data
-        //_module.ubo_data_layouts.reserve(4);
-        //_module.ubo_data_layouts.emplace_back();
-        //_module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        //_module.ubo_data_layouts.back().binding = 0;
-        //_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        //_module.ubo_data_layouts.back().ubo_size = sizeof(ModelAnimationUbo);
-        //_module.ubo_data_layouts.back().offset = _base_offset;
-        //_base_offset += static_cast<uint32_t>(sizeof(ModelAnimationUbo));
+        _module.ubo_data_layouts.reserve(4);
+        _module.ubo_data_layouts.emplace_back();
+        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        _module.ubo_data_layouts.back().block.binding = 1;
+        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+        _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
 
         //// ModelUbo
-        //_module.ubo_data_layouts.emplace_back();
-        //_module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        //_module.ubo_data_layouts.back().binding = 2;
-        //_module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        //_module.ubo_data_layouts.back().ubo_size = sizeof(ModelUbo);
-        //_module.ubo_data_layouts.back().offset = _rend.AlignUniformBufferOffset(_base_offset);
-        //_base_offset += static_cast<uint32_t>(sizeof(ModelUbo));
+        _module.ubo_data_layouts.emplace_back();
+        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        _module.ubo_data_layouts.back().block.binding = 2;
+        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
+        _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
             
         // check if uv attributes are present and if they are, add sampler
         if(_id == POS_UV_NORMAL_TANG || _id == POS_UV_NORMAL || _id == POS_UV_TANG || _id == POS_UV) {
             _module.ubo_data_layouts.emplace_back();
             _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
-            _module.ubo_data_layouts.back().binding = 3;
+            _module.ubo_data_layouts.back().block.binding = 3;
             _module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
+            _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
         }
     }
 
@@ -165,16 +163,15 @@ namespace DENG {
         if(m_shader_ids[id] == UINT32_MAX) {
             ShaderModule module;
             if(mask & UV_ATTR_MASK)
-                module.fragment_shader_file = UV_FRAGMENT_SHADER;
-            else module.fragment_shader_file = COLORED_SHADER;
+                module.fragment_shader_src = ModelShaderGenerator::GetSampledFragmentShaderSource();
+            else module.fragment_shader_src = ModelShaderGenerator::GetColoredFragmentShaderSource();
 
             _GetAttributesByType(_parser, _mesh, id, module, _base_offset);
             _GetUniforms(module, _camera_ubo_offset, id);
 
-            module.vertex_shader_file = g_vertex_shader_files[id];
-            if(mask & UV_ATTR_MASK) module.fragment_shader_file = UV_FRAGMENT_SHADER;
-            else module.fragment_shader_file = COLORED_SHADER;
-            module.load_shaders_from_file = true;
+            module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(mask);
+            module.load_shaders_from_file = false;
+            module.use_seperate_attribute_strides = true;
             m_shader_ids[id] = _rend.PushShader(module);
         }
 

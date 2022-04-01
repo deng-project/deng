@@ -10,6 +10,7 @@
     #include <string>
     #include <vector>
     #include <unordered_map>
+    #include <variant>
     #include <vulkan/vulkan.h>
 
     #include <ErrorDefinitions.h>
@@ -26,7 +27,7 @@ namespace DENG {
                 const VkDevice m_device;
                 const VkBuffer m_uniform_buffer;
                 const VkDescriptorSetLayout m_descriptor_set_layout;
-                const std::vector<UniformDataLayout> &m_ubo_layouts;
+                const std::variant<std::vector<UniformDataLayout>*, std::vector<UniformBufferBlock>*> m_ubo_desc;
                 const uint32_t m_swapchain_image_count;
                 const Vulkan::TextureData &m_missing;
                 bool m_is_sampled = false;
@@ -41,7 +42,7 @@ namespace DENG {
                 void _UpdateDescriptorSets(const Vulkan::TextureData &_tex, size_t _beg);
 
             public:
-                DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, const std::vector<UniformDataLayout> &_ubo_layouts, 
+                DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, const std::variant<std::vector<UniformDataLayout>*, std::vector<UniformBufferBlock>*> &_ubo_desc, 
                                     uint32_t _sc_img_c, const Vulkan::TextureData &_missing, uint32_t _pool_cap = 1);
                 ~DescriptorAllocator();
                 DescriptorAllocator &operator=(const DescriptorAllocator &_da);

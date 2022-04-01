@@ -1,17 +1,27 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-// input data
+/* VULKAN ONLY */
+
+/*** Input data ***/
+
 layout(location = 0) in vec3 i_pos;
 layout(location = 1) in vec2 i_uv;
 layout(location = 2) in vec3 i_norm;
 layout(location = 3) in vec4 i_tang;
 
-// output data
+/*** End of input data ***/
+
+/*** Output data ***/
+
 layout(location = 0) out vec2 o_uv;
 
+/*** End of output data ***/
+
+/*** Uniform data section ***/
+
 // Camera uniform data
-layout(binding = 0) uniform CameraUbo {
+layout(set = 0, binding = 0) uniform CameraUbo {
     mat4 projection;
     mat4 view;
 } camera;
@@ -27,7 +37,7 @@ layout(binding = 0) uniform CameraUbo {
 #define INTERPOLATION_TYPE_STEP         1
 #define INTERPOLATION_TYPE_CUBICSPLINE  2
 
-layout(binding = 1) uniform AnimationUbo {
+layout(set = 1, binding = 1) uniform AnimationUbo {
     vec4 rotations[2];      // quaternions
     vec4 weights[2];        // point structures
     vec4 translations[2];   // point structures
@@ -44,13 +54,14 @@ layout(binding = 1) uniform AnimationUbo {
 
 
 // Model uniform data
-layout(binding = 2) uniform ModelUbo {
+layout(set = 1, binding = 2) uniform ModelUbo {
     mat4 node;
     mat4 skeleton;
 } model;
 
-/*** Quaternion operations ***/
+/*** End of uniform data section ***/
 
+/*** Quaternion operations ***/
 vec4 QConjugate(vec4 _q1) {
     return vec4(-_q1.xyz, _q1.w);
 }
@@ -81,13 +92,6 @@ mat4 QToMatrix(vec4 _q) {
     float yw = _q.y * _q.w;
 
     float zw = _q.z * _q.w;
-
-    //mat4 m = mat4(
-        //(1 - 2 * y2 - 2 * z2), (2 * xy - 2 * zw), (2 * xz - 2 * yw), 0,
-        //(2 * xy + 2 * zw), (1 - 2 * x2 - 2 * z2), (2 * yz - 2 * xw), 0,
-        //(2 * xz - 2 * yw), (2 * yz + 2 * xw), (1 - 2 * x2 - 2 * y2), 0,
-        //0, 0, 0, 1
-    //);
 
     mat4 m = mat4(
         (1 - 2 * y2 - 2 * z2), (2 * xy + 2 * zw), (2 * xz - 2 * yw), 0,
@@ -235,7 +239,7 @@ mat4 CalculateAnimation() {
     return ani_mat;
 }
 
-/*** End of animation functions ***/
+/*** End of animation functions */
 
 
 void main() {
@@ -244,6 +248,7 @@ void main() {
     mat4 c = camera.projection * camera.view;
     mat4 m = model.skeleton * model.node;
 
+    //gl_Position = a * c * m * vec4(i_pos, 1.0f);
     gl_Position = a * c * m * vec4(i_pos, 1.0f);
     o_uv = i_uv;
 }

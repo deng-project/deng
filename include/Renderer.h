@@ -39,7 +39,7 @@ namespace DENG {
         std::string name = "Mesh";
         uint32_t shader_module_id = 0;
         std::vector<DrawCommand> commands;
-        std::vector<UniformDataLayout> ubo_data_layouts;    // per mesh uniforms
+        std::vector<UniformBufferBlock> ubo_blocks;
     };
 
 

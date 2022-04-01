@@ -14,6 +14,7 @@
 #include <chrono>
 #include <vector>
 #include <cstring>
+#include <variant>
 #include <unordered_map>
 
 #ifdef _DEBUG

@@ -50,6 +50,10 @@ namespace DENG {
             const uint32_t m_shader_id;
             const uint32_t m_ubo_offset;
 
+            // Uniform node data
+            Libdas::Matrix4<float> m_node_transform;
+            Libdas::Matrix4<float> m_skeleton_transform;
+
         public:
             MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset);
             void Attach();
@@ -72,6 +76,23 @@ namespace DENG {
             }
 
             static uint32_t CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset);
+
+            // transform setters and getters
+            inline Libdas::Matrix4<float> &GetNodeTransform() {
+                return m_node_transform;
+            }
+
+            inline Libdas::Matrix4<float> &GetSkeletonTransform() {
+                return m_skeleton_transform;
+            }
+
+            inline void SetNodeTransform(const Libdas::Matrix4<float> &_node) {
+                m_node_transform = _node;
+            }
+
+            inline void SetSkeletonTransform(const Libdas::Matrix4<float> &_skeleton) {
+                m_skeleton_transform = _skeleton;
+            }
 
     };
 }

@@ -110,14 +110,14 @@ namespace DENG {
 
         module.ubo_data_layouts.reserve(2);
         module.ubo_data_layouts.emplace_back();
-        module.ubo_data_layouts.back().binding = 0;
+        module.ubo_data_layouts.back().block.binding = 0;
         module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
-        module.ubo_data_layouts.back().ubo_size = sizeof(Libdas::Point2D<float>);
-        module.ubo_data_layouts.back().offset = m_ubo_offset;
+        module.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(Libdas::Point2D<float>));
+        module.ubo_data_layouts.back().block.offset = m_ubo_offset;
 
         module.ubo_data_layouts.emplace_back();
-        module.ubo_data_layouts.back().binding = 1;
+        module.ubo_data_layouts.back().block.binding = 1;
         module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 

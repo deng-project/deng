@@ -65,18 +65,29 @@ namespace DENG {
     };
 
 
+    enum UniformUsage {
+        UNIFORM_USAGE_PER_SHADER,
+        UNIFORM_USAGE_PER_MESH
+    };
+
+
     typedef uint8_t ShaderStage;
     #define SHADER_STAGE_VERTEX     0x01
     #define SHADER_STAGE_GEOMETRY   0x02
     #define SHADER_STAGE_FRAGMENT   0x04
 
+    struct UniformBufferBlock {
+        uint32_t binding = 0;
+        uint32_t size = 0;
+        uint32_t offset = 0;
+    };
+
     // Structure to be passed into the renderer
     struct UniformDataLayout {
+        UniformBufferBlock block = {};
         UniformDataType type;
-        uint32_t binding = 0;
         ShaderStage stage;
-        uint32_t ubo_size = 0;
-        uint32_t offset = 0;
+        UniformUsage usage = UNIFORM_USAGE_PER_SHADER;
     };
 
     enum CullMode {
@@ -104,10 +115,12 @@ namespace DENG {
         bool enable_depth_testing = false;
         bool enable_stencil_testing = false;
         bool enable_blend = false;
+        bool use_seperate_attribute_strides = false;
         CullMode cull_mode = CULL_MODE_NONE;
     };
 
-    std::size_t CalculateStride(const ShaderModule &_module);
+    std::size_t CalculatePackedStride(const ShaderModule &_module);
+    std::size_t CalculateAttributeStride(const AttributeType _attr);
 }
 
 #endif

@@ -10,8 +10,8 @@
 namespace DENG {
     namespace Vulkan {
 
-        PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, VkDescriptorSetLayout _desc_set_layout, ShaderModule &_module) :
-            m_device(_dev), m_desc_set_layout(_desc_set_layout), m_ext(_ext), m_samples(_samples), m_module(_module), m_render_pass(_render_pass)
+        PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, ShaderModule &_module) :
+            m_device(_dev), m_desc_set_layouts(_desc_set_layouts), m_ext(_ext), m_samples(_samples), m_module(_module), m_render_pass(_render_pass)
         {
             _CreatePipelineLayout();
 
@@ -199,17 +199,33 @@ namespace DENG {
 
 
         void PipelineCreator::_FindInputBindingDescriptions(const ShaderModule &_module) {
-            m_input_binding_desc.emplace_back();
-            m_input_binding_desc.back().binding = m_input_binding_desc.size() - 1;
-            m_input_binding_desc.back().stride = static_cast<uint32_t>(CalculateStride(_module));
-            m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            // 1. use tightly packed vertices
+            // 2. use separate attribute locations
+            if(!_module.use_seperate_attribute_strides) {
+                m_input_binding_desc.emplace_back();
+                m_input_binding_desc.back().binding = 0;
+                m_input_binding_desc.back().stride = static_cast<uint32_t>(CalculatePackedStride(_module));
+                m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            } else {
+                m_input_binding_desc.reserve(_module.attributes.size());
+
+                for(auto it = _module.attributes.begin(); it != _module.attributes.end(); it++) {
+                    uint32_t i = static_cast<uint32_t>(it - _module.attributes.begin());
+                    m_input_binding_desc.emplace_back();
+                    m_input_binding_desc.back().binding = i;
+                    m_input_binding_desc.back().stride = static_cast<uint32_t>(CalculateAttributeStride(*it));
+                    m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                }
+            }
         }
 
 
         void PipelineCreator::_FindVertexInputAttributeDescriptions(const ShaderModule &_module) {
             for(uint32_t i = 0; i < static_cast<uint32_t>(_module.attributes.size()); i++) {
                 m_input_attr_descs.push_back(VkVertexInputAttributeDescription{});
-                m_input_attr_descs.back().binding = 0;
+                if(_module.use_seperate_attribute_strides)
+                    m_input_attr_descs.back().binding = i;
+                else m_input_attr_descs.back().binding = 0;
                 m_input_attr_descs.back().location = i;
 
                 switch(_module.attributes[i]) {
@@ -346,7 +362,9 @@ namespace DENG {
                         break;
                 }
 
-                m_input_attr_descs.back().offset = _module.offsets[i];
+                if(!_module.use_seperate_attribute_strides)
+                    m_input_attr_descs.back().offset = _module.offsets[i];
+                else m_input_attr_descs.back().offset = 0;
             }
         }
 
@@ -404,8 +422,23 @@ namespace DENG {
             VkPipelineLayoutCreateInfo pipeline_layout_createinfo = {};
             pipeline_layout_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipeline_layout_createinfo.pushConstantRangeCount = 0;
-            pipeline_layout_createinfo.setLayoutCount = 1;
-            pipeline_layout_createinfo.pSetLayouts = &m_desc_set_layout;
+            
+            // 1. only per shader descriptor set layouts are present
+            // 2. only per mesh descriptor set layouts are present
+            // 3. all descriptor set layouts are present
+            if(m_desc_set_layouts[0] != VK_NULL_HANDLE && m_desc_set_layouts[1] == VK_NULL_HANDLE) {
+                pipeline_layout_createinfo.setLayoutCount = 1;
+                pipeline_layout_createinfo.pSetLayouts = m_desc_set_layouts.data();
+            } else if(m_desc_set_layouts[0] == VK_NULL_HANDLE && m_desc_set_layouts[1] != VK_NULL_HANDLE) {
+                pipeline_layout_createinfo.setLayoutCount = 1;
+                pipeline_layout_createinfo.pSetLayouts = &m_desc_set_layouts[1];
+            } else {
+                pipeline_layout_createinfo.setLayoutCount = 2;
+                pipeline_layout_createinfo.pSetLayouts = m_desc_set_layouts.data();
+            }
+
+            pipeline_layout_createinfo.setLayoutCount = 2;
+            pipeline_layout_createinfo.pSetLayouts = m_desc_set_layouts.data();
 
             if(vkCreatePipelineLayout(m_device, &pipeline_layout_createinfo, NULL, &m_pipeline_layout) != VK_SUCCESS)
                 VK_PIPELINEC_ERR("failed to create a pipeline layout");

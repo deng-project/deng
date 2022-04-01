@@ -10,12 +10,12 @@
 namespace DENG {
     namespace Vulkan {
     
-        DescriptorAllocator::DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, const std::vector<UniformDataLayout> &_ubo_layouts, 
+        DescriptorAllocator::DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, const std::variant<std::vector<UniformDataLayout>*, std::vector<UniformBufferBlock>*> &_ubo_desc, 
                                                  uint32_t _sc_img_c, const Vulkan::TextureData &_missing, uint32_t _pool_cap) :
             m_device(_dev),
             m_uniform_buffer(_u_buffer),
             m_descriptor_set_layout(_layout),
-            m_ubo_layouts(_ubo_layouts),
+            m_ubo_desc(_ubo_desc),
             m_swapchain_image_count(_sc_img_c),
             m_missing(_missing),
             m_pool_capacity(_pool_cap)
@@ -32,30 +32,65 @@ namespace DENG {
 
 
         DescriptorAllocator &DescriptorAllocator::operator=(const DescriptorAllocator &_da) {
-            this->m_descriptor_sets = _da.m_descriptor_sets;
+            m_is_sampled = _da.m_is_sampled;
+            m_pool = _da.m_pool;
+            m_pool_capacity = _da.m_pool_capacity;
+            m_descriptor_sets = _da.m_descriptor_sets;
+            m_texture_bound_desc_sets = _da.m_texture_bound_desc_sets;
             return *this;
         }
 
 
         void DescriptorAllocator::_AllocateDescriptorPool() {
-            std::vector<VkDescriptorPoolSize> desc_sizes(m_ubo_layouts.size());
+            std::vector<VkDescriptorPoolSize> desc_sizes;
 
-            for(size_t i = 0; i < desc_sizes.size(); i++) {
-                switch(m_ubo_layouts[i].type) {
-                    case UNIFORM_DATA_TYPE_BUFFER:
-                        desc_sizes[i].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                        break;
+            // check ubo desc index
+            switch(m_ubo_desc.index()) {
+                // per shader descriptor
+                case 0:
+                    {
+                        std::vector<UniformDataLayout> *layouts = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
+                        desc_sizes.reserve(layouts->size());
 
-                    case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
-                        desc_sizes[i].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        break;
+                        for(size_t i = 0; i < layouts->size(); i++) {
+                            if(layouts->at(i).usage != UNIFORM_USAGE_PER_MESH) {
+                                desc_sizes.emplace_back();
+                                switch(layouts->at(i).type) {
+                                    case UNIFORM_DATA_TYPE_BUFFER:
+                                        desc_sizes.back().type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                                        break;
 
-                    default:
-                        DENG_ASSERT(false);
-                        break;
-                }
+                                    case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                        desc_sizes.back().type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                        break;
 
-                desc_sizes[i].descriptorCount = m_pool_capacity * m_swapchain_image_count;
+                                    default:
+                                        DENG_ASSERT(false);
+                                        break;
+                                }
+
+                                desc_sizes.back().descriptorCount = m_pool_capacity * m_swapchain_image_count;
+                            }
+                        }
+                    }
+                    break;
+
+                // per mesh descriptor
+                case 1:
+                    {
+                        std::vector<UniformBufferBlock> *block = std::get<std::vector<UniformBufferBlock>*>(m_ubo_desc);
+                        desc_sizes.resize(block->size());
+
+                        for(auto it = desc_sizes.begin(); it != desc_sizes.end(); it++) {
+                            it->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;       // per mesh descriptor is always uniform buffer type
+                            it->descriptorCount = m_pool_capacity * m_swapchain_image_count;
+                        }
+                    }
+                    break;
+
+                default:
+                    DENG_ASSERT(false);
+                    break;
             }
 
             VkDescriptorPoolCreateInfo desc_pool_info = {};
@@ -100,63 +135,108 @@ namespace DENG {
             std::vector<VkDescriptorBufferInfo> buffer_infos;
             std::vector<VkDescriptorImageInfo> img_infos;
             std::vector<VkWriteDescriptorSet> write_sets;
-            buffer_infos.reserve(m_ubo_layouts.size());
-            img_infos.reserve(m_ubo_layouts.size());
-            write_sets.reserve(m_swapchain_image_count * m_ubo_layouts.size());
 
-            // for each data layout create appropriate write infos
-            for(auto it = m_ubo_layouts.begin(); it != m_ubo_layouts.end(); it++) {
-                switch(it->type) {
-                    case UNIFORM_DATA_TYPE_BUFFER:
-                        buffer_infos.emplace_back();
-                        buffer_infos.back().buffer = m_uniform_buffer;
-                        buffer_infos.back().offset = it->offset;
-                        buffer_infos.back().range = it->ubo_size;
-                        break;
+            switch(m_ubo_desc.index()) {
+                // per shader uniform
+                case 0:
+                    {
+                        std::vector<UniformDataLayout> *layout = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
 
-                    case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
-                        img_infos.emplace_back();
-                        img_infos.back().sampler = _tex.sampler;
-                        img_infos.back().imageView = _tex.image_view;
-                        img_infos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        break;
+                        buffer_infos.reserve(layout->size());
+                        img_infos.reserve(layout->size());
+                        write_sets.reserve(m_swapchain_image_count * layout->size());
 
-                    default:
-                        DENG_ASSERT(false);
-                        break;
-                }
-            }
+                        // for each data layout create appropriate write infos
+                        for(auto it = layout->begin(); it != layout->end(); it++) {
+                            if(it->usage == UNIFORM_USAGE_PER_SHADER) {
+                                switch(it->type) {
+                                    case UNIFORM_DATA_TYPE_BUFFER:
+                                        buffer_infos.emplace_back();
+                                        buffer_infos.back().buffer = m_uniform_buffer;
+                                        buffer_infos.back().offset = it->block.offset;
+                                        buffer_infos.back().range = it->block.size;
+                                        break;
 
-            // create write infos
-            for(auto desc_it = m_descriptor_sets.begin() + _beg; desc_it < m_descriptor_sets.end(); desc_it++) {
-                uint32_t used_buffers = 0;
-                uint32_t used_imgs = 0;
-                for(auto ubo_it = m_ubo_layouts.begin(); ubo_it != m_ubo_layouts.end(); ubo_it++) {
-                    write_sets.emplace_back();
-                    write_sets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    write_sets.back().dstSet = *desc_it;
-                    write_sets.back().dstBinding = ubo_it->binding;
-                    write_sets.back().dstArrayElement = 0;
-                    write_sets.back().descriptorCount = 1;
+                                    case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                        img_infos.emplace_back();
+                                        img_infos.back().sampler = _tex.sampler;
+                                        img_infos.back().imageView = _tex.image_view;
+                                        img_infos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                        break;
 
-                    switch(ubo_it->type) {
-                        case UNIFORM_DATA_TYPE_BUFFER:
-                            write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                            write_sets.back().pBufferInfo = &buffer_infos[used_buffers++];
-                            write_sets.back().pImageInfo = nullptr;
-                            break;
+                                    default:
+                                        DENG_ASSERT(false);
+                                        break;
+                                }
+                            }
+                        }
 
-                        case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
-                            write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                            write_sets.back().pImageInfo = &img_infos[used_imgs++];
-                            write_sets.back().pBufferInfo = nullptr;
-                            break;
+                        // create write infos
+                        for(auto desc_it = m_descriptor_sets.begin() + _beg; desc_it < m_descriptor_sets.end(); desc_it++) {
+                            uint32_t used_buffers = 0;
+                            uint32_t used_imgs = 0;
+                            for(auto ubo_it = layout->begin(); ubo_it != layout->end(); ubo_it++) {
+                                if(ubo_it->usage == UNIFORM_USAGE_PER_SHADER) {
+                                    write_sets.emplace_back();
+                                    write_sets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                                    write_sets.back().dstSet = *desc_it;
+                                    write_sets.back().dstBinding = ubo_it->block.binding;
+                                    write_sets.back().dstArrayElement = 0;
+                                    write_sets.back().descriptorCount = 1;
 
-                        default:
-                            DENG_ASSERT(false);
-                            break;
+                                    switch(ubo_it->type) {
+                                        case UNIFORM_DATA_TYPE_BUFFER:
+                                            write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                                            write_sets.back().pBufferInfo = &buffer_infos[used_buffers++];
+                                            write_sets.back().pImageInfo = nullptr;
+                                            break;
+
+                                        case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                            write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                            write_sets.back().pImageInfo = &img_infos[used_imgs++];
+                                            write_sets.back().pBufferInfo = nullptr;
+                                            break;
+
+                                        default:
+                                            DENG_ASSERT(false);
+                                            break;
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
+                    break;
+
+                // per mesh uniform
+                case 1:
+                    {
+                        std::vector<UniformBufferBlock> *block = std::get<std::vector<UniformBufferBlock>*>(m_ubo_desc);
+                        buffer_infos.reserve(block->size());
+
+                        for(auto it = block->begin(); it != block->end(); it++) {
+                            buffer_infos.emplace_back();
+                            buffer_infos.back().buffer = m_uniform_buffer;
+                            buffer_infos.back().offset = it->offset;
+                            buffer_infos.back().range = it->size;
+                        }
+
+                        for(auto desc_it = m_descriptor_sets.begin() + _beg; desc_it < m_descriptor_sets.end(); desc_it++) {
+                            uint32_t used_buffers = 0;
+                            for(auto ubo_it = block->begin(); ubo_it != block->end(); ubo_it++) {
+                                write_sets.emplace_back();
+                                write_sets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                                write_sets.back().dstSet = *desc_it;
+                                write_sets.back().dstBinding = ubo_it->binding;
+                                write_sets.back().dstArrayElement = 0;
+                                write_sets.back().descriptorCount = 1;
+
+                                write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                                write_sets.back().pBufferInfo = &buffer_infos[used_buffers++];
+                                write_sets.back().pImageInfo = nullptr;
+                            }
+                        }
+                    }
+                    break;
             }
 
             vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(write_sets.size()), write_sets.data(), 0, nullptr);

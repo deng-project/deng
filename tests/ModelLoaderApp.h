@@ -61,16 +61,21 @@
 #define WIDTH   1280
 #define HEIGHT  720
 
-#define MODEL_FILE_NAME  "cube.das"
+#define CONFIG_FILE  "loader.conf"
 
 class ModelLoaderApp {
     private: 
         DENG::ModelLoader m_loader;
         DENG::Window &m_window;
         DENG::Renderer &m_renderer;
+        std::string m_file_name;
 
     public:
-        ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend) : m_loader(MODEL_FILE_NAME, _rend, 0, 0), m_window(_win), m_renderer(_rend) {
+        ModelLoaderApp(const std::string &_file_name, DENG::Window &_win, DENG::Renderer &_rend) : 
+            m_loader(_file_name, _rend, 0, 0), 
+            m_window(_win), 
+            m_renderer(_rend) 
+        {
             m_loader.Attach();
             m_renderer.LoadShaders();
         }

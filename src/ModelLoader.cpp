@@ -65,6 +65,32 @@ namespace DENG {
     }
 
 
+    void ModelLoader::_AttachNodeAndSkeletonTransforms(uint32_t _scene_id) {
+        const Libdas::DasScene &scene = m_parser.AccessScene(_scene_id);
+        
+        for(uint32_t i = 0; i < scene.root_count; i++) {
+            // traverse the node tree
+            std::stack<std::pair<uint32_t, Libdas::Matrix4<float>>> st;
+            st.push(std::make_pair(scene.roots[i], m_parser.AccessNode(scene.roots[i]).transform));
+
+            while(!st.empty()) {
+                const Libdas::DasNode &node = m_parser.AccessNode(st.top().first);
+                const Libdas::Matrix4<float> mat = st.top().second;
+                st.pop();
+
+                for(uint32_t i = 0; i < node.children_count; i++)
+                    st.push(std::make_pair(node.children[i], node.transform * mat));
+
+                // submit the transformation matrix to the mesh if mesh exists for current node
+                if(node.mesh != UINT32_MAX)
+                    m_mesh_loaders[node.mesh].SetNodeTransform(mat);
+            }
+        }
+
+        // SKELETON transformation are not yet implemented
+    }
+
+
     void ModelLoader::_CheckMeshPrimitives(const Libdas::DasMesh &_mesh) {
         BufferType base_mask = 0; // uninitialised
         DENG_ASSERT(_mesh.primitive_count);
@@ -142,8 +168,11 @@ namespace DENG {
                 const Libdas::DasAnimationChannel &channel = m_parser.AccessAnimationChannel(ani.channels[j]);
                 std::vector<uint32_t> offsets = _GetMeshUboOffsetsFromNodeId(channel.node_id);
                 m_animations.back().samplers.emplace_back(channel, m_parser, offsets);
+                m_animations.back().samplers.back().Animate(true);
             }
         }
+
+        _AttachNodeAndSkeletonTransforms(0);
     }
 
     
@@ -151,15 +180,20 @@ namespace DENG {
         // update camera
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(&_camera), static_cast<uint32_t>(sizeof(ModelCameraUbo)), m_base_ubo_offset);
 
-        ModelUbo ubo;
-
-        for(uint32_t i = 0; i < m_parser.GetMeshCount(); i++)
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(&ubo), static_cast<uint32_t>(sizeof(ModelUbo)), m_mesh_ubo_offsets[i]);
+        for(uint32_t i = 0; i < m_parser.GetMeshCount(); i++) {
+            uint32_t rel = m_renderer.AlignUniformBufferOffset(sizeof(ModelAnimationUbo));
+            ModelUbo model_ubo;
+            model_ubo.node_transform = m_mesh_loaders[i].GetNodeTransform();
+            model_ubo.skeleton_transform = m_mesh_loaders[i].GetSkeletonTransform();
+            model_ubo.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(&model_ubo), static_cast<uint32_t>(sizeof(ModelUbo)), m_mesh_ubo_offsets[i] + rel);
+        }
 
         // update animations
         for(auto ani = m_animations.begin(); ani != m_animations.end(); ani++) {
-            for(auto smp = ani->samplers.begin(); smp != ani->samplers.end(); smp++)
+            for(auto smp = ani->samplers.begin(); smp != ani->samplers.end(); smp++) {
                 smp->Update(m_renderer);
+            }
         }
     }
 }

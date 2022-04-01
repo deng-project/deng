@@ -15,6 +15,7 @@
     #include <unordered_map>
     #include <chrono>
     #include <variant>
+    #include <stack>
     #include <any>
 #ifdef _DEBUG
     #include <iostream>
@@ -67,6 +68,9 @@ namespace DENG {
 
         private:
             void _AttachBuffersAndTextures();
+            void _AttachNodeAndSkeletonTransforms(uint32_t _scene_id);
+            void _REC_AttachNodeTransforms(uint32_t *_nodes, uint32_t _node_count);
+            void _FindSceneRootNodes(uint32_t _scene_id);
             void _CheckMeshPrimitives(const Libdas::DasMesh &_mesh); // mesh primitives should all have the same vertex attributes
             std::vector<uint32_t> _GetMeshUboOffsetsFromNodeId(uint32_t _node_id);
 

@@ -425,18 +425,6 @@ namespace DENG {
 
 
     void OpenGLRenderer::LoadShaders() {
-        m_ubo_offsets.reserve(m_shaders.size());
-
-        uint32_t offset = mp_buffer_loader->GetUniformBufferOffsetAlignment();
-        for(auto shader_it = m_shaders.begin(); shader_it != m_shaders.end(); shader_it++) {
-            m_ubo_offsets.emplace_back();
-
-            for(auto ubo_it = shader_it->ubo_data_layouts.begin(); ubo_it != shader_it->ubo_data_layouts.end(); ubo_it++) {
-                m_ubo_offsets.back().push_back(offset);
-                offset += AlignData(ubo_it->ubo_size, mp_buffer_loader->GetUniformBufferOffsetAlignment());
-            }
-        }
-
         mp_shader_loader->LoadShaders(m_shaders);
     }
 
@@ -509,11 +497,10 @@ namespace DENG {
                 _BindVertexAttributes(shader_i, cmd_it->vertices_offset);
 
                 // for each mesh uniform object bind appropriate buffer ranges
-                for(auto ubo = mesh_it->ubo_data_layouts.begin(); ubo != mesh_it->ubo_data_layouts.begin(); ubo++) {
-                    DENG_ASSERT(ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER);
+                for(auto ubo = mesh_it->ubo_blocks.begin(); ubo != mesh_it->ubo_blocks.begin(); ubo++) {
                     const GLuint binding = static_cast<GLuint>(ubo->binding);
                     const GLintptr offset = static_cast<GLintptr>(ubo->offset);
-                    const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->ubo_size);
+                    const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->size);
 
                     glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                     glErrorCheck("glBindBufferRange");
@@ -521,11 +508,11 @@ namespace DENG {
 
                 // for each shader uniform object bind appropriate uniform buffer ranges
                 for(auto ubo = m_shaders[shader_i].ubo_data_layouts.begin(); ubo != m_shaders[shader_i].ubo_data_layouts.end(); ubo++) {
-                    const GLuint binding = static_cast<GLuint>(ubo->binding);
+                    const GLuint binding = static_cast<GLuint>(ubo->block.binding);
 
                     if(ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
-                        const GLintptr offset = static_cast<GLintptr>(ubo->offset);
-                        const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->ubo_size);
+                        const GLintptr offset = static_cast<GLintptr>(ubo->block.offset);
+                        const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->block.size);
 
                         glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");

@@ -37,14 +37,15 @@ namespace DENG {
             private:
                 VkDevice m_device;
                 ShaderModule const *m_shader_module;
-                MeshReference const *m_sample_mesh;
-                VkDescriptorSetLayout m_descriptor_set_layout = VK_NULL_HANDLE;
+                VkDescriptorSetLayout m_per_shader_descriptor_set_layout = VK_NULL_HANDLE;
+                VkDescriptorSetLayout m_per_mesh_descriptor_set_layout = VK_NULL_HANDLE;
 
             private:
-                void _CreateDescriptorSetLayout();
+                void _CreatePerShaderDescriptorSetLayout();
+                void _CreatePerMeshDescriptorSetLayout();
 
             public:
-                DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module, const MeshReference &_mesh);
+                DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module);
                 DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = default;
                 DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc);
                 ~DescriptorSetLayoutCreator();
@@ -52,7 +53,8 @@ namespace DENG {
                 DescriptorSetLayoutCreator &operator=(const DescriptorSetLayoutCreator &_dslc);
                 DescriptorSetLayoutCreator &operator=(DescriptorSetLayoutCreator &&_dslc);
 
-                inline VkDescriptorSetLayout GetDescriptorSetLayout() { return m_descriptor_set_layout; }
+                inline VkDescriptorSetLayout GetPerShaderDescriptorSetLayout() { return m_per_shader_descriptor_set_layout; }
+                inline VkDescriptorSetLayout GetPerMeshDescriptorSetLayout() { return m_per_mesh_descriptor_set_layout; }
         };
     }
 }

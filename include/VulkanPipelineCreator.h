@@ -26,7 +26,7 @@ namespace DENG {
         class PipelineCreator {
             private:
                 VkDevice m_device = VK_NULL_HANDLE;
-                VkDescriptorSetLayout m_desc_set_layout = VK_NULL_HANDLE;
+                std::array<VkDescriptorSetLayout, 2> m_desc_set_layouts; // [ per shader, per mesh ]
                 VkViewport m_viewport = {};
                 VkRect2D m_scissor = {};
                 VkExtent2D m_ext = {};
@@ -73,7 +73,7 @@ namespace DENG {
                 VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(bool _create_shader_modules = true);
 
             public:
-                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, VkDescriptorSetLayout _desc_set_layout, ShaderModule &_module);
+                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, ShaderModule &_module);
                 PipelineCreator(const PipelineCreator &_pc);
                 PipelineCreator(PipelineCreator &&_pc);
                 ~PipelineCreator();

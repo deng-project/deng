@@ -25,6 +25,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <variant>
 #include <unordered_map>
 
 #include <libdas/include/Points.h>
@@ -102,7 +103,7 @@ class TriangleApp {
 
             // setup sampler layout specification
             m_module.ubo_data_layouts.emplace_back();
-            m_module.ubo_data_layouts.back().binding = 0;
+            m_module.ubo_data_layouts.back().block.binding = 0;
             m_module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
             m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 

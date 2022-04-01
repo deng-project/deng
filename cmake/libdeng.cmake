@@ -23,6 +23,7 @@ set(DENG_HEADERS
     include/Missing.h
     include/ModelLoader.h
     include/ModelShaderManager.h
+    include/ModelShaderGenerator.h
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
@@ -46,6 +47,7 @@ set(DENG_SOURCES
     src/MeshLoader.cpp
     src/ModelLoader.cpp
     src/ModelShaderManager.cpp
+    src/ModelShaderGenerator.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp

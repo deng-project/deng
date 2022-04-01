@@ -59,20 +59,10 @@ namespace DENG {
         // per shader descriptors
         while(m_shader_desc_allocators.size()) 
             m_shader_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
-        //while(m_shader_descriptor_sets_creators.size())
-            //m_shader_descriptor_sets_creators.erase(m_shader_descriptor_sets_creators.end() - 1);
-
-        //while(m_shader_descriptor_pool_creators.size())
-            //m_shader_descriptor_pool_creators.erase(m_shader_descriptor_pool_creators.end() - 1);
 
         // per mesh descriptors
         while(m_mesh_desc_allocators.size()) 
             m_mesh_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
-        //while(m_mesh_descriptor_sets_creators.size())
-            //m_mesh_descriptor_sets_creators.erase(m_mesh_descriptor_sets_creators.end() - 1);
-
-        //while(m_mesh_descriptor_pool_creators.size())
-            //m_mesh_descriptor_pool_creators.erase(m_mesh_descriptor_pool_creators.end() - 1);
 
         while(m_pipeline_creators.size())
             m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
@@ -199,57 +189,50 @@ namespace DENG {
         _AllocateUniformBuffer();
 
         // reserve memory for shader descriptor set creators
-        //m_shader_descriptor_pool_creators.reserve(m_shaders.size());
-        //m_shader_descriptor_sets_creators.reserve(m_shaders.size());
         m_shader_desc_allocators.reserve(m_shaders.size());
         m_descriptor_set_layout_creators.reserve(m_shaders.size());
         m_pipeline_creators.reserve(m_shaders.size());
 
         // reserve memory for mesh descriptor set creators 
         m_mesh_desc_allocators.reserve(m_meshes.size());
-        //m_mesh_descriptor_pool_creators.reserve(m_meshes.size());
-        //m_mesh_descriptor_sets_creators.reserve(m_meshes.size());
 
         const uint32_t sc_img_count = static_cast<uint32_t>(mp_swapchain_creator->GetSwapchainImages().size());
         const Vulkan::TextureData &missing = m_vulkan_texture_handles[MISSING_TEXTURE_NAME];
 
         // for each shader create pipelines
         for(size_t i = 0; i < m_shaders.size(); i++) {
-            // check which mesh uses current shader 
-            MeshReference *mesh = nullptr;
-            for(size_t j = 0; j < m_meshes.size(); j++) {
-                if(m_meshes[j].shader_module_id == i) {
-                    mesh = &m_meshes[j];
-                    break;
-                }
-            }
+            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i]);
 
-            m_descriptor_set_layout_creators.emplace_back(mp_instance_creator->GetDevice(), m_shaders[i], *mesh);
-            m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, 
-                                             m_descriptor_set_layout_creators.back().GetDescriptorSetLayout(), m_shaders[i]);
+            // construct a temporary array containing all descriptor set layouts [ per shader, per mesh ]
+            std::array<VkDescriptorSetLayout, 2> layouts = { 
+                m_descriptor_set_layout_creators.back().GetPerShaderDescriptorSetLayout(), 
+                m_descriptor_set_layout_creators.back().GetPerMeshDescriptorSetLayout() 
+            };
+
+            m_pipeline_creators.emplace_back(mp_instance_creator->GetDevice(), mp_swapchain_creator->GetRenderPass(), mp_swapchain_creator->GetExtent(), m_sample_count, layouts, m_shaders[i]);
+            
             if(m_shaders[i].ubo_data_layouts.size()) {
-                const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
-                const uint32_t pool_cap = static_cast<uint32_t>(m_vulkan_texture_handles.size()) > 0 ? static_cast<uint32_t>(m_vulkan_texture_handles.size()) : 1;
+                // check if per shader descriptor set layout is present
+                if(layouts[0] != VK_NULL_HANDLE) {
+                    const uint32_t pool_cap = static_cast<uint32_t>(m_vulkan_texture_handles.size()) > 0 ? static_cast<uint32_t>(m_vulkan_texture_handles.size()) : 1;
 
-                //m_shader_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_shaders[i].ubo_data_layouts);
-                //m_shader_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_shaders[i], m_uniform_buffer, pool, layout, missing);
-                m_shader_desc_allocators.emplace_back(mp_instance_creator->GetDevice(), m_uniform_buffer, layout, m_shaders[i].ubo_data_layouts, 
-                                                      sc_img_count, missing, pool_cap);
-                m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
-            }
-            else {
-                m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
+                    m_shader_desc_allocators.emplace_back(mp_instance_creator->GetDevice(), m_uniform_buffer, layouts[0], &m_shaders[i].ubo_data_layouts, sc_img_count, missing, pool_cap);
+                    m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
+                } else {
+                    m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
+                }
             }
         }
 
         // for each mesh create descriptor sets if required
         for(size_t i = 0; i < m_meshes.size(); i++) {
-            if(m_meshes[i].ubo_data_layouts.size()) {
+            if(m_meshes[i].ubo_blocks.size()) {
                 //m_mesh_descriptor_pool_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_meshes[i].ubo_data_layouts);
                 //m_mesh_descriptor_sets_creators.emplace_back(mp_instance_creator->GetDevice(), sc_img_count, m_meshes[i], m_uniform_buffer, pool, layout);
+                const uint32_t pool_cap = static_cast<uint32_t>(m_vulkan_texture_handles.size()) > 0 ? static_cast<uint32_t>(m_vulkan_texture_handles.size()) : 1;
 
-                const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[m_meshes[i].shader_module_id].GetDescriptorSetLayout();
-                m_mesh_desc_allocators.emplace_back(mp_instance_creator->GetDevice(), m_uniform_buffer, layout, m_meshes[i].ubo_data_layouts, sc_img_count, missing);
+                const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[m_meshes[i].shader_module_id].GetPerMeshDescriptorSetLayout();
+                m_mesh_desc_allocators.emplace_back(mp_instance_creator->GetDevice(), m_uniform_buffer, layout, &m_meshes[i].ubo_blocks, sc_img_count, missing, pool_cap);
                 m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
             } else {
                 m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
@@ -436,15 +419,15 @@ namespace DENG {
         // find the maximum offset and size uniform block
         for(auto shader = m_shaders.begin(); shader != m_shaders.end(); shader++) {
             for(auto ubo = shader->ubo_data_layouts.begin(); ubo != shader->ubo_data_layouts.end(); ubo++) {
-                if(ubo->ubo_size + ubo->offset > max_size)
-                    max_size = ubo->ubo_size + ubo->offset;
+                if(ubo->block.size + ubo->block.offset > max_size)
+                    max_size = ubo->block.size + ubo->block.offset;
             }
         }
 
         for(auto mesh = m_meshes.begin(); mesh != m_meshes.end(); mesh++) {
-            for(auto ubo = mesh->ubo_data_layouts.begin(); ubo != mesh->ubo_data_layouts.end(); ubo++) {
-                if(ubo->ubo_size + ubo->offset > max_size)
-                    max_size = ubo->ubo_size + ubo->offset;
+            for(auto ubo = mesh->ubo_blocks.begin(); ubo != mesh->ubo_blocks.end(); ubo++) {
+                if(ubo->size + ubo->offset > max_size)
+                    max_size = ubo->size + ubo->offset;
             }
         }
 
@@ -587,8 +570,22 @@ namespace DENG {
                 for(size_t j = 0; j < m_meshes[i].commands.size(); j++) {
                     vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipeline());
                     VkDeviceSize offset = m_meshes[i].commands[j].vertices_offset;
-                    vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, 1, &m_main_buffer, &offset);
-                    offset = m_vertices_size + m_meshes[i].commands[j].indices_offset;
+
+                    // 1. bind all attribute bindings
+                    // 2. bind single attribute binding
+                    if(m_shaders[shader_id].use_seperate_attribute_strides) {
+                        std::vector<VkBuffer> buffers(m_shaders[shader_id].attributes.size(), m_main_buffer);
+                        vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, static_cast<uint32_t>(m_shaders[shader_id].attributes.size()), buffers.data(), m_shaders[shader_id].offsets.data());
+                    } else {
+                        vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, 1, &m_main_buffer, &offset);
+                    }
+
+                    // 1. index and vertex buffers are shared resources
+                    // 2. index and vertex buffers are not shared resources
+                    if(!m_conf.share_buffers)
+                        offset = m_vertices_size + m_meshes[i].commands[j].indices_offset;
+                    else offset = m_meshes[i].commands[j].indices_offset;
+
                     vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
                     // check if descriptor sets should be bound
@@ -609,7 +606,7 @@ namespace DENG {
                     }
 
                     // per mesh descriptor sets
-                    if(m_meshes[i].ubo_data_layouts.size()) {
+                    if(m_meshes[i].ubo_blocks.size()) {
                         if(used_desc_sets == 1)
                             desc_sets[1] = m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame);
                         else desc_sets[0] = m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame);

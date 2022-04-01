@@ -7,10 +7,23 @@
 #include <ModelLoaderApp.h>
 
 int main() {
+    std::ifstream file("loader.conf");
+    std::string file_name;
+    file.seekg(0, std::ios_base::end);
+    const size_t fsize = file.tellg();
+    file_name.resize(fsize - 1);
+    file.seekg(0, std::ios_base::beg);
+    file.read(file_name.data(), fsize);
+    file.close();
+
+    if(file_name.back() == '\n')
+        file_name = file_name.substr(0, file_name.size() - 1);
+
+
     DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "VulkanModelLoader");
-    DENG::RendererConfig conf = {};
+    DENG::RendererConfig conf = { false, true };
     DENG::VulkanRenderer rend(win, conf);
-    ModelLoaderApp app(win, rend);
+    ModelLoaderApp app(file_name, win, rend);
     app.Run();
     return EXIT_SUCCESS;
 }

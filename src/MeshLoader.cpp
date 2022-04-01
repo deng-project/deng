@@ -36,24 +36,18 @@ namespace DENG {
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
 
-        // create mesh ubo data layouts
-        mesh.ubo_data_layouts.reserve(2);
-
         // ModelAnimationUbo
-        mesh.ubo_data_layouts.emplace_back();
-        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        mesh.ubo_data_layouts.back().binding = 1;
-        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        mesh.ubo_data_layouts.back().ubo_size = sizeof(ModelAnimationUbo);
-        mesh.ubo_data_layouts.back().offset = m_ubo_offset;
+        mesh.ubo_blocks.reserve(2);
+        mesh.ubo_blocks.emplace_back();
+        mesh.ubo_blocks.back().binding = 1;
+        mesh.ubo_blocks.back().size = static_cast<uint32_t>(sizeof(ModelAnimationUbo));
+        mesh.ubo_blocks.back().offset = m_ubo_offset;
         
         // ModelUbo
-        mesh.ubo_data_layouts.emplace_back();
-        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        mesh.ubo_data_layouts.back().binding = 2;
-        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        mesh.ubo_data_layouts.back().ubo_size = sizeof(ModelUbo);
-        mesh.ubo_data_layouts.back().offset = m_ubo_offset + m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelAnimationUbo)));
+        mesh.ubo_blocks.emplace_back();
+        mesh.ubo_blocks.back().binding = 2;
+        mesh.ubo_blocks.back().size = static_cast<uint32_t>(sizeof(ModelUbo));
+        mesh.ubo_blocks.back().offset = m_ubo_offset + m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelAnimationUbo)));
 
         // create mesh draw commands
         mesh.commands.reserve(m_mesh.primitive_count);

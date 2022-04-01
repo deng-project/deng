@@ -45,12 +45,6 @@ namespace DENG {
 
                 case LIBDAS_ANIMATION_TARGET_ROTATION:
                     m_interp_values.push_back(reinterpret_cast<Libdas::Quaternion*>(data_ptr + rel_target_offset));
-                    std::cout << "Rotation quaternion: " << 
-                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->x << " " << 
-                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->y << " " << 
-                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->z << " " << 
-                                 std::get<Libdas::Quaternion*>(m_interp_values.back())->w << std::endl;
-                                  
                     rel_target_offset += static_cast<uint32_t>(sizeof(Libdas::Quaternion));
                     break;
 
@@ -71,60 +65,54 @@ namespace DENG {
         // calculate delta time
         m_active_time = std::chrono::system_clock::now();
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
-        
-        // check the current timestamp against keyframe values
-        if(delta_time.count() / 1000.0f >= m_timestamps[m_active_timestamp_index + 1]) {
-            m_active_timestamp_index++;
-            if(m_active_timestamp_index >= m_timestamps.size() - 1 && m_repeat && m_animate)
-                m_active_timestamp_index = 0;
-            else m_ubo.animate = static_cast<uint32_t>(m_animate);
-        }
 
         // set correct interpolation values
-        switch(m_interp_values[m_active_timestamp_index].index()) {
-            case 0:
-                {
-                    m_ubo.target_mask = TARGET_MASK_WEIGHT;
-                    m_ubo.used_weights = m_weight_target_count;
+        if(m_animate) {
+            switch(m_interp_values[m_active_timestamp_index].index()) {
+                case 0:
+                    {
+                        m_ubo.target_mask = TARGET_MASK_WEIGHT;
+                        m_ubo.used_weights = m_weight_target_count;
 
-                    DENG_ASSERT(m_weight_target_count > 4);
-                    std::vector<float> weights[2];
-                    weights[0].resize(m_weight_target_count);
-                    weights[1].resize(m_weight_target_count);
+                        DENG_ASSERT(m_weight_target_count > 4);
+                        std::vector<float> weights[2];
+                        weights[0].resize(m_weight_target_count);
+                        weights[1].resize(m_weight_target_count);
 
-                    for(size_t i = 0; i < m_weight_target_count; i++) {
-                        weights[0][i] = std::get<float*>(m_interp_values[m_active_timestamp_index])[i];
-                        weights[1][i] = std::get<float*>(m_interp_values[m_active_timestamp_index + 1])[i];
+                        for(size_t i = 0; i < m_weight_target_count; i++) {
+                            weights[0][i] = std::get<float*>(m_interp_values[m_active_timestamp_index])[i];
+                            weights[1][i] = std::get<float*>(m_interp_values[m_active_timestamp_index + 1])[i];
+                        }
+
+                        for(struct { Libdas::Vector4<float>::iterator t1; Libdas::Vector4<float>::iterator t2; uint32_t i; } s = {m_ubo.weights[0].Begin(), m_ubo.weights[1].Begin(), 0}; s.i < m_weight_target_count; s.i++, s.t1++, s.t2++) {
+                            *s.t1 = weights[0][s.i];
+                            *s.t2 = weights[1][s.i];
+                        }
                     }
+                    break;
 
-                    for(struct { Libdas::Vector4<float>::iterator t1; Libdas::Vector4<float>::iterator t2; uint32_t i; } s = {m_ubo.weights[0].Begin(), m_ubo.weights[1].Begin(), 0}; s.i < m_weight_target_count; s.i++, s.t1++, s.t2++) {
-                        *s.t1 = weights[0][s.i];
-                        *s.t2 = weights[1][s.i];
-                    }
-                }
-                break;
+                case 1:
+                    m_ubo.target_mask = TARGET_MASK_TRANSLATION;
+                    m_ubo.translation[0] = *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]);
+                    m_ubo.translation[1] = *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index + 1]);
+                    break;
 
-            case 1:
-                m_ubo.target_mask = TARGET_MASK_TRANSLATION;
-                m_ubo.translation[0] = *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]);
-                m_ubo.translation[1] = *std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index + 1]);
-                break;
+                case 2:
+                    m_ubo.target_mask = TARGET_MASK_ROTATION;
+                    m_ubo.rotation[0] = *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]);
+                    m_ubo.rotation[1] = *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index + 1]);
+                    break;
 
-            case 2:
-                m_ubo.target_mask = TARGET_MASK_ROTATION;
-                m_ubo.rotation[0] = *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]);
-                m_ubo.rotation[1] = *std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index + 1]);
-                break;
+                case 3:
+                    m_ubo.target_mask = TARGET_MASK_SCALE;
+                    m_ubo.scales[0] = std::get<float>(m_interp_values[m_active_timestamp_index]);
+                    m_ubo.scales[1] = std::get<float>(m_interp_values[m_active_timestamp_index]);
+                    break;
 
-            case 3:
-                m_ubo.target_mask = TARGET_MASK_SCALE;
-                m_ubo.scales[0] = std::get<float>(m_interp_values[m_active_timestamp_index]);
-                m_ubo.scales[1] = std::get<float>(m_interp_values[m_active_timestamp_index]);
-                break;
-
-            default:
-                DENG_ASSERT(false);
-                break;
+                default:
+                    DENG_ASSERT(false);
+                    break;
+            }
         }
 
         m_ubo.timestamps[0] = m_timestamps[m_active_timestamp_index];
@@ -133,6 +121,14 @@ namespace DENG {
 
         // set correct interpolation method
         m_ubo.interpolation_mode = static_cast<uint32_t>(m_channel.interpolation);
+        
+        // check the current timestamp against keyframe values
+        if(delta_time.count() / 1000.0f >= m_timestamps[m_active_timestamp_index + 1]) {
+            m_active_timestamp_index++;
+            if(m_active_timestamp_index >= m_timestamps.size() - 1 && m_repeat && m_animate)
+                m_active_timestamp_index = 0;
+            else m_ubo.animate = static_cast<uint32_t>(m_animate);
+        }
 
         // submit uniform data to renderer
         for(uint32_t offset : m_ubo_offsets)
