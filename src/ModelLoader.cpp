@@ -182,7 +182,7 @@ namespace DENG {
             ModelUbo model_ubo;
             model_ubo.node_transform = m_mesh_loaders[i].GetNodeTransform();
             model_ubo.skeleton_transform = m_mesh_loaders[i].GetSkeletonTransform();
-            model_ubo.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+            model_ubo.color = { 1.0f, 0.0f, 1.0f, 1.0f };
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(&model_ubo), static_cast<uint32_t>(sizeof(ModelUbo)), m_mesh_ubo_offsets[i] + rel);
         }
 

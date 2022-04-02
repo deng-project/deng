@@ -10,15 +10,11 @@ set(DENG_HEADERS
     include/Api.h
     include/BaseTypes.h
     include/BufferAlignment.h
-    #include/Camera3DControl.h
-    #include/Camera3DEventBase.h
     include/Camera3D.h
     include/CameraTransformManager.h
-    #include/CameraMatrix.h
-    #include/EditorCamera.h
+    include/EditorCamera.h
     include/ErrorDefinitions.h
-    #include/FirstPersonCamera.h
-    #include/HidEventManager.h
+    include/FirstPersonCamera.h
     include/ImGuiLayer.h
     include/MeshLoader.h
     include/Missing.h
@@ -30,6 +26,7 @@ set(DENG_HEADERS
     include/OpenGLShaderLoader.h
     include/Renderer.h
     include/ShaderDefinitions.h
+    include/ThirdPersonCamera.h
     include/VulkanDescriptorAllocator.h
     include/VulkanDescriptorSetLayoutCreator.h
     include/VulkanHelpers.h
@@ -42,8 +39,9 @@ set(DENG_HEADERS
 
 set(DENG_SOURCES
     src/AnimationSampler.cpp
-    src/Camera3D.cpp
     src/CameraTransformManager.cpp
+    src/EditorCamera.cpp
+    src/FirstPersonCamera.cpp
     src/ImGuiLayer.cpp
     src/Missing.cpp
     src/MeshLoader.cpp
@@ -54,6 +52,7 @@ set(DENG_SOURCES
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/ShaderDefinitions.cpp
+    src/ThirdPersonCamera.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
     src/VulkanHelpers.cpp

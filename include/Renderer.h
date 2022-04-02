@@ -43,24 +43,6 @@ namespace DENG {
     };
 
 
-    // *** DEPRECATED *** //
-    //struct TextureReference {
-        //std::string name = "Texture";
-        //uint32_t shader_module_id = 0;
-        //uint32_t shader_sampler_id = 0;
-        //uint32_t r_identifier = UINT32_MAX;      // leave it as blank, used by renderer for referencing
-
-        //// compare by shader_sampler_id and shader_module_id
-        //struct less {
-            //bool operator()(const TextureReference &_t1, const TextureReference &_t2) {
-                //if(_t1.shader_module_id == _t2.shader_module_id)
-                    //return _t1.shader_sampler_id < _t2.shader_sampler_id;
-                //else return _t1.shader_module_id < _t2.shader_module_id;
-            //}
-        //};
-    //};
-
-
     struct RendererConfig {
         bool enable_vsync = false;
         bool share_buffers = false;

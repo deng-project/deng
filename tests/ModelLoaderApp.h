@@ -40,6 +40,7 @@
 #include <libdas/include/DasParser.h>
 
 #include <Api.h>
+#include <BaseTypes.h>
 #include <ErrorDefinitions.h>
 #include <ShaderDefinitions.h>
 #include <Window.h>
@@ -51,6 +52,8 @@
 #include <ModelLoader.h>
 #include <CameraTransformManager.h>
 #include <Camera3D.h>
+#include <FirstPersonCamera.h>
+#include <ImGuiLayer.h>
 
 // backend specific includes
 #ifdef USE_OPENGL
@@ -71,7 +74,18 @@ class ModelLoaderApp {
         DENG::ModelLoader m_loader;
         DENG::Window &m_window;
         DENG::Renderer &m_renderer;
-        DENG::Camera3D m_camera;
+
+        DENG::FirstPersonCameraConfiguration m_camera_conf = {
+            neko_CreateInputMask(1, NEKO_KEY_W),
+            neko_CreateInputMask(1, NEKO_KEY_S),
+            neko_CreateInputMask(1, NEKO_KEY_SPACE),
+            neko_CreateInputMask(1, NEKO_KEY_LEFT_SHIFT),
+            neko_CreateInputMask(1, NEKO_KEY_D),
+            neko_CreateInputMask(1, NEKO_KEY_A)
+        };
+
+        DENG::FirstPersonCamera m_camera;
+        //DENG::ImGuiLayer m_imgui;
         std::string m_file_name;
         const float m_key_interval =  100;    // ms
         std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
@@ -83,7 +97,7 @@ class ModelLoaderApp {
             m_loader(_file_name, _rend, 0, 0), 
             m_window(_win), 
             m_renderer(_rend),
-            m_camera(m_window, "First person camera", 0, 0)
+            m_camera(m_window, m_camera_conf, "First person camera", 0)
         {
             m_loader.Attach();
             m_renderer.LoadShaders();

@@ -6,81 +6,73 @@
 #ifndef CAMERA_3D_H
 #define CAMERA_3D_H
 
-#ifdef CAMERA_3D_CPP
-    #include <string>
-    #include <vector>
-    #include <cmath>
-    #include <cstring>
-    #include <chrono>
-#ifdef _DEBUG
-    #include <iostream>
-#endif
-
-    #include <libdas/include/Points.h>
-    #include <libdas/include/Vector.h>
-    #include <libdas/include/Matrix.h>
-    #include <libdas/include/Quaternion.h>
-
-    #include <Api.h>
-    #include <BaseTypes.h>
-    #include <Window.h>
-    #include <ShaderDefinitions.h>
-    #include <Renderer.h>
-    #include <HidEventManager.h>
-    #include <CameraTransformManager.h>
-    #include <ModelUniforms.h>
-
-    #define DELTA_MOV       0.02f
-    #define ACTION_DELAY    10
-
-    #define DELTA_ROTATE            PI / 36.0f
-    #define MOUSE_ROTATION_DELTA    50.0f       // pixels virtually
-#endif
-
 
 namespace DENG {
 
+    struct FirstPersonCameraConfiguration {
+        neko_InputBits forward;
+        neko_InputBits back;
+        neko_InputBits up;
+        neko_InputBits down;
+        neko_InputBits right;
+        neko_InputBits left;
+
+        float delta_mov = 0.02f;
+        float action_delay = 10; // ms
+
+        float delta_rotate = PI / 36;
+        float mouse_rotation_delta = 50.0f;     // virtual pixels
+    };
+
+    struct ThirdPersonCameraConfiguration {
+        neko_InputBits forward;
+        neko_InputBits back;
+        neko_InputBits up;
+        neko_InputBits down;
+        neko_InputBits right;
+        neko_InputBits left;
+    };
+
+
+    struct EditorCameraConfiguration {
+        neko_InputBits zoom_in;
+        neko_InputBits zoom_out;
+        neko_InputBits rotate_toggle;
+        Libdas::Point3D<float> origin; 
+    };
+
     class DENG_API Camera3D {
-        private:
+        protected:
+            typedef std::variant<FirstPersonCameraConfiguration, ThirdPersonCameraConfiguration, EditorCameraConfiguration> Camera3DConfiguration;
             Window &m_window;
-            // config values
-            neko_InputBits m_forward;
-            neko_InputBits m_back;
-            neko_InputBits m_up;
-            neko_InputBits m_down;
-            neko_InputBits m_right;
-            neko_InputBits m_left;
+            Camera3DConfiguration m_config;
+            CameraTransformManager m_cam_transform;
 
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
 
-            CameraTransformManager m_cam_transform;
-            uint32_t m_camera_id = 0;
             const uint32_t m_ubo_offset;
             std::string m_name;
 
         public:
-            Camera3D(Window &_win, const std::string &_name, uint32_t _ubo_offset, uint32_t _id);
+            Camera3D(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) : 
+                m_window(_win), 
+                m_config(_conf), 
+                m_ubo_offset(_ubo_offset),
+                m_name(_name) {}
 
-            inline void EnableCamera() {
-                m_window.ChangeVCMode(true);
-                m_window.ChangeCursor(NEKO_CURSOR_MODE_HIDDEN);
-            }
-
-            inline void DisableCamera() {
-                m_window.ChangeVCMode(false);
-                m_window.ChangeCursor(NEKO_CURSOR_MODE_STANDARD);
-            }
+            virtual void EnableCamera() = 0;
+            virtual void DisableCamera() = 0;
+            virtual void Update(Renderer &_rend) = 0;
 
             inline const std::string &GetName() {
                 return m_name;
             }
 
-            inline uint32_t GetCameraId() {
-                return m_camera_id;
+            inline void UpdateConfig(const Camera3DConfiguration &_conf) {
+                DENG_ASSERT(m_config.index() == _conf.index());
+                m_config = _conf;
             }
-
-            void Update(Renderer &_rend);
     };
 }
 
