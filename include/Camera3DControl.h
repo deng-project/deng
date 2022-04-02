@@ -31,7 +31,11 @@ namespace DENG {
 
         public:
             Camera3DControl(float fov, const Libdas::Point2D<float> &planes, float aspect_ratio) : 
-                m_fov(fov), m_planes(planes), m_aspect_ratio(aspect_ratio), m_cam_mat(type), m_proj_mat(_CalculateProjection()) {}
+                m_fov(fov), 
+                m_planes(planes), 
+                m_aspect_ratio(aspect_ratio), 
+                m_cam_mat(type), 
+                m_proj_mat(_CalculateProjection()) {}
 
 
             /// Following methods are for moving the camera position in its coordinate system

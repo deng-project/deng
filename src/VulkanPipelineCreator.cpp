@@ -437,9 +437,6 @@ namespace DENG {
                 pipeline_layout_createinfo.pSetLayouts = m_desc_set_layouts.data();
             }
 
-            pipeline_layout_createinfo.setLayoutCount = 2;
-            pipeline_layout_createinfo.pSetLayouts = m_desc_set_layouts.data();
-
             if(vkCreatePipelineLayout(m_device, &pipeline_layout_createinfo, NULL, &m_pipeline_layout) != VK_SUCCESS)
                 VK_PIPELINEC_ERR("failed to create a pipeline layout");
         }

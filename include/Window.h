@@ -56,13 +56,17 @@ namespace DENG {
 
 
             /// Get the mouse delta compared to previous frame mouse position
-            Libdas::Point2D<uint64_t> GetMouseDelta() const;
+            Libdas::Point2D<int64_t> GetMouseDelta() const;
 
 
         // inlined methods
         public:
+            inline void ChangeSizeHints(neko_Hint _hints) {
+                neko_UpdateSizeMode(m_surface, _hints);
+            }
+
             /// Explicitly change virtual cursor mode
-            inline void ChangeVCMode(const bool is_vcp) {
+            inline void ChangeVCMode(bool is_vcp) {
                 neko_ChangeVCMode(is_vcp, m_surface);
             }
 
@@ -120,6 +124,8 @@ namespace DENG {
                 neko_GetPixelSize(m_surface, &pix.x, &pix.y);
                 return pix;
             }
+
+            bool IsHidEventActive(neko_InputBits _bits) const;
 
             inline bool IsKeyPressed(neko_HidEvent _hid) const {
                 return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_ACTIVE);

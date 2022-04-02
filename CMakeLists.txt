@@ -32,7 +32,7 @@ if(MSVC)
         add_compile_options(/O2)
     endif()
 else()
-    add_compile_options(-Wall -Wextra $<$<COMPILE_LANGUAGE:CXX>:-std=c++17> $<$<COMPILE_LANGUAGE:C>:-std=c99>)
+    add_compile_options(-Wall -msse4.1 -Wextra $<$<COMPILE_LANGUAGE:CXX>:-std=c++17> $<$<COMPILE_LANGUAGE:C>:-std=c99>)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
         add_compile_options(-O0)

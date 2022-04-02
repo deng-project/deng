@@ -8,6 +8,6 @@
 
 #include <cstdint>
 
-#define PI 3.14159
+#define PI 3.14159f
 
 #endif

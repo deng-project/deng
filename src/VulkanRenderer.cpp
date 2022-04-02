@@ -62,7 +62,7 @@ namespace DENG {
 
         // per mesh descriptors
         while(m_mesh_desc_allocators.size()) 
-            m_mesh_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
+            m_mesh_desc_allocators.erase(m_mesh_desc_allocators.end() - 1);
 
         while(m_pipeline_creators.size())
             m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
@@ -254,12 +254,18 @@ namespace DENG {
 
             // allocate new uniform buffer instances
             VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
-            Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
             vkBindBufferMemory(mp_instance_creator->GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
 
             Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_size), data, m_uniform_memory, 0);
-
             std::free(data);
+
+            // recreate descriptor sets
+            for(Vulkan::DescriptorAllocator &allocator : m_shader_desc_allocators)
+                allocator.RecreateDescriptorSets(m_uniform_buffer);
+
+            for(Vulkan::DescriptorAllocator &allocator : m_mesh_desc_allocators)
+                allocator.RecreateDescriptorSets(m_uniform_buffer);
         }
 
         Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_size), _raw_data, m_uniform_memory, static_cast<VkDeviceSize>(_offset));

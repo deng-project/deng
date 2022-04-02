@@ -39,20 +39,7 @@
     #include <Renderer.h>
     #include <MeshLoader.h>
     #include <ModelShaderGenerator.h>
-
-    //static const std::string g_vertex_shader_files[] = {
-        //"ModelShaders/PosUVNormalTang.vert",
-        //"ModelShaders/PosUVNormal.vert",
-        //"ModelShaders/PosUVTang.vert",
-        //"ModelShaders/PosNormalTang.vert",
-        //"ModelShaders/PosUV.vert",
-        //"ModelShaders/PosNormal.vert",
-        //"ModelShaders/PosTang.vert",
-        //"ModelShaders/Pos.vert"
-    //};
-
-    //#define UV_FRAGMENT_SHADER  "ModelShaders/UVMapped.frag"
-    //#define COLORED_SHADER      "ModelShaders/Colored.frag"
+    #include <ModelUniforms.h>
 
     #define POS_UV_NORMAL_TANG  0
     #define POS_UV_NORMAL       1
@@ -80,34 +67,6 @@
 
 #ifndef DENG_DEFS_ONLY
 namespace DENG {
-
-    struct ModelCameraUbo {
-        Libdas::Matrix4<float> projection_matrix;
-        Libdas::Matrix4<float> view_matrix;
-    };
-
-    struct ModelAnimationUbo {
-        // animated properties
-        Libdas::Quaternion rotation[2];
-        Libdas::Vector4<float> weights[2];
-        Libdas::Vector4<float> translation[2];
-        float scales[2];
-
-        uint32_t target_mask = 0; // see AnimationSampler.h
-        uint32_t interpolation_mode = 0; // see DasStructures.h
-        uint32_t animate = 0;
-
-        // timestamp data in seconds
-        float timestamps[2] = {};
-        float current_time = 0;
-        uint32_t used_weights = 0;
-    };
-
-    struct ModelUbo {
-        Libdas::Matrix4<float> node_transform;
-        Libdas::Matrix4<float> skeleton_transform;
-        Libdas::Vector4<float> color;
-    };
 
     class ModelShaderManager {
         private:

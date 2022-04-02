@@ -176,10 +176,7 @@ namespace DENG {
     }
 
     
-    void ModelLoader::Update(const ModelCameraUbo &_camera) { 
-        // update camera
-        m_renderer.UpdateUniform(reinterpret_cast<const char*>(&_camera), static_cast<uint32_t>(sizeof(ModelCameraUbo)), m_base_ubo_offset);
-
+    void ModelLoader::Update() { 
         for(uint32_t i = 0; i < m_parser.GetMeshCount(); i++) {
             uint32_t rel = m_renderer.AlignUniformBufferOffset(sizeof(ModelAnimationUbo));
             ModelUbo model_ubo;

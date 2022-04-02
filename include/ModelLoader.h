@@ -41,6 +41,7 @@
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
     #include <MeshLoader.h>
+    #include <ModelUniforms.h>
     #include <ModelShaderManager.h>
     #include <AnimationSampler.h>
 #endif
@@ -77,7 +78,7 @@ namespace DENG {
         public:
             ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset);
             void Attach();
-            void Update(const ModelCameraUbo &_camera);
+            void Update();
 
             inline std::vector<std::string> &GetAttachedTextures() {
                 return m_texture_names;

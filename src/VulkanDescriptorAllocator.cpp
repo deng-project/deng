@@ -243,6 +243,17 @@ namespace DENG {
         }
 
 
+        void DescriptorAllocator::RecreateDescriptorSets(VkBuffer _new_ubo) {
+            m_uniform_buffer = _new_ubo;
+            vkDeviceWaitIdle(m_device);
+            vkFreeDescriptorSets(m_device, m_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
+            m_descriptor_sets.clear();
+            m_texture_bound_desc_sets.clear();
+
+            _CreateDescriptorSets(MISSING_TEXTURE_NAME, m_missing);
+        }
+
+
         void DescriptorAllocator::RequestNewDescriptorPool(uint32_t _cap) {
             m_pool_capacity = _cap;
 

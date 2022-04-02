@@ -10,14 +10,15 @@ set(DENG_HEADERS
     include/Api.h
     include/BaseTypes.h
     include/BufferAlignment.h
-    include/Camera3DControl.h
-    include/Camera3DEventBase.h
+    #include/Camera3DControl.h
+    #include/Camera3DEventBase.h
     include/Camera3D.h
-    include/CameraMatrix.h
-    include/EditorCamera.h
+    include/CameraTransformManager.h
+    #include/CameraMatrix.h
+    #include/EditorCamera.h
     include/ErrorDefinitions.h
-    include/FirstPersonCamera.h
-    include/HidEventManager.h
+    #include/FirstPersonCamera.h
+    #include/HidEventManager.h
     include/ImGuiLayer.h
     include/MeshLoader.h
     include/Missing.h
@@ -41,8 +42,9 @@ set(DENG_HEADERS
 
 set(DENG_SOURCES
     src/AnimationSampler.cpp
+    src/Camera3D.cpp
+    src/CameraTransformManager.cpp
     src/ImGuiLayer.cpp
-    src/Interpolation.cpp
     src/Missing.cpp
     src/MeshLoader.cpp
     src/ModelLoader.cpp

@@ -44,10 +44,13 @@
 #include <ShaderDefinitions.h>
 #include <Window.h>
 #include <Renderer.h>
+#include <ModelUniforms.h>
 #include <ModelShaderManager.h>
 #include <AnimationSampler.h>
 #include <MeshLoader.h>
 #include <ModelLoader.h>
+#include <CameraTransformManager.h>
+#include <Camera3D.h>
 
 // backend specific includes
 #ifdef USE_OPENGL
@@ -68,13 +71,19 @@ class ModelLoaderApp {
         DENG::ModelLoader m_loader;
         DENG::Window &m_window;
         DENG::Renderer &m_renderer;
+        DENG::Camera3D m_camera;
         std::string m_file_name;
+        const float m_key_interval =  100;    // ms
+        std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
+        bool m_is_camera_enabled = false;
 
     public:
         ModelLoaderApp(const std::string &_file_name, DENG::Window &_win, DENG::Renderer &_rend) : 
             m_loader(_file_name, _rend, 0, 0), 
             m_window(_win), 
-            m_renderer(_rend) 
+            m_renderer(_rend),
+            m_camera(m_window, "First person camera", 0, 0)
         {
             m_loader.Attach();
             m_renderer.LoadShaders();
@@ -84,11 +93,30 @@ class ModelLoaderApp {
             while(m_window.IsRunning()) {
                 m_renderer.ClearFrame();
 
-                if(m_window.IsKeyPressed(NEKO_KEY_Q))
+                m_cur_time = std::chrono::system_clock::now();
+                std::chrono::duration<float, std::milli> delta_time = m_cur_time - m_beg_time;
+
+                if(delta_time.count() >= m_key_interval && m_window.IsKeyPressed(NEKO_KEY_Q))
                     break;
 
+                if(delta_time.count() >= m_key_interval && m_window.IsKeyPressed(NEKO_KEY_F)) {
+                    m_window.ChangeSizeHints(NEKO_HINT_FULL_SCREEN);
+                    m_beg_time = std::chrono::system_clock::now();
+                }
+
+
+                if(delta_time.count() >= m_key_interval && m_window.IsKeyPressed(NEKO_KEY_ESCAPE)) {
+                    if(m_is_camera_enabled)
+                        m_camera.DisableCamera();
+                    else m_camera.EnableCamera();
+
+                    m_is_camera_enabled = !m_is_camera_enabled;
+                    m_beg_time = std::chrono::system_clock::now();
+                }
+
                 DENG::ModelCameraUbo ubo;
-                m_loader.Update(ubo);
+                m_camera.Update(m_renderer);
+                m_loader.Update();
                 m_renderer.RenderFrame();
                 m_window.Update();
             }

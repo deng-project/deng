@@ -36,6 +36,7 @@
     #include <Window.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
+    #include <ModelUniforms.h>
     #include <ModelShaderManager.h>
 #endif
 

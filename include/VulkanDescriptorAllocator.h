@@ -25,7 +25,7 @@ namespace DENG {
         class DescriptorAllocator {
             private:
                 const VkDevice m_device;
-                const VkBuffer m_uniform_buffer;
+                VkBuffer m_uniform_buffer;
                 const VkDescriptorSetLayout m_descriptor_set_layout;
                 const std::variant<std::vector<UniformDataLayout>*, std::vector<UniformBufferBlock>*> m_ubo_desc;
                 const uint32_t m_swapchain_image_count;
@@ -47,6 +47,8 @@ namespace DENG {
                 ~DescriptorAllocator();
                 DescriptorAllocator &operator=(const DescriptorAllocator &_da);
 
+                // whenever new uniform buffer is allocated
+                void RecreateDescriptorSets(VkBuffer _new_ubo);
                 void RequestNewDescriptorPool(uint32_t _cap);
                 void RemoveDescriptorSetByTexture(const std::string &_name);
 

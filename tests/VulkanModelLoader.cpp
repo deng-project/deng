@@ -11,7 +11,7 @@ int main() {
     std::string file_name;
     file.seekg(0, std::ios_base::end);
     const size_t fsize = file.tellg();
-    file_name.resize(fsize - 1);
+    file_name.resize(fsize);
     file.seekg(0, std::ios_base::beg);
     file.read(file_name.data(), fsize);
     file.close();

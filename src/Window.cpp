@@ -52,9 +52,27 @@ namespace DENG {
 
 
     /// Get the mouse delta compared to previous frame mouse position
-    Libdas::Point2D<uint64_t> Window::GetMouseDelta() const {
-        Libdas::Point2D<uint64_t> pos;
+    Libdas::Point2D<int64_t> Window::GetMouseDelta() const {
+        Libdas::Point2D<int64_t> pos;
         neko_FindDeltaMovement(m_surface, &pos.x, &pos.y);
-        return Libdas::Point2D<uint64_t>(static_cast<uint64_t>(pos.x), static_cast<uint64_t>(pos.y));
+        return pos;
+    }
+
+
+    bool Window::IsHidEventActive(neko_InputBits _bits) const {
+        bool is_active = true;
+        neko_HidEvent *ev = neko_UnmaskInput(_bits);
+
+        for(int i = 0; i < 8; i++) {
+            if(ev[i] == NEKO_HID_UNKNOWN)
+                break;
+            
+            if(!neko_FindKeyStatus(ev[i], NEKO_INPUT_EVENT_TYPE_ACTIVE)) {
+                is_active = false;
+                break;
+            }
+        }
+
+        return is_active;
     }
 }
