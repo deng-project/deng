@@ -41,10 +41,18 @@ namespace DENG {
         layout_id = 0;
         if(_mask & UV_ATTR_MASK) {
             std::string uv_attr = UV_VERTEX_OUTPUT; 
-            uv_attr.replace(uv_attr.find("${ID}"), id_var_len, std::to_string(layout_id++));
-            shader += uv_attr;
+            std::string color_attr = COLOR_VERTEX_OUTPUT;
+            std::string is_colored_attr = IS_COLOR_OUTPUT;
 
-            out_code = "out_uv = in_uv;";
+            uv_attr.replace(uv_attr.find("${ID}"), id_var_len, std::to_string(layout_id++));
+            color_attr.replace(color_attr.find("${ID}"), id_var_len, std::to_string(layout_id++));
+            is_colored_attr.replace(is_colored_attr.find("${ID}"), id_var_len, std::to_string(layout_id++));
+
+            shader += uv_attr;
+            shader += color_attr;
+            shader += is_colored_attr;
+
+            out_code = "out_uv = in_uv;\nout_color = model.color;\nout_is_colored = model.is_color;\n";
         } else {
             std::string color_attr = COLOR_VERTEX_OUTPUT;
             color_attr.replace(color_attr.find("${ID}"), id_var_len, std::to_string(layout_id++));
@@ -55,8 +63,6 @@ namespace DENG {
 
         // add uniform blocks and functions
         shader += VERTEX_SHADER_UBO_SECTION;
-        shader += QUATERNION_OPERATIONS;
-        shader += INTERP_FUNCTIONS;
 
         // main function
         std::string main = VERTEX_MAIN;

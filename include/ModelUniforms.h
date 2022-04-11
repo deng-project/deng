@@ -14,25 +14,16 @@ namespace DENG {
 
     struct ModelAnimationUbo {
         // animated properties
-        Libdas::Quaternion rotation[2];
-        Libdas::Vector4<float> weights[2];
-        Libdas::Vector4<float> translation[2];
-        float scales[2];
-
-        uint32_t target_mask = 0; // see AnimationSampler.h
-        uint32_t interpolation_mode = 0; // see DasStructures.h
-        uint32_t animate = 0;
-
-        // timestamp data in seconds
-        float timestamps[2] = {};
-        float current_time = 0;
-        uint32_t used_weights = 0;
+        Libdas::Matrix4<float> rot;
+        Libdas::Matrix4<float> scale;
+        Libdas::Matrix4<float> translation;
     };
 
     struct ModelUbo {
         Libdas::Matrix4<float> node_transform;
         Libdas::Matrix4<float> skeleton_transform;
         Libdas::Vector4<float> color;
+        uint32_t use_color = 0;
     };
 }
 

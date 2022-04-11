@@ -9,5 +9,7 @@
 #include <cstdint>
 
 #define PI 3.14159f
+#define SQR(x) (x*x)
+#define CUBE(x) (x*x*x)
 
 #endif

@@ -126,6 +126,9 @@ namespace DENG {
         const Libdas::DasNode &node = m_parser.AccessNode(_node_id);
         offsets.push_back(m_mesh_ubo_offsets[node.mesh]);
 
+        // flag meshes for animating
+        m_mesh_loaders[node.mesh].SetAnimationTargetFlag(true);
+
         for(uint32_t i = 0; i < node.children_count; i++) {
             std::vector<uint32_t> sub_node_offsets = _GetMeshUboOffsetsFromNodeId(node.children[i]);
             offsets.insert(offsets.end(), sub_node_offsets.begin(), sub_node_offsets.end());
@@ -178,18 +181,27 @@ namespace DENG {
     
     void ModelLoader::Update() { 
         for(uint32_t i = 0; i < m_parser.GetMeshCount(); i++) {
-            uint32_t rel = m_renderer.AlignUniformBufferOffset(sizeof(ModelAnimationUbo));
+            const uint32_t rel = m_renderer.AlignUniformBufferOffset(sizeof(ModelAnimationUbo));
             ModelUbo model_ubo;
             model_ubo.node_transform = m_mesh_loaders[i].GetNodeTransform();
             model_ubo.skeleton_transform = m_mesh_loaders[i].GetSkeletonTransform();
-            model_ubo.color = { 1.0f, 0.0f, 1.0f, 1.0f };
+            model_ubo.color = { 0.2f, 1.0f, 0.2f, 1.0f };
+            model_ubo.use_color = true;
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(&model_ubo), static_cast<uint32_t>(sizeof(ModelUbo)), m_mesh_ubo_offsets[i] + rel);
+
+            // tmp solution
+            if(!m_mesh_loaders[i].IsAnimationTarget()) {
+                ModelAnimationUbo animation_ubo;
+                m_renderer.UpdateUniform(reinterpret_cast<const char*>(&animation_ubo), static_cast<uint32_t>(sizeof(ModelAnimationUbo)), m_mesh_ubo_offsets[i]);
+            }
         }
 
         // update animations
-        for(auto ani = m_animations.begin(); ani != m_animations.end(); ani++) {
-            for(auto smp = ani->samplers.begin(); smp != ani->samplers.end(); smp++) {
-                smp->Update(m_renderer);
+        if(m_animations.size()) {
+            for(auto ani = m_animations.begin(); ani != m_animations.end(); ani++) {
+                for(auto smp = ani->samplers.begin(); smp != ani->samplers.end(); smp++) {
+                    smp->Update(m_renderer);
+                }
             }
         }
     }

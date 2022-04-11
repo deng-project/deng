@@ -21,9 +21,9 @@
 
     #include <libdas/include/Iterators.h>
     #include <libdas/include/Points.h>
-    #include <libdas/include/Quaternion.h>
     #include <libdas/include/Vector.h>
     #include <libdas/include/Matrix.h>
+    #include <libdas/include/Quaternion.h>
     #include <libdas/include/Api.h>
     #include <libdas/include/DasStructures.h>
     #include <libdas/include/ErrorHandlers.h>
@@ -33,6 +33,7 @@
     #include <libdas/include/DasParser.h>
 
     #include <Api.h>
+    #include <BaseTypes.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Window.h>
@@ -69,6 +70,11 @@ namespace DENG {
             bool m_animate = false;
             bool m_repeat = false;
 
+        private:
+            void _LinearInterpolation(float _t1, float _tc, float _t2);
+            void _StepInterpolation();
+            //void _CubicSplineInterpolation(const Libdas::Vector3<float> &_t1, float _tc, const Libdas::Vector3<float> &_t2);
+
         public:
             AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser, const std::vector<uint32_t> &m_ubo_offsets);
 
@@ -78,6 +84,7 @@ namespace DENG {
                 m_animate = true;
                 m_repeat = _repeat;
                 m_active_timestamp_index = 0;
+                //m_ubo.animate = 1;
                 m_beg_time = std::chrono::system_clock::now();
             }
 

@@ -33,7 +33,6 @@ namespace DENG {
         if(!ignore_pitch_movement)
             mov = m_rel_z_rot * m_rel_y_rot * m_rel_x_rot * Libdas::Vector4<float>{ _delta_mov.first, _delta_mov.second, _delta_mov.third, 1.0f };
         else mov = m_rel_y_rot * Libdas::Vector4<float>(_delta_mov.first,  _delta_mov.second, _delta_mov.third, 1.0f);
-        std::cout << "Movement: " << mov.first << " " << mov.second << " " << mov.third << std::endl;
         m_camera_pos += mov;
     }
 

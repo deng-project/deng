@@ -162,13 +162,19 @@ namespace DENG {
 
         if(m_shader_ids[id] == UINT32_MAX) {
             ShaderModule module;
-            if(mask & UV_ATTR_MASK)
+            if(mask & UV_ATTR_MASK) {
                 module.fragment_shader_src = ModelShaderGenerator::GetSampledFragmentShaderSource();
-            else module.fragment_shader_src = ModelShaderGenerator::GetColoredFragmentShaderSource();
+                module.fragment_shader_file = "GeneratedFragmentShaderWithTextureSampling";
+            }
+            else {
+                module.fragment_shader_src = ModelShaderGenerator::GetColoredFragmentShaderSource();
+                module.fragment_shader_file = "GeneratedFragmentShaderWithColoring";
+            }
 
             _GetAttributesByType(_parser, _mesh, id, module, _base_offset);
             _GetUniforms(module, _camera_ubo_offset, id);
 
+            module.vertex_shader_file = "GeneratedVertexShader";
             module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(mask);
             module.load_shaders_from_file = false;
             module.use_seperate_attribute_strides = true;

@@ -30,4 +30,4 @@ add_custom_command(TARGET ${VK_MODEL_LOADER_TARGET}
 )
 
 # Write default loader.conf file
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/loader.conf "Models/Box.das")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/loader.conf "Models/AnimatedCube.das")

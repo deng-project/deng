@@ -50,6 +50,7 @@ namespace DENG {
             Renderer &m_renderer;
             const uint32_t m_shader_id;
             const uint32_t m_ubo_offset;
+            bool m_is_animation_target = false;
 
             // Uniform node data
             Libdas::Matrix4<float> m_node_transform;
@@ -93,6 +94,14 @@ namespace DENG {
 
             inline void SetSkeletonTransform(const Libdas::Matrix4<float> &_skeleton) {
                 m_skeleton_transform = _skeleton;
+            }
+
+            inline void SetAnimationTargetFlag(bool _flag) {
+                m_is_animation_target = _flag;
+            }
+
+            inline bool IsAnimationTarget() {
+                return m_is_animation_target;
             }
 
     };
