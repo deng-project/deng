@@ -24,6 +24,7 @@ set(DENG_HEADERS
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
+    include/PythonScriptExecutor.h
     include/Renderer.h
     include/ShaderDefinitions.h
     include/ThirdPersonCamera.h
@@ -51,6 +52,7 @@ set(DENG_SOURCES
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
+    src/PythonScriptExecutor.cpp
     src/ShaderDefinitions.cpp
     src/ThirdPersonCamera.cpp
     src/VulkanDescriptorAllocator.cpp
@@ -75,9 +77,13 @@ target_compile_definitions(${DENG_STATIC_TARGET}
     PUBLIC DENG_STATIC
 )
 
+# Find python library
+find_package(Python COMPONENTS Development REQUIRED)
+
 target_include_directories(${DENG_STATIC_TARGET}
     PUBLIC include
     PUBLIC deps
+    PUBLIC ${Python_INCLUDE_DIRS}
     PUBLIC deps/${LIBLUA_DEP_DIR}/src
 )
 
@@ -86,6 +92,7 @@ target_link_libraries(${DENG_STATIC_TARGET}
     PUBLIC ${LIBDAS_TARGET}
     PUBLIC ${IMGUI_TARGET}
     PUBLIC ${LIBLUA_TARGET}
+    PUBLIC ${Python_LIBRARIES}
 )
 
 
@@ -99,6 +106,7 @@ target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE DENG_EXPORT_LIBRARY)
 target_include_directories(${DENG_SHARED_TARGET} 
     PUBLIC include
     PUBLIC deps
+    PUBLIC ${Python_INCLUDE_DIRS}
     PUBLIC deps/${LIBLUA_DEP_DIR}/src
 )
 
@@ -107,6 +115,7 @@ target_link_libraries(${DENG_SHARED_TARGET}
     PUBLIC ${LIBDAS_TARGET}
     PUBLIC ${IMGUI_TARGET}
     PUBLIC ${LIBLUA_TARGET}
+    PUBLIC ${Python_LIBRARIES}
 )
 
 # Link either shaderc_combined if on Linux or shaderc if building for windows platform

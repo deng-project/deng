@@ -13,7 +13,12 @@ namespace DENG {
         m_mesh(_mesh),
         m_renderer(_renderer), 
         m_shader_id(_shader_id),
-        m_ubo_offset(_base_ubo_offset) {}
+        m_ubo_offset(_base_ubo_offset) 
+    {
+        if(m_mesh.name != "") {
+            m_name = m_mesh.name;
+        }
+    }
 
 
     uint32_t MeshLoader::CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset) {

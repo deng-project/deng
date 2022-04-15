@@ -8,7 +8,7 @@
 
 int main() {
     DENG::Window win = DENG::Window(1280, 720, NEKO_HINT_API_VULKAN | NEKO_HINT_RESIZEABLE, "VulkanImGui");
-    DENG::RendererConfig conf = {}; // keep default
+    DENG::RendererConfig conf = { false, true };
     DENG::VulkanRenderer renderer = DENG::VulkanRenderer(win, conf);
     ImGuiApp app(win, renderer);
     app.Run();

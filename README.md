@@ -30,7 +30,7 @@ PS > git clone https://github.com/inugami-dev64/deng -b animations
 
 Fetch all required dependencies:  
 ```
-PS > python FetchDependencies.py
+PS > python scripts\FetchDependencies.py
 ```
 
 Generate build files using CMake:  
@@ -48,7 +48,7 @@ Download Vulkan SDK tarball and extract it to familiar location.
 
 On Debian based distributions you can install following packages that are required for building DENG  
 ```
-$ sudo apt install cmake libx11-6 libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
+$ sudo apt install python3-tk cmake libx11-6 libxrandr-dev libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
 ```
 
 Clone the repository with following command:  
@@ -58,7 +58,7 @@ $ git clone https://github.com/inugami-dev64/deng
 
 Fetch all required dependencies:  
 ```
-$ python FetchDependencies.py
+$ python scripts/FetchDependencies.py
 ```
 
 Generate build files using CMake:  

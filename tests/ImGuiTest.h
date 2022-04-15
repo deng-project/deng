@@ -62,7 +62,7 @@ class ImGuiApp {
         void Run() {
             while(m_window.IsRunning()) {
                 m_renderer.ClearFrame();
-                m_imgui.Update(0, 0);
+                m_imgui.Update(0);
                 m_renderer.RenderFrame();
                 m_window.Update();
             }

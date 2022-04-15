@@ -17,19 +17,26 @@ namespace DENG {
         ImGui::DestroyContext();
     }
     
-    void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data, uint32_t _vertex_offset, uint32_t _index_offset) {
-        uint32_t cmd_vert_offset = _vertex_offset;
-        uint32_t cmd_idx_offset = _index_offset;
+    void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data, uint32_t _combined_offset) {
         DENG::MeshReference &mesh = mp_renderer->GetMeshes()[m_mesh_id];
+        mesh.shader_module_id = m_shader_id;
         mesh.commands.clear();
 
+        uint32_t cmd_vert_offset = _combined_offset;
+        uint32_t cmd_idx_offset = _combined_offset;
+
         for(int i = 0; i < _draw_data->CmdListsCount; i++) {
+
             const ImDrawList *cmd_list = _draw_data->CmdLists[i];
             const ImDrawVert *vert_buffer = cmd_list->VtxBuffer.Data;
             const ImDrawIdx *idx_buffer = cmd_list->IdxBuffer.Data;
 
-            mp_renderer->UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(vert_buffer), static_cast<uint32_t>(cmd_list->VtxBuffer.Size) * sizeof(ImDrawVert)), cmd_vert_offset);
-            mp_renderer->UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(idx_buffer), static_cast<uint32_t>(cmd_list->IdxBuffer.Size) * sizeof(ImDrawIdx)), cmd_idx_offset);
+            cmd_idx_offset += static_cast<uint32_t>(cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+
+            mp_renderer->UpdateCombinedBuffer(std::make_pair(reinterpret_cast<const char*>(vert_buffer), static_cast<uint32_t>(cmd_list->VtxBuffer.Size * sizeof(ImDrawVert))), cmd_vert_offset);
+            mp_renderer->UpdateCombinedBuffer(std::make_pair(reinterpret_cast<const char*>(idx_buffer), static_cast<uint32_t>(cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx))), cmd_idx_offset);
+
+            const uint32_t used_size = cmd_idx_offset + cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
 
             for(int j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                 const ImDrawCmd *pcmd = &cmd_list->CmdBuffer[j];
@@ -62,8 +69,8 @@ namespace DENG {
                 }
             }
 
-            cmd_vert_offset +=  cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
-            cmd_idx_offset += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
+            cmd_vert_offset += used_size;
+            cmd_idx_offset += used_size;
         }
     }
 
@@ -107,6 +114,7 @@ namespace DENG {
         module.enable_scissor = true;
         module.load_shaders_from_file = false;
         module.use_texture_mapping = true;
+        module.use_seperate_attribute_strides = false;
 
         module.ubo_data_layouts.reserve(2);
         module.ubo_data_layouts.emplace_back();
@@ -129,7 +137,7 @@ namespace DENG {
     }
 
 
-    void ImGuiLayer::Update(uint32_t _vertex_offset, uint32_t _index_offset) {
+    void ImGuiLayer::Update(uint32_t _combined_offset) {
         m_end = std::chrono::system_clock::now();
         m_delta_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_beg).count());
         m_beg = std::chrono::system_clock::now();
@@ -141,7 +149,7 @@ namespace DENG {
         ImGui::Render();
 
         ImDrawData *draw_data = ImGui::GetDrawData();
-        _CreateDrawCommands(draw_data, _vertex_offset, _index_offset);
+        _CreateDrawCommands(draw_data, _combined_offset);
 
         Libdas::Point2D<float> wsize = { static_cast<float>(mp_window->GetSize().x), static_cast<float>(mp_window->GetSize().y) };
         mp_renderer->UpdateUniform(reinterpret_cast<char*>(&wsize), sizeof(Libdas::Point2D<float>), m_ubo_offset);

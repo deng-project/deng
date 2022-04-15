@@ -194,8 +194,6 @@ namespace DENG {
         const uint32_t next = (m_active_timestamp_index + 1) % static_cast<uint32_t>(m_timestamps.size());
 
         // check the current timestamp against keyframe values
-        std::cout << "current timestamp: " << delta_time.count() / 1000 << std::endl;
-        std::cout << "Next timestamp: " << m_timestamps[next] << std::endl;
         if(delta_time.count() / 1000.0f >= m_timestamps[next]) {
             m_active_timestamp_index++;
             if(m_active_timestamp_index >= m_timestamps.size()) {

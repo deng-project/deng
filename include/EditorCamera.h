@@ -9,48 +9,68 @@
 
 
 #ifdef EDITOR_CAMERA_CPP
-    #include <stdlib.h>
-    #include <string.h>
-    #include <mutex>
-    #include <cmath>
     #include <string>
-    #include <vulkan/vulkan.h>
+    #include <cstring>
+    #include <vector>
+    #include <variant>
+    #include <chrono>
+    #include <cmath>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
 
-    #include <common/base_types.h>
-    #include <common/err_def.h>
-    #include <data/assets.h>
+    #include <libdas/include/Points.h>
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
+    #include <libdas/include/Quaternion.h>
 
-    #include <math/deng_math.h>
-    #include <deng/window.h>
-    #include <deng/camera/3d/cam_bindings.h>
-    #include <deng/camera/3d/cam_base.h>
-    #include <deng/camera/3d/ev_base.h>
-    #include <deng/camera/3d/ed_cam_ev.h>
+    #include <Api.h>
+    #include <BaseTypes.h>
+    #include <ErrorDefinitions.h>
+    #include <ShaderDefinitions.h>
+    #include <Window.h>
+    #include <Renderer.h>
+    #include <ModelUniforms.h>
+    #include <CameraTransformManager.h>
+    #include <Camera3D.h>
 #endif
 
 namespace DENG {
 
-    /// Main class for editor camera instance creation
-    class EditorCamera : private __EditorCameraEv, public __Camera3DBase {
-    private:
-        dengMath::vec3<deng_vec_t> m_origin;
+    class DENG_API EditorCamera : public Camera3D {
+        private:
+            bool m_is_enabled = false;
+            const Libdas::Vector4<float> m_center_point = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-    public:
-        __EditorCamera(deng_vec_t zoom_step, const dengMath::vec3<deng_vec_t> &origin, const dengMath::vec2<deng_f64_t> &mouse_sens, 
-            deng_vec_t FOV, deng_vec_t near_plane, deng_vec_t far_plane, Window *p_ww );
-        
+        public:
+            EditorCamera(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset);
 
-        /// Move origin point in world coordinate system by delta_mov
-        void moveOrigin(const dengMath::vec3<deng_vec_t> &delta_mov); 
-
-        
-        /// Set camera control bindings for editor camera system
-        void setBindings(const Camera3DBindings &bindings);
-
-
-        /// Wrapper method for updating camera events
-        void update();
+            virtual void EnableCamera() override;
+            virtual void DisableCamera() override;
+            virtual void Update(Renderer &_rend) override;
     };
+
+    /// Main class for editor camera instance creation
+    //class EditorCamera : private __EditorCameraEv, public __Camera3DBase {
+    //private:
+        //dengMath::vec3<deng_vec_t> m_origin;
+
+    //public:
+        //__EditorCamera(deng_vec_t zoom_step, const dengMath::vec3<deng_vec_t> &origin, const dengMath::vec2<deng_f64_t> &mouse_sens, 
+            //deng_vec_t FOV, deng_vec_t near_plane, deng_vec_t far_plane, Window *p_ww );
+        
+
+        ///// Move origin point in world coordinate system by delta_mov
+        //void moveOrigin(const dengMath::vec3<deng_vec_t> &delta_mov); 
+
+        
+        ///// Set camera control bindings for editor camera system
+        //void setBindings(const Camera3DBindings &bindings);
+
+
+        ///// Wrapper method for updating camera events
+        //void update();
+    //};
 }
 
 #endif

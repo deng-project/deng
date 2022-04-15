@@ -80,14 +80,14 @@ namespace DENG {
             std::chrono::time_point<std::chrono::system_clock> m_end;
 
         private:
-            void _CreateDrawCommands(ImDrawData *_draw_data, uint32_t _vertex_offset, uint32_t _index_offset);
+            void _CreateDrawCommands(ImDrawData *_draw_data, uint32_t _combined_offset);
             void _UpdateIO();
 
         public:
             ImGuiLayer();
             ~ImGuiLayer();
             void Attach(Window &_win, Renderer &_rend, uint32_t _ubo_offset, PFN_ImGuiDrawCallback _callback, void *_user_data);
-            void Update(uint32_t _vertex_offset, uint32_t _index_offset);
+            void Update(uint32_t _combined_offset);
     };
 }
 

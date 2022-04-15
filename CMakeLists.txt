@@ -16,7 +16,6 @@ option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
 option(BUILD_DENG "Build all DENG targets" ON)
 option(EXPERIMENTAL_BUILD_MODEL_LOADER "Build model loader testing applications" OFF)
-option(EXPERIMENTAL_BUILD_LUA_TESTS "Build lua testing applications" OFF)
 option(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS "Build cubic spline interpolation tests" OFF)
 option(EXPERIMENTAL_BUILD_MATRIX_TESTS "Build matrix tests" OFF)
 
@@ -62,7 +61,6 @@ if(BUILD_DEPS)
     include(cmake/libdas.cmake)
     include(cmake/libnwin.cmake)
     include(cmake/imgui.cmake)
-    include(cmake/lua.cmake)
 	
 	if(WIN32)
 		set(SHADERC_ENABLE_SHARED_CRT ON)
@@ -75,6 +73,7 @@ endif()
 
 if(BUILD_DENG)
     include(cmake/libdeng.cmake)
+    include(cmake/ViewModels.cmake)
     include(cmake/TextureDump.cmake)
 endif()
 
@@ -87,7 +86,6 @@ if(BUILD_TESTS)
     include(cmake/tests/OpenGLImGui.cmake)
 
     if(EXPERIMENTAL_BUILD_MODEL_LOADER)
-        include(cmake/tests/ModelLoaderApp.cmake)
     endif()
 
     if(EXPERIMENTAL_BUILD_LUA_TESTS)

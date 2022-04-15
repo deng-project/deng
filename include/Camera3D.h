@@ -38,7 +38,12 @@ namespace DENG {
         neko_InputBits zoom_in;
         neko_InputBits zoom_out;
         neko_InputBits rotate_toggle;
-        Libdas::Point3D<float> origin; 
+
+        float zoom_step = 1.f;                 // coordinate unit
+        float action_delay = 10;                // ms
+        float delta_rotate = PI / 36;           // radians
+        float mouse_rotation_delta = 50.0f;     // virtual pixels
+        Libdas::Point4D<float> origin = { 0.0f, 0.0f, 0.0f, 0.0f }; 
     };
 
     class DENG_API Camera3D {
@@ -51,8 +56,27 @@ namespace DENG {
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
 
+            // perspective projection matrix attributes
+            float m_fov = 65.f * PI / 180.f;    // 65 degrees by default
+            Libdas::Point2D<float> m_planes = { -0.1f, -25.0f };
+
             const uint32_t m_ubo_offset;
             std::string m_name;
+
+        protected:
+            inline float _CalculateAspectRatio() {
+                return static_cast<float>(m_window.GetSize().x) / static_cast<float>(m_window.GetSize().y);
+            }
+
+
+            inline Libdas::Matrix4<float> _CalculateProjection() {
+                return Libdas::Matrix4<float> {
+                    { _CalculateAspectRatio() / tanf(m_fov), 0.0f, 0.0f, 0.0f },
+                    { 0.0f, 1 / tanf(m_fov / 2), 0.0f, 0.0f },
+                    { 0.0f, 0.0f, m_planes.y / (m_planes.x + m_planes.y), 1.0f },
+                    { 0.0f, 0.0f, (m_planes.x * m_planes.y) / (m_planes.x + m_planes.y), 0.0f }
+                };
+            }
 
         public:
             Camera3D(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) : 
@@ -67,6 +91,10 @@ namespace DENG {
 
             inline const std::string &GetName() {
                 return m_name;
+            }
+
+            inline void ChangeFov(float _fov) {
+                m_fov = _fov;
             }
 
             inline void UpdateConfig(const Camera3DConfiguration &_conf) {

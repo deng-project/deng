@@ -9,8 +9,7 @@
 namespace DENG {
 
     FirstPersonCamera::FirstPersonCamera(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) :
-        Camera3D(_win, _conf, _name, _ubo_offset) 
-    { DENG_ASSERT(m_config.index() == 0); }
+        Camera3D(_win, _conf, _name, _ubo_offset) { DENG_ASSERT(m_config.index() == 0); }
 
     void FirstPersonCamera::EnableCamera() {
         m_window.ChangeVCMode(true);
@@ -25,17 +24,8 @@ namespace DENG {
 
 
     void FirstPersonCamera::Update(Renderer &_rend) {
-        const float aspect_ratio = static_cast<float>(m_window.GetSize().x) / static_cast<float>(m_window.GetSize().y);
-        const float fov = 65 * PI / 180;                            // 65 degrees
-        const Libdas::Point2D<float> planes = { -0.1f, -25.0f };    // some random plane values
-        
         ModelCameraUbo ubo;
-        ubo.projection_matrix = Libdas::Matrix4<float> {
-            { aspect_ratio / tanf(fov), 0.0f, 0.0f, 0.0f },
-            { 0.0f, 1 / tanf(fov / 2), 0.0f, 0.0f },
-            { 0.0f, 0.0f, planes.y / (planes.x + planes.y), 1.0f },
-            { 0.0f, 0.0f, (planes.x * planes.y) / (planes.x + planes.y), 0.0f }
-        };
+        ubo.projection_matrix = _CalculateProjection();
 
         m_cur_time = std::chrono::system_clock::now();
         std::chrono::duration<float, std::milli> delta_time = m_cur_time - m_beg_time;
@@ -43,7 +33,7 @@ namespace DENG {
         FirstPersonCameraConfiguration &conf = std::get<FirstPersonCameraConfiguration>(m_config);
 
         // update code
-        if(delta_time.count() >= conf.action_delay && m_window.IsVirtualCursor()) {
+        if(m_window.IsVirtualCursor()) {
             const float delta_mov = conf.delta_mov * delta_time.count() / conf.action_delay;
             Libdas::Point2D<int64_t> delta_mouse = m_window.GetMouseDelta();
             Libdas::Point2D<float> delta_mousef = { static_cast<float>(delta_mouse.x), static_cast<float>(delta_mouse.y) };

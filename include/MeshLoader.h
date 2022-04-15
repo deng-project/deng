@@ -51,10 +51,12 @@ namespace DENG {
             const uint32_t m_shader_id;
             const uint32_t m_ubo_offset;
             bool m_is_animation_target = false;
+            std::string m_name = "Unnamed mesh";
 
             // Uniform node data
             Libdas::Matrix4<float> m_node_transform;
             Libdas::Matrix4<float> m_skeleton_transform;
+            Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
 
         public:
             MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _shader_id, uint32_t _base_ubo_offset);
@@ -73,8 +75,8 @@ namespace DENG {
                 return m_shader_id;
             }
 
-            inline const std::string &GetName() {
-                return m_mesh.name;
+            inline const std::string &GetName() const {
+                return m_name;
             }
 
             static uint32_t CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset);
@@ -86,6 +88,14 @@ namespace DENG {
 
             inline Libdas::Matrix4<float> &GetSkeletonTransform() {
                 return m_skeleton_transform;
+            }
+
+            inline Libdas::Vector4<float> GetColor() {
+                return m_color;
+            }
+
+            inline void SetColor(const Libdas::Vector4<float> &_color) {
+                m_color = _color;
             }
 
             inline void SetNodeTransform(const Libdas::Matrix4<float> &_node) {

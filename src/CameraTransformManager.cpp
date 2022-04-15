@@ -32,8 +32,10 @@ namespace DENG {
         Libdas::Vector4<float> mov;
         if(!ignore_pitch_movement)
             mov = m_rel_z_rot * m_rel_y_rot * m_rel_x_rot * Libdas::Vector4<float>{ _delta_mov.first, _delta_mov.second, _delta_mov.third, 1.0f };
-        else mov = m_rel_y_rot * Libdas::Vector4<float>(_delta_mov.first,  _delta_mov.second, _delta_mov.third, 1.0f);
+        else mov = m_rel_z_rot * m_rel_y_rot * Libdas::Vector4<float>(_delta_mov.first,  _delta_mov.second, _delta_mov.third, 1.0f);
+
         m_camera_pos += mov;
+        m_translation = m_normalized_sides * m_camera_pos;
     }
 
 
@@ -41,6 +43,7 @@ namespace DENG {
         m_camera_pos.first += _delta_mov.first;
         m_camera_pos.second += _delta_mov.second;
         m_camera_pos.third += _delta_mov.third;
+        m_translation = m_camera_pos;
     }
 
 
@@ -60,10 +63,6 @@ namespace DENG {
         };
 
         m_normalized_sides = (m_rel_z_rot * m_rel_y_rot * m_rel_x_rot).ExpandToMatrix4() * sides;
-
-        m_translation.first = m_normalized_sides.row1 * m_camera_pos;
-        m_translation.second = m_normalized_sides.row2 * m_camera_pos;
-        m_translation.third = m_normalized_sides.row3 * m_camera_pos;
     }
 
 
@@ -77,20 +76,13 @@ namespace DENG {
     }
 
 
-    void CameraTransformManager::CustomPointRelativeRotation(const Libdas::Point3D<float> &_delta_rot, const Libdas::Vector4<float> &_pos) {
+    void CameraTransformManager::CustomPointRelativeRotation(const Libdas::Point3D<float> &_delta_rot, const Libdas::Vector4<float> &_point) {
         m_rotations += _delta_rot;
         _PreventRotationOverflow();
 
         m_rel_x_rot = { sinf(m_rotations.x / 2), 0, 0, cosf(m_rotations.x / 2) };
         m_rel_y_rot = { 0, sinf(m_rotations.y / 2), 0, cosf(m_rotations.y / 2) };
         m_rel_z_rot = { 0, 0, sinf(m_rotations.z / 2), cosf(m_rotations.z / 2) };
-
-        const Libdas::Matrix4<float> translation = {
-            { 1.0f, 0.0f, 0.0f, _pos.first },
-            { 0.0f, 1.0f, 0.0f, _pos.second },
-            { 0.0f, 0.0f, 1.0f, _pos.third },
-            { 0.0f, 0.0f, 0.0f, 1.0f }
-        };
 
         const Libdas::Matrix4<float> sides = {
             { 1.0f, 0.0f, 0.0f, 0.0f },
@@ -99,16 +91,18 @@ namespace DENG {
             { 0.0f, 0.0f, 0.0f, 1.0f }
         };
 
-        m_camera_pos = translation * (m_rel_z_rot * m_rel_y_rot * m_rel_x_rot).ExpandToMatrix4() * m_camera_pos;
-        m_normalized_sides = sides * (m_rel_z_rot * m_rel_y_rot * m_rel_x_rot).ExpandToMatrix4();
+
+        m_translation_offset = { _point.first, _point.second, _point.third };
+        m_normalized_sides = (m_rel_z_rot * m_rel_y_rot * m_rel_x_rot).ExpandToMatrix4() * sides;
+        m_translation = m_camera_pos;
     }
 
 
     Libdas::Matrix4<float> CameraTransformManager::ConstructViewMatrix() {
         Libdas::Matrix4<float> view = m_normalized_sides;
-        view.row1.fourth = -m_translation.first;
-        view.row2.fourth = -m_translation.second;
-        view.row3.fourth = -m_translation.third;
+        view.row1.fourth = -(m_translation.first - m_translation_offset.first);
+        view.row2.fourth = -(m_translation.second - m_translation_offset.second);
+        view.row3.fourth = -(m_translation.third - m_translation_offset.third);
 
         view = view * (m_abs_z_rot * m_abs_y_rot * m_abs_x_rot).ExpandToMatrix4();
 

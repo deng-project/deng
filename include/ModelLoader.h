@@ -51,8 +51,9 @@ namespace DENG {
     struct ModelAnimation {
         ModelAnimation(const std::string &_name) : name(_name) {}
 
-        const std::string &name;
+        std::string name = "Unnamed animation";
         std::vector<AnimationSampler> samplers;
+        bool is_animated = true;
     };
 
     class DENG_API ModelLoader {
@@ -66,6 +67,8 @@ namespace DENG {
             uint32_t m_texture_bookmark = 0;
             const uint32_t m_base_buffer_offset;
             const uint32_t m_base_ubo_offset;
+
+            uint32_t m_used_base_buffer_memory = 0;
 
         private:
             void _AttachBuffersAndTextures();
@@ -81,6 +84,26 @@ namespace DENG {
 
             inline std::vector<std::string> &GetAttachedTextures() {
                 return m_texture_names;
+            }
+
+            inline uint32_t GetUsedMainBufferMemory() {
+                return m_used_base_buffer_memory;
+            }
+
+            inline uint32_t GetUsedUniformBufferMemory() {
+                return m_mesh_ubo_offsets.back() + m_renderer.AlignUniformBufferOffset(sizeof(ModelUbo)) + m_renderer.AlignUniformBufferOffset(sizeof(ModelAnimationUbo));
+            }
+
+            inline const std::string &GetName() {
+                return m_parser.GetProperties().model;
+            }
+
+            inline std::vector<ModelAnimation> &GetAnimations() {
+                return m_animations;
+            }
+
+            inline std::vector<MeshLoader> &GetMeshes() {
+                return m_mesh_loaders;
             }
     };
 }
