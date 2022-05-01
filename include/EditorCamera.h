@@ -43,11 +43,11 @@ namespace DENG {
             const Libdas::Vector4<float> m_center_point = { 0.0f, 0.0f, 0.0f, 0.0f };
 
         public:
-            EditorCamera(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset);
+            EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset);
 
             virtual void EnableCamera() override;
             virtual void DisableCamera() override;
-            virtual void Update(Renderer &_rend) override;
+            virtual void Update() override;
     };
 
     /// Main class for editor camera instance creation

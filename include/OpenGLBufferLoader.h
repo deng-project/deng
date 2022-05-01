@@ -20,9 +20,6 @@
 #undef DEBUG_ONLY
 #endif
 
-#define DENG_DEFAULT_MESH_CAPACITY      65536
-#define DENG_DEFAULT_UBO_CAPACITY       512
-
 
 namespace DENG {
 
@@ -31,16 +28,14 @@ namespace DENG {
         struct BufferData {
             GLuint vert_array = 0;
             GLuint vert_buffer = 0;
-            GLuint idx_buffer = 0;
             GLuint ubo_buffer = 0;
         };
 
         class BufferLoader {
             private:
                 BufferData m_buffer_data;
-                uint32_t m_mesh_cap = DENG_DEFAULT_MESH_CAPACITY;
-                uint32_t m_index_cap = DENG_DEFAULT_MESH_CAPACITY;
-                uint32_t m_ubo_cap = DENG_DEFAULT_UBO_CAPACITY;
+                uint32_t m_buffer_cap = DEFAULT_BUFFER_SIZE;
+                uint32_t m_ubo_cap = DEFAULT_UNIFORM_SIZE;
 
                 // device limitations
                 GLint m_max_vertex_uniform_blocks = 0;
@@ -53,7 +48,7 @@ namespace DENG {
                 uint32_t _CalculateNewCapacity(uint32_t);
                 void _FindLimits();
 
-                void _ReallocateBuffer(GLenum _buffer, uint32_t _new_size, uint32_t &_supplement);
+                void _ReallocateBuffer(GLenum _buffer, uint32_t _required_size);
             public:
                 BufferLoader();
                 void RequestMemory(uint32_t _request, GLenum _buffer_type);

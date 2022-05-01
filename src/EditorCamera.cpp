@@ -8,8 +8,8 @@
 
 namespace DENG {
 
-    EditorCamera::EditorCamera(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) :
-        Camera3D(_win, _conf, _name, _ubo_offset) { DENG_ASSERT(m_config.index() == 2); }
+    EditorCamera::EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) :
+        Camera3D(_rend, _win, _conf, _name, _ubo_offset) { DENG_ASSERT(m_config.index() == 2); }
 
 
     void EditorCamera::EnableCamera() {
@@ -22,12 +22,9 @@ namespace DENG {
     }
 
 
-    void EditorCamera::Update(Renderer &_rend) {
-        ModelCameraUbo ubo;
-        ubo.projection_matrix = _CalculateProjection();
+    void EditorCamera::Update() {
+        m_ubo.projection_matrix = _CalculateProjection();
         
-        m_cur_time = std::chrono::system_clock::now();
-        std::chrono::duration<float, std::milli> delta_time = m_cur_time - m_beg_time;
         EditorCameraConfiguration &conf = std::get<EditorCameraConfiguration>(m_config);
 
         if(m_is_enabled) {
@@ -64,13 +61,10 @@ namespace DENG {
                     delta_step = -conf.zoom_step;
                     m_cam_transform.MoveCameraAbsolutely({ 0.0f, 0.0f, delta_step });
                 }
-
             }
-
-            m_beg_time = std::chrono::system_clock::now();
         }
 
-        ubo.view_matrix = m_cam_transform.ConstructViewMatrix();
-        _rend.UpdateUniform(reinterpret_cast<const char*>(&ubo), sizeof(ModelCameraUbo), m_ubo_offset);
+        m_ubo.view_matrix = m_cam_transform.ConstructViewMatrix();
+        m_renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), sizeof(ModelCameraUbo), m_ubo_offset);
     }
 }

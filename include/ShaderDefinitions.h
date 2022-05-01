@@ -14,6 +14,9 @@
     #include <ErrorDefinitions.h>
 #endif
 
+#define DEFAULT_UNIFORM_SIZE    1024
+#define DEFAULT_BUFFER_SIZE     4096
+
 
 namespace DENG {
     enum AttributeType {
@@ -101,7 +104,7 @@ namespace DENG {
     // NOTE: geometry shaders are completely optional and not required
     struct ShaderModule {
         std::vector<AttributeType> attributes;
-        std::vector<std::size_t> offsets;
+        std::vector<std::size_t> attribute_strides;
         std::vector<UniformDataLayout> ubo_data_layouts; // per shader uniforms
         std::string vertex_shader_file = "";
         std::string geometry_shader_file = "";
@@ -115,7 +118,6 @@ namespace DENG {
         bool enable_depth_testing = false;
         bool enable_stencil_testing = false;
         bool enable_blend = false;
-        bool use_seperate_attribute_strides = false;
         CullMode cull_mode = CULL_MODE_NONE;
     };
 

@@ -33,8 +33,8 @@ namespace DENG {
 
             cmd_idx_offset += static_cast<uint32_t>(cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
 
-            mp_renderer->UpdateCombinedBuffer(std::make_pair(reinterpret_cast<const char*>(vert_buffer), static_cast<uint32_t>(cmd_list->VtxBuffer.Size * sizeof(ImDrawVert))), cmd_vert_offset);
-            mp_renderer->UpdateCombinedBuffer(std::make_pair(reinterpret_cast<const char*>(idx_buffer), static_cast<uint32_t>(cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx))), cmd_idx_offset);
+            mp_renderer->UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(vert_buffer), static_cast<uint32_t>(cmd_list->VtxBuffer.Size * sizeof(ImDrawVert))), cmd_vert_offset);
+            mp_renderer->UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(idx_buffer), static_cast<uint32_t>(cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx))), cmd_idx_offset);
 
             const uint32_t used_size = cmd_idx_offset + cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
 
@@ -59,10 +59,13 @@ namespace DENG {
 
                     // update the mesh instance for new draw calls
                     mesh.commands.emplace_back();
-                    mesh.commands.back().vertices_offset = cmd_vert_offset + pcmd->VtxOffset * sizeof(ImDrawVert);
+                    const uint32_t base_vertex_offset = cmd_vert_offset + pcmd->VtxOffset * sizeof(ImDrawVert);
+                    mesh.commands.back().attribute_offsets.push_back(base_vertex_offset + offsetof(ImDrawVert, pos));
+                    mesh.commands.back().attribute_offsets.push_back(base_vertex_offset + offsetof(ImDrawVert, uv));
+                    mesh.commands.back().attribute_offsets.push_back(base_vertex_offset + offsetof(ImDrawVert, col));
                     mesh.commands.back().indices_offset = cmd_idx_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
                     mesh.commands.back().indices_count = pcmd->ElemCount;
-                    mesh.commands.back().texture_name = IMGUI_TEXTURE_NAME;
+                    mesh.commands.back().texture_names.push_back(IMGUI_TEXTURE_NAME);
                     mesh.commands.back().scissor.offset = { static_cast<int32_t>(clip.x), static_cast<int32_t>(clip.y) };
                     mesh.commands.back().scissor.ext = { static_cast<uint32_t>(clip.z - clip.x), static_cast<uint32_t>(clip.w - clip.y) };
                     mesh.commands.back().scissor.enabled = true;
@@ -83,6 +86,12 @@ namespace DENG {
         m_io->MousePos.y = static_cast<float>(mp_window->GetMousePosition().y);
         m_io->MouseDown[0] = mp_window->IsKeyPressed(NEKO_MOUSE_BTN_1);
         m_io->MouseDown[1] = mp_window->IsKeyPressed(NEKO_MOUSE_BTN_2);
+
+        if(mp_window->IsKeyPressed(NEKO_MOUSE_SCROLL_DOWN))
+            m_io->MouseWheel = -1;
+        else if(mp_window->IsKeyPressed(NEKO_MOUSE_SCROLL_UP))
+            m_io->MouseWheel = 1;
+        else m_io->MouseWheel = 0;
     }
 
 
@@ -105,16 +114,15 @@ namespace DENG {
         module.fragment_shader_src = FRAG_SHADER_SRC;
         module.vertex_shader_src = VERT_SHADER_SRC;
         module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
-        module.offsets.push_back(offsetof(ImDrawVert, pos));
         module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
-        module.offsets.push_back(offsetof(ImDrawVert, uv));
         module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_UBYTE);
-        module.offsets.push_back(offsetof(ImDrawVert, col));
+        module.attribute_strides.push_back(sizeof(ImDrawVert));
+        module.attribute_strides.push_back(sizeof(ImDrawVert));
+        module.attribute_strides.push_back(sizeof(ImDrawVert));
         module.enable_blend = true;
         module.enable_scissor = true;
         module.load_shaders_from_file = false;
         module.use_texture_mapping = true;
-        module.use_seperate_attribute_strides = false;
 
         module.ubo_data_layouts.reserve(2);
         module.ubo_data_layouts.emplace_back();

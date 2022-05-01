@@ -199,23 +199,15 @@ namespace DENG {
 
 
         void PipelineCreator::_FindInputBindingDescriptions(const ShaderModule &_module) {
-            // 1. use tightly packed vertices
-            // 2. use separate attribute locations
-            if(!_module.use_seperate_attribute_strides) {
-                m_input_binding_desc.emplace_back();
-                m_input_binding_desc.back().binding = 0;
-                m_input_binding_desc.back().stride = static_cast<uint32_t>(CalculatePackedStride(_module));
-                m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            } else {
-                m_input_binding_desc.reserve(_module.attributes.size());
+            DENG_ASSERT(_module.attributes.size() == _module.attribute_strides.size());
+            m_input_binding_desc.reserve(_module.attributes.size());
 
-                for(auto it = _module.attributes.begin(); it != _module.attributes.end(); it++) {
-                    uint32_t i = static_cast<uint32_t>(it - _module.attributes.begin());
-                    m_input_binding_desc.emplace_back();
-                    m_input_binding_desc.back().binding = i;
-                    m_input_binding_desc.back().stride = static_cast<uint32_t>(CalculateAttributeStride(*it));
-                    m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-                }
+            for(auto it = _module.attributes.begin(); it != _module.attributes.end(); it++) {
+                uint32_t i = static_cast<uint32_t>(it - _module.attributes.begin());
+                m_input_binding_desc.emplace_back();
+                m_input_binding_desc.back().binding = i;
+                m_input_binding_desc.back().stride = _module.attribute_strides[i];
+                m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
             }
         }
 
@@ -223,9 +215,7 @@ namespace DENG {
         void PipelineCreator::_FindVertexInputAttributeDescriptions(const ShaderModule &_module) {
             for(uint32_t i = 0; i < static_cast<uint32_t>(_module.attributes.size()); i++) {
                 m_input_attr_descs.push_back(VkVertexInputAttributeDescription{});
-                if(_module.use_seperate_attribute_strides)
-                    m_input_attr_descs.back().binding = i;
-                else m_input_attr_descs.back().binding = 0;
+                m_input_attr_descs.back().binding = i;
                 m_input_attr_descs.back().location = i;
 
                 switch(_module.attributes[i]) {
@@ -362,9 +352,7 @@ namespace DENG {
                         break;
                 }
 
-                if(!_module.use_seperate_attribute_strides)
-                    m_input_attr_descs.back().offset = _module.offsets[i];
-                else m_input_attr_descs.back().offset = 0;
+                m_input_attr_descs.back().offset = 0;
             }
         }
 

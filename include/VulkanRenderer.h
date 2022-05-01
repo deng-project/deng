@@ -46,10 +46,6 @@
     #include <Renderer.h>
 #endif
 
-#define DEFAULT_UNIFORM_SIZE    1024
-#define DEFAULT_VERTICES_SIZE   2048
-#define DEFAULT_INDICES_SIZE    2048
-
 #include <VulkanHelpers.h>
 #include <VulkanInstanceCreator.h>
 #include <VulkanSwapchainCreator.h>
@@ -83,9 +79,7 @@ namespace DENG {
             // locally managed vulkan resources
             VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT; // tmp
             VkDeviceSize m_uniform_size = DEFAULT_UNIFORM_SIZE;
-            VkDeviceSize m_vertices_size = DEFAULT_VERTICES_SIZE;
-            VkDeviceSize m_indices_size = DEFAULT_INDICES_SIZE;
-            VkDeviceSize m_combined_size = m_vertices_size + m_indices_size;
+            VkDeviceSize m_buffer_size = DEFAULT_BUFFER_SIZE;
 
             //  Main memory is usually splitted into vertex regions and index regions, but not always
             //  [ [ VERTICES ] [ INDICES ] ]
@@ -123,7 +117,7 @@ namespace DENG {
             void _CreateSemaphores();
             void _AllocateBufferResources();
             void _AllocateUniformBuffer();
-            void _ReallocateBufferResources(VkDeviceSize _old_size, VkDeviceSize _old_index_size = 0, VkDeviceSize _old_index_offset = 0);
+            void _ReallocateBufferResources(VkDeviceSize _old_size);
             void _CreateColorResources();
             void _CreateDepthResources();
             void _CreateFrameBuffers();
@@ -147,9 +141,7 @@ namespace DENG {
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
-            virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
-            virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
-            virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;
             virtual void RenderFrame() override;
 

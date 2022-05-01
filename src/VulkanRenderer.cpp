@@ -272,49 +272,16 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
+    void VulkanRenderer::UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
         // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_combined_size) {
-            VkDeviceSize old_size = m_combined_size;
-            m_combined_size = (_raw_data.second + _offset) * 3 / 2;
-            m_vertices_size = m_combined_size / 2;
-            m_indices_size = m_combined_size - m_vertices_size;
+        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_buffer_size) {
+            VkDeviceSize old_size = m_buffer_size;
+            m_buffer_size = (_raw_data.second + _offset) * 3 / 2;
             _ReallocateBufferResources(old_size);
         }
 
         Vulkan::_ImplicitDataToBufferCopy(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
                                           reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, static_cast<VkDeviceSize>(_offset));
-    }
-
-
-    void VulkanRenderer::UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_vertices_size) {
-            const VkDeviceSize old_size = m_combined_size;
-            const VkDeviceSize old_idx_offset = m_vertices_size;
-            m_vertices_size = (_raw_data.second + _offset) * 3 / 2;
-            m_combined_size = m_vertices_size + m_indices_size;
-            _ReallocateBufferResources(old_size, m_indices_size, old_idx_offset);
-        }
-
-        Vulkan::_ImplicitDataToBufferCopy(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
-                                          reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, static_cast<VkDeviceSize>(_offset));
-    }
-
-
-    void VulkanRenderer::UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_indices_size) {
-            const VkDeviceSize old_size = m_combined_size;
-            const VkDeviceSize old_idx_size = m_indices_size;
-            const VkDeviceSize old_idx_offset = m_vertices_size;
-            m_indices_size = (_raw_data.second + _offset) * 3 / 2;
-            m_combined_size = m_vertices_size + m_indices_size;
-            _ReallocateBufferResources(old_size, old_idx_size, old_idx_offset);
-        }
-
-        Vulkan::_ImplicitDataToBufferCopy(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
-                                          reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, m_vertices_size + static_cast<VkDeviceSize>(_offset));
     }
 
 
@@ -410,7 +377,7 @@ namespace DENG {
 
 
     void VulkanRenderer::_AllocateBufferResources() {
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_combined_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
                                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_main_buffer);
 
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_main_memory, 
@@ -422,18 +389,11 @@ namespace DENG {
     void VulkanRenderer::_AllocateUniformBuffer() {
         uint32_t max_size = 0;
 
-        // find the maximum offset and size uniform block
+        // find the maximum offset and size for uniform block
         for(auto shader = m_shaders.begin(); shader != m_shaders.end(); shader++) {
-            for(auto ubo = shader->ubo_data_layouts.begin(); ubo != shader->ubo_data_layouts.end(); ubo++) {
-                if(ubo->block.size + ubo->block.offset > max_size)
-                    max_size = ubo->block.size + ubo->block.offset;
-            }
-        }
-
-        for(auto mesh = m_meshes.begin(); mesh != m_meshes.end(); mesh++) {
-            for(auto ubo = mesh->ubo_blocks.begin(); ubo != mesh->ubo_blocks.end(); ubo++) {
-                if(ubo->size + ubo->offset > max_size)
-                    max_size = ubo->size + ubo->offset;
+            for(size_t i = 0; i < shader->ubo_data_layouts.size(); i++) {
+                if(shader->ubo_data_layouts[i].block.size + shader->ubo_data_layouts[i].block.offset > max_size)
+                    max_size = shader->ubo_data_layouts[i].block.size + shader->ubo_data_layouts[i].block.offset;
             }
         }
 
@@ -446,7 +406,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_size, VkDeviceSize _old_index_size, VkDeviceSize _old_index_offset) {
+    void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_size) {
         // step 1: create staging buffer
         VkBuffer staging_buffer = VK_NULL_HANDLE;
         VkDeviceMemory staging_memory = VK_NULL_HANDLE;
@@ -465,10 +425,6 @@ namespace DENG {
 
         // step 3: copy data to new offsets in new buffer
         Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_size, 0, 0);
-
-        // attempt to copy indices over to the new reallocated buffer
-        if(_old_index_offset)
-            Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_index_size, _old_index_offset, m_vertices_size);
     }
 
 
@@ -560,7 +516,12 @@ namespace DENG {
 
         // set up clear values
         std::array<VkClearValue, 2> clear_values;
-        clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+        clear_values[0].color = {{ 
+            m_conf.clear_color.first, 
+            m_conf.clear_color.second,
+            m_conf.clear_color.third, 
+            m_conf.clear_color.fourth
+        }};
         clear_values[1].depthStencil = { 1.0f, 0 };
 
         // add clear values to renderpass begin info
@@ -575,53 +536,41 @@ namespace DENG {
                 const uint32_t shader_id = m_meshes[i].shader_module_id;
                 for(size_t j = 0; j < m_meshes[i].commands.size(); j++) {
                     vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipeline());
-                    VkDeviceSize offset = m_meshes[i].commands[j].vertices_offset;
+                    VkDeviceSize offset = 0;
 
-                    // 1. bind all attribute bindings
-                    // 2. bind single attribute binding
-                    if(m_shaders[shader_id].use_seperate_attribute_strides) {
-                        std::vector<VkBuffer> buffers(m_shaders[shader_id].attributes.size(), m_main_buffer);
-                        vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, static_cast<uint32_t>(m_shaders[shader_id].attributes.size()), buffers.data(), m_shaders[shader_id].offsets.data());
-                    } else {
-                        vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, 1, &m_main_buffer, &offset);
-                    }
+                    // bind all attribute bindings
+                    DENG_ASSERT(m_shaders[shader_id].attributes.size() == m_meshes[i].commands[j].attribute_offsets.size());
+                    DENG_ASSERT(m_shaders[shader_id].attributes.size() == m_shaders[shader_id].attribute_strides.size());
+                    std::vector<VkBuffer> buffers(m_shaders[shader_id].attributes.size(), m_main_buffer);
+                    vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, static_cast<uint32_t>(m_shaders[shader_id].attributes.size()), buffers.data(), m_meshes[i].commands[j].attribute_offsets.data());
 
-                    // 1. index and vertex buffers are shared resources
-                    // 2. index and vertex buffers are not shared resources
-                    if(!m_conf.share_buffers)
-                        offset = m_vertices_size + m_meshes[i].commands[j].indices_offset;
-                    else offset = m_meshes[i].commands[j].indices_offset;
+                    offset = m_meshes[i].commands[j].indices_offset;
 
                     vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
                     // check if descriptor sets should be bound
-                    std::array<VkDescriptorSet, 2> desc_sets;
-                    uint32_t used_desc_sets = 0;
+                    std::vector<VkDescriptorSet> desc_sets;
 
                     // per shader descriptor sets
                     if(m_shaders[shader_id].ubo_data_layouts.size()) {
                         if(m_shaders[shader_id].use_texture_mapping) {
-                            DENG_ASSERT(m_vulkan_texture_handles.find(m_meshes[i].commands[j].texture_name) != m_vulkan_texture_handles.end());
-                            const Vulkan::TextureData &tex = m_vulkan_texture_handles[m_meshes[i].commands[j].texture_name];
-                            desc_sets[0] = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByTexture(m_meshes[i].commands[j].texture_name, tex, m_current_frame);
+                            for(auto tex_it = m_meshes[i].commands[j].texture_names.begin(); tex_it != m_meshes[i].commands[j].texture_names.end(); tex_it++) {
+                                DENG_ASSERT(m_vulkan_texture_handles.find(*tex_it) != m_vulkan_texture_handles.end());
+                                const Vulkan::TextureData &tex = m_vulkan_texture_handles[*tex_it];
+                                desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByTexture(*tex_it, tex, m_current_frame));
+                            }
                         } else {
-                            desc_sets[0] = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByFrame(m_current_frame);
+                            desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByFrame(m_current_frame));
                         }
-
-                        used_desc_sets++;
                     }
 
                     // per mesh descriptor sets
                     if(m_meshes[i].ubo_blocks.size()) {
-                        if(used_desc_sets == 1)
-                            desc_sets[1] = m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame);
-                        else desc_sets[0] = m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame);
-
-                        used_desc_sets++;
+                        desc_sets.push_back(m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[i]].RequestDescriptorSetByFrame(m_current_frame));
                     }
 
-                    if(used_desc_sets)
-                        vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, used_desc_sets, desc_sets.data(), 0, nullptr);
+                    if(desc_sets.size())
+                        vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, static_cast<uint32_t>(desc_sets.size()), desc_sets.data(), 0, nullptr);
 
                     if(m_shaders[shader_id].enable_scissor) {
                         VkRect2D rect = {};

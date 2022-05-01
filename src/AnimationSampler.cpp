@@ -8,109 +8,71 @@
 
 namespace DENG {
 
-    AnimationSampler::AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser, const std::vector<uint32_t> &_ubo_offsets) : 
-        m_channel(_channel), m_parser(_parser), m_ubo_offsets(_ubo_offsets)
-    {
-        const Libdas::DasBuffer &kf_buffer = m_parser.AccessBuffer(m_channel.keyframe_buffer_id);
-        const Libdas::DasBuffer &target_buffer = m_parser.AccessBuffer(m_channel.target_value_buffer_id);
-
-        // get keyframe timestamps and target values
-        m_timestamps.reserve(m_channel.keyframe_count);
-        m_interp_values.reserve(m_channel.keyframe_count);
-
-        uint32_t rel_timestamp_offset = m_channel.keyframe_buffer_offset;
-        uint32_t rel_target_offset = m_channel.target_value_buffer_offset;
-
-        for(uint32_t i = 0; i < m_channel.keyframe_count; i++) {
-            DENG_ASSERT(kf_buffer.data_ptrs.size() == 1);
-            DENG_ASSERT(target_buffer.data_ptrs.size() == 1);
-
-            // push timestamps
-            m_timestamps.push_back(*reinterpret_cast<const float*>(kf_buffer.data_ptrs.back().first + rel_timestamp_offset));
-            rel_timestamp_offset += static_cast<uint32_t>(sizeof(float));
-
-            char *data_ptr = const_cast<char*>(target_buffer.data_ptrs.back().first);
-
-            // push target values
-            switch(m_channel.target) {
-                case LIBDAS_ANIMATION_TARGET_WEIGHTS:
-                    m_interp_values.push_back(reinterpret_cast<float*>(data_ptr + rel_target_offset));
-                    rel_target_offset += m_channel.weight_count * static_cast<uint32_t>(sizeof(float));
-                    break;
-
-                case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                    m_interp_values.push_back(reinterpret_cast<Libdas::Vector3<float>*>(data_ptr + rel_target_offset));
-                    rel_target_offset += static_cast<uint32_t>(sizeof(Libdas::Vector3<float>));
-                    break;
-
-                case LIBDAS_ANIMATION_TARGET_ROTATION:
-                    m_interp_values.push_back(reinterpret_cast<Libdas::Quaternion*>(data_ptr + rel_target_offset));
-                    rel_target_offset += static_cast<uint32_t>(sizeof(Libdas::Quaternion));
-                    break;
-
-                case LIBDAS_ANIMATION_TARGET_SCALE:
-                    m_interp_values.push_back(*reinterpret_cast<float*>(data_ptr + rel_target_offset));
-                    rel_target_offset += static_cast<uint32_t>(sizeof(float));
-                    break;
-
-                default:
-                    DENG_ASSERT(false);
-                    break;
-            }
-        }
-    }
+    AnimationSampler::AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser) : 
+        m_channel(_channel), 
+        m_parser(_parser) {}
 
 
     void AnimationSampler::_LinearInterpolation(float _t1, float _tc, float _t2) {
-        const uint32_t next = (m_active_timestamp_index + 1) % m_timestamps.size();
+        const size_t curr = static_cast<size_t>(m_active_timestamp_index);
+        const size_t next = static_cast<size_t>((m_active_timestamp_index + 1) % m_channel.keyframe_count);
         const float t = (_tc - _t1) / (_t2 - _t1);
 
-        switch(m_interp_values[m_active_timestamp_index].index()) {
+        switch(m_channel.target) {
             // weights
-            case 0:
+            case LIBDAS_ANIMATION_TARGET_WEIGHTS:
                 { 
-                    // not yet implemented
+                    DENG_ASSERT(m_channel.weight_count > MAX_MORPH_TARGETS);
+                    const size_t size = static_cast<size_t>(m_channel.weight_count) * sizeof(float);
+                    float *w1 = reinterpret_cast<float*>(m_channel.target_values + curr * size);
+                    float *w2 = reinterpret_cast<float*>(m_channel.target_values + next * size);
+
+                    for(uint32_t i = 0; i < m_channel.weight_count; i++)
+                        m_morph_weights[i] = w1[i] * (1 - t) + w2[i] * t;
                 }
                 break;
 
             // translation
-            case 1:
+            case LIBDAS_ANIMATION_TARGET_TRANSLATION:
                 {
-                    Libdas::Vector3<float> *tr1 = std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]);
-                    Libdas::Vector3<float> *tr2 = std::get<Libdas::Vector3<float>*>(m_interp_values[next]);
+                    const size_t size = sizeof(Libdas::Vector3<float>);
+                    Libdas::Vector3<float> *tr1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
+                    Libdas::Vector3<float> *tr2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + next * size);
 
-                    Libdas::Vector3<float> interp = *tr1 * (1 - t) + *tr2 * t;
-                    m_ubo.translation.row4.first = interp.first;
-                    m_ubo.translation.row4.second = interp.second;
-                    m_ubo.translation.row4.third = interp.third;
+                    Libdas::Vector3<float> interp = (*tr1) * (1 - t) + (*tr2) * t;
+                    m_animation_matrix.row4.first = interp.first;
+                    m_animation_matrix.row4.second = interp.second;
+                    m_animation_matrix.row4.third = interp.third;
                 }
                 break;
 
             // rotation
-            case 2:
+            case LIBDAS_ANIMATION_TARGET_ROTATION:
                 {
-                    Libdas::Quaternion *q1 = std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]);
-                    Libdas::Quaternion *q2 = std::get<Libdas::Quaternion*>(m_interp_values[next]);
+                    const size_t size = sizeof(Libdas::Quaternion);
+                    Libdas::Quaternion *q1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
+                    Libdas::Quaternion *q2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
                     float dot = Libdas::Quaternion::Dot(*q1, *q2);
 
                     float sign = dot < 0.0f ? -1.0f : 1.0f;
                     float a = acosf(dot);
 
                     Libdas::Quaternion interp = *q1 * sinf(a * (1 - t)) / sinf(a) + *q2 * sign * sinf(a * t) / sinf(a);
-                    m_ubo.rot = interp.ExpandToMatrix4().Transpose();
+                    m_animation_matrix = interp.ExpandToMatrix4().Transpose();
                 }
                 break;
 
             // uniform scale
-            case 3:
+            case LIBDAS_ANIMATION_TARGET_SCALE:
                 {
-                    float s1 = std::get<float>(m_interp_values[m_active_timestamp_index]);
-                    float s2 = std::get<float>(m_interp_values[m_active_timestamp_index]);
+                    const size_t size = sizeof(float);
+                    float s1 = *reinterpret_cast<float*>(m_channel.target_values + curr * size);
+                    float s2 = *reinterpret_cast<float*>(m_channel.target_values + next * size);
 
                     float interp = (1 - t) * s1 + s2 * t;
-                    m_ubo.scale.row1.first = interp;;
-                    m_ubo.scale.row2.second = interp;
-                    m_ubo.scale.row3.third = interp;
+                    m_animation_matrix.row1.first = interp;
+                    m_animation_matrix.row2.second = interp;
+                    m_animation_matrix.row3.third = interp;
                 }
                 break;
         }
@@ -118,85 +80,145 @@ namespace DENG {
 
 
     void AnimationSampler::_StepInterpolation() {
-        switch(m_interp_values[m_active_timestamp_index].index()) {
+        const size_t curr = static_cast<size_t>(m_active_timestamp_index);
+
+        switch(m_channel.target) {
             // weight
-            case 0:
+            case LIBDAS_ANIMATION_TARGET_WEIGHTS:
                 {
-                    // not yet implemented
+                    const size_t size = static_cast<size_t>(m_channel.weight_count) * sizeof(float);
+                    float *w = reinterpret_cast<float*>(m_channel.target_values + curr * size);
+
+                    for(uint32_t i = 0; i < m_channel.weight_count; i++)
+                        m_morph_weights[i] = w[i];
                 }
                 break;
 
             // translation
-            case 1:
+            case LIBDAS_ANIMATION_TARGET_TRANSLATION:
                 {
-                    Libdas::Vector3<float> *tr = std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]);
-                    m_ubo.translation.row4.first = tr->first;
-                    m_ubo.translation.row4.second = tr->second;
-                    m_ubo.translation.row4.third = tr->third;
+                    const size_t size = sizeof(Libdas::Vector3<float>);
+                    Libdas::Vector3<float> *tr = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
+                    m_animation_matrix.row4.first = tr->first;
+                    m_animation_matrix.row4.second = tr->second;
+                    m_animation_matrix.row4.third = tr->third;
                 }
                 break;
 
             // rotation
-            case 2:
+            case LIBDAS_ANIMATION_TARGET_ROTATION:
                 {
-                    Libdas::Quaternion *rot = std::get<Libdas::Quaternion*>(m_interp_values[m_active_timestamp_index]);
-                    m_ubo.rot = rot->ExpandToMatrix4().Transpose();
+                    const size_t size = sizeof(Libdas::Quaternion);
+                    Libdas::Quaternion *rot = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
+                    m_animation_matrix = rot->ExpandToMatrix4().Transpose();
                 }
                 break;
 
             // uniform scale
-            case 3:
+            case LIBDAS_ANIMATION_TARGET_SCALE:
                 {
-                    float scale = std::get<float>(m_interp_values[m_active_timestamp_index]);
-                    m_ubo.scale.row1.first = scale;
-                    m_ubo.scale.row2.second = scale;
-                    m_ubo.scale.row3.third = scale;
+                    const size_t size = sizeof(float);
+                    float scale = *reinterpret_cast<float*>(m_channel.target_values + curr * size);
+                    m_animation_matrix.row1.first = scale;
+                    m_animation_matrix.row2.second = scale;
+                    m_animation_matrix.row3.third = scale;
                 }
                 break;
         }
     }
 
 
-    //void AnimationSampler::_CubicSplineInterpolation(const Libdas::Vector3<float> &_t1, float _tc, const Libdas::Vector3<float> &_t2) {
-        //const float td = _t2.second - _t1.second;
-        //const float t = (_tc - _t1.second) / td;
+    void AnimationSampler::_CubicSplineInterpolation(float _t1, float _tc, float _t2) {
+        const float td = _t2 - _t1;
+        const float t = (_tc - _t1) / td;
+        const size_t curr = static_cast<size_t>(m_active_timestamp_index);
+        const size_t next = static_cast<size_t>((m_active_timestamp_index + 1) % m_channel.keyframe_count);
 
-        //// tangents
-        //const float a1 = _t1.first;
-        //const float b1 = _t1.third;
+        switch(m_channel.target) {
+            // weights
+            case LIBDAS_ANIMATION_TARGET_WEIGHTS:
+                {
+                    const size_t size = static_cast<size_t>(m_channel.weight_count) * sizeof(float);
+                    float *v1 = reinterpret_cast<float*>(m_channel.target_values + curr * size);
+                    float *v2 = reinterpret_cast<float*>(m_channel.target_values + next * size);
 
-        //const float a2 = _t2.first;
-        //const float b2 = _t2.third;
+                    // in and out tangents
+                    float *a2 = reinterpret_cast<float*>(m_channel.tangents + next * 2 * size);
+                    float *b1 = reinterpret_cast<float*>(m_channel.tangents + (curr * 2 + 1) * size);
 
-        //switch(m_interp_values[m_active_timestamp_index].index()) {
-            //// weights
-            //case 0:
-                //// not yet implemented
-                //break;
+                    for(uint32_t i = 0; i < m_channel.weight_count; i++)
+                        m_morph_weights[i] = (2 * CUBE(t) - 3 * SQR(t) + 1) * v1[i] + td * (CUBE(t) - 2 * SQR(t) + 1) * b1[i] + (-2 * CUBE(t) + 3 * SQR(t)) * v2[i] + td * (CUBE(t) - SQR(t)) * a2[i];
+                }
+                break;
 
-            //// translation
-            //case 1:
-                //{
-                    //Libdas::Vector3<float> *tr1 = std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index]);
-                    //Libdas::Vector3<float> *tr2 = std::get<Libdas::Vector3<float>*>(m_interp_values[m_active_timestamp_index + 1]);
+            // translation
+            case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                {
+                    const size_t size = sizeof(Libdas::Vector3<float>);
+                    Libdas::Vector3<float> *v1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
+                    Libdas::Vector3<float> *v2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + next * size);
 
-                    //Libdas::Vector3<float> interp = *tr1 * (2 * CUBE(t) - 3 * SQR(t) + 1) + b1(td * (CUBE(t) - 2 * SQR(t) + t))
-                //}
-                //break;
-        //}
-    //}
+                    Libdas::Vector3<float> *a2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.tangents + next * 2 * size);
+                    Libdas::Vector3<float> *b1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.tangents + (curr * 2 + 1) * size);
+
+                    Libdas::Vector3<float> interp = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
+                    m_animation_matrix.row4.first = interp.first;
+                    m_animation_matrix.row4.second = interp.second;
+                    m_animation_matrix.row4.third = interp.third;
+                }
+                break;
+
+            // rotation
+            case LIBDAS_ANIMATION_TARGET_ROTATION:
+                {
+                    const size_t size = sizeof(Libdas::Quaternion);
+                    Libdas::Quaternion *v1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
+                    Libdas::Quaternion *v2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
+
+                    Libdas::Quaternion *a2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.tangents + next * 2 * size);
+                    Libdas::Quaternion *b1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.tangents + (curr * 2 + 1) * size);
+
+                    Libdas::Quaternion interp = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
+                    m_animation_matrix = interp.ExpandToMatrix4();
+                }
+                break;
+
+            case LIBDAS_ANIMATION_TARGET_SCALE:
+                {
+                    const size_t size = sizeof(float);
+                    float v1 = *reinterpret_cast<float*>(m_channel.target_values + curr * size);
+                    float v2 = *reinterpret_cast<float*>(m_channel.target_values + next * size);
+
+                    float a2 = *reinterpret_cast<float*>(m_channel.tangents + next * 2 * size);
+                    float b1 = *reinterpret_cast<float*>(m_channel.tangents + (curr * 2 + 1) * size);
+
+                    float interp = v1 * (2 * CUBE(t) - 3 * SQR(t) + 1) + b1 * td * (CUBE(t) - 2 * SQR(t) + 1) + v2 * (-2 * CUBE(t) + 3 * SQR(t)) + a2 * td * (CUBE(t) - SQR(t));
+                    m_animation_matrix.row1.first = interp;
+                    m_animation_matrix.row2.second = interp;
+                    m_animation_matrix.row3.third = interp;
+                }
+                break;
+
+            default:
+                DENG_ASSERT(false);
+                break;
+        }
+    }
 
 
-    void AnimationSampler::Update(DENG::Renderer &_renderer) {
+    void AnimationSampler::Update() {
+        m_animation_matrix = Libdas::Matrix4<float>();
+        std::memset(m_morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
+
         // calculate delta time
         m_active_time = std::chrono::system_clock::now();
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
-        const uint32_t next = (m_active_timestamp_index + 1) % static_cast<uint32_t>(m_timestamps.size());
+        const uint32_t next = (m_active_timestamp_index + 1) % m_channel.keyframe_count;
 
         // check the current timestamp against keyframe values
-        if(delta_time.count() / 1000.0f >= m_timestamps[next]) {
+        if(delta_time.count() / 1000.0f >= m_channel.keyframes[next]) {
             m_active_timestamp_index++;
-            if(m_active_timestamp_index >= m_timestamps.size()) {
+            if(m_active_timestamp_index >= m_channel.keyframe_count) {
                 m_active_timestamp_index = 0;
                 m_beg_time = std::chrono::system_clock::now();
             }
@@ -204,21 +226,15 @@ namespace DENG {
 
         // set correct interpolation values
         if(m_animate) {
+            float t1 = m_channel.keyframes[m_active_timestamp_index];
+            float t2 = m_channel.keyframes[next];
             switch(m_channel.interpolation) {
                 case LIBDAS_INTERPOLATION_VALUE_LINEAR:
-                    {
-                        float t1 = m_timestamps[m_active_timestamp_index];
-                        float t2 = m_timestamps[next];
-                        _LinearInterpolation(t1, delta_time.count() / 1000.0f, t2);
-                    }
+                    _LinearInterpolation(t1, delta_time.count() / 1000.0f, t2);
                     break;
 
                 case LIBDAS_INTERPOLATION_VALUE_CUBICSPLINE:
-                    {
-                        //const Libdas::Vector3<float> *t1 = std::get<const Libdas::Vector3<float>*>(m_timestamps[m_active_timestamp_index]);
-                        //const Libdas::Vector3<float> *t2 = std::get<const Libdas::Vector3<float>*>(m_timestamps[m_active_timestamp_index]);
-                        //_CubicSplineInterpolation(*t1, delta_time.count() / 1000.f, *t2);
-                    }
+                    _CubicSplineInterpolation(t1, delta_time.count() / 1000.0f, t2);
                     break;
 
                 case LIBDAS_INTERPOLATION_VALUE_STEP:
@@ -229,9 +245,5 @@ namespace DENG {
                     break;
             }
         }
-
-        // submit uniform data to renderer
-        for(uint32_t offset : m_ubo_offsets)
-            _renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), sizeof(ModelAnimationUbo), offset);
     }
 }

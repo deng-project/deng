@@ -31,6 +31,7 @@
     #include <libdas/include/AsciiLineReader.h>
     #include <libdas/include/DasReaderCore.h>
     #include <libdas/include/DasParser.h>
+    #include <libdas/include/Hash.h>
 
     #include <Api.h>
     #include <Window.h>
@@ -70,18 +71,14 @@ namespace DENG {
 
     class ModelShaderManager {
         private:
-            static std::array<uint32_t, 8> m_shader_ids;
-            static uint32_t m_used_shaders;
-            static bool m_set_stage;
+            typedef std::unordered_map<MeshPrimitiveAttributeDescriptor, uint32_t, Libdas::Hash<MeshPrimitiveAttributeDescriptor>> map_t;
+            static map_t m_shader_map;
 
         private:
-            static void _GetAttributesByType(const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _id, ShaderModule &_module, uint32_t _base_offset);
-            static void _GetUniforms(ShaderModule &_module, const uint32_t _camera_ubo_offset, const uint32_t _id);
-            static uint32_t _ResolveMask(uint32_t _mask);
+            static uint32_t _GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset);
 
         public:
-            static uint32_t RequestShaderModule(Renderer &_rend, const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_mesh, 
-                                                const uint32_t _base_offset, const uint32_t _camera_ubo_offset);
+            static uint32_t RequestShaderModule(Renderer &_rend, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, const uint32_t _camera_offset);
     };
 }
 #endif

@@ -8,95 +8,86 @@
 
 #ifdef MODEL_SHADER_GENERATOR_CPP
     #include <string>
+    #include <vector>
+    #include <queue>
+    #include <utility>
+    #include <cstring>
 
+#ifdef _DEBUG
+    #include <iostream>
+#endif
+
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
+    #include <ErrorDefinitions.h>
+    #include <ModelUniforms.h>
 #define DENG_DEFS_ONLY
     #include<ModelShaderManager.h>
 #undef DENG_DEFS_ONLY
 
     // Declarations ${ID} and ${CUSTOM_CODE} specify layout id and custom code in main() correspondingly
-    #define SHADER_HEADING              "#version 450\n" \
-                                        "#extension GL_ARB_separate_shader_objects : enable\n"
-
-    // input attributes
-    #define POSITION_VERTEX_INPUT       "layout(location = ${ID}) in vec3 in_pos;\n"
-    #define UV_VERTEX_INPUT             "layout(location = ${ID})in vec2 in_uv;\n"
-    #define NORM_VERTEX_INPUT           "layout(location = ${ID}) in vec3 in_norm;\n"
-    #define TANG_VERTEX_INPUT           "layout(location = ${ID}) in vec4 in_tang;\n"
-
-    // output attributes
-    #define UV_VERTEX_OUTPUT            "layout(location = ${ID}) out vec2 out_uv;\n"
-    #define COLOR_VERTEX_OUTPUT         "layout(location = ${ID}) out vec4 out_color;\n"
-    #define IS_COLOR_OUTPUT             "layout(location = ${ID}) out uint out_is_colored;\n"
-
-    #define VERTEX_SHADER_UBO_SECTION   "// Camera uniform data\n"\
-                                        "layout(set = 0, binding = 0) uniform CameraUbo {\n"\
+    #define SHADER_HEADING              "#version 450\n"\
+                                        "#extension GL_ARB_separate_shader_objects : enable\n"\
+                                        "layout(std140, set = 0, binding = 0) uniform CameraUbo {\n"\
                                         "    mat4 projection;\n"\
                                         "    mat4 view;\n"\
                                         "} camera;\n"\
                                         "\n"\
-                                        "layout(std140, set = 1, binding = 1) uniform AnimationUbo {\n"\
-                                        "   mat4 rotation;\n"\
-                                        "   mat4 scale;\n"\
-                                        "   mat4 translation;\n"\
-                                        "} animation;\n"\
-                                        "\n"\
                                         "// Model uniform data\n"\
-                                        "layout(set = 1, binding = 2) uniform ModelUbo {\n"\
+                                        "layout(std140, set = 1, binding = 1) uniform ModelUbo {\n"\
                                         "   mat4 node;\n"\
-                                        "   mat4 skeleton;\n"\
                                         "   vec4 color;\n"\
+                                        "   vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
                                         "   uint is_color;\n"\
                                         "} model;\n"
 
-
     #define VERTEX_MAIN                 "void main() {\n"\
-                                        "    mat4 a = animation.translation * animation.rotation * animation.scale;\n"\
                                         "    mat4 c = camera.projection * camera.view;\n"\
-                                        "    mat4 m = model.skeleton * model.node;\n"\
+                                        "    mat4 m = mat4(1.0f);\n"\
                                         "\n"\
-                                        "    gl_Position = c * a * m * vec4(in_pos, 1.0f);\n"\
-                                        "    ${CUSTOM_CODE}\n"\
+                                        "${CUSTOM_CODE}\n"\
                                         "}\n"
-
-    #define SAMPLED_FRAG_SRC            "#version 450\n"\
-                                        "#extension GL_ARB_separate_shader_objects : enable\n"\
-                                        "\n"\
-                                        "/* VULKAN ONLY */\n"\
-                                        "\n"\
-                                        "// input data\n"\
-                                        "layout(location = 0) in vec2 i_uv;\n"\
-                                        "layout(location = 1) in vec4 i_color;\n"\
-                                        "layout(location = 2) in flat uint i_is_colored;\n"\
-                                        "\n"\
-                                        "layout(set = 0, binding = 3) uniform sampler2D tex_sampler;\n"\
-                                        "\n"\
-                                        "// output data\n"\
-                                        "layout(location = 0) out vec4 o_color;\n"\
-                                        "\n"\
-                                        "void main() {\n"\
-                                        "   if(i_is_colored == 0)\n"\
-                                        "       o_color = texture(tex_sampler, i_uv);\n"\
-                                        "   else o_color = i_color;\n"\
-                                        "}\n"
-
-    #define COLORED_FRAG_SRC            "#version 450\n"\
-                                        "#extension GL_ARB_separate_shader_objects : enable\n"\
-                                        "\n"\
-                                        "layout(location = 0) in vec4 i_color;\n"\
-                                        "layout(location = 0) out vec4 o_color;\n"\
-                                        "\n"\
-                                        "void main() {\n"\
-                                        "    o_color = i_color;\n"\
-                                        "}\n"
-
 #endif
 
 namespace DENG {
 
-    struct ModelShaderGenerator {
-        static std::string GenerateVertexShaderSource(uint32_t _mask );
-        static const std::string GetSampledFragmentShaderSource();
-        static const std::string GetColoredFragmentShaderSource();
+    struct MeshPrimitiveAttributeDescriptor {
+        const bool pos = true;
+        bool normal = false;
+        bool tangent = false;
+        uint32_t texture_count = 0;
+        uint32_t color_mul_count = 0;
+        uint32_t joint_set_count = 0;
+        std::vector<MeshPrimitiveAttributeDescriptor> morph_targets;
+
+        inline bool operator==(const MeshPrimitiveAttributeDescriptor &_m1) const {
+            return _m1.pos == pos &&
+                   _m1.normal == normal &&
+                   _m1.texture_count == texture_count &&
+                   _m1.color_mul_count == color_mul_count &&
+                   _m1.joint_set_count == joint_set_count &&
+                   _m1.morph_targets == morph_targets;
+        }
+
+        inline bool operator!=(const MeshPrimitiveAttributeDescriptor &_m1) const {
+            return !(_m1 == *this);
+        }
+    };
+
+    class ModelShaderGenerator {
+        private:
+            static uint32_t m_in_id;
+            static uint32_t m_out_id;
+            static uint32_t m_binding_id;
+
+        private:
+            static void _WriteBaseAttributes(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, std::string &_shader, std::string &_custom_code);
+            static void _WriteMorphTargets(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, std::string &_shader, std::string &_custom_code);
+            static void _MixTextures(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, std::string &_shader, std::string &_custom_code);
+
+        public:
+            static std::string GenerateVertexShaderSource(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc);
+            static std::string GenerateFragmentShaderSource(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc);
     };
 }
 

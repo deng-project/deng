@@ -49,12 +49,11 @@ namespace DENG {
     class DENG_API Camera3D {
         protected:
             typedef std::variant<FirstPersonCameraConfiguration, ThirdPersonCameraConfiguration, EditorCameraConfiguration> Camera3DConfiguration;
+            Renderer &m_renderer;
             Window &m_window;
             Camera3DConfiguration m_config;
             CameraTransformManager m_cam_transform;
-
-            std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
-            std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
+            ModelCameraUbo m_ubo;
 
             // perspective projection matrix attributes
             float m_fov = 65.f * PI / 180.f;    // 65 degrees by default
@@ -79,7 +78,8 @@ namespace DENG {
             }
 
         public:
-            Camera3D(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) : 
+            Camera3D(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) : 
+                m_renderer(_rend),
                 m_window(_win), 
                 m_config(_conf), 
                 m_ubo_offset(_ubo_offset),
@@ -87,7 +87,11 @@ namespace DENG {
 
             virtual void EnableCamera() = 0;
             virtual void DisableCamera() = 0;
-            virtual void Update(Renderer &_rend) = 0;
+            virtual void Update() = 0;
+
+            inline ModelCameraUbo &GetCameraUbo() {
+                return m_ubo;
+            }
 
             inline const std::string &GetName() {
                 return m_name;

@@ -51,6 +51,7 @@ set(LIBDAS_SOURCES
     deps/libdas/src/BufferImageTypeResolver.cpp
     deps/libdas/src/DasParser.cpp
     deps/libdas/src/DasReaderCore.cpp
+    deps/libdas/src/DasStructures.cpp
     deps/libdas/src/DasWriterCore.cpp
     deps/libdas/src/Debug.cpp
     deps/libdas/src/ErrorHandlers.cpp
@@ -63,7 +64,6 @@ set(LIBDAS_SOURCES
     deps/libdas/src/STLCompiler.cpp
     deps/libdas/src/STLParser.cpp
     deps/libdas/src/STLStructures.cpp
-    deps/libdas/src/tests
     deps/libdas/src/TextureReader.cpp
     deps/libdas/src/URIResolver.cpp
     deps/libdas/src/WavefrontObjCompiler.cpp

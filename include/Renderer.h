@@ -22,10 +22,10 @@ namespace DENG {
 
 
     struct DrawCommand {
-        uint32_t vertices_offset = 0;
         uint32_t indices_offset = 0;
         uint32_t indices_count = 0;
-        std::string texture_name = MISSING_TEXTURE_NAME;
+        std::vector<std::string> texture_names;
+        std::vector<std::size_t> attribute_offsets;
 
         struct {
             Libdas::Point2D<int32_t> offset = { INT32_MAX, INT32_MAX };
@@ -45,7 +45,7 @@ namespace DENG {
 
     struct RendererConfig {
         bool enable_vsync = false;
-        bool share_buffers = false;
+        Libdas::Vector4<float> clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
 
@@ -93,9 +93,7 @@ namespace DENG {
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;
             virtual void LoadShaders() = 0;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) = 0;
-            virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
-            virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
-            virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
+            virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;
             virtual void RenderFrame() = 0;
     };

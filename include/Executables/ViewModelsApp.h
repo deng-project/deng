@@ -11,6 +11,7 @@
 #endif
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <array>
 #include <fstream>
@@ -38,6 +39,7 @@
 #include <libdas/include/DasStructures.h>
 #include <libdas/include/DasReaderCore.h>
 #include <libdas/include/DasParser.h>
+#include <libdas/include/Hash.h>
 
 #include <Api.h>
 #include <BaseTypes.h>
@@ -46,9 +48,13 @@
 #include <Window.h>
 #include <Renderer.h>
 #include <ModelUniforms.h>
+#include <ModelShaderGenerator.h>
 #include <ModelShaderManager.h>
 #include <AnimationSampler.h>
 #include <MeshLoader.h>
+#include <SkeletonDataManager.h>
+#include <NodeLoader.h>
+#include <SceneLoader.h>
 #include <ModelLoader.h>
 #include <CameraTransformManager.h>
 #include <Camera3D.h>
@@ -75,25 +81,15 @@ namespace Executable {
 
         bool &use_camera;
         bool is_object_manager = true;
+        DENG::EditorCamera *p_camera;
         std::vector<DENG::ModelLoader*> model_loaders;
     };
 
     class ModelLoaderApp {
         private: 
-            DENG::ModelLoader m_loader;
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
 
-            // implement three different camera types to use
-            const DENG::FirstPersonCameraConfiguration m_first_person_camera_conf = {
-                neko_CreateInputMask(1, NEKO_KEY_W),
-                neko_CreateInputMask(1, NEKO_KEY_S),
-                neko_CreateInputMask(1, NEKO_KEY_SPACE),
-                neko_CreateInputMask(1, NEKO_KEY_LEFT_SHIFT),
-                neko_CreateInputMask(1, NEKO_KEY_D),
-                neko_CreateInputMask(1, NEKO_KEY_A)
-            };
-            
             const DENG::EditorCameraConfiguration m_editor_camera_conf = {
                 neko_CreateInputMask(1, NEKO_MOUSE_SCROLL_UP),
                 neko_CreateInputMask(1, NEKO_MOUSE_SCROLL_DOWN),
@@ -101,6 +97,8 @@ namespace Executable {
             };
 
             DENG::EditorCamera m_editor_camera;
+            DENG::ModelLoader m_loader;
+
             DENG::ImGuiLayer m_imgui;
 
             std::string m_file_name;
@@ -115,6 +113,7 @@ namespace Executable {
             ImGuiData m_imgui_user_data;
 
         private:
+            static void _ImGuiRecursiveNodeIteration(const DENG::NodeLoader &_node);
             static void _ImGuiCallback(void *_data);
 
         public:

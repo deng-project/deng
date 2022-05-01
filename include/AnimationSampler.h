@@ -31,6 +31,7 @@
     #include <libdas/include/AsciiLineReader.h>
     #include <libdas/include/DasReaderCore.h>
     #include <libdas/include/DasParser.h>
+    #include <libdas/include/Hash.h>
 
     #include <Api.h>
     #include <BaseTypes.h>
@@ -39,6 +40,7 @@
     #include <Window.h>
     #include <Renderer.h>
     #include <ModelUniforms.h>
+    #include <ModelShaderGenerator.h>
     #include <ModelShaderManager.h>
 #endif
 
@@ -51,19 +53,18 @@ namespace DENG {
 
     class DENG_API AnimationSampler {
         private:
-            ModelAnimationUbo m_ubo;
+            Libdas::Matrix4<float> m_animation_matrix;
+            float m_morph_weights[MAX_MORPH_TARGETS] = {};
             const Libdas::DasAnimationChannel &m_channel;
             Libdas::DasParser &m_parser;
             const std::vector<uint32_t> m_ubo_offsets;
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> m_active_time = std::chrono::system_clock::now();
-            std::vector<float> m_timestamps;
 
             // needs some fixes later
             const uint32_t m_weight_target_count = 1;
 
             // weight, translation, rotation and scale
-            std::vector<std::variant<float*, Libdas::Vector3<float>*, Libdas::Quaternion*, float>> m_interp_values;
             uint32_t m_active_timestamp_index = 0;
 
             // boolean config values
@@ -73,12 +74,12 @@ namespace DENG {
         private:
             void _LinearInterpolation(float _t1, float _tc, float _t2);
             void _StepInterpolation();
-            //void _CubicSplineInterpolation(const Libdas::Vector3<float> &_t1, float _tc, const Libdas::Vector3<float> &_t2);
+            void _CubicSplineInterpolation(float _t1, float _tc, float _t2);
 
         public:
-            AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser, const std::vector<uint32_t> &m_ubo_offsets);
+            AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser);
 
-            void Update(DENG::Renderer &_renderer);
+            void Update();
 
             inline void Animate(bool _repeat) {
                 m_animate = true;
@@ -91,6 +92,18 @@ namespace DENG {
             inline void Stop() {
                 m_animate = false;
                 m_active_timestamp_index = UINT32_MAX;
+            }
+
+            inline const Libdas::DasAnimationChannel &GetAnimationChannel() {
+                return m_channel;
+            }
+
+            inline const Libdas::Matrix4<float> GetAnimationMatrix() {
+                return m_animation_matrix;
+            }
+
+            inline float *GetMorphWeights() {
+                return m_morph_weights;
             }
     };
 }

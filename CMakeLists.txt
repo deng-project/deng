@@ -84,13 +84,7 @@ if(BUILD_TESTS)
     include(cmake/tests/TriangleApp.cmake)
     include(cmake/tests/VulkanImGui.cmake)
     include(cmake/tests/OpenGLImGui.cmake)
-
-    if(EXPERIMENTAL_BUILD_MODEL_LOADER)
-    endif()
-
-    if(EXPERIMENTAL_BUILD_LUA_TESTS)
-        include(cmake/tests/LuaTest.cmake)
-    endif()
+    include(cmake/tests/ShaderGenerator.cmake)
 
     if(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS)
         include(cmake/tests/CubicsInterp.cmake)

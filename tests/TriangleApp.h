@@ -95,9 +95,9 @@ class TriangleApp {
 
             // specify vertex attributes
             m_module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
-            m_module.offsets.push_back(0);
             m_module.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
-            m_module.offsets.push_back(sizeof(float) * 3);
+            m_module.attribute_strides.push_back(sizeof(float) * 5);
+            m_module.attribute_strides.push_back(sizeof(float) * 5);
             m_module.enable_scissor = false;
             m_module.enable_depth_testing = false;
 
@@ -110,17 +110,18 @@ class TriangleApp {
             m_module.load_shaders_from_file = true;
             m_module.use_texture_mapping = true;
 
-            m_renderer.UpdateVertexBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))), 0);
-            m_renderer.UpdateIndexBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))), 0);
+            m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))), 0);
+            m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))), static_cast<uint32_t>(sizeof(g_verts)));
             uint32_t shader_id = m_renderer.PushShader(m_module);
             m_renderer.PushTextureFromFile(TEXTURE_NAME, TEXTURE_FILE);
 
             // create the mesh object
             m_mesh.commands.emplace_back();
-            m_mesh.commands.back().vertices_offset = 0;
-            m_mesh.commands.back().indices_offset = 0;
+            m_mesh.commands.back().attribute_offsets.push_back(0);
+            m_mesh.commands.back().attribute_offsets.push_back(sizeof(float) * 3);
+            m_mesh.commands.back().indices_offset = sizeof(g_verts);
             m_mesh.commands.back().indices_count = 3;
-            m_mesh.commands.back().texture_name = TEXTURE_NAME;
+            m_mesh.commands.back().texture_names.push_back(TEXTURE_NAME);
             m_mesh.shader_module_id = shader_id;
             m_mesh.name = MESH_NAME;
 

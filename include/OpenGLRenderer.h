@@ -59,7 +59,7 @@ namespace DENG {
             std::unordered_map<std::string, GLuint> m_opengl_textures;
 
         private:
-            void _BindVertexAttributes(uint32_t _shader_id, uint32_t _base_offset);
+            void _BindVertexAttributes(const DrawCommand &_cmd, uint32_t _shader_id, uint32_t _base_offset);
             void _UnbindVertexAttributes(uint32_t _shader_id);
             void _SetRenderState(uint32_t _shader_id);
 
@@ -77,9 +77,7 @@ namespace DENG {
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
             virtual void LoadShaders() override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
-            virtual void UpdateCombinedBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
-            virtual void UpdateVertexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
-            virtual void UpdateIndexBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
+            virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;
             virtual void RenderFrame() override;
     };

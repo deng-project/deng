@@ -21,12 +21,16 @@ set(DENG_HEADERS
     include/ModelLoader.h
     include/ModelShaderManager.h
     include/ModelShaderGenerator.h
+    include/ModelUniforms.h
+    include/NodeLoader.h
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
     include/PythonScriptExecutor.h
     include/Renderer.h
+    include/SceneLoader.h
     include/ShaderDefinitions.h
+    include/SkeletonDataManager.h
     include/ThirdPersonCamera.h
     include/VulkanDescriptorAllocator.h
     include/VulkanDescriptorSetLayoutCreator.h
@@ -44,16 +48,19 @@ set(DENG_SOURCES
     src/EditorCamera.cpp
     src/FirstPersonCamera.cpp
     src/ImGuiLayer.cpp
-    src/Missing.cpp
     src/MeshLoader.cpp
+    src/Missing.cpp
     src/ModelLoader.cpp
     src/ModelShaderManager.cpp
     src/ModelShaderGenerator.cpp
+    src/NodeLoader.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/PythonScriptExecutor.cpp
+    src/SceneLoader.cpp
     src/ShaderDefinitions.cpp
+    src/SkeletonDataManager.cpp
     src/ThirdPersonCamera.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
@@ -161,14 +168,12 @@ if(BUILD_DEPS)
         ${LIBDAS_TARGET}
         ${IMGUI_TARGET}
         ${LIBNWIN_TARGET}
-        ${LIBLUA_TARGET}
     )
     
     add_dependencies(${DENG_SHARED_TARGET}
         ${LIBDAS_TARGET}
         ${IMGUI_TARGET}
         ${LIBNWIN_TARGET}
-        ${LIBLUA_TARGET}
     )
     
     if(WIN32)

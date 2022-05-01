@@ -6,23 +6,18 @@
 #ifndef MODEL_UNIFORMS_H
 #define MODEL_UNIFORMS_H
 
+#define MAX_MORPH_TARGETS  16
+
 namespace DENG {
     struct ModelCameraUbo {
         Libdas::Matrix4<float> projection_matrix;
         Libdas::Matrix4<float> view_matrix;
     };
 
-    struct ModelAnimationUbo {
-        // animated properties
-        Libdas::Matrix4<float> rot;
-        Libdas::Matrix4<float> scale;
-        Libdas::Matrix4<float> translation;
-    };
-
     struct ModelUbo {
         Libdas::Matrix4<float> node_transform;
-        Libdas::Matrix4<float> skeleton_transform;
         Libdas::Vector4<float> color;
+        float morph_weights[MAX_MORPH_TARGETS] = {};
         uint32_t use_color = 0;
     };
 }

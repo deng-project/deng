@@ -39,12 +39,16 @@
 namespace DENG {
 
     class DENG_API FirstPersonCamera : public Camera3D {
+        private:
+            std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
+            std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
+
         public:
-            FirstPersonCamera(Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset);
+            FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset);
 
             virtual void EnableCamera() override;
             virtual void DisableCamera() override;
-            virtual void Update(Renderer &_rend) override;
+            virtual void Update() override;
     };
 }
 

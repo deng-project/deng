@@ -34,6 +34,7 @@
     #include <libdas/include/DasParser.h>
     #include <libdas/include/stb_image.h>
     #include <libdas/include/TextureReader.h>
+    #include <libdas/include/Hash.h>
 
     #include <Api.h>
     #include <Window.h>
@@ -42,8 +43,13 @@
     #include <Renderer.h>
     #include <MeshLoader.h>
     #include <ModelUniforms.h>
-    #include <ModelShaderManager.h>
     #include <AnimationSampler.h>
+    #include <ModelShaderGenerator.h>
+    #include <ModelShaderManager.h>
+    #include <MeshLoader.h>
+    #include <SkeletonDataManager.h>
+    #include <NodeLoader.h>
+    #include <SceneLoader.h>
 #endif
 
 namespace DENG {
@@ -60,26 +66,18 @@ namespace DENG {
         private:
             Libdas::DasParser m_parser;
             Renderer &m_renderer;
-            std::vector<uint32_t> m_mesh_ubo_offsets;
-            std::vector<MeshLoader> m_mesh_loaders;
-            std::vector<ModelAnimation> m_animations;
+            std::vector<std::vector<AnimationSampler>> m_animation_samplers;
+            std::vector<SceneLoader> m_scene_loaders;
+            static uint32_t m_model_index;
+            std::string m_model_name = "Unnamed model";
             std::vector<std::string> m_texture_names;
-            uint32_t m_texture_bookmark = 0;
-            const uint32_t m_base_buffer_offset;
-            const uint32_t m_base_ubo_offset;
-
-            uint32_t m_used_base_buffer_memory = 0;
+            uint32_t m_used_main_buffer_memory = 0;
 
         private:
             void _AttachBuffersAndTextures();
-            void _AttachNodeAndSkeletonTransforms(uint32_t _scene_id);
-            void _FindSceneRootNodes(uint32_t _scene_id);
-            void _CheckMeshPrimitives(const Libdas::DasMesh &_mesh); // mesh primitives should all have the same vertex attributes
-            std::vector<uint32_t> _GetMeshUboOffsetsFromNodeId(uint32_t _node_id);
 
         public:
-            ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset);
-            void Attach();
+            ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset, uint32_t _camera_offset);
             void Update();
 
             inline std::vector<std::string> &GetAttachedTextures() {
@@ -87,23 +85,15 @@ namespace DENG {
             }
 
             inline uint32_t GetUsedMainBufferMemory() {
-                return m_used_base_buffer_memory;
-            }
-
-            inline uint32_t GetUsedUniformBufferMemory() {
-                return m_mesh_ubo_offsets.back() + m_renderer.AlignUniformBufferOffset(sizeof(ModelUbo)) + m_renderer.AlignUniformBufferOffset(sizeof(ModelAnimationUbo));
+                return m_used_main_buffer_memory;
             }
 
             inline const std::string &GetName() {
-                return m_parser.GetProperties().model;
+                return m_model_name;
             }
 
-            inline std::vector<ModelAnimation> &GetAnimations() {
-                return m_animations;
-            }
-
-            inline std::vector<MeshLoader> &GetMeshes() {
-                return m_mesh_loaders;
+            inline const std::vector<SceneLoader> &GetScenes() {
+                return m_scene_loaders;
             }
     };
 }

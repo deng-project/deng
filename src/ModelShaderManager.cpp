@@ -7,180 +7,100 @@
 #include <ModelShaderManager.h>
 
 namespace DENG {
+    ModelShaderManager::map_t ModelShaderManager::m_shader_map = {};
 
-    uint32_t ModelShaderManager::m_used_shaders = 0;
-    std::array<uint32_t, 8> ModelShaderManager::m_shader_ids = std::array<uint32_t, 8>();
-    bool ModelShaderManager::m_set_stage = false;
+    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset) {
+        ShaderModule module;
+        uint32_t binding_id = 0;
 
-    uint32_t ModelShaderManager::_ResolveMask(uint32_t _mask) {
-        DENG_ASSERT(_mask & POS_ATTR_MASK);
+        // push some uniform data layouts
+        module.ubo_data_layouts.reserve(5);
+        module.ubo_data_layouts.push_back({
+            { binding_id++, static_cast<uint32_t>(sizeof(ModelCameraUbo)), _camera_offset },
+            UNIFORM_DATA_TYPE_BUFFER,
+            SHADER_STAGE_VERTEX,
+            UNIFORM_USAGE_PER_SHADER
+        });
 
-        if((_mask & UV_ATTR_MASK) && (_mask & NORMAL_ATTR_MASK) && (_mask & TANG_ATTR_MASK))
-            return POS_UV_NORMAL_TANG;
-        else if((_mask & UV_ATTR_MASK) && (_mask & NORMAL_ATTR_MASK))
-            return POS_UV_NORMAL;
-        else if((_mask & UV_ATTR_MASK) && (_mask & TANG_ATTR_MASK))
-            return POS_UV_TANG;
-        else if((_mask & NORMAL_ATTR_MASK) && (_mask & TANG_ATTR_MASK))
-            return POS_NORMAL_TANG;
-        else if((_mask & UV_ATTR_MASK))
-            return POS_UV;
-        else if((_mask & NORMAL_ATTR_MASK))
-            return POS_NORMAL;
-        else if((_mask & TANG_ATTR_MASK))
-            return POS_TANG;
+        module.ubo_data_layouts.push_back({
+            { binding_id++, static_cast<uint32_t>(sizeof(ModelUbo)), _base_ubo_offset },
+            UNIFORM_DATA_TYPE_BUFFER,
+            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT,
+            UNIFORM_USAGE_PER_MESH
+        });
+        _base_ubo_offset += _rend.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelUbo)));
 
-        return POS;
-    }
+        module.attributes.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
+        module.attribute_strides.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
+        module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
+        module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
 
-    void ModelShaderManager::_GetAttributesByType(const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _id, ShaderModule &_module, uint32_t _base_offset) {
-        // pos
-        _module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-        _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_buffer_id, _prim.vertex_buffer_offset));
-
-        switch(_id) {
-            case POS_UV_NORMAL_TANG:
-                // uv
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.uv_buffer_id, _prim.uv_buffer_offset));
-                // normal
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_normal_buffer_id, _prim.vertex_normal_buffer_offset));
-                // tangent
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_tangent_buffer_id, _prim.vertex_tangent_buffer_offset));
-                break;
-
-            case POS_UV_NORMAL:
-                // uv
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.uv_buffer_id, _prim.uv_buffer_offset));
-                // normal
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_normal_buffer_id, _prim.vertex_normal_buffer_offset));
-                break;
-
-            case POS_UV_TANG:
-                // uv
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.uv_buffer_id, _prim.uv_buffer_offset));
-                // tangent
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_tangent_buffer_id, _prim.vertex_tangent_buffer_offset));
-                break;
-
-            case POS_NORMAL_TANG:
-                // normal
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_normal_buffer_id, _prim.vertex_normal_buffer_offset));
-                // tangent
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_tangent_buffer_id, _prim.vertex_tangent_buffer_offset));
-                break;
-
-            case POS_UV:
-                // uv
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.uv_buffer_id, _prim.uv_buffer_offset));
-                break;
-
-            case POS_NORMAL:
-                // normal
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_normal_buffer_id, _prim.vertex_normal_buffer_offset));
-                break;
-
-            case POS_TANG:
-                // tangent
-                _module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                _module.offsets.push_back(_base_offset + MeshLoader::CalculateAbsoluteOffset(_parser, _prim.vertex_tangent_buffer_id, _prim.vertex_tangent_buffer_offset));
-                break;
-
-            default:
-                break;
+        if(_mesh_attr_desc.normal) {
+            module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
+            module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
         }
-    }
-
-
-    void ModelShaderManager::_GetUniforms(ShaderModule &_module, const uint32_t _camera_ubo_offset, const uint32_t _id) {
-        // there is a single camera ubo instance in each shader module
-        // AnimationUbo and ModelUbo are managed by meshes
-
-        // CameraUbo data
-        _module.ubo_data_layouts.emplace_back();
-        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().block.binding = 0;
-        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        _module.ubo_data_layouts.back().block.size = sizeof(ModelCameraUbo);
-        _module.ubo_data_layouts.back().block.offset = _camera_ubo_offset;
-        _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
-
-        // AnimationUbo data
-        _module.ubo_data_layouts.reserve(4);
-        _module.ubo_data_layouts.emplace_back();
-        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().block.binding = 1;
-        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
-
-        //// ModelUbo
-        _module.ubo_data_layouts.emplace_back();
-        _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
-        _module.ubo_data_layouts.back().block.binding = 2;
-        _module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
-        _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
-            
-        // check if uv attributes are present and if they are, add sampler
-        if(_id == POS_UV_NORMAL_TANG || _id == POS_UV_NORMAL || _id == POS_UV_TANG || _id == POS_UV) {
-            _module.ubo_data_layouts.emplace_back();
-            _module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
-            _module.ubo_data_layouts.back().block.binding = 3;
-            _module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
-            _module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
+        if(_mesh_attr_desc.tangent) {
+            module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
+            module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
         }
-    }
 
+        for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+            module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
+            module.attribute_strides.push_back(sizeof(Libdas::Vector2<float>));
+        }
 
-    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, const Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_mesh,
-                                                     const uint32_t _base_offset, const uint32_t _camera_ubo_offset) {
-        if(!m_set_stage) {
-            memset(m_shader_ids.data(), 0xff, sizeof(uint32_t) * 8);
-            m_set_stage = true;
-        } 
+        for(uint32_t i = 0; i < _mesh_attr_desc.color_mul_count; i++) {
+            module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
+            module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+        }
 
-        uint32_t mask = 0;
-        if(_mesh.vertex_buffer_id != UINT32_MAX)
-            mask |= POS_ATTR_MASK;
-        if(_mesh.uv_buffer_id != UINT32_MAX)
-            mask |= UV_ATTR_MASK;
-        if(_mesh.vertex_normal_buffer_id != UINT32_MAX)
-            mask |= NORMAL_ATTR_MASK;
-        if(_mesh.vertex_tangent_buffer_id != UINT32_MAX)
-            mask |= TANG_ATTR_MASK;
+        if(_mesh_attr_desc.joint_set_count) {
+            module.ubo_data_layouts.push_back({
+                { binding_id++, static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)) * _mesh_attr_desc.joint_set_count * 4, _base_ubo_offset },
+                UNIFORM_DATA_TYPE_BUFFER,
+                SHADER_STAGE_VERTEX,
+                UNIFORM_USAGE_PER_MESH
+            });
 
-        uint32_t id = _ResolveMask(mask);
-
-        if(m_shader_ids[id] == UINT32_MAX) {
-            ShaderModule module;
-            if(mask & UV_ATTR_MASK) {
-                module.fragment_shader_src = ModelShaderGenerator::GetSampledFragmentShaderSource();
-                module.fragment_shader_file = "GeneratedFragmentShaderWithTextureSampling";
+            for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
+                module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_USHORT);
+                module.attribute_strides.push_back(sizeof(Libdas::Vector4<uint16_t>));
+                module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
+                module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
             }
-            else {
-                module.fragment_shader_src = ModelShaderGenerator::GetColoredFragmentShaderSource();
-                module.fragment_shader_file = "GeneratedFragmentShaderWithColoring";
-            }
-
-            _GetAttributesByType(_parser, _mesh, id, module, _base_offset);
-            _GetUniforms(module, _camera_ubo_offset, id);
-
-            module.vertex_shader_file = "GeneratedVertexShader";
-            module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(mask);
-            module.load_shaders_from_file = false;
-            module.use_seperate_attribute_strides = true;
-            m_shader_ids[id] = _rend.PushShader(module);
         }
 
-        return m_shader_ids[id];
+        if(_mesh_attr_desc.texture_count) {
+            module.use_texture_mapping = true;
+            for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+                module.ubo_data_layouts.push_back({
+                    { binding_id++, 0, 0 },
+                    UNIFORM_DATA_TYPE_IMAGE_SAMPLER,
+                    SHADER_STAGE_FRAGMENT,
+                    UNIFORM_USAGE_PER_SHADER
+                });
+            }
+        }
+
+        module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(_mesh_attr_desc);
+        module.fragment_shader_src = ModelShaderGenerator::GenerateFragmentShaderSource(_mesh_attr_desc);
+        return _rend.PushShader(module);
+    }
+
+
+    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, uint32_t _camera_offset) {
+        // assemble MeshPrimitiveAttributeDescriptor object
+        MeshPrimitiveAttributeDescriptor attr_desc;
+        attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
+        attr_desc.tangent = (_prim.vertex_tangent_buffer_id != UINT32_MAX);
+        attr_desc.texture_count = _prim.texture_count;
+        attr_desc.color_mul_count = _prim.color_mul_count;
+        attr_desc.joint_set_count = _prim.joint_set_count;
+        
+        // check if current MeshPrimitiveAttributeDescriptor object is present
+        if(m_shader_map.find(attr_desc) == m_shader_map.end())
+            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _base_ubo_offset, _camera_offset);
+
+        return m_shader_map[attr_desc];
     }
 }

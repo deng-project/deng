@@ -3,22 +3,36 @@
 // file: VulkanModelLoader.cpp - Vulkan model loader application implementation
 // author: Karl-Mihkel Ott
 
-#include "imgui.h"
 #include <Executables/ViewModelsApp.h>
 
 namespace Executable {
     
     ModelLoaderApp::ModelLoaderApp(const std::string &_file_name, DENG::Window &_win, DENG::Renderer &_rend) : 
-        m_loader(_file_name, _rend, 0, 0), 
         m_window(_win), 
         m_renderer(_rend),
-        m_editor_camera(m_window, m_editor_camera_conf, "Editor camera", 0),
+        m_editor_camera(m_renderer, m_window, m_editor_camera_conf, "Editor camera", 0),
+        m_loader(_file_name, _rend, 0, m_renderer.AlignUniformBufferOffset(sizeof(DENG::ModelCameraUbo)), 0), 
         m_imgui_user_data(m_use_camera)
     {
-        m_loader.Attach();
         m_imgui_user_data.model_loaders.push_back(&m_loader);
-        m_imgui.Attach(m_window, m_renderer, m_loader.GetUsedUniformBufferMemory(), ModelLoaderApp::_ImGuiCallback, &m_imgui_user_data);
+        m_imgui_user_data.p_camera = &m_editor_camera;
+        m_imgui.Attach(m_window, m_renderer, DENG::MeshLoader::GetUboOffset(), ModelLoaderApp::_ImGuiCallback, &m_imgui_user_data);
         m_renderer.LoadShaders();
+    }
+
+
+    void ModelLoaderApp::_ImGuiRecursiveNodeIteration(const DENG::NodeLoader &_node) {
+        if(ImGui::CollapsingHeader(_node.GetName().c_str())) {
+            // check if mesh is present
+            if(_node.GetMeshLoader()) {
+                const DENG::MeshLoader *mp_mesh = _node.GetMeshLoader();
+                std::string title = "Mesh: " + mp_mesh->GetName();
+                ImGui::Text(title.c_str());
+            }
+
+            for(auto sub_it = _node.GetChildNodes().begin(); sub_it != _node.GetChildNodes().end(); sub_it++)
+                _ImGuiRecursiveNodeIteration(*sub_it);
+        }
     }
 
 
@@ -34,48 +48,44 @@ namespace Executable {
                 ImGui::Separator();
 
                 if(ImGui::CollapsingHeader(model_name.c_str())) {
-                    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Meshes contained within this model");
-
-                    // for each mesh contained within model
-                    std::vector<DENG::MeshLoader> &mesh_loaders = (*model_it)->GetMeshes();
-                    for(auto mesh_it = mesh_loaders.begin(); mesh_it != mesh_loaders.end(); mesh_it++) {
-                        std::string mesh_name = mesh_it->GetName();
-                        if(ImGui::CollapsingHeader(mesh_name.c_str())) {
-                            Libdas::Vector4<float> color = mesh_it->GetColor();
-                            float color_arr[4] = { color.first, color.second, color.third, color.fourth };
-                            ImGui::ColorEdit4("Color", color_arr);
-
-                            color = { color_arr[0], color_arr[1], color_arr[2], color_arr[3] };
-                            mesh_it->SetColor(color);
-                        }
-                    }
-                    ImGui::Separator();
-
-                    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Animations contained within this model");
-
-                    // for each animation contained show drop down menu
-                    std::vector<DENG::ModelAnimation> &animations = (*model_it)->GetAnimations();
-                    for(auto ani_it = animations.begin(); ani_it != animations.end(); ani_it++) {
-                        std::string ani_name = ani_it->name;
-                        if(ImGui::CollapsingHeader(ani_name.c_str())) {
-                            if(ani_it->is_animated) {
-                                if(ImGui::Button("Stop animation")) {
-                                    for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++)
-                                        smp_it->Stop();
-                                    ani_it->is_animated = false;
-                                }
-                            }
-                            else {
-                                if(ImGui::Button("Animate")) {
-                                    for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++)
-                                        smp_it->Animate(true);
-                                    ani_it->is_animated = true;
-                                }
-                            }
+                    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Scenes contained within this model");
+                    for(auto sc_it = (*model_it)->GetScenes().begin(); sc_it != (*model_it)->GetScenes().end(); sc_it++) {
+                        if(ImGui::CollapsingHeader(sc_it->GetName().c_str())) {
+                            // scenes can contain nodes
+                            for(auto node_it = sc_it->GetNodes().begin(); node_it != sc_it->GetNodes().end(); node_it++)
+                                _ImGuiRecursiveNodeIteration(*node_it);
                         }
                     }
                     ImGui::Separator();
                 }
+
+#ifdef _DEBUG
+                    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Camera projection matrix: ");
+                    DENG::ModelCameraUbo &ubo = p_data->p_camera->GetCameraUbo();
+                    //DENG::ModelCameraUbo &ubo = p_data->p_camera->GetCameraUbo();
+                    Libdas::Matrix4<float> &prj = ubo.projection_matrix;
+                    Libdas::Matrix4<float> &view = ubo.view_matrix;
+                    std::string ms;
+                    std::stringstream strm;
+                    strm << prj.row1.first << " " << prj.row1.second << " " << prj.row1.third << " " << prj.row1.fourth << "\n" <<
+                            prj.row2.first << " " << prj.row2.second << " " << prj.row2.third << " " << prj.row2.fourth << "\n" <<
+                            prj.row3.first << " " << prj.row3.second << " " << prj.row3.third << " " << prj.row3.fourth << "\n" <<
+                            prj.row4.first << " " << prj.row4.second << " " << prj.row4.third << " " << prj.row4.fourth;
+
+                    ms = strm.str();
+                    ImGui::Text(ms.c_str());
+                    ImGui::Separator();
+                    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Camera view matrix: ");
+                    
+                    strm.str("");
+                    strm.clear();
+                    strm << view.row1.first << " " << view.row1.second << " " << view.row1.third << " " << view.row1.fourth << "\n" <<
+                            view.row2.first << " " << view.row2.second << " " << view.row2.third << " " << view.row2.fourth << "\n" <<
+                            view.row3.first << " " << view.row3.second << " " << view.row3.third << " " << view.row3.fourth << "\n" <<
+                            view.row4.first << " " << view.row4.second << " " << view.row4.third << " " << view.row4.fourth;
+                    ms = strm.str();
+                    ImGui::Text(ms.c_str());
+#endif
             }
         ImGui::End();
     }
@@ -117,7 +127,7 @@ namespace Executable {
 
 
             DENG::ModelCameraUbo ubo;
-            m_editor_camera.Update(m_renderer);
+            m_editor_camera.Update();
             m_loader.Update();
             m_imgui.Update(m_loader.GetUsedMainBufferMemory());
             m_renderer.RenderFrame();
@@ -147,7 +157,7 @@ int main() {
     int32_t backend = py.ExecuteFunction<int32_t>("BackendChooser", "Prompt");
 
     // python layer to prompt api selection dialog
-    DENG::RendererConfig conf = { false, true };
+    DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
     if(backend == USE_VULKAN) {
         DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "VulkanModelLoader");
         DENG::VulkanRenderer rend(win, conf);
