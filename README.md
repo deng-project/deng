@@ -48,7 +48,7 @@ Download Vulkan SDK tarball and extract it to familiar location.
 
 On Debian based distributions you can install following packages that are required for building DENG  
 ```
-$ sudo apt install python3-tk cmake libx11-6 libxrandr-dev libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
+$ sudo apt install python3-tk python3-dev cmake libx11-6 libxrandr-dev libx11-dev libxcursor1 libxcursor-dev vulkan-validationlayers libglvnd0 libglvnd-dev
 ```
 
 Clone the repository with following command:  

@@ -41,11 +41,11 @@ namespace Executable {
 
         //ImGui::ShowDemoWindow();
         ImGui::Begin("Object manager", &p_data->is_object_manager);
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "List of all objects");
+            ImGui::Separator();
             for(auto model_it = p_data->model_loaders.begin(); model_it != p_data->model_loaders.end(); model_it++) {
+                ImGui::Text("Scene hierarchy");
                 std::string model_name = (*model_it)->GetName();
-
-                ImGui::Text("List of all loaded models");
-                ImGui::Separator();
 
                 if(ImGui::CollapsingHeader(model_name.c_str())) {
                     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Scenes contained within this model");
@@ -56,8 +56,36 @@ namespace Executable {
                                 _ImGuiRecursiveNodeIteration(*node_it);
                         }
                     }
-                    ImGui::Separator();
                 }
+
+                ImGui::Separator();
+
+                ImGui::Text("Animations");
+
+                for(auto ani_it = (*model_it)->GetAnimations().begin(); ani_it != (*model_it)->GetAnimations().end(); ani_it++) {
+                    const std::string &animation_name = ani_it->first;
+                    if(ani_it->second.front().GetAnimationStatus()) {
+                        if(ImGui::Button("Stop animation")) {
+                            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
+                                smp_it->Stop();
+                        }
+                    } else {
+                        if(ImGui::Button("Animate")) {
+                            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
+                                smp_it->Animate(true);
+                        }
+                    }
+
+                    if(ImGui::CollapsingHeader(animation_name.c_str())) {
+                        for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
+                            const size_t index = smp_it - ani_it->second.begin();
+                            const std::string smp_title = "Sampler" + std::to_string(index);
+                            ImGui::Text(smp_title.c_str());
+                        }
+                    }
+                }
+
+                ImGui::Separator();
 
 #ifdef _DEBUG
                     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Camera projection matrix: ");

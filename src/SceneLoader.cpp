@@ -10,7 +10,7 @@ namespace DENG {
 
     uint32_t SceneLoader::m_scene_index = 0;
 
-    SceneLoader::SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, uint32_t _camera_offset, std::vector<std::vector<AnimationSampler>> &_animation_samplers) : 
+    SceneLoader::SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers) : 
         m_renderer(_rend),
         m_parser(_parser),
         m_scene(_scene)
@@ -32,7 +32,7 @@ namespace DENG {
 
         // check and select all animation samplers which target scene root nodes
         for(auto ani_it = _animation_samplers.begin(); ani_it != _animation_samplers.end(); ani_it++) {
-            for(auto smp_it = ani_it->begin(); smp_it != ani_it->end(); smp_it++) {
+            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
                 for(uint32_t i = 0; i < m_scene.node_count; i++) {
                     if(smp_it->GetAnimationChannel().node_id == m_scene.nodes[i]) {
                         m_scene_root_node_animation_samplers.push_back(&(*smp_it));

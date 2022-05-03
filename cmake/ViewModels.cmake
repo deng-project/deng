@@ -13,9 +13,7 @@ add_dependencies(${VIEW_MODELS_TARGET} ${DENG_SHARED_TARGET})
 add_custom_command(TARGET ${VIEW_MODELS_TARGET}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
-    ARGS -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/scripts
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy ${CMAKE_SOURCE_DIR}/scripts/BackendChooser.py ${CMAKE_CURRENT_BINARY_DIR}/scripts
+    ARGS -E copy ${CMAKE_SOURCE_DIR}/scripts/BackendChooser.py ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 target_link_libraries(${VIEW_MODELS_TARGET} PRIVATE ${DENG_SHARED_TARGET})

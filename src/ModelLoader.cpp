@@ -9,6 +9,7 @@
 namespace DENG {
 
     uint32_t ModelLoader::m_model_index = 0;
+    uint32_t ModelLoader::m_animation_index = 0;
 
     ModelLoader::ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset, uint32_t _camera_offset) : 
         m_parser(_file_name), m_renderer(_rend)
@@ -23,11 +24,17 @@ namespace DENG {
         for(uint32_t i = 0; i < m_parser.GetAnimationCount(); i++) {
             const Libdas::DasAnimation &ani = m_parser.AccessAnimation(i);
             m_animation_samplers.emplace_back();
-            m_animation_samplers.back().reserve(ani.channel_count);
+
+            // check if animation name was given
+            if(ani.name != "")
+                m_animation_samplers.back().first = ani.name;
+            else m_animation_samplers.back().first = "Unnamed animation" + std::to_string(m_animation_index++);
+
+            m_animation_samplers.back().second.reserve(ani.channel_count);
 
             for(uint32_t j = 0; j < ani.channel_count; j++) {
                 const Libdas::DasAnimationChannel &channel = m_parser.AccessAnimationChannel(ani.channels[j]);
-                m_animation_samplers.back().emplace_back(channel, m_parser);
+                m_animation_samplers.back().second.emplace_back(channel, m_parser);
             }
         }
 

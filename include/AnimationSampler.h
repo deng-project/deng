@@ -71,6 +71,8 @@ namespace DENG {
             bool m_animate = false;
             bool m_repeat = false;
 
+            static uint32_t m_animation_sampler_index;
+
         private:
             void _LinearInterpolation(float _t1, float _tc, float _t2);
             void _StepInterpolation();
@@ -85,13 +87,16 @@ namespace DENG {
                 m_animate = true;
                 m_repeat = _repeat;
                 m_active_timestamp_index = 0;
-                //m_ubo.animate = 1;
                 m_beg_time = std::chrono::system_clock::now();
             }
 
             inline void Stop() {
                 m_animate = false;
                 m_active_timestamp_index = UINT32_MAX;
+            }
+
+            inline bool GetAnimationStatus() const {
+                return m_animate;
             }
 
             inline const Libdas::DasAnimationChannel &GetAnimationChannel() {
@@ -106,6 +111,9 @@ namespace DENG {
                 return m_morph_weights;
             }
     };
+
+    typedef std::pair<std::string, std::vector<AnimationSampler>> Animation;
+
 }
 
 #endif

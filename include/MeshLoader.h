@@ -73,21 +73,11 @@ namespace DENG {
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);
 
-            static inline void SetUniformBufferOffset(uint32_t _ubo_offset) {
-                m_ubo_offset = _ubo_offset;
-            }
-
-            static inline uint32_t GetUboOffset() {
-                return m_ubo_offset;
-            }
-
-            static inline void SetMainBufferOffset(uint32_t _offset) {
-                m_main_buffer_offset = _offset;
-            }
-
-            static inline uint32_t GetMainBufferOffset() {
-                return m_main_buffer_offset;
-            }
+            // static member getters / setters
+            static void SetUniformBufferOffset(uint32_t _ubo_offset);
+            static uint32_t GetUboOffset();
+            static void SetMainBufferOffset(uint32_t _offset);
+            static uint32_t GetMainBufferOffset();
 
             inline uint32_t GetMeshUboOffset() {
                 return m_mesh_ubo_offset;

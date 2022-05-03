@@ -160,4 +160,24 @@ namespace DENG {
         const uint32_t rel_offset = m_mesh_ubo_offset + m_renderer.AlignUniformBufferOffset(sizeof(ModelUbo));
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), rel_offset);
     }
+
+
+    // setters / getters
+    void MeshLoader::SetUniformBufferOffset(uint32_t _ubo_offset) {
+        m_ubo_offset = _ubo_offset;
+    }
+
+
+    uint32_t MeshLoader::GetUboOffset() {
+        return m_ubo_offset;
+    }
+
+
+    void MeshLoader::SetMainBufferOffset(uint32_t _main_offset) {
+        m_main_buffer_offset = _main_offset;
+    }
+
+    uint32_t MeshLoader::GetMainBufferOffset() {
+        return m_main_buffer_offset;
+    }
 }

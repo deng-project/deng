@@ -65,7 +65,7 @@ namespace DENG {
             std::string m_node_name = "Unnamed node";
 
         public:
-            NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<std::vector<AnimationSampler>> &_animation_samplers);
+            NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers);
             ~NodeLoader();
             void Update(const Libdas::Matrix4<float> &_parent, float *morph_weights);
 

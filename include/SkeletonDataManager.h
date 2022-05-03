@@ -50,7 +50,7 @@ namespace DENG {
             std::string m_skeleton_name = "Unnamed skeleton";
 
         public:
-            SkeletonDataManager(Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<std::vector<AnimationSampler>> &_animation_samplers);
+            SkeletonDataManager(Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_samplers);
             void Update();
 
             inline std::vector<Libdas::Matrix4<float>> GetJointMatrices() {

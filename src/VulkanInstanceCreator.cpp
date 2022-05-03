@@ -60,7 +60,7 @@ namespace DENG {
             if(!_CheckValidationLayerSupport())
                 VK_INSTANCE_ERR("validation layers usage specified, but none are available!");
 
-            else if(_CheckValidationLayerSupport()) {
+            else {
                 VkDebugUtilsMessengerCreateInfoEXT debug_createinfo = {};
 
                 // Set up instance info to support validation layers

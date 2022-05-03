@@ -8,9 +8,12 @@
 
 namespace DENG {
 
+    uint32_t AnimationSampler::m_animation_sampler_index = 0;
+
     AnimationSampler::AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser) : 
         m_channel(_channel), 
-        m_parser(_parser) {}
+        m_parser(_parser) 
+    {}
 
 
     void AnimationSampler::_LinearInterpolation(float _t1, float _tc, float _t2) {

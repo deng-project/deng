@@ -5,7 +5,7 @@ namespace DENG {
 
     uint32_t NodeLoader::m_node_index = 0;
 
-    NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<std::vector<AnimationSampler>> &_animation_samplers) :
+    NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers) :
         m_renderer(_rend),
         m_node(_node),
         m_parser(_parser)
@@ -46,7 +46,7 @@ namespace DENG {
 
         // search for animation samplers whose nodes are current node's children
         for(auto ani_it = _animation_samplers.begin(); ani_it != _animation_samplers.end(); ani_it++) {
-            for(auto smp_it = ani_it->begin(); smp_it != ani_it->end(); smp_it++) {
+            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
                 for(uint32_t i = 0; i < m_node.children_count; i++) {
                     if(m_node.children[i] == smp_it->GetAnimationChannel().node_id) {
                         m_child_samplers.push_back(&(*smp_it));
@@ -90,13 +90,13 @@ namespace DENG {
         if(mp_mesh_loader) {
             uint32_t offset = mp_mesh_loader->GetMeshUboOffset();
             ModelUbo ubo;
-            ubo.node_transform = Libdas::Matrix4<float>();
+            ubo.node_transform = new_parent;
             ubo.use_color = true;
             ubo.color = mp_mesh_loader->GetColor();
 
             // check if morph weights are given
-            //if(_morph_weights) std::memcpy(ubo.morph_weights, _morph_weights, sizeof(float[MAX_MORPH_TARGETS]));
-            //else std::memset(ubo.morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
+            if(_morph_weights) std::memcpy(ubo.morph_weights, _morph_weights, sizeof(float[MAX_MORPH_TARGETS]));
+            else std::memset(ubo.morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(&ubo), sizeof(ModelUbo), offset);
         }
 
