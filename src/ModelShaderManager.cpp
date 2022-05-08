@@ -9,7 +9,7 @@
 namespace DENG {
     ModelShaderManager::map_t ModelShaderManager::m_shader_map = {};
 
-    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset) {
+    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset) {
         ShaderModule module;
         uint32_t binding_id = 0;
 
@@ -55,8 +55,9 @@ namespace DENG {
         }
 
         if(_mesh_attr_desc.joint_set_count) {
+            const uint32_t size = _mesh_attr_desc.skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
             module.ubo_data_layouts.push_back({
-                { binding_id++, static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)) * _mesh_attr_desc.joint_set_count * 4, _base_ubo_offset },
+                { binding_id++, size, _base_ubo_offset },
                 UNIFORM_DATA_TYPE_BUFFER,
                 SHADER_STAGE_VERTEX,
                 UNIFORM_USAGE_PER_MESH
@@ -65,6 +66,30 @@ namespace DENG {
             for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_USHORT);
                 module.attribute_strides.push_back(sizeof(Libdas::Vector4<uint16_t>));
+                module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
+                module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+            }
+        }
+
+        for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
+            module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
+            module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+            if(it->normal) {
+                module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
+                module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+            }
+
+            if(it->tangent) {
+                module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
+                module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+            }
+
+            for(uint32_t i = 0; i < it->texture_count; i++) {
+                module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
+                module.attribute_strides.push_back(sizeof(Libdas::Vector2<float>));
+            }
+
+            for(uint32_t i = 0; i < it->color_mul_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
                 module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
             }
@@ -88,7 +113,7 @@ namespace DENG {
     }
 
 
-    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, uint32_t _camera_offset) {
+    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, uint32_t _camera_offset, uint32_t _skeleton_joint_count) {
         // assemble MeshPrimitiveAttributeDescriptor object
         MeshPrimitiveAttributeDescriptor attr_desc;
         attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
@@ -96,10 +121,20 @@ namespace DENG {
         attr_desc.texture_count = _prim.texture_count;
         attr_desc.color_mul_count = _prim.color_mul_count;
         attr_desc.joint_set_count = _prim.joint_set_count;
+        attr_desc.skeleton_joint_count = _skeleton_joint_count;
+
+        for(uint32_t i = 0; i < _prim.morph_target_count; i++) {
+            const Libdas::DasMorphTarget &morph = _parser.AccessMorphTarget(_prim.morph_targets[i]);
+            attr_desc.morph_targets.emplace_back();
+            attr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
+            attr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
+            attr_desc.morph_targets.back().texture_count = morph.texture_count;
+            attr_desc.morph_targets.back().color_mul_count = morph.color_mul_count;
+        }
         
         // check if current MeshPrimitiveAttributeDescriptor object is present
         if(m_shader_map.find(attr_desc) == m_shader_map.end())
-            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _base_ubo_offset, _camera_offset);
+            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, _parser, attr_desc, _base_ubo_offset, _camera_offset);
 
         return m_shader_map[attr_desc];
     }

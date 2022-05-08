@@ -25,7 +25,7 @@ namespace DENG {
             // weights
             case LIBDAS_ANIMATION_TARGET_WEIGHTS:
                 { 
-                    DENG_ASSERT(m_channel.weight_count > MAX_MORPH_TARGETS);
+                    DENG_ASSERT(m_channel.weight_count <= MAX_MORPH_TARGETS);
                     const size_t size = static_cast<size_t>(m_channel.weight_count) * sizeof(float);
                     float *w1 = reinterpret_cast<float*>(m_channel.target_values + curr * size);
                     float *w2 = reinterpret_cast<float*>(m_channel.target_values + next * size);
@@ -60,8 +60,12 @@ namespace DENG {
                     float sign = dot < 0.0f ? -1.0f : 1.0f;
                     float a = acosf(dot);
 
-                    Libdas::Quaternion interp = *q1 * sinf(a * (1 - t)) / sinf(a) + *q2 * sign * sinf(a * t) / sinf(a);
-                    m_animation_matrix = interp.ExpandToMatrix4().Transpose();
+                    if(a != 0.0f) {
+                        Libdas::Quaternion interp = *q1 * sinf(a * (1 - t)) / sinf(a) + *q2 * sign * sinf(a * t) / sinf(a);
+                        m_animation_matrix = interp.ExpandToMatrix4().Transpose();
+                    } else {
+                        m_animation_matrix = Libdas::Matrix4<float>();
+                    }
                 }
                 break;
 

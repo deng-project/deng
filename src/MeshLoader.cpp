@@ -12,10 +12,11 @@ namespace DENG {
     uint32_t MeshLoader::m_ubo_offset = 0;
     uint32_t MeshLoader::m_main_buffer_offset = 0;
 
-    MeshLoader::MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _camera_offset) : 
-        m_parser(_parser), 
+    MeshLoader::MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _camera_offset, uint32_t _skeleton_joint_count) : 
+        m_parser(_parser),
         m_mesh(_mesh),
-        m_renderer(_renderer)
+        m_renderer(_renderer),
+        m_skeleton_joint_count(_skeleton_joint_count)
     {
         m_mesh_ubo_offset = m_ubo_offset;
         if(m_mesh.name != "") {
@@ -26,8 +27,8 @@ namespace DENG {
 
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
-        const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
-        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, prim, m_mesh_ubo_offset, _camera_offset);
+        mp_prim = &m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
+        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, m_mesh_ubo_offset, _camera_offset, m_skeleton_joint_count);
     }
 
 
@@ -43,6 +44,15 @@ namespace DENG {
                 attr_desc.texture_count = prim.texture_count;
                 attr_desc.color_mul_count = prim.color_mul_count;
                 attr_desc.joint_set_count = prim.joint_set_count;
+
+                for(uint32_t j = 0; j < prim.morph_target_count; j++) {
+                    const Libdas::DasMorphTarget &morph = m_parser.AccessMorphTarget(prim.morph_targets[i]);
+                    attr_desc.morph_targets.emplace_back();
+                    attr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
+                    attr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
+                    attr_desc.morph_targets.back().texture_count = morph.texture_count;
+                    attr_desc.morph_targets.back().color_mul_count = morph.color_mul_count;
+                }
             } else {
                 MeshPrimitiveAttributeDescriptor cattr_desc;
                 cattr_desc.normal = (prim.vertex_normal_buffer_id != UINT32_MAX);
@@ -50,6 +60,15 @@ namespace DENG {
                 cattr_desc.texture_count = prim.texture_count;
                 cattr_desc.color_mul_count = prim.color_mul_count;
                 cattr_desc.joint_set_count = prim.joint_set_count;
+
+                for(uint32_t j = 0; j < prim.morph_target_count; j++) {
+                    const Libdas::DasMorphTarget &morph = m_parser.AccessMorphTarget(prim.morph_targets[i]);
+                    cattr_desc.morph_targets.emplace_back();
+                    cattr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
+                    cattr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
+                    cattr_desc.morph_targets.back().texture_count = morph.texture_count;
+                    cattr_desc.morph_targets.back().color_mul_count = morph.color_mul_count;
+                }
 
                 // check if created attribute descriptor matches the original descriptor
                 if(cattr_desc != attr_desc) {
@@ -92,12 +111,11 @@ namespace DENG {
 
         // check if joint matrix ubos should be created
         if(m_parser.AccessMeshPrimitive(m_mesh.primitives[0]).joint_set_count) {
-            const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
             mesh.ubo_blocks.emplace_back();
             mesh.ubo_blocks.back().binding = binding_id++;
-            mesh.ubo_blocks.back().size = static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)) * 4 * prim.joint_set_count;
+            mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
             mesh.ubo_blocks.back().offset = m_ubo_offset;
-            m_ubo_offset += m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)) * 4 * prim.joint_set_count);
+            m_ubo_offset += m_renderer.AlignUniformBufferOffset(m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)));
         }
 
         // create mesh draw commands
@@ -147,18 +165,25 @@ namespace DENG {
     void MeshLoader::UseTextures(const std::vector<std::string> &_names) {
         MeshReference &mesh = m_renderer.GetMeshes()[m_mesh_ref_id];
 
-        for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++)
+        for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++) {
             cmd->texture_names = _names;
+        }
     }
 
 
     void MeshLoader::UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices) {
-#ifdef _DEBUG
-        const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
-        DENG_ASSERT(prim.joint_set_count * 4 >= _matrices.size());
-#endif
         const uint32_t rel_offset = m_mesh_ubo_offset + m_renderer.AlignUniformBufferOffset(sizeof(ModelUbo));
-        m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), rel_offset);
+
+#ifdef _DEBUG
+        if(!m_disable_joint_transforms)
+#endif
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), rel_offset);
+#ifdef _DEBUG
+        else {
+            std::vector<Libdas::Matrix4<float>> rmat(_matrices.size());
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), rmat.size() * sizeof(Libdas::Matrix4<float>), rel_offset);
+        }
+#endif
     }
 
 

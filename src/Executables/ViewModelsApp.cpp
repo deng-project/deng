@@ -25,9 +25,23 @@ namespace Executable {
         if(ImGui::CollapsingHeader(_node.GetName().c_str())) {
             // check if mesh is present
             if(_node.GetMeshLoader()) {
-                const DENG::MeshLoader *mp_mesh = _node.GetMeshLoader();
-                std::string title = "Mesh: " + mp_mesh->GetName();
-                ImGui::Text(title.c_str());
+                DENG::MeshLoader *mp_mesh = _node.GetMeshLoader();
+                std::string str = "Mesh: " + mp_mesh->GetName();
+                ImGui::Text(str.c_str());
+
+                bool v = !mp_mesh->GetUseColor();
+                ImGui::Checkbox("Use textures instead", &v);
+                mp_mesh->SetUseColor(!v);
+
+#ifdef _DEBUG
+                v = mp_mesh->GetDisableJointTransforms();
+                ImGui::Checkbox("Disable joint transforms", &v);
+                mp_mesh->SetDisableJointTransforms(v);
+#endif
+
+                Libdas::Vector4<float> color = mp_mesh->GetColor();
+                ImGui::ColorEdit4("Mesh color", reinterpret_cast<float*>(&color));
+                mp_mesh->SetColor(color);
             }
 
             for(auto sub_it = _node.GetChildNodes().begin(); sub_it != _node.GetChildNodes().end(); sub_it++)
@@ -44,7 +58,7 @@ namespace Executable {
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "List of all objects");
             ImGui::Separator();
             for(auto model_it = p_data->model_loaders.begin(); model_it != p_data->model_loaders.end(); model_it++) {
-                ImGui::Text("Scene hierarchy");
+                ImGui::Text("Models: ");
                 std::string model_name = (*model_it)->GetName();
 
                 if(ImGui::CollapsingHeader(model_name.c_str())) {
@@ -54,38 +68,39 @@ namespace Executable {
                             // scenes can contain nodes
                             for(auto node_it = sc_it->GetNodes().begin(); node_it != sc_it->GetNodes().end(); node_it++)
                                 _ImGuiRecursiveNodeIteration(*node_it);
+                            }
+                    }
+
+                    ImGui::Separator();
+
+                    ImGui::Text("Animations");
+
+                    for(auto ani_it = (*model_it)->GetAnimations().begin(); ani_it != (*model_it)->GetAnimations().end(); ani_it++) {
+                        const std::string &animation_name = ani_it->first;
+
+                        if(ImGui::CollapsingHeader(animation_name.c_str())) {
+                            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
+                                const size_t index = smp_it - ani_it->second.begin();
+                                const std::string smp_title = "Sampler" + std::to_string(index);
+                                ImGui::Text(smp_title.c_str());
+                            }
+
+                            if(ani_it->second.front().GetAnimationStatus()) {
+                                if(ImGui::Button("Stop animation")) {
+                                    for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
+                                        smp_it->Stop();
+                                }
+                            } else {
+                                if(ImGui::Button("Animate")) {
+                                    for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
+                                        smp_it->Animate(true);
+                                }
+                            }
                         }
                     }
+
+                    ImGui::Separator();
                 }
-
-                ImGui::Separator();
-
-                ImGui::Text("Animations");
-
-                for(auto ani_it = (*model_it)->GetAnimations().begin(); ani_it != (*model_it)->GetAnimations().end(); ani_it++) {
-                    const std::string &animation_name = ani_it->first;
-                    if(ani_it->second.front().GetAnimationStatus()) {
-                        if(ImGui::Button("Stop animation")) {
-                            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
-                                smp_it->Stop();
-                        }
-                    } else {
-                        if(ImGui::Button("Animate")) {
-                            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
-                                smp_it->Animate(true);
-                        }
-                    }
-
-                    if(ImGui::CollapsingHeader(animation_name.c_str())) {
-                        for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
-                            const size_t index = smp_it - ani_it->second.begin();
-                            const std::string smp_title = "Sampler" + std::to_string(index);
-                            ImGui::Text(smp_title.c_str());
-                        }
-                    }
-                }
-
-                ImGui::Separator();
 
 #ifdef _DEBUG
                     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Camera projection matrix: ");

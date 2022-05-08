@@ -38,18 +38,18 @@ namespace DENG {
             }
         }
 
+        _AttachBuffersAndTextures();
+
         // load each scene in the model
         m_scene_loaders.reserve(m_parser.GetSceneCount());
         for(uint32_t i = 0; i < m_parser.GetSceneCount(); i++) {
             const Libdas::DasScene &scene = m_parser.AccessScene(i);
-            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, _camera_offset, m_animation_samplers);
+            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, _camera_offset, m_animation_samplers, m_texture_names);
         }
 
         if(m_parser.GetProperties().model != "")
             m_model_name = m_parser.GetProperties().model;
         else m_model_name += std::to_string(m_model_index++);
-
-        _AttachBuffersAndTextures();
     }
 
 

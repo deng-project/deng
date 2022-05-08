@@ -75,10 +75,10 @@ namespace DENG {
             static map_t m_shader_map;
 
         private:
-            static uint32_t _GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset);
+            static uint32_t _GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset);
 
         public:
-            static uint32_t RequestShaderModule(Renderer &_rend, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, const uint32_t _camera_offset);
+            static uint32_t RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, const uint32_t _camera_offset, uint32_t _skeleton_joint_count);
     };
 }
 #endif

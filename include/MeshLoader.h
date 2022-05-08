@@ -60,6 +60,12 @@ namespace DENG {
             static uint32_t m_ubo_offset;
             static uint32_t m_main_buffer_offset;
             uint32_t m_mesh_ubo_offset;
+            const uint32_t m_skeleton_joint_count;
+            const Libdas::DasMeshPrimitive *mp_prim = nullptr;
+            bool m_use_color = true;
+#ifdef _DEBUG
+            bool m_disable_joint_transforms = false;
+#endif
 
             // Uniform node data
             Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
@@ -68,7 +74,7 @@ namespace DENG {
             void _CheckMeshPrimitives();
 
         public:
-            MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _camera_offset);
+            MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _camera_offset, uint32_t _skeleton_joint_count);
             void Attach();
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);
@@ -78,6 +84,10 @@ namespace DENG {
             static uint32_t GetUboOffset();
             static void SetMainBufferOffset(uint32_t _offset);
             static uint32_t GetMainBufferOffset();
+
+            inline const Libdas::DasMeshPrimitive *GetSamplePrimitive() {
+                return mp_prim;
+            }
 
             inline uint32_t GetMeshUboOffset() {
                 return m_mesh_ubo_offset;
@@ -97,7 +107,25 @@ namespace DENG {
 
             static uint32_t CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset);
 
-            inline Libdas::Vector4<float> GetColor() {
+            inline bool GetUseColor() const {
+                return m_use_color;
+            }
+
+            inline void SetUseColor(bool _use_color) {
+                m_use_color = _use_color;
+            }
+
+#ifdef _DEBUG
+            inline bool GetDisableJointTransforms() const {
+                return m_disable_joint_transforms;
+            }
+
+            inline void SetDisableJointTransforms(bool _disable) {
+                m_disable_joint_transforms = _disable;
+            }
+#endif
+
+            inline Libdas::Vector4<float> GetColor() const {
                 return m_color;
             }
 

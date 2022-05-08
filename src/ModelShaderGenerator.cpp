@@ -46,12 +46,11 @@ namespace DENG {
 
         // write joint transformations
         if(_mesh_attr_desc.joint_set_count) {
-            _shader += "layout(std140, set = 2, binding = 3) uniform JointMatrices { mat4 mat[" + std::to_string(_mesh_attr_desc.joint_set_count * 4) + "]; } joint_matrices;\n";
+            _shader += "layout(std140, set = 1, binding = 2) uniform JointMatrices { mat4 mat[" + std::to_string(_mesh_attr_desc.skeleton_joint_count) + "]; } joint_matrices;\n";
             _custom_code += "\tmat4 skeleton = \n";
             for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
-                _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 joints" + std::to_string(i) + ";\n";
+                _shader += "layout(location = " + std::to_string(m_in_id++) + ") in uvec4 joints" + std::to_string(i) + ";\n";
                 _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 weights" + std::to_string(i) + ";\n";
-
                 if(i == _mesh_attr_desc.joint_set_count - 1) {
                     _custom_code += "\t\tweights" + std::to_string(i) + ".x * joint_matrices.mat[int(joints" + std::to_string(i) + ".x)] +\n"\
                                     "\t\tweights" + std::to_string(i) + ".y * joint_matrices.mat[int(joints" + std::to_string(i) + ".y)] +\n"\
@@ -105,9 +104,15 @@ namespace DENG {
             _custom_code += "\tpos += ";
             for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
                 const size_t index = it - _mesh_attr_desc.morph_targets.begin();
+                const size_t arr_index = index / 4;
+
+                char suf = 'x' + (index % 4);
+                if((index % 4) == 3)
+                    suf = 'w';
+
                 if(it != _mesh_attr_desc.morph_targets.end() - 1)
-                    _custom_code += "animation.morph_weights[" + std::to_string(index) + "] * in_morph_pos" + std::to_string(index) + " + ";
-                else _custom_code += "animation.morph_weights[" + std::to_string(index) + "] * in_morph_pos" + std::to_string(index) + ";\n";
+                    _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + suf + " * in_morph_pos" + std::to_string(index) + " + ";
+                else _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + suf + " * in_morph_pos" + std::to_string(index) + ";\n";
             }
 
             // write morphed normal attributes if possible
@@ -115,9 +120,15 @@ namespace DENG {
                 _custom_code += "\tnorm += ";
                 for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
                     const size_t index = it - _mesh_attr_desc.morph_targets.begin();
+                    const size_t arr_index = index / 4;
+
+                    char suf = 'x' + (index % 4);
+                    if((index % 4) == 3)
+                        suf = 'w';
+
                     if(it != _mesh_attr_desc.morph_targets.end() - 1)
-                        _custom_code += "animation.morph_weights[" + std::to_string(index) + "] * in_morph_normal" + std::to_string(index) + " + ";
-                    else _custom_code += "animation.morph_weights[" + std::to_string(index) + "] * in_morph_normal" + std::to_string(index) + ";\n";
+                        _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + suf + " * in_morph_normal" + std::to_string(index) + " + ";
+                    else _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + suf + " * in_morph_normal" + std::to_string(index) + ";\n";
                 }
             }
 
@@ -127,13 +138,15 @@ namespace DENG {
                     _custom_code += "\tuv" + std::to_string(i) + " += ";
                     for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
                         const size_t index = it - _mesh_attr_desc.morph_targets.begin();
+                        const size_t arr_index = index / 4;
+
                         char elem = (index % 4) + 'x';
-                        if((index % 4) == 0)
+                        if((index % 4) == 3)
                             elem = 'w';
 
                         if(it != _mesh_attr_desc.morph_targets.end() - 1)
-                            _custom_code += "animation.morph_weights[" + std::to_string(index / 4) + "]." + elem + " * in_morph_uv" + std::to_string(index) + "_" + std::to_string(i) + " + ";
-                        else _custom_code += "animation.morph_weights[" + std::to_string(index / 4) + "]." + elem + " * in_morph_uv" + std::to_string(index) + "_" + std::to_string(i) + ";\n";
+                            _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + elem + " * in_morph_uv" + std::to_string(index) + "_" + std::to_string(i) + " + ";
+                        else _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + elem + " * in_morph_uv" + std::to_string(index) + "_" + std::to_string(i) + ";\n";
                     }
                 }
             }
@@ -145,8 +158,8 @@ namespace DENG {
                     for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
                         const size_t index = it - _mesh_attr_desc.morph_targets.begin();
                         if(it != _mesh_attr_desc.morph_targets.end() - 1)
-                            _custom_code += "animation.morph_weights[" + std::to_string(index) + "] * in_morph_color" + std::to_string(index) + "_" + std::to_string(i) + " + ";
-                        else _custom_code += "animation.morph_weights[" + std::to_string(index) + "] * in_morph_color" + std::to_string(index) + "_" + std::to_string(i) + ";\n";
+                            _custom_code += "model.morph_weights[" + std::to_string(index) + "] * in_morph_color" + std::to_string(index) + "_" + std::to_string(i) + " + ";
+                        else _custom_code += "model.morph_weights[" + std::to_string(index) + "] * in_morph_color" + std::to_string(index) + "_" + std::to_string(i) + ";\n";
                     }
                 }
             }

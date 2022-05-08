@@ -5,7 +5,7 @@ namespace DENG {
 
     uint32_t NodeLoader::m_node_index = 0;
 
-    NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers) :
+    NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names) :
         m_renderer(_rend),
         m_node(_node),
         m_parser(_parser)
@@ -18,7 +18,7 @@ namespace DENG {
         uint32_t max_node = 0;
         for(uint32_t i = 0; i < m_node.children_count; i++) {
             const Libdas::DasNode &child_node = m_parser.AccessNode(m_node.children[i]);
-            m_child_nodes.emplace_back(m_renderer, child_node, m_parser, _camera_offset, _animation_samplers);
+            m_child_nodes.emplace_back(m_renderer, child_node, m_parser, _camera_offset, _animation_samplers, _texture_names);
 
             if(m_node.children[i] > max_node)
                 max_node = m_node.children[i];
@@ -40,8 +40,13 @@ namespace DENG {
 
         if(m_node.mesh != UINT32_MAX) {
             const Libdas::DasMesh &mesh = m_parser.AccessMesh(m_node.mesh);
-            mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _camera_offset);
+            if(mp_skeleton) {
+                const uint32_t joint_count = static_cast<uint32_t>(mp_skeleton->GetJointMatrices().size());
+                mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _camera_offset, joint_count);
+            }
+            else mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _camera_offset, 0);
             mp_mesh_loader->Attach();
+            mp_mesh_loader->UseTextures(_texture_names);
         }
 
         // search for animation samplers whose nodes are current node's children
@@ -91,7 +96,7 @@ namespace DENG {
             uint32_t offset = mp_mesh_loader->GetMeshUboOffset();
             ModelUbo ubo;
             ubo.node_transform = new_parent;
-            ubo.use_color = true;
+            ubo.use_color = mp_mesh_loader->GetUseColor();
             ubo.color = mp_mesh_loader->GetColor();
 
             // check if morph weights are given
@@ -104,9 +109,8 @@ namespace DENG {
         if(mp_skeleton) {
             mp_skeleton->Update();
             auto joints = mp_skeleton->GetJointMatrices();
-            if(mp_mesh_loader) {
-
-            }
+            if(mp_mesh_loader)
+                mp_mesh_loader->UpdateJointMatrices(joints);
         }
     }
 }

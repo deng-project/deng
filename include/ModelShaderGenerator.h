@@ -58,6 +58,7 @@ namespace DENG {
         uint32_t texture_count = 0;
         uint32_t color_mul_count = 0;
         uint32_t joint_set_count = 0;
+        uint32_t skeleton_joint_count = 0;
         std::vector<MeshPrimitiveAttributeDescriptor> morph_targets;
 
         inline bool operator==(const MeshPrimitiveAttributeDescriptor &_m1) const {

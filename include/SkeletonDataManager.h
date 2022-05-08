@@ -48,12 +48,16 @@ namespace DENG {
             std::vector<AnimationSampler*> m_joint_samplers;
             static uint32_t m_skeleton_index;
             std::string m_skeleton_name = "Unnamed skeleton";
+            uint32_t m_max_joint = 0;
+
+        private:
+            void _ApplyAnimationTransformation(Libdas::Matrix4<float> _animation_matrix, uint32_t _joint_id);
 
         public:
             SkeletonDataManager(Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_samplers);
             void Update();
 
-            inline std::vector<Libdas::Matrix4<float>> GetJointMatrices() {
+            inline std::vector<Libdas::Matrix4<float>> &GetJointMatrices() {
                 return m_modified_joint_matrices;
             }
 
