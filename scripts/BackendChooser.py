@@ -12,10 +12,11 @@ class ApiType(IntEnum):
     Vulkan = 1
     OpenGL = 2
     DirectX = 3
+    Unknown = 4
 
 
 # Default value
-api = ApiType.Vulkan
+api = ApiType.Unknown
 win = tk.Tk()
 
 

@@ -25,12 +25,14 @@ namespace DENG {
         }
 
         // fill the lookup table
+        max_node++;
+        m_node_lookup.resize(max_node);
         for(uint32_t i = 0; i < m_node.children_count; i++)
             m_node_lookup[m_node.children[i]] = i;
 
         if(m_node.skeleton != UINT32_MAX) {
             const Libdas::DasSkeleton &skeleton = m_parser.AccessSkeleton(m_node.skeleton);
-            mp_skeleton = new SkeletonDataManager(m_parser, skeleton, _animation_samplers);
+            mp_skeleton = new SkeletonDataManager(m_node.transform, m_parser, skeleton, _animation_samplers);
 
             if(m_node.mesh == UINT32_MAX) {
                 const Libdas::DasSkeleton &skeleton = mp_skeleton->GetSkeleton();
@@ -46,7 +48,6 @@ namespace DENG {
             }
             else mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _camera_offset, 0);
             mp_mesh_loader->Attach();
-            mp_mesh_loader->UseTextures(_texture_names);
         }
 
         // search for animation samplers whose nodes are current node's children
@@ -75,14 +76,39 @@ namespace DENG {
     }
 
 
+    void NodeLoader::_ApplyCustomTransform() {
+        // TRS properties
+        const Libdas::Matrix4<float> t = {
+            { 1.0f, 0.0f, 0.0f, m_translation.first },
+            { 0.0f, 1.0f, 0.0f, m_translation.second },
+            { 0.0f, 0.0f, 1.0f, m_translation.third },
+            { 0.0f, 0.0f, 0.0f, 1.0f },
+        };
+
+        const Libdas::Quaternion x(sinf(m_rotation.x / 2), 0, 0, cosf(m_rotation.x / 2));
+        const Libdas::Quaternion y(0, sinf(m_rotation.y / 2), 0, cosf(m_rotation.y / 2));
+        const Libdas::Quaternion z(0, 0, sinf(m_rotation.z / 2), cosf(m_rotation.z / 2));
+        const Libdas::Matrix4<float> r = z.ExpandToMatrix4() * y.ExpandToMatrix4() * x.ExpandToMatrix4();
+
+        const Libdas::Matrix4<float> s = {
+            { m_scale, 0.0f, 0.0f, 0.0f },
+            { 0.0f, m_scale, 0.0f, 0.0f },
+            { 0.0f, 0.0f, m_scale, 0.0f },
+            { 0.0f, 0.0f, 0.0f, 1.0f },
+        };
+
+        m_custom_transform = s * r * t;
+    }
+
+
     void NodeLoader::Update(const Libdas::Matrix4<float> &_parent, float *_morph_weights) {
-        const Libdas::Matrix4<float> new_parent = _parent * m_node.transform;
+        const Libdas::Matrix4<float> new_parent = m_custom_transform * m_node.transform * _parent;
         std::fill(m_child_matrices.begin(), m_child_matrices.end(), Libdas::Matrix4<float>());
         std::fill(m_child_morph_weights.begin(), m_child_morph_weights.end(), nullptr);
 
         for(auto it = m_child_samplers.begin(); it != m_child_samplers.end(); it++) {
             (*it)->Update();
-            m_child_matrices[m_node_lookup[(*it)->GetAnimationChannel().node_id]] = (*it)->GetAnimationMatrix();
+            m_child_matrices[m_node_lookup[(*it)->GetAnimationChannel().node_id]] *= (*it)->GetAnimationMatrix();
             m_child_morph_weights[m_node_lookup[(*it)->GetAnimationChannel().node_id]] = (*it)->GetMorphWeights();
         }
 

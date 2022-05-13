@@ -65,7 +65,7 @@ namespace DENG {
                 return m_scene_name;
             }
 
-            inline const std::vector<NodeLoader> &GetNodes() const {
+            inline std::vector<NodeLoader> &GetNodes() {
                 return m_node_loaders;
             }
     };

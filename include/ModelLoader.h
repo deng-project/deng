@@ -93,7 +93,7 @@ namespace DENG {
                 return m_model_name;
             }
 
-            inline const std::vector<SceneLoader> &GetScenes() {
+            inline std::vector<SceneLoader> &GetScenes() {
                 return m_scene_loaders;
             }
 

@@ -11,6 +11,7 @@ namespace DENG {
 
     uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset) {
         ShaderModule module;
+        module.enable_depth_testing = true;
         uint32_t binding_id = 0;
 
         // push some uniform data layouts

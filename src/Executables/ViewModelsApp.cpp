@@ -21,8 +21,37 @@ namespace Executable {
     }
 
 
-    void ModelLoaderApp::_ImGuiRecursiveNodeIteration(const DENG::NodeLoader &_node) {
+    void ModelLoaderApp::_ImGuiShowTransformationProperties(DENG::NodeLoader &_node) {
+        ImGui::Text("Custom transformations:");
+        float scale = _node.GetCustomScale();
+        ImGui::DragFloat("Scale", &scale);
+        _node.SetCustomScale(scale);
+
+        Libdas::Vector3<float> translation = _node.GetCustomTranslation();
+        ImGui::Text("Translation:");
+        ImGui::DragFloat("Translation X", &translation.first);
+        ImGui::DragFloat("Translation Y", &translation.second);
+        ImGui::DragFloat("Translation Z", &translation.third);
+        _node.SetCustomTranslation(translation);
+
+        Libdas::Point3D<float> rotation = _node.GetCustomRotation();
+        rotation.x *= 180 / PI;
+        rotation.y *= 180 / PI;
+        rotation.z *= 180 / PI;
+        ImGui::Text("Rotation:");
+        ImGui::DragFloat("Rotation X", &rotation.x, 1.0f, 0.0f, 360.0f);
+        ImGui::DragFloat("Rotation Y", &rotation.y, 1.0f, 0.0f, 360.0f);
+        ImGui::DragFloat("Rotation Z", &rotation.z, 1.0f, 0.0f, 360.0f);
+        rotation.x *= PI / 180;
+        rotation.y *= PI / 180;
+        rotation.z *= PI / 180;
+        _node.SetCustomRotation(rotation);
+    }
+
+
+    void ModelLoaderApp::_ImGuiRecursiveNodeIteration(DENG::NodeLoader &_node) {
         if(ImGui::CollapsingHeader(_node.GetName().c_str())) {
+            _ImGuiShowTransformationProperties(_node);
             // check if mesh is present
             if(_node.GetMeshLoader()) {
                 DENG::MeshLoader *mp_mesh = _node.GetMeshLoader();
@@ -62,13 +91,15 @@ namespace Executable {
                 std::string model_name = (*model_it)->GetName();
 
                 if(ImGui::CollapsingHeader(model_name.c_str())) {
+
                     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Scenes contained within this model");
                     for(auto sc_it = (*model_it)->GetScenes().begin(); sc_it != (*model_it)->GetScenes().end(); sc_it++) {
                         if(ImGui::CollapsingHeader(sc_it->GetName().c_str())) {
                             // scenes can contain nodes
-                            for(auto node_it = sc_it->GetNodes().begin(); node_it != sc_it->GetNodes().end(); node_it++)
+                            for(auto node_it = sc_it->GetNodes().begin(); node_it != sc_it->GetNodes().end(); node_it++) {
                                 _ImGuiRecursiveNodeIteration(*node_it);
                             }
+                        }
                     }
 
                     ImGui::Separator();

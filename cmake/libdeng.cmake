@@ -26,6 +26,7 @@ set(DENG_HEADERS
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
+    include/PointViewer.h
     include/PythonScriptExecutor.h
     include/Renderer.h
     include/SceneLoader.h
@@ -57,6 +58,7 @@ set(DENG_SOURCES
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
+    src/PointViewer.cpp
     src/PythonScriptExecutor.cpp
     src/SceneLoader.cpp
     src/ShaderDefinitions.cpp

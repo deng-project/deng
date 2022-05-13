@@ -67,7 +67,7 @@ namespace DENG {
                                             LIBDAS_BUFFER_TYPE_TEXTURE_RAW;
 
             if(buffer.type & texture_mask) {
-                const std::string texture_name = m_parser.GetProperties().model + "_TEX" + std::to_string(m_texture_names.size());
+                const std::string texture_name = "{" + m_model_name + "}" + "_TEX" + std::to_string(m_texture_names.size());
                 m_texture_names.push_back(texture_name);
 
                 // not raw texture data

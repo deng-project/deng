@@ -64,6 +64,16 @@ namespace DENG {
             static uint32_t m_node_index;
             std::string m_node_name = "Unnamed node";
 
+            // custom transformation properties
+            float m_scale = 1.0f;
+            Libdas::Vector3<float> m_translation = { 0.0f, 0.0f, 0.0f };
+            Libdas::Point3D<float> m_rotation = { 0.0f, 0.0f, 0.0f };        // rotations are in radians
+
+            Libdas::Matrix4<float> m_custom_transform;
+
+        private:
+            void _ApplyCustomTransform();
+
         public:
             NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names);
             ~NodeLoader();
@@ -81,8 +91,36 @@ namespace DENG {
                 return mp_skeleton;
             }
 
-            inline const std::vector<NodeLoader> &GetChildNodes() const {
+            inline std::vector<NodeLoader> &GetChildNodes() {
                 return m_child_nodes;
+            }
+
+            // custom transformations
+            inline float GetCustomScale() const {
+                return m_scale;
+            }
+
+            inline Libdas::Vector3<float> GetCustomTranslation() const {
+                return m_translation;
+            }
+
+            inline Libdas::Point3D<float> GetCustomRotation() const {
+                return m_rotation;
+            }
+
+            inline void SetCustomScale(float _scale) {
+                m_scale = _scale;
+                _ApplyCustomTransform();
+            }
+
+            inline void SetCustomTranslation(const Libdas::Vector3<float> &_translation) {
+                m_translation = _translation;
+                _ApplyCustomTransform();
+            }
+
+            inline void SetCustomRotation(const Libdas::Point3D<float> &_rot) {
+                m_rotation = _rot;
+                _ApplyCustomTransform();
             }
     };
 }

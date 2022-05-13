@@ -81,6 +81,7 @@ namespace Executable {
 
         bool &use_camera;
         bool is_object_manager = true;
+        bool is_texture_picker = false;
         DENG::EditorCamera *p_camera;
         std::vector<DENG::ModelLoader*> model_loaders;
     };
@@ -113,7 +114,9 @@ namespace Executable {
             ImGuiData m_imgui_user_data;
 
         private:
-            static void _ImGuiRecursiveNodeIteration(const DENG::NodeLoader &_node);
+            static void _ImGuiShowTransformationProperties(DENG::NodeLoader &_node);
+            //static void _ImGuiShowTexturePicker(ImGuiData *_p_data, DENG::MeshLoader &_mesh);
+            static void _ImGuiRecursiveNodeIteration(DENG::NodeLoader &_node);
             static void _ImGuiCallback(void *_data);
 
         public:

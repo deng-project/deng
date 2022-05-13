@@ -42,8 +42,8 @@ namespace DENG {
         private:
             Libdas::DasParser &m_parser;
             const Libdas::DasSkeleton &m_skeleton;
+            const Libdas::Matrix4<float> m_node_transform;
             std::vector<Libdas::Matrix4<float>> m_joint_matrices;
-            std::vector<Libdas::Matrix4<float>> m_modified_joint_matrices;
             std::vector<uint32_t> m_joint_lookup;
             std::vector<AnimationSampler*> m_joint_samplers;
             static uint32_t m_skeleton_index;
@@ -51,14 +51,14 @@ namespace DENG {
             uint32_t m_max_joint = 0;
 
         private:
-            void _ApplyAnimationTransformation(Libdas::Matrix4<float> _animation_matrix, uint32_t _joint_id);
+            void _ApplyJointTransforms(const Libdas::Matrix4<float> &_parent, const Libdas::Matrix4<float> &_custom, uint32_t _joint_id);
 
         public:
-            SkeletonDataManager(Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_samplers);
+            SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_samplers);
             void Update();
 
             inline std::vector<Libdas::Matrix4<float>> &GetJointMatrices() {
-                return m_modified_joint_matrices;
+                return m_joint_matrices;
             }
 
             inline const Libdas::DasSkeleton &GetSkeleton() {

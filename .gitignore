@@ -1,6 +1,7 @@
 .vscode/
 .vs/
 .cache/
+.clangd/
 .modules/
 .stfolder/
 *.vcxproj*
