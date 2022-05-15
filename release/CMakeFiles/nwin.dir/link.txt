@@ -1,2 +1,0 @@
-/usr/bin/ar qc libnwin.a CMakeFiles/nwin.dir/deps/nekowin/src/glad.c.o CMakeFiles/nwin.dir/deps/nekowin/src/key_ev.c.o CMakeFiles/nwin.dir/deps/nekowin/src/key_translation.c.o CMakeFiles/nwin.dir/deps/nekowin/src/napi.c.o CMakeFiles/nwin.dir/deps/nekowin/src/x11_window.c.o
-/usr/bin/ranlib libnwin.a
