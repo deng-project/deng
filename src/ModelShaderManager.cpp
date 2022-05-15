@@ -9,9 +9,10 @@
 namespace DENG {
     ModelShaderManager::map_t ModelShaderManager::m_shader_map = {};
 
-    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _base_ubo_offset, uint32_t _camera_offset) {
+    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _camera_offset) {
         ShaderModule module;
         module.enable_depth_testing = true;
+        module.enable_blend = true;
         uint32_t binding_id = 0;
 
         // push some uniform data layouts
@@ -24,12 +25,11 @@ namespace DENG {
         });
 
         module.ubo_data_layouts.push_back({
-            { binding_id++, static_cast<uint32_t>(sizeof(ModelUbo)), _base_ubo_offset },
+            { binding_id++, static_cast<uint32_t>(sizeof(ModelUbo)), 0 },
             UNIFORM_DATA_TYPE_BUFFER,
             SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT,
             UNIFORM_USAGE_PER_MESH
         });
-        _base_ubo_offset += _rend.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelUbo)));
 
         module.attributes.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
         module.attribute_strides.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
@@ -58,7 +58,7 @@ namespace DENG {
         if(_mesh_attr_desc.joint_set_count) {
             const uint32_t size = _mesh_attr_desc.skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
             module.ubo_data_layouts.push_back({
-                { binding_id++, size, _base_ubo_offset },
+                { binding_id++, size, 0 },
                 UNIFORM_DATA_TYPE_BUFFER,
                 SHADER_STAGE_VERTEX,
                 UNIFORM_USAGE_PER_MESH
@@ -114,7 +114,7 @@ namespace DENG {
     }
 
 
-    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, const uint32_t _base_ubo_offset, uint32_t _camera_offset, uint32_t _skeleton_joint_count) {
+    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _camera_offset, uint32_t _skeleton_joint_count) {
         // assemble MeshPrimitiveAttributeDescriptor object
         MeshPrimitiveAttributeDescriptor attr_desc;
         attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
@@ -135,7 +135,7 @@ namespace DENG {
         
         // check if current MeshPrimitiveAttributeDescriptor object is present
         if(m_shader_map.find(attr_desc) == m_shader_map.end())
-            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, _parser, attr_desc, _base_ubo_offset, _camera_offset);
+            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, _parser, attr_desc, _camera_offset);
 
         return m_shader_map[attr_desc];
     }

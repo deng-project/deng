@@ -55,14 +55,14 @@ class ImGuiApp {
 
     public:
         ImGuiApp(DENG::Window &_win, DENG::Renderer &_rend) : m_renderer(_rend), m_window(_win) {
-            m_imgui.Attach(m_window, m_renderer, 0, ImGuiApp::_Draw, nullptr);
+            m_imgui.Attach(m_window, m_renderer, ImGuiApp::_Draw, nullptr);
             m_renderer.LoadShaders();
         }
 
         void Run() {
             while(m_window.IsRunning()) {
                 m_renderer.ClearFrame();
-                m_imgui.Update(0);
+                m_imgui.Update();
                 m_renderer.RenderFrame();
                 m_window.Update();
             }

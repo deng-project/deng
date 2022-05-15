@@ -38,6 +38,7 @@
     #include <Window.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
+    #include <GPUMemoryManager.h>
     #include <ModelUniforms.h>
     #include <ModelShaderGenerator.h>
     #include <ModelShaderManager.h>
@@ -57,15 +58,14 @@ namespace DENG {
             uint32_t m_shader_id = UINT32_MAX;
 
             // singleton instance of ubo offset
-            static uint32_t m_ubo_offset;
-            static uint32_t m_main_buffer_offset;
-            uint32_t m_mesh_ubo_offset;
+            uint32_t m_mesh_ubo_offset = 0;
+            uint32_t m_mesh_joints_ubo_offset = UINT32_MAX;
+            const std::vector<uint32_t> &m_mesh_buffer_offsets;
             const uint32_t m_skeleton_joint_count;
             const Libdas::DasMeshPrimitive *mp_prim = nullptr;
             bool m_use_color = true;
-#ifdef _DEBUG
             bool m_disable_joint_transforms = false;
-#endif
+            uint32_t m_supported_texture_count = 0;
 
             // Uniform node data
             Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
@@ -74,23 +74,21 @@ namespace DENG {
             void _CheckMeshPrimitives();
 
         public:
-            MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _camera_offset, uint32_t _skeleton_joint_count);
+            MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, uint32_t _skeleton_joint_count);
             void Attach();
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);
 
-            // static member getters / setters
-            static void SetUniformBufferOffset(uint32_t _ubo_offset);
-            static uint32_t GetUboOffset();
-            static void SetMainBufferOffset(uint32_t _offset);
-            static uint32_t GetMainBufferOffset();
+            inline uint32_t GetMeshUboOffset() {
+                return m_mesh_ubo_offset;
+            }
+
+            inline uint32_t GetSupportedTextureCount() {
+                return m_supported_texture_count;
+            };
 
             inline const Libdas::DasMeshPrimitive *GetSamplePrimitive() {
                 return mp_prim;
-            }
-
-            inline uint32_t GetMeshUboOffset() {
-                return m_mesh_ubo_offset;
             }
 
             inline uint32_t &GetMeshReferenceId() {
@@ -105,8 +103,6 @@ namespace DENG {
                 return m_name;
             }
 
-            static uint32_t CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset);
-
             inline bool GetUseColor() const {
                 return m_use_color;
             }
@@ -115,7 +111,6 @@ namespace DENG {
                 m_use_color = _use_color;
             }
 
-#ifdef _DEBUG
             inline bool GetDisableJointTransforms() const {
                 return m_disable_joint_transforms;
             }
@@ -123,7 +118,6 @@ namespace DENG {
             inline void SetDisableJointTransforms(bool _disable) {
                 m_disable_joint_transforms = _disable;
             }
-#endif
 
             inline Libdas::Vector4<float> GetColor() const {
                 return m_color;

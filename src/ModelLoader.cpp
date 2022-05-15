@@ -11,13 +11,11 @@ namespace DENG {
     uint32_t ModelLoader::m_model_index = 0;
     uint32_t ModelLoader::m_animation_index = 0;
 
-    ModelLoader::ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset, uint32_t _camera_offset) : 
+    ModelLoader::ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _camera_offset) : 
         m_parser(_file_name), m_renderer(_rend)
     {
         // reserve enough memory for meshes and animation samplers
         m_parser.Parse();
-        MeshLoader::SetMainBufferOffset(_base_buffer_offset);
-        MeshLoader::SetUniformBufferOffset(_base_ubo_offset);
 
         // load each animation in model
         m_animation_samplers.reserve(m_parser.GetAnimationCount());
@@ -44,7 +42,7 @@ namespace DENG {
         m_scene_loaders.reserve(m_parser.GetSceneCount());
         for(uint32_t i = 0; i < m_parser.GetSceneCount(); i++) {
             const Libdas::DasScene &scene = m_parser.AccessScene(i);
-            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, _camera_offset, m_animation_samplers, m_texture_names);
+            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animation_samplers, m_texture_names);
         }
 
         if(m_parser.GetProperties().model != "")
@@ -54,7 +52,8 @@ namespace DENG {
 
 
     void ModelLoader::_AttachBuffersAndTextures() {
-        uint32_t abs_offset = MeshLoader::GetMainBufferOffset();
+        m_buffer_offsets.resize(m_parser.GetBufferCount());
+        std::fill(m_buffer_offsets.begin(), m_buffer_offsets.end(), UINT32_MAX);
 
         // iterate through buffers
         for(uint32_t i = 0; i < m_parser.GetBufferCount(); i++) {
@@ -92,12 +91,11 @@ namespace DENG {
                     m_renderer.PushTextureFromMemory(texture_name, data, width, height, static_cast<uint32_t>(bit_depth));
                 }
             } else {
-                m_renderer.UpdateVertexDataBuffer(std::make_pair(buffer.data_ptrs.back().first, static_cast<uint32_t>(buffer.data_ptrs.back().second)), abs_offset);
-                abs_offset += buffer.data_ptrs.back().second;
+                GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
+                m_buffer_offsets[i] = mem_manager->RequestMainMemoryLocationP(1, buffer.data_ptrs.back().second);
+                m_renderer.UpdateVertexDataBuffer(std::make_pair(buffer.data_ptrs.back().first, static_cast<uint32_t>(buffer.data_ptrs.back().second)), m_buffer_offsets[i]);
             }
         }
-
-        m_used_main_buffer_memory = static_cast<uint32_t>(abs_offset - MeshLoader::GetMainBufferOffset());
     }
 
     void ModelLoader::Update() { 

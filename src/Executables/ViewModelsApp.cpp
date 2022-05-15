@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: VulkanModelLoader.cpp - Vulkan model loader application implementation
+// file: ViewModelsApp.cpp - View models application implementation
 // author: Karl-Mihkel Ott
 
 #include <Executables/ViewModelsApp.h>
@@ -10,13 +10,13 @@ namespace Executable {
     ModelLoaderApp::ModelLoaderApp(const std::string &_file_name, DENG::Window &_win, DENG::Renderer &_rend) : 
         m_window(_win), 
         m_renderer(_rend),
-        m_editor_camera(m_renderer, m_window, m_editor_camera_conf, "Editor camera", 0),
-        m_loader(_file_name, _rend, 0, m_renderer.AlignUniformBufferOffset(sizeof(DENG::ModelCameraUbo)), 0), 
+        m_editor_camera(m_renderer, m_window, m_editor_camera_conf, "Editor camera"),
+        m_loader(_file_name, _rend, m_editor_camera.GetUboOffset()), 
         m_imgui_user_data(m_use_camera)
     {
         m_imgui_user_data.model_loaders.push_back(&m_loader);
         m_imgui_user_data.p_camera = &m_editor_camera;
-        m_imgui.Attach(m_window, m_renderer, DENG::MeshLoader::GetUboOffset(), ModelLoaderApp::_ImGuiCallback, &m_imgui_user_data);
+        m_imgui.Attach(m_window, m_renderer, ModelLoaderApp::_ImGuiCallback, &m_imgui_user_data);
         m_renderer.LoadShaders();
     }
 
@@ -49,8 +49,50 @@ namespace Executable {
     }
 
 
-    void ModelLoaderApp::_ImGuiRecursiveNodeIteration(DENG::NodeLoader &_node) {
-        if(ImGui::CollapsingHeader(_node.GetName().c_str())) {
+    void ModelLoaderApp::_ImGuiShowTexturePicker(ImGuiData *_p_data, DENG::ModelLoader *_p_loader, DENG::MeshLoader &_mesh) {
+        if(ImGui::BeginPopup("Texture picker")) {
+            ImGui::Text("Pick textures");
+            const std::string info_str = "This mesh can use " + std::to_string(_mesh.GetSupportedTextureCount()) + " textures; " + std::to_string(_mesh.GetSupportedTextureCount() - _p_data->enabled_texture_count) + " left";
+            _p_data->enabled_texture_count = 0;
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), info_str.c_str());
+
+            for(auto it = _p_loader->GetAttachedTextures().begin(); it != _p_loader->GetAttachedTextures().end(); it++) {
+                const size_t index = it - _p_loader->GetAttachedTextures().begin();
+                const std::string title = "Use texture no. " + std::to_string(index);
+                bool box = _p_data->texture_picker_data[index];
+                if(!box && !(_mesh.GetSupportedTextureCount() - _p_data->enabled_texture_count)) {
+                    ImGui::BeginDisabled(true);
+                    ImGui::Checkbox(title.c_str(), &box);
+                    ImGui::EndDisabled();
+                } else {
+                    ImGui::Checkbox(title.c_str(), &box);
+                    _p_data->texture_picker_data[index] = box;
+                }
+
+                if(box) _p_data->enabled_texture_count++;
+                ImGui::Image(const_cast<char*>(it->c_str()), ImVec2(64, 64));
+            }
+
+            if(ImGui::Button("Save")) {
+                std::vector<std::string> names;
+                names.reserve(_p_loader->GetAttachedTextures().size());
+                for(auto it = _p_loader->GetAttachedTextures().begin(); it != _p_loader->GetAttachedTextures().end(); it++) {
+                    const size_t index = it - _p_loader->GetAttachedTextures().begin();
+                    if(_p_data->texture_picker_data[index])
+                        names.push_back(*it);
+                }
+
+                _mesh.UseTextures(names);
+                std::fill(_p_data->texture_picker_data.begin(), _p_data->texture_picker_data.end(), false);
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+
+    void ModelLoaderApp::_ImGuiRecursiveNodeIteration(ImGuiData *_p_data, DENG::ModelLoader *_p_loader, DENG::NodeLoader &_node) {
+        if(ImGui::TreeNode(_node.GetName().c_str())) {
             _ImGuiShowTransformationProperties(_node);
             // check if mesh is present
             if(_node.GetMeshLoader()) {
@@ -58,29 +100,38 @@ namespace Executable {
                 std::string str = "Mesh: " + mp_mesh->GetName();
                 ImGui::Text(str.c_str());
 
-                bool v = !mp_mesh->GetUseColor();
-                ImGui::Checkbox("Use textures instead", &v);
-                mp_mesh->SetUseColor(!v);
+                if(mp_mesh) {
+                    bool v = !mp_mesh->GetUseColor();
+                    ImGui::Checkbox("Use textures instead", &v);
+                    mp_mesh->SetUseColor(!v);
+                    if(ImGui::Button("Select textures")) {
+                        _p_data->texture_picker_data.resize(mp_mesh->GetSupportedTextureCount());
+                        std::fill(_p_data->texture_picker_data.begin(), _p_data->texture_picker_data.end(), false);
+                        ImGui::OpenPopup("Texture picker");
+                    }
+                    _ImGuiShowTexturePicker(_p_data, _p_loader, *mp_mesh);
 
-#ifdef _DEBUG
-                v = mp_mesh->GetDisableJointTransforms();
-                ImGui::Checkbox("Disable joint transforms", &v);
-                mp_mesh->SetDisableJointTransforms(v);
-#endif
+                    v = mp_mesh->GetDisableJointTransforms();
+                    ImGui::Checkbox("Disable joint transforms", &v);
+                    mp_mesh->SetDisableJointTransforms(v);
 
-                Libdas::Vector4<float> color = mp_mesh->GetColor();
-                ImGui::ColorEdit4("Mesh color", reinterpret_cast<float*>(&color));
-                mp_mesh->SetColor(color);
+                    Libdas::Vector4<float> color = mp_mesh->GetColor();
+                    ImGui::ColorEdit4("Mesh color", reinterpret_cast<float*>(&color));
+                    mp_mesh->SetColor(color);
+                }
             }
 
             for(auto sub_it = _node.GetChildNodes().begin(); sub_it != _node.GetChildNodes().end(); sub_it++)
-                _ImGuiRecursiveNodeIteration(*sub_it);
+                _ImGuiRecursiveNodeIteration(_p_data, _p_loader, *sub_it);
+
+            ImGui::TreePop();
         }
     }
 
 
     void ModelLoaderApp::_ImGuiCallback(void *_data) {
         ImGuiData *p_data = reinterpret_cast<ImGuiData*>(_data);
+        p_data->max_id = 1;
 
         //ImGui::ShowDemoWindow();
         ImGui::Begin("Object manager", &p_data->is_object_manager);
@@ -90,26 +141,26 @@ namespace Executable {
                 ImGui::Text("Models: ");
                 std::string model_name = (*model_it)->GetName();
 
-                if(ImGui::CollapsingHeader(model_name.c_str())) {
+                if(ImGui::TreeNode(model_name.c_str())) {
 
                     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Scenes contained within this model");
                     for(auto sc_it = (*model_it)->GetScenes().begin(); sc_it != (*model_it)->GetScenes().end(); sc_it++) {
-                        if(ImGui::CollapsingHeader(sc_it->GetName().c_str())) {
+                        if(ImGui::TreeNode(sc_it->GetName().c_str())) {
                             // scenes can contain nodes
                             for(auto node_it = sc_it->GetNodes().begin(); node_it != sc_it->GetNodes().end(); node_it++) {
-                                _ImGuiRecursiveNodeIteration(*node_it);
+                                _ImGuiRecursiveNodeIteration(p_data, *model_it, *node_it);
                             }
+                            ImGui::TreePop();
                         }
                     }
 
                     ImGui::Separator();
 
                     ImGui::Text("Animations");
-
                     for(auto ani_it = (*model_it)->GetAnimations().begin(); ani_it != (*model_it)->GetAnimations().end(); ani_it++) {
                         const std::string &animation_name = ani_it->first;
 
-                        if(ImGui::CollapsingHeader(animation_name.c_str())) {
+                        if(ImGui::TreeNode(animation_name.c_str())) {
                             for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
                                 const size_t index = smp_it - ani_it->second.begin();
                                 const std::string smp_title = "Sampler" + std::to_string(index);
@@ -127,10 +178,12 @@ namespace Executable {
                                         smp_it->Animate(true);
                                 }
                             }
+
+                            ImGui::TreePop();
                         }
                     }
 
-                    ImGui::Separator();
+                    ImGui::TreePop();
                 }
 
 #ifdef _DEBUG
@@ -203,7 +256,7 @@ namespace Executable {
             DENG::ModelCameraUbo ubo;
             m_editor_camera.Update();
             m_loader.Update();
-            m_imgui.Update(m_loader.GetUsedMainBufferMemory());
+            m_imgui.Update();
             m_renderer.RenderFrame();
             m_window.Update();
         }

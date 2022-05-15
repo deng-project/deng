@@ -9,16 +9,14 @@
 namespace DENG {
 
     uint32_t MeshLoader::m_mesh_index = 0;
-    uint32_t MeshLoader::m_ubo_offset = 0;
-    uint32_t MeshLoader::m_main_buffer_offset = 0;
 
-    MeshLoader::MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, uint32_t _camera_offset, uint32_t _skeleton_joint_count) : 
+    MeshLoader::MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, uint32_t _skeleton_joint_count) : 
         m_parser(_parser),
         m_mesh(_mesh),
         m_renderer(_renderer),
+        m_mesh_buffer_offsets(_main_buffer_offsets),
         m_skeleton_joint_count(_skeleton_joint_count)
     {
-        m_mesh_ubo_offset = m_ubo_offset;
         if(m_mesh.name != "") {
             m_name = m_mesh.name;
         } else {
@@ -28,7 +26,7 @@ namespace DENG {
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
         mp_prim = &m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
-        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, m_mesh_ubo_offset, _camera_offset, m_skeleton_joint_count);
+        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count);
     }
 
 
@@ -77,20 +75,8 @@ namespace DENG {
                 }
             }
         }
-    }
 
-
-    uint32_t MeshLoader::CalculateAbsoluteOffset(const Libdas::DasParser &_parser, uint32_t _buffer_id, uint32_t _buffer_offset) {
-        uint32_t abs = m_main_buffer_offset;
-        for(uint32_t i = 0; i < _buffer_id; i++) {
-            auto &buffer = _parser.AccessBuffer(i);
-
-            for(auto it = buffer.data_ptrs.begin(); it != buffer.data_ptrs.end(); it++)
-                abs += static_cast<uint32_t>(it->second);
-        }
-
-        abs += _buffer_offset;
-        return abs;
+        m_supported_texture_count = attr_desc.texture_count;
     }
 
 
@@ -100,22 +86,24 @@ namespace DENG {
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
 
+        GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
+
         // ModelUbo
         uint32_t binding_id = 1;
         mesh.ubo_blocks.reserve(3);
         mesh.ubo_blocks.emplace_back();
         mesh.ubo_blocks.back().binding = binding_id++;
         mesh.ubo_blocks.back().size = static_cast<uint32_t>(sizeof(ModelUbo));
-        mesh.ubo_blocks.back().offset = m_ubo_offset;
-        m_ubo_offset += m_renderer.AlignUniformBufferOffset(static_cast<uint32_t>(sizeof(ModelUbo)));
+        mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelUbo)));
+        m_mesh_ubo_offset = mesh.ubo_blocks.back().offset;
 
         // check if joint matrix ubos should be created
         if(m_parser.AccessMeshPrimitive(m_mesh.primitives[0]).joint_set_count) {
             mesh.ubo_blocks.emplace_back();
             mesh.ubo_blocks.back().binding = binding_id++;
             mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
-            mesh.ubo_blocks.back().offset = m_ubo_offset;
-            m_ubo_offset += m_renderer.AlignUniformBufferOffset(m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)));
+            mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)));
+            m_mesh_joints_ubo_offset = mesh.ubo_blocks.back().offset;
         }
 
         // create mesh draw commands
@@ -123,40 +111,58 @@ namespace DENG {
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
             mesh.commands.emplace_back();
             const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[i]);
-            const uint32_t index_offset = CalculateAbsoluteOffset(m_parser, prim.index_buffer_id, prim.index_buffer_offset);
-
-            mesh.commands.back().indices_offset = index_offset;
+            uint32_t abs = m_mesh_buffer_offsets[prim.index_buffer_id] + prim.index_buffer_offset;
+            mesh.commands.back().indices_offset = abs;
             mesh.commands.back().indices_count = prim.indices_count;
             mesh.commands.back().attribute_offsets.reserve(3 + prim.texture_count + prim.color_mul_count + prim.joint_set_count * 2);
-            mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.vertex_buffer_id, prim.vertex_buffer_offset));
-            if(prim.vertex_normal_buffer_id != UINT32_MAX)
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.vertex_normal_buffer_id, prim.vertex_normal_buffer_offset));
-            if(prim.vertex_tangent_buffer_id != UINT32_MAX)
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.vertex_tangent_buffer_id, prim.vertex_tangent_buffer_offset));
+            abs = m_mesh_buffer_offsets[prim.vertex_buffer_id] + prim.vertex_buffer_offset;
+            mesh.commands.back().attribute_offsets.push_back(abs);
+            if(prim.vertex_normal_buffer_id != UINT32_MAX) {
+                abs = m_mesh_buffer_offsets[prim.vertex_normal_buffer_id] + prim.vertex_normal_buffer_offset;
+                mesh.commands.back().attribute_offsets.push_back(abs);
+            }
+            if(prim.vertex_tangent_buffer_id != UINT32_MAX) {
+                abs = m_mesh_buffer_offsets[prim.vertex_tangent_buffer_id] + prim.vertex_tangent_buffer_offset;
+                mesh.commands.back().attribute_offsets.push_back(abs);
+            }
             for(uint32_t j = 0; j < prim.texture_count; j++) {
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.uv_buffer_ids[j], prim.uv_buffer_offsets[j]));
+                abs = m_mesh_buffer_offsets[prim.uv_buffer_ids[j]] + prim.uv_buffer_offsets[j];
+                mesh.commands.back().attribute_offsets.push_back(abs);
                 mesh.commands.back().texture_names.push_back(MISSING_TEXTURE_NAME);
             }
-            for(uint32_t j = 0; j < prim.color_mul_count; j++)
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.color_mul_buffer_ids[j], prim.color_mul_buffer_offsets[j]));
+            for(uint32_t j = 0; j < prim.color_mul_count; j++) {
+                abs = m_mesh_buffer_offsets[prim.color_mul_buffer_ids[j]] + prim.color_mul_buffer_offsets[j];
+                mesh.commands.back().attribute_offsets.push_back(abs);
+            }
             for(uint32_t j = 0; j < prim.joint_set_count; j++) {
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.joint_index_buffer_ids[j], prim.joint_index_buffer_offsets[j]));
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, prim.joint_weight_buffer_ids[j], prim.joint_weight_buffer_offsets[j]));
+                abs = m_mesh_buffer_offsets[prim.joint_index_buffer_ids[j]] + prim.joint_index_buffer_offsets[j];
+                mesh.commands.back().attribute_offsets.push_back(abs);
+                abs = m_mesh_buffer_offsets[prim.joint_weight_buffer_ids[j]] + prim.joint_weight_buffer_offsets[j];
+                mesh.commands.back().attribute_offsets.push_back(abs);
             }
 
             // add morph targets
             for(uint32_t j = 0; j < prim.morph_target_count; j++) {
                 const Libdas::DasMorphTarget &morph = m_parser.AccessMorphTarget(prim.morph_targets[j]);
-                mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, morph.vertex_buffer_id, morph.vertex_buffer_offset));
-                if(morph.vertex_normal_buffer_id != UINT32_MAX)
-                    mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, morph.vertex_normal_buffer_id, morph.vertex_normal_buffer_offset));
-                if(morph.vertex_tangent_buffer_id != UINT32_MAX)
-                    mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, morph.vertex_tangent_buffer_id, morph.vertex_tangent_buffer_offset));
+                abs = m_mesh_buffer_offsets[morph.vertex_buffer_id] + morph.vertex_buffer_offset;
+                mesh.commands.back().attribute_offsets.push_back(abs);
+                if(morph.vertex_normal_buffer_id != UINT32_MAX) {
+                    abs = m_mesh_buffer_offsets[morph.vertex_normal_buffer_id] + morph.vertex_normal_buffer_offset;
+                    mesh.commands.back().attribute_offsets.push_back(abs);
+                }
+                if(morph.vertex_tangent_buffer_id != UINT32_MAX) {
+                    abs = m_mesh_buffer_offsets[morph.vertex_tangent_buffer_id] + morph.vertex_tangent_buffer_offset;
+                    mesh.commands.back().attribute_offsets.push_back(abs);
+                }
 
-                for(uint32_t k = 0; k < morph.texture_count; k++)
-                    mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, morph.uv_buffer_ids[k], morph.uv_buffer_offsets[k]));
-                for(uint32_t k = 0; k < morph.color_mul_count; k++)
-                    mesh.commands.back().attribute_offsets.push_back(CalculateAbsoluteOffset(m_parser, morph.color_mul_buffer_ids[k], morph.color_mul_buffer_offsets[k]));
+                for(uint32_t k = 0; k < morph.texture_count; k++) {
+                    abs = m_mesh_buffer_offsets[morph.uv_buffer_ids[k]] + morph.uv_buffer_offsets[k];
+                    mesh.commands.back().attribute_offsets.push_back(abs);
+                }
+                for(uint32_t k = 0; k < morph.color_mul_count; k++) {
+                    abs = m_mesh_buffer_offsets[morph.color_mul_buffer_ids[k]] + morph.color_mul_buffer_offsets[k];
+                    mesh.commands.back().attribute_offsets.push_back(abs);
+                }
             }
         }
     }
@@ -172,37 +178,11 @@ namespace DENG {
 
 
     void MeshLoader::UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices) {
-        const uint32_t rel_offset = m_mesh_ubo_offset + m_renderer.AlignUniformBufferOffset(sizeof(ModelUbo));
-
-#ifdef _DEBUG
         if(!m_disable_joint_transforms)
-#endif
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), rel_offset);
-#ifdef _DEBUG
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), m_mesh_joints_ubo_offset);
         else {
             std::vector<Libdas::Matrix4<float>> rmat(_matrices.size());
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), rmat.size() * sizeof(Libdas::Matrix4<float>), rel_offset);
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), rmat.size() * sizeof(Libdas::Matrix4<float>), m_mesh_joints_ubo_offset);
         }
-#endif
-    }
-
-
-    // setters / getters
-    void MeshLoader::SetUniformBufferOffset(uint32_t _ubo_offset) {
-        m_ubo_offset = _ubo_offset;
-    }
-
-
-    uint32_t MeshLoader::GetUboOffset() {
-        return m_ubo_offset;
-    }
-
-
-    void MeshLoader::SetMainBufferOffset(uint32_t _main_offset) {
-        m_main_buffer_offset = _main_offset;
-    }
-
-    uint32_t MeshLoader::GetMainBufferOffset() {
-        return m_main_buffer_offset;
     }
 }

@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: ModelLoader.h - API neutral DAS model loading implementation
+// file: ViewModelsApp.h - API neutral DAS model loading header
 // author: Karl-Mihkel Ott
 
 #ifndef MODEL_LOADER_APP_H
@@ -84,6 +84,12 @@ namespace Executable {
         bool is_texture_picker = false;
         DENG::EditorCamera *p_camera;
         std::vector<DENG::ModelLoader*> model_loaders;
+
+        // for texture picker
+        uint32_t enabled_texture_count = 0;
+        std::vector<bool> texture_picker_data;
+
+        uint32_t max_id = 1;
     };
 
     class ModelLoaderApp {
@@ -115,8 +121,8 @@ namespace Executable {
 
         private:
             static void _ImGuiShowTransformationProperties(DENG::NodeLoader &_node);
-            //static void _ImGuiShowTexturePicker(ImGuiData *_p_data, DENG::MeshLoader &_mesh);
-            static void _ImGuiRecursiveNodeIteration(DENG::NodeLoader &_node);
+            static void _ImGuiShowTexturePicker(ImGuiData *_p_data, DENG::ModelLoader *_p_loader, DENG::MeshLoader &_mesh);
+            static void _ImGuiRecursiveNodeIteration(ImGuiData *_p_data, DENG::ModelLoader *_p_loader, DENG::NodeLoader &_node);
             static void _ImGuiCallback(void *_data);
 
         public:

@@ -7,6 +7,34 @@
 #define CAMERA_3D_H
 
 
+#ifdef CAMERA_3D_CPP
+    #include <cstdint>
+    #include <cstring>
+    #include <cmath>
+    #include <vector>
+    #include <variant>
+    #include <string>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
+
+    #include <libdas/include/Points.h>
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
+    #include <libdas/include/Quaternion.h>
+
+    #include <Api.h>
+    #include <BaseTypes.h>
+    #include <ErrorDefinitions.h>
+    #include <Window.h>
+    #include <ModelUniforms.h>
+    #include <ShaderDefinitions.h>
+    #include <Renderer.h>
+    #include <CameraTransformManager.h>
+    #include <GPUMemoryManager.h>
+#endif
+
+
 namespace DENG {
 
     struct FirstPersonCameraConfiguration {
@@ -59,14 +87,13 @@ namespace DENG {
             float m_fov = 65.f * PI / 180.f;    // 65 degrees by default
             Libdas::Point2D<float> m_planes = { -0.1f, -25.0f };
 
-            const uint32_t m_ubo_offset;
+            uint32_t m_ubo_offset;
             std::string m_name;
 
         protected:
             inline float _CalculateAspectRatio() {
                 return static_cast<float>(m_window.GetSize().x) / static_cast<float>(m_window.GetSize().y);
             }
-
 
             inline Libdas::Matrix4<float> _CalculateProjection() {
                 return Libdas::Matrix4<float> {
@@ -78,12 +105,7 @@ namespace DENG {
             }
 
         public:
-            Camera3D(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) : 
-                m_renderer(_rend),
-                m_window(_win), 
-                m_config(_conf), 
-                m_ubo_offset(_ubo_offset),
-                m_name(_name) {}
+            Camera3D(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);
 
             virtual void EnableCamera() = 0;
             virtual void DisableCamera() = 0;
@@ -99,6 +121,10 @@ namespace DENG {
 
             inline void ChangeFov(float _fov) {
                 m_fov = _fov;
+            }
+
+            inline uint32_t GetUboOffset() {
+                return m_ubo_offset;
             }
 
             inline void UpdateConfig(const Camera3DConfiguration &_conf) {

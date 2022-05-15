@@ -5,10 +5,12 @@ namespace DENG {
 
     uint32_t NodeLoader::m_node_index = 0;
 
-    NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names) :
+    NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, 
+                           std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names, const Libdas::Matrix4<float> &_parent) :
         m_renderer(_rend),
         m_node(_node),
-        m_parser(_parser)
+        m_parser(_parser),
+        m_parent_transform(_parent)
     {
         // for each node traverse its children
         m_child_nodes.reserve(m_node.children_count);
@@ -16,9 +18,10 @@ namespace DENG {
         m_child_matrices.resize(m_node.children_count);
 
         uint32_t max_node = 0;
+        m_custom_transform = _parent * m_node.transform;
         for(uint32_t i = 0; i < m_node.children_count; i++) {
             const Libdas::DasNode &child_node = m_parser.AccessNode(m_node.children[i]);
-            m_child_nodes.emplace_back(m_renderer, child_node, m_parser, _camera_offset, _animation_samplers, _texture_names);
+            m_child_nodes.emplace_back(m_renderer, child_node, m_parser, _main_buffer_offsets, _camera_offset, _animation_samplers, _texture_names, m_custom_transform);
 
             if(m_node.children[i] > max_node)
                 max_node = m_node.children[i];
@@ -32,7 +35,7 @@ namespace DENG {
 
         if(m_node.skeleton != UINT32_MAX) {
             const Libdas::DasSkeleton &skeleton = m_parser.AccessSkeleton(m_node.skeleton);
-            mp_skeleton = new SkeletonDataManager(m_node.transform, m_parser, skeleton, _animation_samplers);
+            mp_skeleton = new SkeletonDataManager(m_custom_transform, m_parser, skeleton, _animation_samplers);
 
             if(m_node.mesh == UINT32_MAX) {
                 const Libdas::DasSkeleton &skeleton = mp_skeleton->GetSkeleton();
@@ -44,9 +47,9 @@ namespace DENG {
             const Libdas::DasMesh &mesh = m_parser.AccessMesh(m_node.mesh);
             if(mp_skeleton) {
                 const uint32_t joint_count = static_cast<uint32_t>(mp_skeleton->GetJointMatrices().size());
-                mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _camera_offset, joint_count);
+                mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _main_buffer_offsets, _camera_offset, joint_count);
             }
-            else mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _camera_offset, 0);
+            else mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _main_buffer_offsets, _camera_offset, 0);
             mp_mesh_loader->Attach();
         }
 
@@ -76,7 +79,9 @@ namespace DENG {
     }
 
 
-    void NodeLoader::_ApplyCustomTransform() {
+    void NodeLoader::ApplyCustomTransform(const Libdas::Matrix4<float> &_parent) {
+        m_parent_transform = _parent;
+
         // TRS properties
         const Libdas::Matrix4<float> t = {
             { 1.0f, 0.0f, 0.0f, m_translation.first },
@@ -97,7 +102,11 @@ namespace DENG {
             { 0.0f, 0.0f, 0.0f, 1.0f },
         };
 
-        m_custom_transform = s * r * t;
+        m_custom_transform = m_parent_transform * m_node.transform * t * r * s;
+
+        // for each child node apply transformations
+        for(auto it = m_child_nodes.begin(); it != m_child_nodes.end(); it++)
+            it->ApplyCustomTransform(m_custom_transform);
     }
 
 

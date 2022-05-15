@@ -8,8 +8,11 @@
 
 namespace DENG {
 
-    FirstPersonCamera::FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) :
-        Camera3D(_rend, _win, _conf, _name, _ubo_offset) { DENG_ASSERT(m_config.index() == 0); }
+    FirstPersonCamera::FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name) :
+        Camera3D(_rend, _win, _conf, _name) 
+    { 
+        DENG_ASSERT(m_config.index() == 0); 
+    }
 
     void FirstPersonCamera::EnableCamera() {
         m_window.ChangeVCMode(true);

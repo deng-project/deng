@@ -23,7 +23,7 @@
     #include <Window.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
-    
+    #include <GPUMemoryManager.h>
     #define MESH_NAME       "ImGui windows"
     #define TEXTURE_NAME    "ImGui texture atlas"
 
@@ -74,20 +74,25 @@ namespace DENG {
             uint32_t m_shader_id = UINT32_MAX;
             void *m_user_data = nullptr;
             uint32_t m_ubo_offset = 0;
+            uint32_t m_main_offset = 0;
             Libdas::Point2D<float> m_ubo;
             float m_delta_time = 1.0f;
             std::chrono::time_point<std::chrono::system_clock> m_beg;
             std::chrono::time_point<std::chrono::system_clock> m_end;
+            const std::string m_gui_texture_name;
+
+            std::pair<uint32_t, uint32_t> m_main_region = std::make_pair(UINT32_MAX, UINT32_MAX);
 
         private:
-            void _CreateDrawCommands(ImDrawData *_draw_data, uint32_t _combined_offset);
+            uint32_t _CalculateUsedMemory(ImDrawData *_draw_data);
+            void _CreateDrawCommands(ImDrawData *_draw_data);
             void _UpdateIO();
 
         public:
             ImGuiLayer();
             ~ImGuiLayer();
-            void Attach(Window &_win, Renderer &_rend, uint32_t _ubo_offset, PFN_ImGuiDrawCallback _callback, void *_user_data);
-            void Update(uint32_t _combined_offset);
+            void Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data);
+            void Update();
     };
 }
 

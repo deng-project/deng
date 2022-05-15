@@ -37,6 +37,7 @@
     #include <ShaderDefinitions.h>
     #include <Missing.h>
     #include <Renderer.h>
+    #include <GPUMemoryManager.h>
 #endif
 
 #include <OpenGLShaderLoader.h>

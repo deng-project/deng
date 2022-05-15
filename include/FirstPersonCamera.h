@@ -44,7 +44,7 @@ namespace DENG {
             std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
 
         public:
-            FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset);
+            FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);
 
             virtual void EnableCamera() override;
             virtual void DisableCamera() override;

@@ -41,6 +41,7 @@
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
+    #include <GPUMemoryManager.h>
     #include <MeshLoader.h>
     #include <ModelUniforms.h>
     #include <AnimationSampler.h>
@@ -72,21 +73,17 @@ namespace DENG {
             static uint32_t m_animation_index;
             std::string m_model_name = "Unnamed model";
             std::vector<std::string> m_texture_names;
-            uint32_t m_used_main_buffer_memory = 0;
+            std::vector<uint32_t> m_buffer_offsets;
 
         private:
             void _AttachBuffersAndTextures();
 
         public:
-            ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _base_buffer_offset, uint32_t _base_ubo_offset, uint32_t _camera_offset);
+            ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _camera_offset);
             void Update();
 
             inline std::vector<std::string> &GetAttachedTextures() {
                 return m_texture_names;
-            }
-
-            inline uint32_t GetUsedMainBufferMemory() {
-                return m_used_main_buffer_memory;
             }
 
             inline const std::string &GetName() {

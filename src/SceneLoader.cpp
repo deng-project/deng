@@ -10,7 +10,7 @@ namespace DENG {
 
     uint32_t SceneLoader::m_scene_index = 0;
 
-    SceneLoader::SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names) : 
+    SceneLoader::SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names) : 
         m_renderer(_rend),
         m_parser(_parser),
         m_scene(_scene)
@@ -19,7 +19,7 @@ namespace DENG {
         uint32_t max_node = 0;
         for(uint32_t i = 0; i < m_scene.node_count; i++) {
             const Libdas::DasNode &node = m_parser.AccessNode(m_scene.nodes[i]);
-            m_node_loaders.emplace_back(m_renderer, node, m_parser, _camera_offset, _animation_samplers, _texture_names);
+            m_node_loaders.emplace_back(m_renderer, node, m_parser, _main_buffer_offsets, _camera_offset, _animation_samplers, _texture_names, Libdas::Matrix4<float>());
             if(m_scene.nodes[i] > max_node)
                 max_node = m_scene.nodes[i];
         }

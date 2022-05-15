@@ -34,8 +34,10 @@ namespace DENG {
             const uint32_t m_point_indices[6] = { 0, 1, 2, 2, 3 };
             float m_point_square_width;
             static uint32_t m_shader_id;
+            static uint32_t m_point_nr;
 
         private:
+            static void _GenerateShaderModule(Renderer &_rend, uint32_t _main_offset, uint32_t _ubo_offset);
             void _CalculateVertices();
 
         public:

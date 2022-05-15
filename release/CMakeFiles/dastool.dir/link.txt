@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/dastool.dir/deps/libdas/src/DASTool.cpp.o -o dastool   -L/x86_64/lib  -Wl,-rpath,/x86_64/lib libdas.a 

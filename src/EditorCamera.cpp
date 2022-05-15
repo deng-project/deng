@@ -8,8 +8,14 @@
 
 namespace DENG {
 
-    EditorCamera::EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name, uint32_t _ubo_offset) :
-        Camera3D(_rend, _win, _conf, _name, _ubo_offset) { DENG_ASSERT(m_config.index() == 2); }
+    EditorCamera::EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name) :
+        Camera3D(_rend, _win, _conf, _name) 
+    { 
+        DENG_ASSERT(m_config.index() == 2); 
+
+        EditorCameraConfiguration &conf = std::get<EditorCameraConfiguration>(m_config);
+        m_cam_transform.MoveCameraAbsolutely({ 0.0f, 0.0f, -conf.zoom_step });
+    }
 
 
     void EditorCamera::EnableCamera() {

@@ -46,6 +46,7 @@ namespace DENG {
 #endif
 
     OpenGLRenderer::OpenGLRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
+        GPUMemoryManager::GetInstance();
         m_window.SetVSync(m_conf.enable_vsync);
         // Load all OpenGL functions
         int status = deng_LoadGL();
@@ -73,6 +74,7 @@ namespace DENG {
 
 
     OpenGLRenderer::~OpenGLRenderer() {
+        GPUMemoryManager::DeleteInstance();
         // delete texture objects
         for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
             glDeleteTextures(1, &it->second);

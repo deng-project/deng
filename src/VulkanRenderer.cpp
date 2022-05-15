@@ -10,6 +10,7 @@
 namespace DENG {
 
     VulkanRenderer::VulkanRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
+        GPUMemoryManager::GetInstance();
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
         mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count);
 
@@ -29,6 +30,7 @@ namespace DENG {
 
 
     VulkanRenderer::~VulkanRenderer() {
+        GPUMemoryManager::DeleteInstance();
         vkDeviceWaitIdle(mp_instance_creator->GetDevice());
         // depth image resources
         vkDestroyImageView(mp_instance_creator->GetDevice(), m_depth_image_view, NULL);

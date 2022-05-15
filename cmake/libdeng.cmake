@@ -15,6 +15,7 @@ set(DENG_HEADERS
     include/EditorCamera.h
     include/ErrorDefinitions.h
     include/FirstPersonCamera.h
+    include/GPUMemoryManager.h
     include/ImGuiLayer.h
     include/MeshLoader.h
     include/Missing.h
@@ -45,9 +46,11 @@ set(DENG_HEADERS
 
 set(DENG_SOURCES
     src/AnimationSampler.cpp
+    src/Camera3D.cpp
     src/CameraTransformManager.cpp
     src/EditorCamera.cpp
     src/FirstPersonCamera.cpp
+    src/GPUMemoryManager.cpp
     src/ImGuiLayer.cpp
     src/MeshLoader.cpp
     src/Missing.cpp
