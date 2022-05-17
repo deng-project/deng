@@ -53,7 +53,6 @@ namespace DENG {
 
     class DENG_API AnimationSampler {
         private:
-            Libdas::Matrix4<float> m_animation_matrix;
             float m_morph_weights[MAX_MORPH_TARGETS] = {};
             const Libdas::DasAnimationChannel &m_channel;
             Libdas::DasParser &m_parser;
@@ -72,6 +71,12 @@ namespace DENG {
             bool m_repeat = false;
 
             static uint32_t m_animation_sampler_index;
+            float m_cached_delta_time = 0;
+
+            // animated properties
+            Libdas::Vector3<float> m_translation = { 0.0f, 0.0f, 0.0f };
+            Libdas::Quaternion m_rotation = { 0.0f, 0.0f, 0.0f, 1.0f }; // note matrices derived from quaternion rotations need to be transposed !
+            float m_scale = 1.0f;
 
         private:
             void _LinearInterpolation(float _t1, float _tc, float _t2);
@@ -86,13 +91,18 @@ namespace DENG {
             inline void Animate(bool _repeat) {
                 m_animate = true;
                 m_repeat = _repeat;
-                m_active_timestamp_index = 0;
                 m_beg_time = std::chrono::system_clock::now();
+                m_active_time = std::chrono::system_clock::now();
             }
 
             inline void Stop() {
                 m_animate = false;
-                m_active_timestamp_index = UINT32_MAX;
+                std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
+                m_cached_delta_time += delta_time.count() / 1000.0f;
+            }
+
+            inline AnimationTarget GetAnimationTarget() {
+                return m_channel.target;
             }
 
             inline bool GetAnimationStatus() const {
@@ -103,8 +113,16 @@ namespace DENG {
                 return m_channel;
             }
 
-            inline const Libdas::Matrix4<float> GetAnimationMatrix() {
-                return m_animation_matrix;
+            inline Libdas::Vector3<float> GetTranslation() {
+                return m_translation;
+            }
+
+            inline Libdas::Quaternion GetRotation() {
+                return m_rotation;
+            }
+
+            inline float GetScale() {
+                return m_scale;
             }
 
             inline float *GetMorphWeights() {

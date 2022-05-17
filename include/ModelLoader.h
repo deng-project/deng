@@ -42,6 +42,7 @@
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
     #include <GPUMemoryManager.h>
+    #include <ModelUniforms.h>
     #include <MeshLoader.h>
     #include <ModelUniforms.h>
     #include <AnimationSampler.h>

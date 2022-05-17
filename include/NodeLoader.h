@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: NodeTransformManager.h - DAS model node transformation handler
+// file: NodeTransformManager.h - DAS model node transformation handler header
 // author: Karl-Mihkel Ott
 
 #ifndef NODE_TRANSFORM_MANAGER_H
@@ -41,7 +41,6 @@
     #include <ModelUniforms.h>
     #include <AnimationSampler.h>
     #include <MeshLoader.h>
-    #include <NodeLoader.h>
     #include <SkeletonDataManager.h>
 #endif
 
@@ -56,29 +55,39 @@ namespace DENG {
             const Libdas::DasNode &m_node;
             Libdas::DasParser &m_parser;
 
-            std::vector<float*> m_child_morph_weights;
-            std::vector<Libdas::Matrix4<float>> m_child_matrices;
             std::vector<NodeLoader> m_child_nodes;
             std::vector<uint32_t> m_node_lookup;
+            std::vector<AnimationSampler*> m_animation_samplers;
             std::vector<AnimationSampler*> m_child_samplers;
             static uint32_t m_node_index;
             std::string m_node_name = "Unnamed node";
 
             // custom transformation properties
-            float m_scale = 1.0f;
-            Libdas::Vector3<float> m_translation = { 0.0f, 0.0f, 0.0f };
-            Libdas::Point3D<float> m_rotation = { 0.0f, 0.0f, 0.0f };        // rotations are in radians
+            Libdas::Vector3<float> m_custom_translation = { 0.0f, 0.0f, 0.0f };
+            Libdas::Quaternion m_custom_rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+            float m_custom_scale = 1.0f;
 
-            Libdas::Matrix4<float> m_custom_transform;
-            Libdas::Matrix4<float> m_parent_transform;
+            // transformation matrices
+            Libdas::Matrix4<float> m_parent;
+            Libdas::Matrix4<float> m_custom;
+            Libdas::Matrix4<float> m_transform;
 
+            float *m_morph_weights = nullptr;
+            uint32_t m_max_node = 0;
+
+        private:
+            void _CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset);
+            void _SearchForBoundAnimationSamplers(std::vector<Animation> &_animations);
+            void _UpdateTransformTRS(Libdas::Vector3<float> _translation, Libdas::Quaternion _rotation, float _scale);
 
         public:
             NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, 
-                       std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names, const Libdas::Matrix4<float> &_parent);
+                       std::vector<Animation> &_animations, const Libdas::Matrix4<float> &_parent);
             ~NodeLoader();
-            void ApplyCustomTransform(const Libdas::Matrix4<float> &_parent);
-            void Update(const Libdas::Matrix4<float> &_parent, float *morph_weights);
+            void Update();
+            inline void NewParent(const Libdas::Matrix4<float> &_parent) {
+                m_parent = _parent;
+            }
 
             inline const std::string &GetName() const {
                 return m_node_name;
@@ -97,31 +106,28 @@ namespace DENG {
             }
 
             // custom transformations
-            inline float GetCustomScale() const {
-                return m_scale;
-            }
-
             inline Libdas::Vector3<float> GetCustomTranslation() const {
-                return m_translation;
+                return m_custom_translation;
             }
 
-            inline Libdas::Point3D<float> GetCustomRotation() const {
-                return m_rotation;
+            inline Libdas::Quaternion GetCustomRotation() const {
+                return m_custom_rotation;
+            }
+
+            inline float GetCustomScale() const {
+                return m_custom_scale;
             }
 
             inline void SetCustomScale(float _scale) {
-                m_scale = _scale;
-                ApplyCustomTransform(m_parent_transform);
+                m_custom_scale = _scale;
             }
 
             inline void SetCustomTranslation(const Libdas::Vector3<float> &_translation) {
-                m_translation = _translation;
-                ApplyCustomTransform(m_parent_transform);
+                m_custom_translation = _translation;
             }
 
-            inline void SetCustomRotation(const Libdas::Point3D<float> &_rot) {
-                m_rotation = _rot;
-                ApplyCustomTransform(m_parent_transform);
+            inline void SetCustomRotation(const Libdas::Quaternion &_rot) {
+                m_custom_rotation = _rot;
             }
     };
 }

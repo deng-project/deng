@@ -42,7 +42,7 @@ namespace DENG {
         m_scene_loaders.reserve(m_parser.GetSceneCount());
         for(uint32_t i = 0; i < m_parser.GetSceneCount(); i++) {
             const Libdas::DasScene &scene = m_parser.AccessScene(i);
-            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animation_samplers, m_texture_names);
+            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animation_samplers);
         }
 
         if(m_parser.GetProperties().model != "")

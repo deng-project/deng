@@ -1,3 +1,8 @@
+// DENG: dynamic engine - small but powerful 3D game engine
+// licence: Apache, see LICENCE file
+// file: NodeTransformManager.h - DAS model node transformation handler implementation
+// author: Karl-Mihkel Ott
+
 #define NODE_TRANSFORM_MANAGER_CPP
 #include <NodeLoader.h>
 
@@ -6,36 +11,53 @@ namespace DENG {
     uint32_t NodeLoader::m_node_index = 0;
 
     NodeLoader::NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, 
-                           std::vector<Animation> &_animation_samplers, std::vector<std::string> &_texture_names, const Libdas::Matrix4<float> &_parent) :
+                           std::vector<Animation> &_animations, const Libdas::Matrix4<float> &_parent) :
         m_renderer(_rend),
         m_node(_node),
         m_parser(_parser),
-        m_parent_transform(_parent)
+        m_parent(_parent)
     {
-        // for each node traverse its children
-        m_child_nodes.reserve(m_node.children_count);
-        m_child_morph_weights.resize(m_node.children_count);
-        m_child_matrices.resize(m_node.children_count);
+        // apply the parent transformation
+        m_transform = m_parent * m_node.transform;
 
-        uint32_t max_node = 0;
-        m_custom_transform = _parent * m_node.transform;
-        for(uint32_t i = 0; i < m_node.children_count; i++) {
-            const Libdas::DasNode &child_node = m_parser.AccessNode(m_node.children[i]);
-            m_child_nodes.emplace_back(m_renderer, child_node, m_parser, _main_buffer_offsets, _camera_offset, _animation_samplers, _texture_names, m_custom_transform);
+        // find the maximum node index from
+        if(m_node.children_count) {
+            m_max_node = *std::max_element(m_node.children, m_node.children + m_node.children_count);
+            m_max_node++;
 
-            if(m_node.children[i] > max_node)
-                max_node = m_node.children[i];
+            // fill the lookup table
+            m_node_lookup.resize(m_max_node);
+            for(uint32_t i = 0; i < m_node.children_count; i++)
+                m_node_lookup[m_node.children[i]] = i;
+
+            // create child nodes
+            m_child_nodes.reserve(m_node.children_count);
+            for(uint32_t i = 0; i < m_node.children_count; i++) {
+                const Libdas::DasNode &node = m_parser.AccessNode(m_node.children[i]);
+                m_child_nodes.emplace_back(m_renderer, node, m_parser, _main_buffer_offsets, _camera_offset, _animations, m_transform);
+            }
         }
 
-        // fill the lookup table
-        max_node++;
-        m_node_lookup.resize(max_node);
-        for(uint32_t i = 0; i < m_node.children_count; i++)
-            m_node_lookup[m_node.children[i]] = i;
+        _CreateBoundElementLoaders(_animations, _main_buffer_offsets, _camera_offset);
+        _SearchForBoundAnimationSamplers(_animations);
 
+        // give node a name if possible
+        if(m_node.name != "")
+            m_node_name = m_node.name;
+        else m_node_name += std::to_string(m_node_index++);
+    }
+
+
+    NodeLoader::~NodeLoader() {
+        delete mp_skeleton;
+        delete mp_mesh_loader;
+    }
+
+
+    void NodeLoader::_CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset) {
         if(m_node.skeleton != UINT32_MAX) {
             const Libdas::DasSkeleton &skeleton = m_parser.AccessSkeleton(m_node.skeleton);
-            mp_skeleton = new SkeletonDataManager(m_custom_transform, m_parser, skeleton, _animation_samplers);
+            mp_skeleton = new SkeletonDataManager(m_transform, m_parser, skeleton, _animations);
 
             if(m_node.mesh == UINT32_MAX) {
                 const Libdas::DasSkeleton &skeleton = mp_skeleton->GetSkeleton();
@@ -51,91 +73,107 @@ namespace DENG {
             }
             else mp_mesh_loader = new MeshLoader(mesh, m_parser, m_renderer, _main_buffer_offsets, _camera_offset, 0);
             mp_mesh_loader->Attach();
+            m_morph_weights = mp_mesh_loader->GetMorphWeights();
         }
+    }
 
-        // search for animation samplers whose nodes are current node's children
-        for(auto ani_it = _animation_samplers.begin(); ani_it != _animation_samplers.end(); ani_it++) {
+
+    void NodeLoader::_SearchForBoundAnimationSamplers(std::vector<Animation> &_animations) {
+        // for each animation
+        for(auto ani_it = _animations.begin(); ani_it != _animations.end(); ani_it++) {
+            // for each sampler
             for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
-                for(uint32_t i = 0; i < m_node.children_count; i++) {
-                    if(m_node.children[i] == smp_it->GetAnimationChannel().node_id) {
-                        m_child_samplers.push_back(&(*smp_it));
-                        break;
-                    }
-                }
+                const uint32_t index = static_cast<uint32_t>(&m_node - &m_parser.AccessNode(0));
+                if(smp_it->GetAnimationChannel().node_id == index)
+                    m_animation_samplers.push_back(&(*smp_it));
             }
         }
-
-
-        // give node a name if possible
-        if(m_node.name != "")
-            m_node_name = m_node.name;
-        else m_node_name += std::to_string(m_node_index++);
     }
 
 
-    NodeLoader::~NodeLoader() {
-        delete mp_skeleton;
-        delete mp_mesh_loader;
-    }
-
-
-    void NodeLoader::ApplyCustomTransform(const Libdas::Matrix4<float> &_parent) {
-        m_parent_transform = _parent;
-
-        // TRS properties
+    void NodeLoader::_UpdateTransformTRS(Libdas::Vector3<float> _translation, Libdas::Quaternion _rotation, float _scale) {
         const Libdas::Matrix4<float> t = {
-            { 1.0f, 0.0f, 0.0f, m_translation.first },
-            { 0.0f, 1.0f, 0.0f, m_translation.second },
-            { 0.0f, 0.0f, 1.0f, m_translation.third },
-            { 0.0f, 0.0f, 0.0f, 1.0f },
+            { 1.0f, 0.0f, 0.0f, _translation.first },
+            { 0.0f, 1.0f, 0.0f, _translation.second },
+            { 0.0f, 0.0f, 1.0f, _translation.third },
+            { 0.0f, 0.0f, 0.0f, 1.0f }
         };
 
-        const Libdas::Quaternion x(sinf(m_rotation.x / 2), 0, 0, cosf(m_rotation.x / 2));
-        const Libdas::Quaternion y(0, sinf(m_rotation.y / 2), 0, cosf(m_rotation.y / 2));
-        const Libdas::Quaternion z(0, 0, sinf(m_rotation.z / 2), cosf(m_rotation.z / 2));
-        const Libdas::Matrix4<float> r = z.ExpandToMatrix4() * y.ExpandToMatrix4() * x.ExpandToMatrix4();
-
+        const Libdas::Matrix4<float> r = _rotation.ExpandToMatrix4();
         const Libdas::Matrix4<float> s = {
-            { m_scale, 0.0f, 0.0f, 0.0f },
-            { 0.0f, m_scale, 0.0f, 0.0f },
-            { 0.0f, 0.0f, m_scale, 0.0f },
-            { 0.0f, 0.0f, 0.0f, 1.0f },
+            { _scale, 0.0f, 0.0f, 0.0f },
+            { 0.0f, _scale, 0.0f, 0.0f },
+            { 0.0f, 0.0f, _scale, 0.0f },
+            { 0.0f, 0.0f, 0.0f, 1.0f }
         };
 
-        m_custom_transform = m_parent_transform * m_node.transform * t * r * s;
-
-        // for each child node apply transformations
-        for(auto it = m_child_nodes.begin(); it != m_child_nodes.end(); it++)
-            it->ApplyCustomTransform(m_custom_transform);
+        m_transform *= t * r * s;
     }
 
+       
+    void NodeLoader::Update() {
+        bool parent_update_flag = false;
 
-    void NodeLoader::Update(const Libdas::Matrix4<float> &_parent, float *_morph_weights) {
-        const Libdas::Matrix4<float> new_parent = m_custom_transform * m_node.transform * _parent;
-        std::fill(m_child_matrices.begin(), m_child_matrices.end(), Libdas::Matrix4<float>());
-        std::fill(m_child_morph_weights.begin(), m_child_morph_weights.end(), nullptr);
+        // update animation samplers if required
+        m_transform = m_parent;
+        if(m_animation_samplers.size()) {
+            for(auto it = m_animation_samplers.begin(); it != m_animation_samplers.end(); it++) {
+                (*it)->Update();
+                Libdas::Vector3<float> translation = { 0.0f, 0.0f, 0.0f };
+                Libdas::Quaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+                float scale = 1.0f;
 
-        for(auto it = m_child_samplers.begin(); it != m_child_samplers.end(); it++) {
-            (*it)->Update();
-            m_child_matrices[m_node_lookup[(*it)->GetAnimationChannel().node_id]] *= (*it)->GetAnimationMatrix();
-            m_child_morph_weights[m_node_lookup[(*it)->GetAnimationChannel().node_id]] = (*it)->GetMorphWeights();
+                switch((*it)->GetAnimationTarget()) {
+                    case LIBDAS_ANIMATION_TARGET_WEIGHTS:
+                        m_morph_weights = (*it)->GetMorphWeights();
+                        break;
+
+                    case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                        translation = (*it)->GetTranslation();
+                        break;
+
+                    case LIBDAS_ANIMATION_TARGET_ROTATION:
+                        rotation = (*it)->GetRotation();
+                        break;
+
+                    case LIBDAS_ANIMATION_TARGET_SCALE:
+                        scale = (*it)->GetScale();
+                        break;
+
+                    default:
+                        DENG_ASSERT(false);
+                        break;
+                }
+
+                _UpdateTransformTRS(translation, rotation, scale);
+                parent_update_flag = true;
+            }
+        } else {
+            m_transform *= m_node.transform;
         }
 
-        for(auto it = m_child_nodes.begin(); it != m_child_nodes.end(); it++) {
-            const size_t index = it - m_child_nodes.begin();
-            it->Update(m_child_matrices[index] * new_parent, m_child_morph_weights[index]);
+        _UpdateTransformTRS(m_custom_translation, m_custom_rotation, m_custom_scale);
+
+        // update parent transformation for child nodes
+        if(parent_update_flag) {
+            for(uint32_t i = 0; i < m_node.children_count; i++)
+                m_child_nodes[i].NewParent(m_transform);
         }
+
+        // update children
+        for(auto it = m_child_nodes.begin(); it != m_child_nodes.end(); it++)
+            it->Update();
 
         // update mesh specific ubo if required
         if(mp_mesh_loader) {
             uint32_t offset = mp_mesh_loader->GetMeshUboOffset();
             ModelUbo ubo;
-            ubo.node_transform = new_parent;
+            ubo.node_transform = m_transform.Transpose();
             ubo.use_color = mp_mesh_loader->GetUseColor();
             ubo.color = mp_mesh_loader->GetColor();
 
             // check if morph weights are given
-            if(_morph_weights) std::memcpy(ubo.morph_weights, _morph_weights, sizeof(float[MAX_MORPH_TARGETS]));
+            if(m_morph_weights) std::memcpy(ubo.morph_weights, m_morph_weights, sizeof(float[MAX_MORPH_TARGETS]));
             else std::memset(ubo.morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(&ubo), sizeof(ModelUbo), offset);
         }

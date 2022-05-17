@@ -27,8 +27,9 @@ namespace DENG {
         for(uint32_t i = 0; i < m_skeleton.joint_count; i++)
             m_joint_lookup[m_skeleton.joints[i]] = i;
 
-        _CalculateJointWorldTransforms(_node, m_skeleton.parent);
-        _ApplyJointTransforms(_node, Libdas::Matrix4<float>(), m_skeleton.parent);
+        _FillJointTransformTableTRS();
+        _CalculateJointWorldTransforms();
+        //_CalculateInverseBindMatrices();
 
         // check which animation sampler joint ids are used in current skeleton
         for(auto ani_it = _animation_sampler.begin(); ani_it != _animation_sampler.end(); ani_it++) {
@@ -46,67 +47,113 @@ namespace DENG {
     }
 
 
-    void SkeletonDataManager::_CalculateJointWorldTransforms(const Libdas::Matrix4<float> &_parent, uint32_t _abs_joint_id) {
-        const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(_abs_joint_id);
-        const Libdas::Matrix4<float> t = {
-            { 1.0f, 0.0f, 0.0f, joint.translation.x },
-            { 0.0f, 1.0f, 0.0f, joint.translation.y },
-            { 0.0f, 0.0f, 1.0f, joint.translation.z },
-            { 0.0f, 0.0f, 0.0f, 1.0f }
-        };
+    //void SkeletonDataManager::_CalculateInverseBindMatrices() {
+        //m_inverse_bind_matrices.resize(m_max_joint);
+        //for(size_t i = 0; i < m_joint_world_transforms.size(); i++) {
+            //m_inverse_bind_matrices[m_joint_lookup[i]] = m_joint_world_transforms[m_joint_lookup[i]].Inverse();
+        //}
+    //}
 
-        const Libdas::Matrix4<float> r = joint.rotation.ExpandToMatrix4();
-        const Libdas::Matrix4<float> s = {
-            { joint.scale, 0.0f, 0.0f, 0.0f },
-            { 0.0f, joint.scale, 0.0f, 0.0f },
-            { 0.0f, 0.0f, joint.scale, 0.0f },
-            { 0.0f, 0.0f, 0.0f, 1.0f },
-        };
 
-        m_joint_world_transforms[m_joint_lookup[_abs_joint_id]] = _parent * (t * r * s);
+    void SkeletonDataManager::_FillJointTransformTableTRS() {
+        m_joint_trs_transforms.resize(m_max_joint);
 
-        // for each child joint
-        for(uint32_t i = 0; i < joint.children_count; i++)
-            _CalculateJointWorldTransforms(m_joint_world_transforms[m_joint_lookup[_abs_joint_id]], joint.children[i]);
+        // fill the TRS table
+        for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
+            const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(m_skeleton.joints[i]);
+            JointTransformation &trs = m_joint_trs_transforms[m_joint_lookup[m_skeleton.joints[i]]];
+            trs.t = { joint.translation.x, joint.translation.y, joint.translation.z };
+            trs.r = joint.rotation;
+            trs.s = joint.scale;
+        }
     }
 
 
-    void SkeletonDataManager::_ApplyJointTransforms(const Libdas::Matrix4<float> &_parent, const Libdas::Matrix4<float> &_custom, uint32_t _joint_id) {
-        const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(_joint_id);
-        //const Libdas::Matrix4<float> t = Libdas::Matrix4<float> {
-            //{ 1.0f, 0.0f, 0.0f, joint.translation.x },
-            //{ 0.0f, 1.0f, 0.0f, joint.translation.y },
-            //{ 0.0f, 0.0f, 1.0f, joint.translation.z },
-            //{ 0.0f, 0.0f, 0.0f, 1.0f }
-        //};
+    void SkeletonDataManager::_CalculateJointWorldTransforms() {
+        // first - index of the joint to be calculated
+        // second - index of parent joint (UINT32_MAX for none)
+        std::queue<std::pair<uint32_t, uint32_t>> children;
+        children.push(std::make_pair(m_skeleton.parent, UINT32_MAX));
 
-        //const Libdas::Matrix4<float> r = joint.rotation.ExpandToMatrix4();
-        //const Libdas::Matrix4<float> s = Libdas::Matrix4<float> {
-            //{ joint.scale, 0.0f, 0.0f, 0.0f },
-            //{ 0.0f, joint.scale, 0.0f, 0.0f },
-            //{ 0.0f, 0.0f, joint.scale, 0.0f },
-            //{ 0.0f, 0.0f, 0.0f, 1.0f },
-        //};
+        while(!children.empty()) {
+            const std::pair<uint32_t, uint32_t> child = children.front();
+            children.pop();
 
-        // tmp
-        m_joint_matrices[m_joint_lookup[_joint_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[_joint_id]] * joint.inverse_bind_pos.Transpose();
+            const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(child.first);
+            const JointTransformation &trs = m_joint_trs_transforms[m_joint_lookup[child.first]];
 
-        for(uint32_t i = 0; i < joint.children_count; i++) {
-            _ApplyJointTransforms(m_joint_world_transforms[m_joint_lookup[_joint_id]], _custom, joint.children[i]);
+            const Libdas::Matrix4<float> t = {
+                { 1.0f, 0.0f, 0.0f, trs.t.first },
+                { 0.0f, 1.0f, 0.0f, trs.t.second },
+                { 0.0f, 0.0f, 1.0f, trs.t.third },
+                { 0.0f, 0.0f, 0.0f, 1.0f }
+            };
+
+            const Libdas::Matrix4<float> r = trs.r.ExpandToMatrix4();
+            const Libdas::Matrix4<float> s = {
+                { trs.s, 0.0f, 0.0f, 0.0f },
+                { 0.0f, trs.s, 0.0f, 0.0f },
+                { 0.0f, 0.0f, trs.s, 0.0f },
+                { 0.0f, 0.0f, 0.0f, 1.0f },
+            };
+
+            if(child.second == UINT32_MAX) {
+                m_joint_world_transforms[m_joint_lookup[child.first]] = m_node_transform * (t * r * s);
+            } else {
+                m_joint_world_transforms[m_joint_lookup[child.first]] = m_joint_world_transforms[m_joint_lookup[child.second]] * (t * r * s);
+            }
+
+            // for each child joint
+            for(uint32_t i = 0; i < joint.children_count; i++)
+                children.push(std::make_pair(joint.children[i], child.first));
+        }
+    }
+
+
+    void SkeletonDataManager::_ApplyJointTransforms(uint32_t _joint_id) {
+        std::queue<uint32_t> children;
+        children.push(_joint_id);
+
+        while(!children.empty()) {
+            uint32_t curr_id = children.front();
+            children.pop();
+
+            const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(curr_id);
+            m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * /* m_inverse_bind_matrices[m_joint_lookup[curr_id]]; */joint.inverse_bind_pos;
+
+            for(uint32_t i = 0; i < joint.children_count; i++)
+                children.push(joint.children[i]);
         }
     }
 
 
     void SkeletonDataManager::Update() {
-        _ApplyJointTransforms(m_node_transform, Libdas::Matrix4<float>(), m_skeleton.parent);
         // update animation samplers
         for(auto it = m_joint_samplers.begin(); it != m_joint_samplers.end(); it++) {
             (*it)->Update();
-            auto ani_mat = (*it)->GetAnimationMatrix();
-            //if(m_parent_joint_id_table[(*it)->GetAnimationChannel().joint_id] != UINT32_MAX)
-                //_ApplyJointTransforms(m_joint_matrices[(*it)->GetAnimationChannel().joint_id], ani_mat, (*it)->GetAnimationChannel().joint_id);
-            //else _ApplyJointTransforms(m_node_transform, ani_mat, (*it)->GetAnimationChannel().joint_id);
+            const uint32_t ani_joint = (*it)->GetAnimationChannel().joint_id;
+
+            switch((*it)->GetAnimationTarget()) {
+                case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                    m_joint_trs_transforms[m_joint_lookup[ani_joint]].t = (*it)->GetTranslation();
+                    break;
+
+                case LIBDAS_ANIMATION_TARGET_ROTATION:
+                    m_joint_trs_transforms[m_joint_lookup[ani_joint]].r = (*it)->GetRotation();
+                    break;
+
+                case LIBDAS_ANIMATION_TARGET_SCALE:
+                    m_joint_trs_transforms[m_joint_lookup[ani_joint]].s = (*it)->GetScale();
+                    break;
+
+                default:
+                    DENG_ASSERT(false);
+                    break;
+            }
         }
+
+        _CalculateJointWorldTransforms();
+        _ApplyJointTransforms(m_skeleton.parent);
 
         for(auto it = m_joint_matrices.begin(); it != m_joint_matrices.end(); it++)
             (*it) = it->Transpose();

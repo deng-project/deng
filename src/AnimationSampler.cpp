@@ -42,10 +42,7 @@ namespace DENG {
                     Libdas::Vector3<float> *tr1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
                     Libdas::Vector3<float> *tr2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + next * size);
 
-                    Libdas::Vector3<float> interp = (*tr1) * (1 - t) + (*tr2) * t;
-                    m_animation_matrix.row4.first = interp.first;
-                    m_animation_matrix.row4.second = interp.second;
-                    m_animation_matrix.row4.third = interp.third;
+                    m_translation = (*tr1) * (1 - t) + (*tr2) * t;
                 }
                 break;
 
@@ -57,14 +54,11 @@ namespace DENG {
                     Libdas::Quaternion *q2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
                     float dot = Libdas::Quaternion::Dot(*q1, *q2);
 
-                    float sign = dot < 0.0f ? -1.0f : 1.0f;
+                    float sign = dot / std::abs(dot);
                     float a = acosf(dot);
 
                     if(a != 0.0f) {
-                        Libdas::Quaternion interp = *q1 * sinf(a * (1 - t)) / sinf(a) + *q2 * sign * sinf(a * t) / sinf(a);
-                        m_animation_matrix = interp.ExpandToMatrix4().Transpose();
-                    } else {
-                        m_animation_matrix = Libdas::Matrix4<float>();
+                        m_rotation = *q1 * sinf(a * (1 - t)) / sinf(a) + *q2 * (sign * sinf(a * t) / sinf(a));
                     }
                 }
                 break;
@@ -76,10 +70,7 @@ namespace DENG {
                     float s1 = *reinterpret_cast<float*>(m_channel.target_values + curr * size);
                     float s2 = *reinterpret_cast<float*>(m_channel.target_values + next * size);
 
-                    float interp = (1 - t) * s1 + s2 * t;
-                    m_animation_matrix.row1.first = interp;
-                    m_animation_matrix.row2.second = interp;
-                    m_animation_matrix.row3.third = interp;
+                    m_scale = (1 - t) * s1 + s2 * t;
                 }
                 break;
         }
@@ -105,10 +96,7 @@ namespace DENG {
             case LIBDAS_ANIMATION_TARGET_TRANSLATION:
                 {
                     const size_t size = sizeof(Libdas::Vector3<float>);
-                    Libdas::Vector3<float> *tr = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
-                    m_animation_matrix.row4.first = tr->first;
-                    m_animation_matrix.row4.second = tr->second;
-                    m_animation_matrix.row4.third = tr->third;
+                    m_translation = *reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
                 }
                 break;
 
@@ -116,8 +104,7 @@ namespace DENG {
             case LIBDAS_ANIMATION_TARGET_ROTATION:
                 {
                     const size_t size = sizeof(Libdas::Quaternion);
-                    Libdas::Quaternion *rot = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
-                    m_animation_matrix = rot->ExpandToMatrix4().Transpose();
+                    m_rotation = *reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
                 }
                 break;
 
@@ -125,10 +112,7 @@ namespace DENG {
             case LIBDAS_ANIMATION_TARGET_SCALE:
                 {
                     const size_t size = sizeof(float);
-                    float scale = *reinterpret_cast<float*>(m_channel.target_values + curr * size);
-                    m_animation_matrix.row1.first = scale;
-                    m_animation_matrix.row2.second = scale;
-                    m_animation_matrix.row3.third = scale;
+                    m_scale = *reinterpret_cast<float*>(m_channel.target_values + curr * size);
                 }
                 break;
         }
@@ -168,10 +152,7 @@ namespace DENG {
                     Libdas::Vector3<float> *a2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.tangents + next * 2 * size);
                     Libdas::Vector3<float> *b1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.tangents + (curr * 2 + 1) * size);
 
-                    Libdas::Vector3<float> interp = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
-                    m_animation_matrix.row4.first = interp.first;
-                    m_animation_matrix.row4.second = interp.second;
-                    m_animation_matrix.row4.third = interp.third;
+                    m_translation = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
                 }
                 break;
 
@@ -185,8 +166,7 @@ namespace DENG {
                     Libdas::Quaternion *a2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.tangents + next * 2 * size);
                     Libdas::Quaternion *b1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.tangents + (curr * 2 + 1) * size);
 
-                    Libdas::Quaternion interp = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
-                    m_animation_matrix = interp.ExpandToMatrix4();
+                    m_rotation = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
                 }
                 break;
 
@@ -199,10 +179,7 @@ namespace DENG {
                     float a2 = *reinterpret_cast<float*>(m_channel.tangents + next * 2 * size);
                     float b1 = *reinterpret_cast<float*>(m_channel.tangents + (curr * 2 + 1) * size);
 
-                    float interp = v1 * (2 * CUBE(t) - 3 * SQR(t) + 1) + b1 * td * (CUBE(t) - 2 * SQR(t) + 1) + v2 * (-2 * CUBE(t) + 3 * SQR(t)) + a2 * td * (CUBE(t) - SQR(t));
-                    m_animation_matrix.row1.first = interp;
-                    m_animation_matrix.row2.second = interp;
-                    m_animation_matrix.row3.third = interp;
+                    m_scale = v1 * (2 * CUBE(t) - 3 * SQR(t) + 1) + b1 * td * (CUBE(t) - 2 * SQR(t) + 1) + v2 * (-2 * CUBE(t) + 3 * SQR(t)) + a2 * td * (CUBE(t) - SQR(t));
                 }
                 break;
 
@@ -214,43 +191,47 @@ namespace DENG {
 
 
     void AnimationSampler::Update() {
-        m_animation_matrix = Libdas::Matrix4<float>();
         std::memset(m_morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
 
         // calculate delta time
-        m_active_time = std::chrono::system_clock::now();
+        if(m_animate) m_active_time = std::chrono::system_clock::now();
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
+        const float kf = delta_time.count() / 1000 + m_cached_delta_time;
         const uint32_t next = (m_active_timestamp_index + 1) % m_channel.keyframe_count;
 
+#ifdef _DEBUG
+        std::cout << "Keyframe timestamp: " << kf << std::endl;
+#endif
+
         // check the current timestamp against keyframe values
-        if(delta_time.count() / 1000.0f >= m_channel.keyframes[next]) {
+        if(kf >= m_channel.keyframes[next]) {
             m_active_timestamp_index++;
             if(m_active_timestamp_index >= m_channel.keyframe_count) {
                 m_active_timestamp_index = 0;
                 m_beg_time = std::chrono::system_clock::now();
+                m_cached_delta_time = 0;
+                if(!m_repeat) m_animate = false;
             }
         }
 
         // set correct interpolation values
-        if(m_animate) {
-            float t1 = m_channel.keyframes[m_active_timestamp_index];
-            float t2 = m_channel.keyframes[next];
-            switch(m_channel.interpolation) {
-                case LIBDAS_INTERPOLATION_VALUE_LINEAR:
-                    _LinearInterpolation(t1, delta_time.count() / 1000.0f, t2);
-                    break;
+        float t1 = m_channel.keyframes[m_active_timestamp_index];
+        float t2 = m_channel.keyframes[next];
+        switch(m_channel.interpolation) {
+            case LIBDAS_INTERPOLATION_VALUE_LINEAR:
+                _LinearInterpolation(t1, kf, t2);
+                break;
 
-                case LIBDAS_INTERPOLATION_VALUE_CUBICSPLINE:
-                    _CubicSplineInterpolation(t1, delta_time.count() / 1000.0f, t2);
-                    break;
+            case LIBDAS_INTERPOLATION_VALUE_CUBICSPLINE:
+                _CubicSplineInterpolation(t1, kf, t2);
+                break;
 
-                case LIBDAS_INTERPOLATION_VALUE_STEP:
-                    _StepInterpolation();
-                    break;
+            case LIBDAS_INTERPOLATION_VALUE_STEP:
+                _StepInterpolation();
+                break;
 
-                default:
-                    break;
-            }
+            default:
+                break;
         }
     }
 }

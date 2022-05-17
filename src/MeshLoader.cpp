@@ -27,6 +27,9 @@ namespace DENG {
         _CheckMeshPrimitives();
         mp_prim = &m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
         m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count);
+
+        for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
+            m_morph_weights[i] = mp_prim->morph_weights[i];
     }
 
 

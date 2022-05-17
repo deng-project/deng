@@ -34,18 +34,11 @@ namespace Executable {
         ImGui::DragFloat("Translation Z", &translation.third);
         _node.SetCustomTranslation(translation);
 
-        Libdas::Point3D<float> rotation = _node.GetCustomRotation();
-        rotation.x *= 180 / PI;
-        rotation.y *= 180 / PI;
-        rotation.z *= 180 / PI;
+        Libdas::Point3D<float> rotation;
         ImGui::Text("Rotation:");
         ImGui::DragFloat("Rotation X", &rotation.x, 1.0f, 0.0f, 360.0f);
         ImGui::DragFloat("Rotation Y", &rotation.y, 1.0f, 0.0f, 360.0f);
         ImGui::DragFloat("Rotation Z", &rotation.z, 1.0f, 0.0f, 360.0f);
-        rotation.x *= PI / 180;
-        rotation.y *= PI / 180;
-        rotation.z *= PI / 180;
-        _node.SetCustomRotation(rotation);
     }
 
 
@@ -147,9 +140,7 @@ namespace Executable {
                     for(auto sc_it = (*model_it)->GetScenes().begin(); sc_it != (*model_it)->GetScenes().end(); sc_it++) {
                         if(ImGui::TreeNode(sc_it->GetName().c_str())) {
                             // scenes can contain nodes
-                            for(auto node_it = sc_it->GetNodes().begin(); node_it != sc_it->GetNodes().end(); node_it++) {
-                                _ImGuiRecursiveNodeIteration(p_data, *model_it, *node_it);
-                            }
+                            _ImGuiRecursiveNodeIteration(p_data, *model_it, sc_it->GetRootNode());
                             ImGui::TreePop();
                         }
                     }

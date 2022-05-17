@@ -38,6 +38,7 @@
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
+    #include <ModelUniforms.h>
     #include <MeshLoader.h>
     #include <ModelShaderGenerator.h>
     #include <ModelUniforms.h>
@@ -75,7 +76,7 @@ namespace DENG {
             static map_t m_shader_map;
 
         private:
-            static uint32_t _GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _camera_offset);
+            static uint32_t _GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _camera_offset);
 
         public:
             static uint32_t RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _camera_offset, uint32_t _skeleton_joint_count);

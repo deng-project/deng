@@ -9,7 +9,7 @@
 namespace DENG {
     ModelShaderManager::map_t ModelShaderManager::m_shader_map = {};
 
-    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _camera_offset) {
+    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _camera_offset) {
         ShaderModule module;
         module.enable_depth_testing = true;
         module.enable_blend = true;
@@ -135,7 +135,7 @@ namespace DENG {
         
         // check if current MeshPrimitiveAttributeDescriptor object is present
         if(m_shader_map.find(attr_desc) == m_shader_map.end())
-            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, _parser, attr_desc, _camera_offset);
+            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _camera_offset);
 
         return m_shader_map[attr_desc];
     }

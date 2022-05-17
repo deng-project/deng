@@ -15,6 +15,8 @@
     #include <any>
     #include <unordered_map>
     #include <cmath>
+    #include <queue>
+    #include <algorithm>
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -32,6 +34,7 @@
     #include <libdas/include/DasParser.h>
 
     #include <Api.h>
+    #include <ErrorDefinitions.h>
     #include <ModelUniforms.h>
     #include <AnimationSampler.h>
 #endif
@@ -40,12 +43,20 @@ namespace DENG {
 
     class SkeletonDataManager {
         private:
+            struct JointTransformation {
+                Libdas::Vector3<float> t = { 0.0f, 0.0f, 0.0f };
+                Libdas::Quaternion r = { 0.0f, 0.0f, 0.0f, 1.0f };
+                float s = 1.0f;
+            };
+
             Libdas::DasParser &m_parser;
             const Libdas::DasSkeleton &m_skeleton;
             const Libdas::Matrix4<float> m_node_transform;
             const Libdas::Matrix4<float> m_inv_node_transform;
             std::vector<Libdas::Matrix4<float>> m_joint_matrices;
             std::vector<Libdas::Matrix4<float>> m_joint_world_transforms;
+            std::vector<JointTransformation> m_joint_trs_transforms;
+            std::vector<Libdas::Matrix4<float>> m_inverse_bind_matrices;
             std::vector<uint32_t> m_joint_lookup;
             std::vector<AnimationSampler*> m_joint_samplers;
             static uint32_t m_skeleton_index;
@@ -53,8 +64,10 @@ namespace DENG {
             uint32_t m_max_joint = 0;
 
         private:
-            void _CalculateJointWorldTransforms(const Libdas::Matrix4<float> &_parent, uint32_t _abs_joint_id);
-            void _ApplyJointTransforms(const Libdas::Matrix4<float> &_parent, const Libdas::Matrix4<float> &_custom, uint32_t _joint_id);
+            //void _CalculateInverseBindMatrices();
+            void _FillJointTransformTableTRS();
+            void _CalculateJointWorldTransforms();
+            void _ApplyJointTransforms(uint32_t _joint_id);
 
         public:
             SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_samplers);

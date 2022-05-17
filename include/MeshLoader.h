@@ -42,6 +42,7 @@
     #include <ModelUniforms.h>
     #include <ModelShaderGenerator.h>
     #include <ModelShaderManager.h>
+    #include <ModelUniforms.h>
 #endif
 
 namespace DENG {
@@ -67,6 +68,8 @@ namespace DENG {
             bool m_disable_joint_transforms = false;
             uint32_t m_supported_texture_count = 0;
 
+            float m_morph_weights[MAX_MORPH_TARGETS] = {};
+
             // Uniform node data
             Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
 
@@ -78,6 +81,10 @@ namespace DENG {
             void Attach();
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);
+
+            inline float *GetMorphWeights() {
+                return m_morph_weights;
+            }
 
             inline uint32_t GetMeshUboOffset() {
                 return m_mesh_ubo_offset;
