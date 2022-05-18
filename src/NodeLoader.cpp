@@ -1,9 +1,9 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: NodeTransformManager.h - DAS model node transformation handler implementation
+// file: NodeLoader.h - DAS model node transformation handler implementation
 // author: Karl-Mihkel Ott
 
-#define NODE_TRANSFORM_MANAGER_CPP
+#define NODE_LOADER_CPP
 #include <NodeLoader.h>
 
 namespace DENG {
@@ -82,10 +82,10 @@ namespace DENG {
         // for each animation
         for(auto ani_it = _animations.begin(); ani_it != _animations.end(); ani_it++) {
             // for each sampler
-            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
+            for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++) {
                 const uint32_t index = static_cast<uint32_t>(&m_node - &m_parser.AccessNode(0));
                 if(smp_it->GetAnimationChannel().node_id == index)
-                    m_animation_samplers.push_back(&(*smp_it));
+                    m_animation_samplers.push_back(std::make_pair(&ani_it->is_bound, &(*smp_it)));
             }
         }
     }
@@ -118,35 +118,37 @@ namespace DENG {
         m_transform = m_parent;
         if(m_animation_samplers.size()) {
             for(auto it = m_animation_samplers.begin(); it != m_animation_samplers.end(); it++) {
-                (*it)->Update();
-                Libdas::Vector3<float> translation = { 0.0f, 0.0f, 0.0f };
-                Libdas::Quaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
-                float scale = 1.0f;
+                if(*it->first) {
+                    it->second->Update();
+                    Libdas::Vector3<float> translation = { 0.0f, 0.0f, 0.0f };
+                    Libdas::Quaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+                    float scale = 1.0f;
 
-                switch((*it)->GetAnimationTarget()) {
-                    case LIBDAS_ANIMATION_TARGET_WEIGHTS:
-                        m_morph_weights = (*it)->GetMorphWeights();
-                        break;
+                    switch(it->second->GetAnimationTarget()) {
+                        case LIBDAS_ANIMATION_TARGET_WEIGHTS:
+                            m_morph_weights = it->second->GetMorphWeights();
+                            break;
 
-                    case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                        translation = (*it)->GetTranslation();
-                        break;
+                        case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                            translation = it->second->GetTranslation();
+                            break;
 
-                    case LIBDAS_ANIMATION_TARGET_ROTATION:
-                        rotation = (*it)->GetRotation();
-                        break;
+                        case LIBDAS_ANIMATION_TARGET_ROTATION:
+                            rotation = it->second->GetRotation();
+                            break;
 
-                    case LIBDAS_ANIMATION_TARGET_SCALE:
-                        scale = (*it)->GetScale();
-                        break;
+                        case LIBDAS_ANIMATION_TARGET_SCALE:
+                            scale = it->second->GetScale();
+                            break;
 
-                    default:
-                        DENG_ASSERT(false);
-                        break;
+                        default:
+                            DENG_ASSERT(false);
+                            break;
+                    }
+
+                    _UpdateTransformTRS(translation, rotation, scale);
+                    parent_update_flag = true;
                 }
-
-                _UpdateTransformTRS(translation, rotation, scale);
-                parent_update_flag = true;
             }
         } else {
             m_transform *= m_node.transform;

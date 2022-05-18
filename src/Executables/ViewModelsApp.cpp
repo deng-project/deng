@@ -149,23 +149,25 @@ namespace Executable {
 
                     ImGui::Text("Animations");
                     for(auto ani_it = (*model_it)->GetAnimations().begin(); ani_it != (*model_it)->GetAnimations().end(); ani_it++) {
-                        const std::string &animation_name = ani_it->first;
+                        const std::string &animation_name = ani_it->name;
 
                         if(ImGui::TreeNode(animation_name.c_str())) {
-                            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
-                                const size_t index = smp_it - ani_it->second.begin();
+                            for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++) {
+                                const size_t index = smp_it - ani_it->samplers.begin();
                                 const std::string smp_title = "Sampler" + std::to_string(index);
                                 ImGui::Text(smp_title.c_str());
                             }
 
-                            if(ani_it->second.front().GetAnimationStatus()) {
+
+                            ImGui::Checkbox("Bind with animation", &ani_it->is_bound);
+                            if(ani_it->samplers.front().GetAnimationStatus()) {
                                 if(ImGui::Button("Stop animation")) {
-                                    for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
+                                    for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++)
                                         smp_it->Stop();
                                 }
                             } else {
                                 if(ImGui::Button("Animate")) {
-                                    for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++)
+                                    for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++)
                                         smp_it->Animate(true);
                                 }
                             }

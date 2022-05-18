@@ -3,7 +3,7 @@
 // file: CameraTransformManager.cpp - camera transformation class implementation
 // author: Karl-Mihkel Ott
 
-
+/***** Deprecated ******/
 #define CAMERA_TRANSFORM_MANAGER_CPP
 #include <CameraTransformManager.h>
 
@@ -28,14 +28,13 @@ namespace DENG {
     }
 
 
-    void CameraTransformManager::MoveCameraRelatively(const Libdas::Vector3<float> &_delta_mov, bool ignore_pitch_movement) {
+    void CameraTransformManager::MoveCamera(const Libdas::Vector3<float> &_delta_mov, bool ignore_pitch_movement) {
         Libdas::Vector4<float> mov;
         if(!ignore_pitch_movement)
             mov = m_rel_z_rot * m_rel_y_rot * m_rel_x_rot * Libdas::Vector4<float>{ _delta_mov.first, _delta_mov.second, _delta_mov.third, 1.0f };
         else mov = m_rel_z_rot * m_rel_y_rot * Libdas::Vector4<float>(_delta_mov.first,  _delta_mov.second, _delta_mov.third, 1.0f);
 
         m_camera_pos += mov;
-        m_translation = m_normalized_sides * m_camera_pos;
     }
 
 
@@ -54,15 +53,6 @@ namespace DENG {
         m_rel_x_rot = { sinf(m_rotations.x / 2), 0, 0, cosf(m_rotations.x / 2) };
         m_rel_y_rot = { 0, sinf(m_rotations.y / 2), 0, cosf(m_rotations.y / 2) };
         m_rel_z_rot = { 0, 0, sinf(m_rotations.z / 2), cosf(m_rotations.z / 2) };
-
-        const Libdas::Matrix4<float> sides = {
-            { 1.0f, 0.0f, 0.0f, 0.0f },
-            { 0.0f, 1.0f, 0.0f, 0.0f },
-            { 0.0f, 0.0f, 1.0f, 0.0f },
-            { 0.0f, 0.0f, 0.0f, 1.0f }
-        };
-
-        m_normalized_sides = (m_rel_z_rot * m_rel_y_rot * m_rel_x_rot).ExpandToMatrix4() * sides;
     }
 
 
@@ -83,18 +73,6 @@ namespace DENG {
         m_rel_x_rot = { sinf(m_rotations.x / 2), 0, 0, cosf(m_rotations.x / 2) };
         m_rel_y_rot = { 0, sinf(m_rotations.y / 2), 0, cosf(m_rotations.y / 2) };
         m_rel_z_rot = { 0, 0, sinf(m_rotations.z / 2), cosf(m_rotations.z / 2) };
-
-        const Libdas::Matrix4<float> sides = {
-            { 1.0f, 0.0f, 0.0f, 0.0f },
-            { 0.0f, 1.0f, 0.0f, 0.0f },
-            { 0.0f, 0.0f, 1.0f, 0.0f },
-            { 0.0f, 0.0f, 0.0f, 1.0f }
-        };
-
-
-        m_translation_offset = { _point.first, _point.second, _point.third };
-        m_normalized_sides = (m_rel_z_rot * m_rel_y_rot * m_rel_x_rot).ExpandToMatrix4() * sides;
-        m_translation = m_camera_pos;
     }
 
 

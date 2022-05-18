@@ -68,7 +68,7 @@ namespace DENG {
         private:
             Libdas::DasParser m_parser;
             Renderer &m_renderer;
-            std::vector<Animation> m_animation_samplers;
+            std::vector<Animation> m_animations;
             std::vector<SceneLoader> m_scene_loaders;
             static uint32_t m_model_index;
             static uint32_t m_animation_index;
@@ -96,7 +96,7 @@ namespace DENG {
             }
 
             inline std::vector<Animation> &GetAnimations() {
-                return m_animation_samplers;
+                return m_animations;
             }
     };
 }

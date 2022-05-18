@@ -1,12 +1,12 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: NodeTransformManager.h - DAS model node transformation handler header
+// file: NodeLoader.h - DAS model node transformation handler header
 // author: Karl-Mihkel Ott
 
-#ifndef NODE_TRANSFORM_MANAGER_H
-#define NODE_TRANSFORM_MANAGER_H
+#ifndef NODE_LOADER_H
+#define NODE_LOADER_H
 
-#ifdef NODE_TRANSFORM_MANAGER_CPP
+#ifdef NODE_LOADER_CPP
     #include <cstdint>
     #include <cstring>
     #include <cmath>
@@ -57,8 +57,7 @@ namespace DENG {
 
             std::vector<NodeLoader> m_child_nodes;
             std::vector<uint32_t> m_node_lookup;
-            std::vector<AnimationSampler*> m_animation_samplers;
-            std::vector<AnimationSampler*> m_child_samplers;
+            std::vector<std::pair<const bool*, AnimationSampler*>> m_animation_samplers;
             static uint32_t m_node_index;
             std::string m_node_name = "Unnamed node";
 

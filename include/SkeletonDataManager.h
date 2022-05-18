@@ -2,7 +2,6 @@
 // licence: Apache, see LICENCE file
 // file: SkeletonDataManager.h - DAS skeleton transformation data manager
 // author: Karl-Mihkel Ott
-
 #ifndef SKELETON_DATA_MANAGER_H
 #define SKELETON_DATA_MANAGER_H
 
@@ -58,10 +57,11 @@ namespace DENG {
             std::vector<JointTransformation> m_joint_trs_transforms;
             std::vector<Libdas::Matrix4<float>> m_inverse_bind_matrices;
             std::vector<uint32_t> m_joint_lookup;
-            std::vector<AnimationSampler*> m_joint_samplers;
+            std::vector<std::pair<const bool*, AnimationSampler*>> m_joint_samplers;
             static uint32_t m_skeleton_index;
             std::string m_skeleton_name = "Unnamed skeleton";
             uint32_t m_max_joint = 0;
+            bool m_is_bound = false;
 
         private:
             //void _CalculateInverseBindMatrices();
@@ -70,8 +70,9 @@ namespace DENG {
             void _ApplyJointTransforms(uint32_t _joint_id);
 
         public:
-            SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_samplers);
+            SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations);
             void Update();
+            void SetNewParentTransform(const Libdas::Matrix4<float> &_parent);
 
             inline std::vector<Libdas::Matrix4<float>> &GetJointMatrices() {
                 return m_joint_matrices;

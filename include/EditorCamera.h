@@ -31,7 +31,6 @@
     #include <Window.h>
     #include <Renderer.h>
     #include <ModelUniforms.h>
-    #include <CameraTransformManager.h>
     #include <Camera3D.h>
 #endif
 
@@ -40,7 +39,15 @@ namespace DENG {
     class DENG_API EditorCamera : public Camera3D {
         private:
             bool m_is_enabled = false;
-            const Libdas::Vector4<float> m_center_point = { 0.0f, 0.0f, 0.0f, 0.0f };
+            Libdas::Point3D<float> m_origin = { 0.0f, 0.0f, 0.0f };
+
+            // camera TR properties
+            Libdas::Point3D<float> m_translation = { 0.0f, 0.0f, 0.0f };
+            Libdas::Point3D<float> m_rotation = { 0.0f, 0.0f, 0.0f };
+
+        private:
+            void _ForceLimits();
+            void _ConstructViewMatrix();
 
         public:
             EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);

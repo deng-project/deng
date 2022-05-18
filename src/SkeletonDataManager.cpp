@@ -5,7 +5,7 @@ namespace DENG {
 
     uint32_t SkeletonDataManager::m_skeleton_index = 0;
 
-    SkeletonDataManager::SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animation_sampler) : 
+    SkeletonDataManager::SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations) : 
         m_parser(_parser),
         m_skeleton(_skeleton),
         m_node_transform(_node),
@@ -29,14 +29,13 @@ namespace DENG {
 
         _FillJointTransformTableTRS();
         _CalculateJointWorldTransforms();
-        //_CalculateInverseBindMatrices();
 
         // check which animation sampler joint ids are used in current skeleton
-        for(auto ani_it = _animation_sampler.begin(); ani_it != _animation_sampler.end(); ani_it++) {
-            for(auto smp_it = ani_it->second.begin(); smp_it != ani_it->second.end(); smp_it++) {
+        for(auto ani_it = _animations.begin(); ani_it != _animations.end(); ani_it++) {
+            for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++) {
                 for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
                     if(m_skeleton.joints[i] == smp_it->GetAnimationChannel().joint_id)
-                        m_joint_samplers.push_back(&(*smp_it));
+                        m_joint_samplers.push_back(std::make_pair(&ani_it->is_bound, &(*smp_it)));
                 }
             }
         }
@@ -111,7 +110,9 @@ namespace DENG {
             children.pop();
 
             const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(curr_id);
-            m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * /* m_inverse_bind_matrices[m_joint_lookup[curr_id]]; */joint.inverse_bind_pos;
+            if(m_is_bound)
+                m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * /* m_inverse_bind_matrices[m_joint_lookup[curr_id]]; */joint.inverse_bind_pos;
+            else m_joint_matrices[m_joint_lookup[curr_id]] = Libdas::Matrix4<float>();
 
             for(uint32_t i = 0; i < joint.children_count; i++)
                 children.push(joint.children[i]);
@@ -120,27 +121,31 @@ namespace DENG {
 
 
     void SkeletonDataManager::Update() {
+        m_is_bound = false;
         // update animation samplers
         for(auto it = m_joint_samplers.begin(); it != m_joint_samplers.end(); it++) {
-            (*it)->Update();
-            const uint32_t ani_joint = (*it)->GetAnimationChannel().joint_id;
+            if(*it->first) {
+                m_is_bound = true;
+                it->second->Update();
+                const uint32_t ani_joint = it->second->GetAnimationChannel().joint_id;
 
-            switch((*it)->GetAnimationTarget()) {
-                case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                    m_joint_trs_transforms[m_joint_lookup[ani_joint]].t = (*it)->GetTranslation();
-                    break;
+                switch(it->second->GetAnimationTarget()) {
+                    case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                        m_joint_trs_transforms[m_joint_lookup[ani_joint]].t = it->second->GetTranslation();
+                        break;
 
-                case LIBDAS_ANIMATION_TARGET_ROTATION:
-                    m_joint_trs_transforms[m_joint_lookup[ani_joint]].r = (*it)->GetRotation();
-                    break;
+                    case LIBDAS_ANIMATION_TARGET_ROTATION:
+                        m_joint_trs_transforms[m_joint_lookup[ani_joint]].r = it->second->GetRotation();
+                        break;
 
-                case LIBDAS_ANIMATION_TARGET_SCALE:
-                    m_joint_trs_transforms[m_joint_lookup[ani_joint]].s = (*it)->GetScale();
-                    break;
+                    case LIBDAS_ANIMATION_TARGET_SCALE:
+                        m_joint_trs_transforms[m_joint_lookup[ani_joint]].s = it->second->GetScale();
+                        break;
 
-                default:
-                    DENG_ASSERT(false);
-                    break;
+                    default:
+                        DENG_ASSERT(false);
+                        break;
+                }
             }
         }
 

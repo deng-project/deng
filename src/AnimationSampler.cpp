@@ -64,12 +64,8 @@ namespace DENG {
                     } else {
                         m_rotation = *q1 * (1 - t) + *q2 * t; 
                     }
-
-                    m_rotation.x = -m_rotation.x;
-                    m_rotation.y = -m_rotation.y;
-                    m_rotation.z = -m_rotation.z;
-                    break;
                 }
+                break;
 
             // uniform scale
             case LIBDAS_ANIMATION_TARGET_SCALE:
@@ -202,17 +198,18 @@ namespace DENG {
         std::memset(m_morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
 
         // calculate delta time
-        if(m_animate) m_active_time = std::chrono::system_clock::now();
+        if(m_animate) m_active_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
         const float kf = delta_time.count() / 1000 + m_cached_delta_time;
         const uint32_t next = (m_active_timestamp_index + 1) % m_channel.keyframe_count;
+        std::cout << kf << std::endl;
 
         // check the current timestamp against keyframe values
         if(kf >= m_channel.keyframes[next]) {
             m_active_timestamp_index++;
             if(m_active_timestamp_index >= m_channel.keyframe_count) {
                 m_active_timestamp_index = 0;
-                m_beg_time = std::chrono::system_clock::now();
+                m_beg_time = std::chrono::high_resolution_clock::now();
                 m_cached_delta_time = 0;
                 if(!m_repeat) m_animate = false;
             }

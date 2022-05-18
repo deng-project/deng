@@ -3,7 +3,7 @@
 // file: CameraTransformManager.h - camera transformation class header
 // author: Karl-Mihkel Ott
 
-
+/***** Deprecated ******/
 #ifndef CAMERA_TRANSFORM_MANAGER_H
 #define CAMERA_TRANSFORM_MANAGER_H
 
@@ -29,30 +29,16 @@ namespace DENG {
 
     class CameraTransformManager {
         private:
+            // rotation quaternions relative to the camera system
+            Libdas::Quaternion m_x_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+            Libdas::Quaternion m_y_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+            Libdas::Quaternion m_z_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+
+            // camera TR properties
+            Libdas::Point3D<float> m_rotations = Libdas::Point3D<float>(0.0f, 0.0f, 0.0f);
             Libdas::Vector4<float> m_camera_pos = Libdas::Vector4<float>(0.0f, 0.0f, 0.0f, 1.0f);
             Libdas::Vector4<float> m_translation = Libdas::Vector4<float>(0.0f, 0.0f, 0.0f, 1.0f);
             Libdas::Vector3<float> m_translation_offset = Libdas::Vector3<float>(0.0f, 0.0f, 0.0f);
-
-            // rotation quaternions relative to the world position
-            Libdas::Quaternion m_abs_x_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
-            Libdas::Quaternion m_abs_y_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
-            Libdas::Quaternion m_abs_z_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
-
-            // rotation quaternions relative to the camera system
-            Libdas::Quaternion m_rel_x_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
-            Libdas::Quaternion m_rel_y_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
-            Libdas::Quaternion m_rel_z_rot = Libdas::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
-
-            Libdas::Point3D<float> m_rotations = Libdas::Point3D<float>(0.0f, 0.0f, 0.0f);
-            // camera viewport sides in world coordinates
-            // NOTE: using right handed coordinate system
-            Libdas::Matrix4<float> m_normalized_sides = {
-                { 1.0f, 0.0f, 0.0f, 0.0f },  // right side
-                { 0.0f, 1.0f, 0.0f, 0.0f },  // top side
-                { 0.0f, 0.0f, 1.0f, 0.0f },  // front side
-                { 0.0f, 0.0f, 0.0f, 1.0f }
-            };
-
         private:
             void _PreventRotationOverflow();
 
@@ -60,18 +46,12 @@ namespace DENG {
             CameraTransformManager() = default;
 
             // NOTE: Relative means relative to camera coordinate set, absolute means relative to world coordinates
-            void MoveCameraRelatively(const Libdas::Vector3<float> &_delta_mov, bool ignore_pitch_movement = false);
-            void MoveCameraAbsolutely(const Libdas::Vector3<float> &_delta_mov);
-            //void MoveCameraRelativeToPoint(const Libdas::Vector3<float> &_delta_mov, const Libdas::Vector4<float> &_point);
-
-            // z coordinate will be directed at the point
-            //void MoveCameraRelativeToPoint(const Libdas::Vector3<float> &_delta_mov, const Libdas::Vector4<float> &_point);
-
-            void RotateCameraRelatively(const Libdas::Point3D<float> &_delta_rot);
-            void RotateCameraAbsolutely(const Libdas::Point3D<float> &_delta_rot);
+            void MoveCamera(const Libdas::Vector3<float> &_delta_mov, bool ignore_pitch_movement = false);
+            void RotateCamera(const Libdas::Point3D<float> &_delta_rot);
 
             // z axis will be pointing to the given point
-            void CustomPointRelativeRotation(const Libdas::Point3D<float> &_delta_rot, const Libdas::Vector4<float> &_point);
+            void CustomPointOriginRotation(const Libdas::Point3D<float> &_delta_rot, const Libdas::Vector4<float> &_point);
+            void CustomPointOriginMove(const Libdas::Vector3<float> &_delta_mov, const Libdas::Vector4<float> &_point);
 
             Libdas::Matrix4<float> ConstructViewMatrix();
 

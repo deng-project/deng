@@ -18,21 +18,21 @@ namespace DENG {
         m_parser.Parse();
 
         // load each animation in model
-        m_animation_samplers.reserve(m_parser.GetAnimationCount());
+        m_animations.reserve(m_parser.GetAnimationCount());
         for(uint32_t i = 0; i < m_parser.GetAnimationCount(); i++) {
             const Libdas::DasAnimation &ani = m_parser.AccessAnimation(i);
-            m_animation_samplers.emplace_back();
+            m_animations.emplace_back();
 
             // check if animation name was given
             if(ani.name != "")
-                m_animation_samplers.back().first = ani.name;
-            else m_animation_samplers.back().first = "Unnamed animation" + std::to_string(m_animation_index++);
+                m_animations.back().name = ani.name;
+            else m_animations.back().name = "Unnamed animation" + std::to_string(m_animation_index++);
 
-            m_animation_samplers.back().second.reserve(ani.channel_count);
+            m_animations.back().samplers.reserve(ani.channel_count);
 
             for(uint32_t j = 0; j < ani.channel_count; j++) {
                 const Libdas::DasAnimationChannel &channel = m_parser.AccessAnimationChannel(ani.channels[j]);
-                m_animation_samplers.back().second.emplace_back(channel, m_parser);
+                m_animations.back().samplers.emplace_back(channel, m_parser);
             }
         }
 
@@ -42,7 +42,7 @@ namespace DENG {
         m_scene_loaders.reserve(m_parser.GetSceneCount());
         for(uint32_t i = 0; i < m_parser.GetSceneCount(); i++) {
             const Libdas::DasScene &scene = m_parser.AccessScene(i);
-            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animation_samplers);
+            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animations);
         }
 
         if(m_parser.GetProperties().model != "")

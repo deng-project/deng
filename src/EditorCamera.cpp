@@ -14,7 +14,43 @@ namespace DENG {
         DENG_ASSERT(m_config.index() == 2); 
 
         EditorCameraConfiguration &conf = std::get<EditorCameraConfiguration>(m_config);
-        m_cam_transform.MoveCameraAbsolutely({ 0.0f, 0.0f, -conf.zoom_step });
+        m_translation = { 0.0f, 0.0f, conf.zoom_step };
+    }
+
+
+    void EditorCamera::_ForceLimits() {
+        // no x axis rotation overflow for angles greater / less than PI / 2 | -PI / 2 is allowed
+        if(m_rotation.x > PI / 2)
+            m_rotation.x = PI / 2;
+        else if(m_rotation.x < -PI / 2)
+            m_rotation.x = -PI / 2;
+
+        // don't allow y rotations greater / smaller than 2 * PI | -2 * PI 
+        if(m_rotation.y > 2 * PI)
+            m_rotation.y = m_rotation.y - 2 * PI;
+        else if(m_rotation.y < -2 * PI)
+            m_rotation.y = m_rotation.y + 2 * PI;
+    }
+
+
+    void EditorCamera::_ConstructViewMatrix() {
+        _ForceLimits();
+
+        // construct quaternions representing the rotation of the camera
+        Libdas::Quaternion x = { sinf(m_rotation.x / 2), 0.0f, 0.0f, cosf(m_rotation.x / 2) };
+        Libdas::Quaternion y = { 0.0f, sinf(m_rotation.y / 2), 0.0f, cosf(m_rotation.y / 2) };
+        Libdas::Quaternion z = { 0.0f, 0.0f, sinf(m_rotation.z / 2), cosf(m_rotation.z / 2) };
+
+        // construct translation matrix
+        Libdas::Matrix4<float> translation = {
+            { 1.0f, 0.0f, 0.0f, m_translation.x - m_origin.x },
+            { 0.0f, 1.0f, 0.0f, m_translation.y - m_origin.y },
+            { 0.0f, 0.0f, 1.0f, m_translation.z - m_origin.z },
+            { 0.0f, 0.0f, 0.0f, 1.0f },
+        };
+
+        m_ubo.view_matrix = translation * (x * y * z).ExpandToMatrix4();
+        m_ubo.view_matrix = m_ubo.view_matrix.Transpose();
     }
 
 
@@ -29,8 +65,8 @@ namespace DENG {
 
 
     void EditorCamera::Update() {
+        // no transposition needed
         m_ubo.projection_matrix = _CalculateProjection();
-        
         EditorCameraConfiguration &conf = std::get<EditorCameraConfiguration>(m_config);
 
         if(m_is_enabled) {
@@ -42,35 +78,26 @@ namespace DENG {
             if(m_window.IsHidEventActive(conf.rotate_toggle)) {
                 m_window.ChangeVCMode(true);
                 Libdas::Point3D<float> rot = {
-                    delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
-                    delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
+                    -delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
+                    -delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
                     0.0f
                 };
 
-                // check for x rotation overflow
-                auto current_rotation = m_cam_transform.GetRotations();
-                // force limits to rotations on u axis
-                if(current_rotation.x + rot.x > PI / 2)
-                    rot.x = PI / 2 - abs(current_rotation.x);
-                else if(current_rotation.x + rot.x < -PI / 2)
-                    rot.x = -(PI / 2 - abs(current_rotation.x));
-
-                m_cam_transform.CustomPointRelativeRotation(rot, m_center_point);
-
+                m_rotation += rot;
             } else {
                 m_window.ChangeVCMode(false);
-                if(m_window.IsHidEventActive(conf.zoom_in) && m_cam_transform.GetPosition().third + conf.zoom_step < 0) {
-                    delta_step = conf.zoom_step;
-                    m_cam_transform.MoveCameraAbsolutely({ 0.0f, 0.0f, delta_step });
+                if(m_window.IsHidEventActive(conf.zoom_in)) {
+                    delta_step = -conf.zoom_step;
+                    m_translation.z += delta_step;
                 }
                 else if(m_window.IsHidEventActive(conf.zoom_out)) {
-                    delta_step = -conf.zoom_step;
-                    m_cam_transform.MoveCameraAbsolutely({ 0.0f, 0.0f, delta_step });
+                    delta_step = conf.zoom_step;
+                    m_translation.z += delta_step;
                 }
             }
         }
 
-        m_ubo.view_matrix = m_cam_transform.ConstructViewMatrix();
+        _ConstructViewMatrix();
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), sizeof(ModelCameraUbo), m_ubo_offset);
     }
 }

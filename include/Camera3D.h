@@ -30,7 +30,6 @@
     #include <ModelUniforms.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
-    #include <CameraTransformManager.h>
     #include <GPUMemoryManager.h>
 #endif
 
@@ -80,7 +79,6 @@ namespace DENG {
             Renderer &m_renderer;
             Window &m_window;
             Camera3DConfiguration m_config;
-            CameraTransformManager m_cam_transform;
             ModelCameraUbo m_ubo;
 
             // perspective projection matrix attributes

@@ -11,7 +11,6 @@ set(DENG_HEADERS
     include/BaseTypes.h
     include/BufferAlignment.h
     include/Camera3D.h
-    include/CameraTransformManager.h
     include/EditorCamera.h
     include/ErrorDefinitions.h
     include/FirstPersonCamera.h
@@ -47,7 +46,6 @@ set(DENG_HEADERS
 set(DENG_SOURCES
     src/AnimationSampler.cpp
     src/Camera3D.cpp
-    src/CameraTransformManager.cpp
     src/EditorCamera.cpp
     src/FirstPersonCamera.cpp
     src/GPUMemoryManager.cpp

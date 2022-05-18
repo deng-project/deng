@@ -59,8 +59,8 @@ namespace DENG {
             const Libdas::DasAnimationChannel &m_channel;
             Libdas::DasParser &m_parser;
             const std::vector<uint32_t> m_ubo_offsets;
-            std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
-            std::chrono::time_point<std::chrono::system_clock> m_active_time = std::chrono::system_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::system_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_active_time = std::chrono::system_clock::now();
 
             // needs some fixes later
             const uint32_t m_weight_target_count = 1;
@@ -93,12 +93,13 @@ namespace DENG {
             inline void Animate(bool _repeat) {
                 m_animate = true;
                 m_repeat = _repeat;
-                m_beg_time = std::chrono::system_clock::now();
-                m_active_time = std::chrono::system_clock::now();
+                m_beg_time = std::chrono::high_resolution_clock::now();
+                m_active_time = std::chrono::high_resolution_clock::now();
             }
 
             inline void Stop() {
                 m_animate = false;
+                m_active_time = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
                 m_cached_delta_time += delta_time.count() / 1000.0f;
             }
@@ -132,7 +133,11 @@ namespace DENG {
             }
     };
 
-    typedef std::pair<std::string, std::vector<AnimationSampler>> Animation;
+    struct Animation {
+        std::string name;
+        std::vector<AnimationSampler> samplers;
+        bool is_bound = false;
+    };
 
 }
 
