@@ -52,16 +52,24 @@ namespace DENG {
                     const size_t size = sizeof(Libdas::Quaternion);
                     Libdas::Quaternion *q1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
                     Libdas::Quaternion *q2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
-                    float dot = Libdas::Quaternion::Dot(*q1, *q2);
+                    const float dot = Libdas::Quaternion::Dot(*q1, *q2);
 
-                    float sign = dot / std::abs(dot);
-                    float a = acosf(dot);
+                    const float a = acosf(std::abs(dot));
+                    const float s = dot / std::abs(dot);
 
-                    if(a != 0.0f) {
-                        m_rotation = *q1 * sinf(a * (1 - t)) / sinf(a) + *q2 * (sign * sinf(a * t) / sinf(a));
+                    if(a > ZERO_MARGIN) {
+                        const float k1 = sinf(a * (1 - t)) / sinf(a);
+                        const float k2 = s * sinf(a * t) / sinf(a);
+                        m_rotation = *q1 * k1 + *q2 * k2;
+                    } else {
+                        m_rotation = *q1 * (1 - t) + *q2 * t; 
                     }
+
+                    m_rotation.x = -m_rotation.x;
+                    m_rotation.y = -m_rotation.y;
+                    m_rotation.z = -m_rotation.z;
+                    break;
                 }
-                break;
 
             // uniform scale
             case LIBDAS_ANIMATION_TARGET_SCALE:
@@ -198,10 +206,6 @@ namespace DENG {
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
         const float kf = delta_time.count() / 1000 + m_cached_delta_time;
         const uint32_t next = (m_active_timestamp_index + 1) % m_channel.keyframe_count;
-
-#ifdef _DEBUG
-        std::cout << "Keyframe timestamp: " << kf << std::endl;
-#endif
 
         // check the current timestamp against keyframe values
         if(kf >= m_channel.keyframes[next]) {

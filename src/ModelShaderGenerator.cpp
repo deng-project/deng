@@ -47,7 +47,7 @@ namespace DENG {
         // write joint transformations
         if(_mesh_attr_desc.joint_set_count) {
             _shader += "layout(std140, set = 1, binding = 2) uniform JointMatrices { mat4 mat[" + std::to_string(_mesh_attr_desc.skeleton_joint_count) + "]; } joint_matrices;\n";
-            _custom_code += "\tmat4 skeleton = \n";
+            _custom_code += "\tcustom = \n";
             for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
                 _shader += "layout(location = " + std::to_string(m_in_id++) + ") in uvec4 joints" + std::to_string(i) + ";\n";
                 _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 weights" + std::to_string(i) + ";\n";
@@ -63,7 +63,6 @@ namespace DENG {
                                     "\t\tweights" + std::to_string(i) + ".w * joint_matrices.mat[int(joints" + std::to_string(i) + ".w)] +\n";
                 }
             }
-            _custom_code += "\tc = c * skeleton;\n";
         }
     }
 
@@ -247,7 +246,7 @@ namespace DENG {
             custom_code += "\tout_col" + std::to_string(i) + " = color" + std::to_string(i) + ";\n";
 
         // position calculation
-        custom_code += "\tgl_Position = c * m * vec4(pos, 1.0f);\n";
+        custom_code += "\tgl_Position = cam * m * custom * vec4(pos, 1.0f);\n";
 
         const auto pos = body.find("${CUSTOM_CODE}");
         const std::string mod_body = body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);

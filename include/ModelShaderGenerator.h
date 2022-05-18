@@ -42,7 +42,8 @@
                                         "} model;\n"
 
     #define VERTEX_MAIN                 "void main() {\n"\
-                                        "    mat4 c = camera.projection * camera.view;\n"\
+                                        "    mat4 custom = mat4(1.0f);\n"\
+                                        "    mat4 cam = camera.projection * camera.view;\n"\
                                         "    mat4 m = model.node;\n"\
                                         "\n"\
                                         "${CUSTOM_CODE}\n"\

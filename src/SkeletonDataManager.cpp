@@ -47,14 +47,6 @@ namespace DENG {
     }
 
 
-    //void SkeletonDataManager::_CalculateInverseBindMatrices() {
-        //m_inverse_bind_matrices.resize(m_max_joint);
-        //for(size_t i = 0; i < m_joint_world_transforms.size(); i++) {
-            //m_inverse_bind_matrices[m_joint_lookup[i]] = m_joint_world_transforms[m_joint_lookup[i]].Inverse();
-        //}
-    //}
-
-
     void SkeletonDataManager::_FillJointTransformTableTRS() {
         m_joint_trs_transforms.resize(m_max_joint);
 
