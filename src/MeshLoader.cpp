@@ -181,8 +181,9 @@ namespace DENG {
 
 
     void MeshLoader::UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices) {
-        if(!m_disable_joint_transforms)
+        if(!m_disable_joint_transforms) {
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), m_mesh_joints_ubo_offset);
+        }
         else {
             std::vector<Libdas::Matrix4<float>> rmat(_matrices.size());
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), rmat.size() * sizeof(Libdas::Matrix4<float>), m_mesh_joints_ubo_offset);

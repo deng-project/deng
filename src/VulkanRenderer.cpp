@@ -12,7 +12,7 @@ namespace DENG {
     VulkanRenderer::VulkanRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
         GPUMemoryManager::GetInstance();
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
-        mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count);
+        mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count, m_conf);
 
         _CreateCommandPool();
         _CreateSemaphores();
@@ -547,7 +547,6 @@ namespace DENG {
                     vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, static_cast<uint32_t>(m_shaders[shader_id].attributes.size()), buffers.data(), m_meshes[i].commands[j].attribute_offsets.data());
 
                     offset = m_meshes[i].commands[j].indices_offset;
-
                     vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
 
                     // check if descriptor sets should be bound

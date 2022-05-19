@@ -10,8 +10,11 @@ namespace DENG {
     
     namespace Vulkan {
 
-        SwapchainCreator::SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c) : 
-            mp_instance_creator(_instance_creator), m_window_size(_win_size), m_sample_c(_sample_c)
+        SwapchainCreator::SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c, const RendererConfig &_conf) : 
+            mp_instance_creator(_instance_creator), 
+            m_window_size(_win_size), 
+            m_sample_c(_sample_c),
+            m_config(_conf)
         {
             _ConfigureSwapchainSettings();
             _CreateSwapchain();
@@ -64,7 +67,8 @@ namespace DENG {
 
 
             bool found_presentation_mode = false;
-            for(const VkPresentModeKHR &presentation_mode : mp_instance_creator->GetPresentationModes()) {
+            bool found_vsync = false;
+            for(const VkPresentModeKHR presentation_mode : mp_instance_creator->GetPresentationModes()) {
                 // Check which present modes are available
                 switch (presentation_mode) {
                     case VK_PRESENT_MODE_IMMEDIATE_KHR:
@@ -77,6 +81,7 @@ namespace DENG {
 
                     case VK_PRESENT_MODE_FIFO_KHR:
                         LOG("VK_PRESENT_MODE_FIFO_KHR is available!");
+                        found_vsync = true;
                         break;
 
                     case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
@@ -98,12 +103,16 @@ namespace DENG {
                 if(presentation_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
                     m_selected_present_mode = presentation_mode;
                     found_presentation_mode = true;
-                    break;
                 }
             }
 
-            if(!found_presentation_mode)
+            if(m_config.enable_vsync && !found_vsync) {
+                VK_SWAPCHAIN_ERR("Vsync requested but no VK_PRESENT_MODE_FIFO_KHR was found");
+            } else if(m_config.enable_vsync) {
+                m_selected_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+            } else if(!found_presentation_mode) {
                 m_selected_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            }
         }
 
 

@@ -19,7 +19,9 @@ namespace DENG {
     void AnimationSampler::_LinearInterpolation(float _t1, float _tc, float _t2) {
         const size_t curr = static_cast<size_t>(m_active_timestamp_index);
         const size_t next = static_cast<size_t>((m_active_timestamp_index + 1) % m_channel.keyframe_count);
-        const float t = (_tc - _t1) / (_t2 - _t1);
+        float t = (_tc - _t1) / (_t2 - _t1);
+        if(_t2 - _t2 < ZERO_MARGIN)
+            t = 0;
 
         switch(m_channel.target) {
             // weights
@@ -52,18 +54,20 @@ namespace DENG {
                     const size_t size = sizeof(Libdas::Quaternion);
                     Libdas::Quaternion *q1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
                     Libdas::Quaternion *q2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
-                    const float dot = Libdas::Quaternion::Dot(*q1, *q2);
+                    float dot = Libdas::Quaternion::Dot(*q1, *q2);
 
-                    const float a = acosf(std::abs(dot));
+                    const float a = acosf(dot);
                     const float s = dot / std::abs(dot);
 
-                    if(a > ZERO_MARGIN) {
-                        const float k1 = sinf(a * (1 - t)) / sinf(a);
-                        const float k2 = s * sinf(a * t) / sinf(a);
+                    if(dot < 1.0f - ZERO_MARGIN) {
+                        const float sin_a = sinf(a);
+                        const float k1 = sinf(a * (1 - t)) / sin_a;
+                        const float k2 = s * sinf(a * t) / sin_a;
                         m_rotation = *q1 * k1 + *q2 * k2;
                     } else {
-                        m_rotation = *q1 * (1 - t) + *q2 * t; 
+                        m_rotation = *q1 * (1 - t) + *q2 * t;
                     }
+
                 }
                 break;
 
@@ -202,14 +206,13 @@ namespace DENG {
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
         const float kf = delta_time.count() / 1000 + m_cached_delta_time;
         const uint32_t next = (m_active_timestamp_index + 1) % m_channel.keyframe_count;
-        std::cout << kf << std::endl;
 
         // check the current timestamp against keyframe values
         if(kf >= m_channel.keyframes[next]) {
             m_active_timestamp_index++;
             if(m_active_timestamp_index >= m_channel.keyframe_count) {
-                m_active_timestamp_index = 0;
                 m_beg_time = std::chrono::high_resolution_clock::now();
+                m_active_timestamp_index = 0;
                 m_cached_delta_time = 0;
                 if(!m_repeat) m_animate = false;
             }

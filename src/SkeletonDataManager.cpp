@@ -122,6 +122,9 @@ namespace DENG {
 
     void SkeletonDataManager::Update() {
         m_is_bound = false;
+        std::fill(m_joint_trs_transforms.begin(), m_joint_trs_transforms.end(), JointTransformation());
+        std::fill(m_joint_world_transforms.begin(), m_joint_world_transforms.end(), Libdas::Matrix4<float>());
+
         // update animation samplers
         for(auto it = m_joint_samplers.begin(); it != m_joint_samplers.end(); it++) {
             if(*it->first) {

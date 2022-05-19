@@ -9,10 +9,17 @@
 
 #ifdef VULKAN_SWAPCHAIN_CREATOR_CPP
     #include <vector>
+    #include <cstring>
     #include <array>
     #include <vulkan/vulkan.h>
+    #include <string>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
 
     #include <libdas/include/Points.h>
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
 
     #include <Api.h>
     #include <ErrorDefinitions.h>
@@ -20,6 +27,8 @@
     #include <Window.h>
     #include <VulkanInstanceCreator.h>
     #include <VulkanHelpers.h>
+    #include <ShaderDefinitions.h>
+    #include <Renderer.h>
 #endif
 
 namespace DENG {
@@ -39,6 +48,8 @@ namespace DENG {
                 VkExtent2D m_extent;
                 VkSampleCountFlagBits m_sample_c;
                 VkRenderPass m_renderpass;
+
+                const RendererConfig &m_config;
             
             private:
                 void _ConfigureSwapchainSettings();
@@ -47,7 +58,7 @@ namespace DENG {
                 void _CreateRenderPass();
             
             public:
-                SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c);
+                SwapchainCreator(InstanceCreator *_instance_creator, Libdas::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c, const RendererConfig &_conf);
                 ~SwapchainCreator();
 
                 /**

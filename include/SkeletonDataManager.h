@@ -64,7 +64,6 @@ namespace DENG {
             bool m_is_bound = false;
 
         private:
-            //void _CalculateInverseBindMatrices();
             void _FillJointTransformTableTRS();
             void _CalculateJointWorldTransforms();
             void _ApplyJointTransforms(uint32_t _joint_id);

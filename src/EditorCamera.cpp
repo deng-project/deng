@@ -79,7 +79,7 @@ namespace DENG {
                 m_window.ChangeVCMode(true);
                 Libdas::Point3D<float> rot = {
                     -delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
-                    -delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
+                    delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
                     0.0f
                 };
 

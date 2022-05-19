@@ -43,7 +43,7 @@
     #include <ModelShaderGenerator.h>
     #include <ModelShaderManager.h>
     
-    #define ZERO_MARGIN 0.0001f
+    #define ZERO_MARGIN 0.000001f
 #endif
 
 #define TARGET_MASK_WEIGHT          0x00000001
