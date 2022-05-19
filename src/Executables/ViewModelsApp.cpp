@@ -277,7 +277,7 @@ int main() {
     int32_t backend = py.ExecuteFunction<int32_t>("BackendChooser", "Prompt");
 
     // python layer to prompt api selection dialog
-    DENG::RendererConfig conf = { true, { 0.0f, 0.0f, 0.0f, 0.0f } };
+    DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
     if(backend == USE_VULKAN) {
         DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "VulkanModelLoader");
         DENG::VulkanRenderer rend(win, conf);
