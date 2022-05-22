@@ -70,6 +70,7 @@ namespace DENG {
         int x, y, size;
         const char *tex = GetMissingTexture(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, tex, x, y, 4);
+        m_backend = RENDERER_BACKEND_OPENGL;
     }
 
 
@@ -488,7 +489,7 @@ namespace DENG {
                 _BindVertexAttributes(*cmd_it, shader_i, 0);
 
                 // for each mesh uniform object bind appropriate buffer ranges
-                for(auto ubo = mesh_it->ubo_blocks.begin(); ubo != mesh_it->ubo_blocks.begin(); ubo++) {
+                for(auto ubo = mesh_it->ubo_blocks.begin(); ubo != mesh_it->ubo_blocks.end(); ubo++) {
                     const GLuint binding = static_cast<GLuint>(ubo->binding);
                     const GLintptr offset = static_cast<GLintptr>(ubo->offset);
                     const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->size);
@@ -501,13 +502,13 @@ namespace DENG {
                 for(auto ubo = m_shaders[shader_i].ubo_data_layouts.begin(); ubo != m_shaders[shader_i].ubo_data_layouts.end(); ubo++) {
                     const GLuint binding = static_cast<GLuint>(ubo->block.binding);
 
-                    if(ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
+                    if(ubo->usage == UNIFORM_USAGE_PER_SHADER && ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
                         const GLintptr offset = static_cast<GLintptr>(ubo->block.offset);
                         const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->block.size);
 
                         glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");
-                    } else if(m_shaders[shader_i].use_texture_mapping) {
+                    } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && m_shaders[shader_i].use_texture_mapping) {
                         // tmp
                         for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
                             const GLuint tex_id = m_opengl_textures[*tex_it];
@@ -518,7 +519,6 @@ namespace DENG {
                             glErrorCheck("glBindTexture");
                         }
                     }
-
                 }
 
                 // check if scissoring was required

@@ -26,6 +26,7 @@ namespace DENG {
         int x, y, size;
         const char *data = GetMissingTexture(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
+        m_backend = RENDERER_BACKEND_VULKAN;
     }
 
 

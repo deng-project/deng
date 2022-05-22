@@ -61,6 +61,7 @@ set(DENG_SOURCES
     src/OpenGLShaderLoader.cpp
     src/PointViewer.cpp
     src/PythonScriptExecutor.cpp
+    src/Renderer.cpp
     src/SceneLoader.cpp
     src/ShaderDefinitions.cpp
     src/SkeletonDataManager.cpp

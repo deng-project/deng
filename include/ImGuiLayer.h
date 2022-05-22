@@ -52,7 +52,7 @@
                             "layout(location = 1) in vec4 col_mul;\n" \
                             "layout(location = 0) out vec4 color;\n" \
                             "void main() {\n" \
-                            "    color = texture(tex_sampler, uv) * col_mul;\n" \
+                            "    color = col_mul * texture(tex_sampler, uv);\n" \
                             "}\n"
 
     #define IMGUI_TEXTURE_NAME "__imgui__"
@@ -80,7 +80,6 @@ namespace DENG {
             std::chrono::time_point<std::chrono::system_clock> m_beg;
             std::chrono::time_point<std::chrono::system_clock> m_end;
             const std::string m_gui_texture_name;
-
             std::pair<uint32_t, uint32_t> m_main_region = std::make_pair(UINT32_MAX, UINT32_MAX);
 
         private:

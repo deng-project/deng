@@ -212,6 +212,7 @@ namespace DENG {
             VkAttachmentReference color_attachment_reference = {};
             color_attachment_reference.attachment = 0;
             color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
             VkAttachmentReference depth_attachment_reference{};
             depth_attachment_reference.attachment = 1;
             depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

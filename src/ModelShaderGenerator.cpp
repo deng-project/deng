@@ -46,7 +46,7 @@ namespace DENG {
 
         // write joint transformations
         if(_mesh_attr_desc.joint_set_count) {
-            _shader += "layout(std140, set = 1, binding = 2) uniform JointMatrices { mat4 mat[" + std::to_string(_mesh_attr_desc.skeleton_joint_count) + "]; } joint_matrices;\n";
+            _shader += "layout(std140, ${SET} binding = 2) uniform JointMatrices { mat4 mat[" + std::to_string(_mesh_attr_desc.skeleton_joint_count) + "]; } joint_matrices;\n";
             _custom_code += "\tcustom = \n";
             for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
                 _shader += "layout(location = " + std::to_string(m_in_id++) + ") in uvec4 joints" + std::to_string(i) + ";\n";
@@ -172,7 +172,18 @@ namespace DENG {
         for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 uv" + std::to_string(i) + ";\n";
             const std::string id = std::to_string(i);
-            _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
+            switch(Renderer::GetBackend()) {
+                case RENDERER_BACKEND_VULKAN:
+                    _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
+                    break;
+
+                case RENDERER_BACKEND_OPENGL:
+                    _shader += "layout(binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         for(uint32_t i = 0; i < _mesh_attr_desc.color_mul_count; i++)
@@ -248,8 +259,31 @@ namespace DENG {
         // position calculation
         custom_code += "\tgl_Position = cam * m * custom * vec4(pos, 1.0f);\n";
 
-        const auto pos = body.find("${CUSTOM_CODE}");
-        const std::string mod_body = body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
+        // set calculations
+        std::size_t pos = 0;
+        std::size_t fpos = 0;
+        while((fpos = shader.find("${SET}", pos)) != std::string::npos) {
+            switch(Renderer::GetBackend()) {
+                case RENDERER_BACKEND_VULKAN:
+                    if(pos == 0) {
+                        shader = shader.replace(fpos, std::strlen("${SET}"), "set = 0,");
+                    } else {
+                        shader = shader.replace(fpos, std::strlen("${SET}"), "set = 1,");
+                    }
+                    break;
+
+                case RENDERER_BACKEND_OPENGL:
+                    shader = shader.replace(fpos, std::strlen("${SET}"), "");
+                    break;
+
+                default:
+                    break;
+            }
+            pos = fpos;
+        }
+
+        fpos = body.find("${CUSTOM_CODE}");
+        const std::string mod_body = body.replace(fpos, std::strlen("${CUSTOM_CODE}"), custom_code);
         shader += mod_body;
         return shader;
     }
@@ -259,15 +293,39 @@ namespace DENG {
         m_in_id = 0;
         m_out_id = 0;
         m_binding_id = _mesh_attr_desc.joint_set_count ? 3 : 2;
-        std::string shader = "#version 450\n"\
-                              "#extension GL_ARB_separate_shader_objects : enable\n"\
-                              "layout(set = 1, binding = 1) uniform ModelUbo {\n"\
-                              "    mat4 node;\n"\
-                              "    vec4 color;\n"\
-                              "    vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
-                              "    uint is_color;\n"\
-                              "} model;\n"\
-                              "layout(location = " + std::to_string(m_out_id++) + ") out vec4 out_color;\n";
+        std::string shader;  
+
+        // correct shader uniform declaration according to the backend used
+        switch(Renderer::GetBackend()) {
+            case RENDERER_BACKEND_VULKAN:
+                shader = "#version 450\n"\
+                         "#extension GL_ARB_separate_shader_objects : enable\n"\
+                         "layout(std140, set = 1, binding = 1) uniform ModelUbo {\n"\
+                         "    mat4 node;\n"\
+                         "    vec4 color;\n"\
+                         "    vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
+                         "    uint is_color;\n"\
+                         "} model;\n"\
+                         "layout(location = " + std::to_string(m_out_id++) + ") out vec4 out_color;\n";
+                break;
+
+            case RENDERER_BACKEND_OPENGL:
+                shader = "#version 450\n"\
+                         "#extension GL_ARB_separate_shader_objects : enable\n"\
+                         "layout(std140, binding = 1) uniform ModelUbo {\n"\
+                         "    mat4 node;\n"\
+                         "    vec4 color;\n"\
+                         "    vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
+                         "    uint is_color;\n"\
+                         "} model;\n"\
+                         "layout(location = " + std::to_string(m_out_id++) + ") out vec4 out_color;\n";
+                break;
+
+            default:
+                break;
+        }
+
+        
         std::string body = 
             "void main() {\n"\
             "\tif(model.is_color != 0)\n"\

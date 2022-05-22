@@ -17,24 +17,30 @@
     #include <iostream>
 #endif
 
+    #include <libdas/include/Points.h>
     #include <libdas/include/Vector.h>
     #include <libdas/include/Matrix.h>
+
+    #include <Api.h>
     #include <ErrorDefinitions.h>
     #include <ModelUniforms.h>
 #define DENG_DEFS_ONLY
     #include<ModelShaderManager.h>
 #undef DENG_DEFS_ONLY
+    #include <ShaderDefinitions.h>
+    #include <Window.h>
+    #include <Renderer.h>
 
     // Declarations ${ID} and ${CUSTOM_CODE} specify layout id and custom code in main() correspondingly
     #define SHADER_HEADING              "#version 450\n"\
                                         "#extension GL_ARB_separate_shader_objects : enable\n"\
-                                        "layout(std140, set = 0, binding = 0) uniform CameraUbo {\n"\
+                                        "layout(std140, ${SET} binding = 0) uniform CameraUbo {\n"\
                                         "    mat4 projection;\n"\
                                         "    mat4 view;\n"\
                                         "} camera;\n"\
                                         "\n"\
                                         "// Model uniform data\n"\
-                                        "layout(std140, set = 1, binding = 1) uniform ModelUbo {\n"\
+                                        "layout(std140, ${SET} binding = 1) uniform ModelUbo {\n"\
                                         "   mat4 node;\n"\
                                         "   vec4 color;\n"\
                                         "   vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
