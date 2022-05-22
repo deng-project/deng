@@ -504,6 +504,10 @@ namespace DENG {
         cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         cmd_buf_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
+        // complete pool transfer whenever possible
+        for(auto it = m_shader_desc_allocators.begin(); it != m_shader_desc_allocators.end(); it++)
+            it->CompletePoolTransfer();
+
         // Begin recording command buffer
         if(vkBeginCommandBuffer(m_command_buffers[m_current_frame], &cmd_buf_info) != VK_SUCCESS)
             VK_DRAWCMD_ERR("failed to begin recording command buffers");
@@ -555,11 +559,19 @@ namespace DENG {
                     // per shader descriptor sets
                     if(m_shaders[shader_id].ubo_data_layouts.size()) {
                         if(m_shaders[shader_id].use_texture_mapping) {
+                            std::vector<std::string> names;
+                            std::vector<Vulkan::TextureData> textures;
+                            names.reserve(m_meshes[i].commands[j].texture_names.size());
+                            textures.reserve(m_meshes[i].commands[j].texture_names.size());
                             for(auto tex_it = m_meshes[i].commands[j].texture_names.begin(); tex_it != m_meshes[i].commands[j].texture_names.end(); tex_it++) {
                                 DENG_ASSERT(m_vulkan_texture_handles.find(*tex_it) != m_vulkan_texture_handles.end());
-                                const Vulkan::TextureData &tex = m_vulkan_texture_handles[*tex_it];
-                                desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByTexture(*tex_it, tex, m_current_frame));
+                                names.push_back(*tex_it);
+                                textures.push_back(m_vulkan_texture_handles[*tex_it]);
                             }
+
+                            Vulkan::DescriptorAllocator &alloc = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]];
+                            const uint32_t request_size = static_cast<uint32_t>(alloc.GetSamplerCount() * m_vulkan_texture_handles.size() - alloc.GetBoundTextureCount());
+                            desc_sets.push_back(alloc.RequestDescriptorSetByTextures(names, textures, m_current_frame, request_size));
                         } else {
                             desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByFrame(m_current_frame));
                         }

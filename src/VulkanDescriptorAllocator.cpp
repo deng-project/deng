@@ -20,20 +20,45 @@ namespace DENG {
             m_missing(_missing),
             m_pool_capacity(_pool_cap)
         {
-            _AllocateDescriptorPool();
-            _CreateDescriptorSets(MISSING_TEXTURE_NAME, _missing);
+            _AllocateDescriptorPool(m_primary_pool);
+            _CreateDescriptorSets(m_primary_pool);
+            m_descriptor_set_pool_flags.resize(m_descriptor_sets.size());
+            std::fill(m_descriptor_set_pool_flags.begin(), m_descriptor_set_pool_flags.end(), true);
+
+            // update created descriptor sets
+            _FindSamplerCountPerDescription();
+
+            std::vector<Vulkan::TextureData> textures;
+            std::vector<std::string> names;
+            
+            if(m_sampler_count) {
+                textures.resize(m_sampler_count);
+                names.resize(m_sampler_count);
+                std::fill(names.begin(), names.end(), MISSING_TEXTURE_NAME);
+                std::fill(textures.begin(), textures.end(), m_missing);
+
+                std::string name = "";
+                for(size_t i = 0; i != names.size(); i++) {
+                    if(!i) name += names[i];
+                    else name += "|" + names[i];
+                }
+                m_texture_bound_desc_sets[name] = m_descriptor_sets.data();
+            }
+
+            _UpdateDescriptorSets(names, textures, 0);
         }
 
 
         DescriptorAllocator::~DescriptorAllocator() {
-            vkFreeDescriptorSets(m_device, m_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
-            vkDestroyDescriptorPool(m_device, m_pool, nullptr);
+            vkFreeDescriptorSets(m_device, m_primary_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
+            vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
         }
 
 
         DescriptorAllocator &DescriptorAllocator::operator=(const DescriptorAllocator &_da) {
             m_is_sampled = _da.m_is_sampled;
-            m_pool = _da.m_pool;
+            m_primary_pool = _da.m_primary_pool,
+            m_secondary_pool = _da.m_secondary_pool,
             m_pool_capacity = _da.m_pool_capacity;
             m_descriptor_sets = _da.m_descriptor_sets;
             m_texture_bound_desc_sets = _da.m_texture_bound_desc_sets;
@@ -41,7 +66,26 @@ namespace DENG {
         }
 
 
-        void DescriptorAllocator::_AllocateDescriptorPool() {
+        void DescriptorAllocator::_FindSamplerCountPerDescription() {
+            switch(m_ubo_desc.index()) {
+                case 0:
+                {
+                    std::vector<UniformDataLayout>* desc = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
+                    for(auto it = desc->begin(); it != desc->end(); it++) {
+                        if(it->type == UNIFORM_DATA_TYPE_IMAGE_SAMPLER) {
+                            m_sampler_count++;
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+
+
+        void DescriptorAllocator::_AllocateDescriptorPool(VkDescriptorPool &_pool) {
             std::vector<VkDescriptorPoolSize> desc_sizes;
 
             // check ubo desc index
@@ -100,12 +144,12 @@ namespace DENG {
             desc_pool_info.maxSets = m_pool_capacity * m_swapchain_image_count;
             desc_pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-            if(vkCreateDescriptorPool(m_device, &desc_pool_info, nullptr, &m_pool) != VK_SUCCESS)
+            if(vkCreateDescriptorPool(m_device, &desc_pool_info, nullptr, &_pool) != VK_SUCCESS)
                 VK_DESC_ERR("Failed to create a descriptor pool");
         }
 
 
-        void DescriptorAllocator::_CreateDescriptorSets(const std::string &_name, const Vulkan::TextureData &_tex) {
+        size_t DescriptorAllocator::_CreateDescriptorSets(VkDescriptorPool &_pool) {
             const size_t rel_offset = m_descriptor_sets.size();
             m_descriptor_sets.resize(m_descriptor_sets.size() + m_swapchain_image_count);
 
@@ -113,34 +157,30 @@ namespace DENG {
             
             VkDescriptorSetAllocateInfo allocation_info = {};
             allocation_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocation_info.descriptorPool = m_pool;
+            allocation_info.descriptorPool = _pool;
             allocation_info.descriptorSetCount = static_cast<uint32_t>(m_swapchain_image_count);
             allocation_info.pSetLayouts = layouts.data();
 
             if(vkAllocateDescriptorSets(m_device, &allocation_info, m_descriptor_sets.data() + rel_offset) != VK_SUCCESS)
                 VK_DESC_ERR("failed to allocate descriptor sets");
 
-            // check if textured descriptor set already exists in map
-            if(m_texture_bound_desc_sets.find(_name) != m_texture_bound_desc_sets.end()) {
-                WARNME("Descriptor for texture with name '" +  _name + "' already exists");
-                DENG_ASSERT(false);
-            }
-
-            m_texture_bound_desc_sets[_name] = m_descriptor_sets.data() + rel_offset;
-            _UpdateDescriptorSets(_tex, rel_offset);
+            return rel_offset;
         }
 
         
-        void DescriptorAllocator::_UpdateDescriptorSets(const Vulkan::TextureData &_tex, size_t _beg) {
+        void DescriptorAllocator::_UpdateDescriptorSets(const std::vector<std::string> &_names, const std::vector<Vulkan::TextureData> &_textures, size_t _rel_offset) {
             std::vector<VkDescriptorBufferInfo> buffer_infos;
             std::vector<VkDescriptorImageInfo> img_infos;
             std::vector<VkWriteDescriptorSet> write_sets;
 
+            DENG_ASSERT(_names.size() == _textures.size());
             switch(m_ubo_desc.index()) {
                 // per shader uniform
                 case 0:
                     {
                         std::vector<UniformDataLayout> *layout = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
+                        size_t texture_index = 0;
+                        std::string bound_texture_name = "";
 
                         buffer_infos.reserve(layout->size());
                         img_infos.reserve(layout->size());
@@ -158,10 +198,17 @@ namespace DENG {
                                         break;
 
                                     case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                        DENG_ASSERT(texture_index < _textures.size());
                                         img_infos.emplace_back();
-                                        img_infos.back().sampler = _tex.sampler;
-                                        img_infos.back().imageView = _tex.image_view;
+
+                                        if(!texture_index)
+                                            bound_texture_name += _names[texture_index];
+                                        else bound_texture_name += "|" + _names[texture_index];
+
+                                        img_infos.back().sampler = _textures[texture_index].sampler;
+                                        img_infos.back().imageView = _textures[texture_index].image_view;
                                         img_infos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                        texture_index++;
                                         break;
 
                                     default:
@@ -172,7 +219,7 @@ namespace DENG {
                         }
 
                         // create write infos
-                        for(auto desc_it = m_descriptor_sets.begin() + _beg; desc_it < m_descriptor_sets.end(); desc_it++) {
+                        for(auto desc_it = m_descriptor_sets.begin() + _rel_offset; desc_it < m_descriptor_sets.end(); desc_it++) {
                             uint32_t used_buffers = 0;
                             uint32_t used_imgs = 0;
                             for(auto ubo_it = layout->begin(); ubo_it != layout->end(); ubo_it++) {
@@ -220,7 +267,7 @@ namespace DENG {
                             buffer_infos.back().range = it->size;
                         }
 
-                        for(auto desc_it = m_descriptor_sets.begin() + _beg; desc_it < m_descriptor_sets.end(); desc_it++) {
+                        for(auto desc_it = m_descriptor_sets.begin() + _rel_offset; desc_it < m_descriptor_sets.end(); desc_it++) {
                             uint32_t used_buffers = 0;
                             for(auto ubo_it = block->begin(); ubo_it != block->end(); ubo_it++) {
                                 write_sets.emplace_back();
@@ -243,60 +290,169 @@ namespace DENG {
         }
 
 
+        void DescriptorAllocator::CompletePoolTransfer() {
+            // check if pool transfer is active
+            if(m_is_pool_transfer) {
+                vkDeviceWaitIdle(m_device);
+
+                // extract and destroy all primary pool descriptors
+                std::vector<VkDescriptorSet> primary_pool_descriptors;
+                std::vector<VkDescriptorSet> secondary_pool_descriptors;
+                primary_pool_descriptors.reserve(m_descriptor_sets.size());
+                secondary_pool_descriptors.reserve(m_descriptor_sets.size());
+                for(size_t i = 0; i < m_descriptor_sets.size(); i++) {
+                    if(m_descriptor_set_pool_flags[i])
+                        primary_pool_descriptors.push_back(m_descriptor_sets[i]);
+                    else secondary_pool_descriptors.push_back(m_descriptor_sets[i]);
+                }
+
+                // create a vector to use for sorting
+                std::vector<std::pair<std::string, VkDescriptorSet*>> sorted_texture_bounds;
+                sorted_texture_bounds.reserve(m_texture_bound_desc_sets.size());
+                for(auto it = m_texture_bound_desc_sets.begin(); it != m_texture_bound_desc_sets.end(); it++) {
+                    sorted_texture_bounds.push_back(*it);
+                }
+                m_texture_bound_desc_sets.clear();
+                std::sort(sorted_texture_bounds.begin(), sorted_texture_bounds.end(), [](auto &_p1, auto &_p2){ return _p1.second < _p2.second; });
+
+
+                // remove all texture bound descriptor sets that were using primary pool
+                // texture bound descriptor sets that are using secondary pool are going to be pointer shifted accordingly
+                size_t shift = 0;
+                for(auto it = sorted_texture_bounds.begin(); it != sorted_texture_bounds.end(); it++) {
+                    const size_t index = it->second - m_descriptor_sets.data();
+                    if(m_descriptor_set_pool_flags[index]) {
+                        shift += m_swapchain_image_count;
+                    }
+                    else {
+                        it->second -= shift;
+                        m_texture_bound_desc_sets[it->first] = it->second;
+                    }
+                }
+
+                // free all primary descriptor sets
+                vkFreeDescriptorSets(m_device, m_primary_pool, primary_pool_descriptors.size(), primary_pool_descriptors.data());
+                vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
+                m_descriptor_sets = secondary_pool_descriptors;
+                m_primary_pool = m_secondary_pool;
+                m_secondary_pool = VK_NULL_HANDLE;
+                m_is_pool_transfer = false;
+            }
+        }
+
+
         void DescriptorAllocator::RecreateDescriptorSets(VkBuffer _new_ubo) {
             m_uniform_buffer = _new_ubo;
+
+            // find all descriptor sets that are using primary pool
+            std::vector<VkDescriptorSet> primary_pool_sets;
+            primary_pool_sets.reserve(m_descriptor_sets.size());
+            for(auto it = m_descriptor_set_pool_flags.begin(); it != m_descriptor_set_pool_flags.end(); it++) {
+                const size_t index = it - m_descriptor_set_pool_flags.begin();
+                if(*it) primary_pool_sets.push_back(m_descriptor_sets[index]);
+            }
+
+            // find all descriptor sets that are using secondary pool
+            std::vector<VkDescriptorSet> secondary_pool_sets;
+            secondary_pool_sets.reserve(m_descriptor_sets.size());
+            for(auto it = m_descriptor_set_pool_flags.begin(); it != m_descriptor_set_pool_flags.end(); it++) {
+                const size_t index = it - m_descriptor_set_pool_flags.begin();
+                if(!*it) secondary_pool_sets.push_back(m_descriptor_sets[index]);
+            }
+
             vkDeviceWaitIdle(m_device);
-            vkFreeDescriptorSets(m_device, m_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
-            m_descriptor_sets.clear();
-            m_texture_bound_desc_sets.clear();
+            std::fill(m_descriptor_set_pool_flags.begin(), m_descriptor_set_pool_flags.end(), true);
 
-            _CreateDescriptorSets(MISSING_TEXTURE_NAME, m_missing);
-        }
+            // free primary pool and its descriptor sets
+            if(primary_pool_sets.size()) {
+                vkFreeDescriptorSets(m_device, m_primary_pool, static_cast<uint32_t>(primary_pool_sets.size()), primary_pool_sets.data());
+            } 
 
-
-        void DescriptorAllocator::RequestNewDescriptorPool(uint32_t _cap) {
-            m_pool_capacity = _cap;
-
-            // free all previous resources
-            vkFreeDescriptorSets(m_device, m_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
-            vkDestroyDescriptorPool(m_device, m_pool, nullptr);
-            m_descriptor_sets.clear();
-            m_texture_bound_desc_sets.clear();
-
-            // create new pool and sets
-            _AllocateDescriptorPool();
-            _CreateDescriptorSets(MISSING_TEXTURE_NAME, m_missing);
-        }
-
-
-        void DescriptorAllocator::RemoveDescriptorSetByTexture(const std::string &_name) {
-            if(m_texture_bound_desc_sets.find(_name) == m_texture_bound_desc_sets.end()) {
-                WARNME("Descriptor for texture with name '" + _name + "' does not exist");
-                DENG_ASSERT(false);
+            if(secondary_pool_sets.size()) {
+                vkFreeDescriptorSets(m_device, m_secondary_pool, static_cast<uint32_t>(secondary_pool_sets.size()), secondary_pool_sets.data());
+                if(primary_pool_sets.size())
+                    vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
+                m_primary_pool = m_secondary_pool;
             }
 
-            VkDescriptorSet *sets = m_texture_bound_desc_sets[_name];
-            vkFreeDescriptorSets(m_device, m_pool, m_swapchain_image_count, sets);
-            m_texture_bound_desc_sets.erase(_name);
+            m_descriptor_sets.clear();
+            m_texture_bound_desc_sets.clear();
+            _CreateDescriptorSets(m_primary_pool);
 
-            auto f_it = m_descriptor_sets.begin() + (sets - m_descriptor_sets.data());
-            auto l_it = m_descriptor_sets.begin() + (sets - m_descriptor_sets.data()) + m_swapchain_image_count;
-            m_descriptor_sets.erase(f_it, l_it);
+            std::vector<std::string> names;
+            std::vector<Vulkan::TextureData> textures;
+            if(m_sampler_count) {
+                names.resize(m_sampler_count);
+                textures.resize(m_sampler_count);
+                std::fill(names.begin(), names.end(), MISSING_TEXTURE_NAME);
+                std::fill(textures.begin(), textures.end(), m_missing);
 
-            // perform some pointer arithmetic for the rest of textured descriptors for continuous block of descriptor sets
-            for(auto it = m_texture_bound_desc_sets.begin(); it != m_texture_bound_desc_sets.end(); it++) {
-                if(it->second > sets)
-                    it->second -= m_swapchain_image_count;
+                std::string name = "";
+                for(size_t i = 0; i < names.size(); i++) {
+                    if(!i) name += names[i];
+                    else name += "|" + names[i];
+                }
+
+                m_texture_bound_desc_sets[name] = m_descriptor_sets.data();
             }
+
+            _UpdateDescriptorSets(names, textures, 0);
         }
 
 
-        VkDescriptorSet DescriptorAllocator::RequestDescriptorSetByTexture(const std::string &_name, const Vulkan::TextureData &_tex, uint32_t _current_frame) {
+        VkDescriptorSet DescriptorAllocator::RequestDescriptorSetByTextures(const std::vector<std::string> &_names, const std::vector<Vulkan::TextureData> &_textures, uint32_t _current_frame, uint32_t _reserve_pool_size) {
+            DENG_ASSERT(m_sampler_count);
+            DENG_ASSERT(_names.size() == _textures.size());
+            DENG_ASSERT(_names.size() == m_sampler_count);
+
+            std::string name = "";
+
+            // create a string key for descriptor sets
+            for(uint32_t i = 0; i < _names.size(); i++) {
+                if(!i) name += _names[i];
+                else name += "|" + _names[i];
+            }
+
             // texture descriptor does not exist in map
-            if(m_texture_bound_desc_sets.find(_name) == m_texture_bound_desc_sets.end())
-                _CreateDescriptorSets(_name, _tex);
+            if(m_texture_bound_desc_sets.find(name) == m_texture_bound_desc_sets.end()) {
+                const size_t old_size = m_descriptor_set_pool_flags.size();
 
-            return m_texture_bound_desc_sets[_name][_current_frame];
+                // write previous bound textures into vector
+                std::vector<std::pair<std::string, size_t>> texture_key_index_pairs;
+                texture_key_index_pairs.reserve(m_texture_bound_desc_sets.size());
+                for(auto it = m_texture_bound_desc_sets.begin(); it != m_texture_bound_desc_sets.end(); it++) {
+                    const size_t index = it->second - m_descriptor_sets.data();
+                    texture_key_index_pairs.push_back(std::make_pair(it->first, index));
+                }
+
+                // check if descriptor pool reallocation is required
+                if(m_texture_bound_desc_sets.size() + _reserve_pool_size + 1 > m_pool_capacity) {
+                    m_pool_capacity += m_texture_bound_desc_sets.size() + _reserve_pool_size + 1;
+                    _AllocateDescriptorPool(m_secondary_pool);
+                    const size_t rel_offset = _CreateDescriptorSets(m_secondary_pool);
+                    m_descriptor_set_pool_flags.resize(old_size + m_swapchain_image_count);
+                    std::fill(m_descriptor_set_pool_flags.begin() + old_size, m_descriptor_set_pool_flags.end(), false);
+                    _UpdateDescriptorSets(_names, _textures, rel_offset);
+                    m_texture_bound_desc_sets[name] = &m_descriptor_sets[rel_offset];
+                    m_is_pool_transfer = true;
+                } else if(m_is_pool_transfer) {         // pool transfer is active
+                    const size_t rel_offset = _CreateDescriptorSets(m_secondary_pool);
+                    _UpdateDescriptorSets(_names, _textures, rel_offset);
+                    std::fill(m_descriptor_set_pool_flags.begin() + old_size, m_descriptor_set_pool_flags.end(), false);
+                    m_texture_bound_desc_sets[name] = &m_descriptor_sets[rel_offset];
+                } else {                                // pool transfer is not active
+                    const size_t rel_offset = _CreateDescriptorSets(m_primary_pool);
+                    _UpdateDescriptorSets(_names, _textures, rel_offset);
+                    std::fill(m_descriptor_set_pool_flags.begin() + old_size, m_descriptor_set_pool_flags.end(), true);
+                    m_texture_bound_desc_sets[name] = &m_descriptor_sets[rel_offset];
+                }
+
+                // correct pointer offsets
+                for(auto it = texture_key_index_pairs.begin(); it != texture_key_index_pairs.end(); it++)
+                    m_texture_bound_desc_sets[it->first] = m_descriptor_sets.data() + it->second;
+            }
+
+            return m_texture_bound_desc_sets[name][_current_frame];
         }
     }
 }

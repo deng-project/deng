@@ -15,6 +15,8 @@ namespace Executable {
         m_imgui_user_data(m_use_camera)
     {
         m_imgui_user_data.model_loaders.push_back(&m_loader);
+        m_imgui_user_data.texture_picker_data.resize(m_loader.GetAttachedTextures().size(), false);
+        m_imgui_user_data.enabled_texture_count = 0;
         m_imgui_user_data.p_camera = &m_editor_camera;
         m_imgui.Attach(m_window, m_renderer, ModelLoaderApp::_ImGuiCallback, &m_imgui_user_data);
         m_renderer.LoadShaders();
@@ -46,13 +48,13 @@ namespace Executable {
         if(ImGui::BeginPopup("Texture picker")) {
             ImGui::Text("Pick textures");
             const std::string info_str = "This mesh can use " + std::to_string(_mesh.GetSupportedTextureCount()) + " textures; " + std::to_string(_mesh.GetSupportedTextureCount() - _p_data->enabled_texture_count) + " left";
-            _p_data->enabled_texture_count = 0;
             ImGui::TextColored(ImVec4(1, 1, 0, 1), info_str.c_str());
 
             for(auto it = _p_loader->GetAttachedTextures().begin(); it != _p_loader->GetAttachedTextures().end(); it++) {
                 const size_t index = it - _p_loader->GetAttachedTextures().begin();
                 const std::string title = "Use texture no. " + std::to_string(index);
                 bool box = _p_data->texture_picker_data[index];
+                const bool prev = _p_data->texture_picker_data[index];
                 if(!box && !(_mesh.GetSupportedTextureCount() - _p_data->enabled_texture_count)) {
                     ImGui::BeginDisabled(true);
                     ImGui::Checkbox(title.c_str(), &box);
@@ -62,7 +64,8 @@ namespace Executable {
                     _p_data->texture_picker_data[index] = box;
                 }
 
-                if(box) _p_data->enabled_texture_count++;
+                if(!prev && box) _p_data->enabled_texture_count++;
+                else if(prev && !box) _p_data->enabled_texture_count--;
                 ImGui::Image(const_cast<char*>(it->c_str()), ImVec2(64, 64));
             }
 
@@ -75,8 +78,10 @@ namespace Executable {
                         names.push_back(*it);
                 }
 
+                if(names.empty())
+                    names.push_back(MISSING_TEXTURE_NAME);
+
                 _mesh.UseTextures(names);
-                std::fill(_p_data->texture_picker_data.begin(), _p_data->texture_picker_data.end(), false);
             }
 
             ImGui::EndPopup();
@@ -98,8 +103,7 @@ namespace Executable {
                     ImGui::Checkbox("Use textures instead", &v);
                     mp_mesh->SetUseColor(!v);
                     if(ImGui::Button("Select textures")) {
-                        _p_data->texture_picker_data.resize(mp_mesh->GetSupportedTextureCount());
-                        std::fill(_p_data->texture_picker_data.begin(), _p_data->texture_picker_data.end(), false);
+                        _p_data->texture_picker_data.resize(_p_loader->GetAttachedTextures().size());
                         ImGui::OpenPopup("Texture picker");
                     }
                     _ImGuiShowTexturePicker(_p_data, _p_loader, *mp_mesh);
@@ -244,7 +248,6 @@ namespace Executable {
                     m_beg_time = std::chrono::system_clock::now();
                 }
             }
-
 
             DENG::ModelCameraUbo ubo;
             m_editor_camera.Update();
