@@ -40,8 +40,8 @@ namespace DENG {
 
     class DENG_API FirstPersonCamera : public Camera3D {
         private:
-            std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::system_clock::now();
-            std::chrono::time_point<std::chrono::high_resolution_clock> m_cur_time = std::chrono::system_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_cur_time = std::chrono::high_resolution_clock::now();
 
             // TR properties
             Libdas::Point3D<float> m_rotation;

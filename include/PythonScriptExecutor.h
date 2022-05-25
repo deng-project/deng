@@ -18,6 +18,7 @@
     #include <libdas/include/Api.h>
     #include <libdas/include/Algorithm.h>
 
+    #include <Api.h>
     #include <ErrorDefinitions.h>
 #endif
 
@@ -26,7 +27,7 @@
 
 namespace DENG {
 
-    class PythonScriptExecutor {
+    class DENG_API PythonScriptExecutor {
         private:
             std::vector<char> _ReadVariadicTypes(const char *_args);
             std::vector<std::variant<const char*, int32_t, double>> _ReadVariadicValues(const char *_args, va_list args);

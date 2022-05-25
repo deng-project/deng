@@ -97,5 +97,5 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${LIBDAS_TARGET} PRIVATE _DEBUG)
 endif()
 
-target_include_directories(${LIBDAS_TARGET} PUBLIC deps/libdas/include)
+target_include_directories(${LIBDAS_TARGET} PRIVATE deps/libdas/include)
 install(FILES)

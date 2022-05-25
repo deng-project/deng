@@ -77,70 +77,101 @@ set(DENG_SOURCES
 )
 
 
-# Static library configuration
+# Library configurations
 add_library(${DENG_STATIC_TARGET} STATIC
     ${DENG_HEADERS}
     ${DENG_SOURCES}
 )
 
-target_compile_definitions(${DENG_STATIC_TARGET} 
-    PUBLIC DENG_EXPORT_LIBRARY
-    PUBLIC DENG_STATIC
-)
-
-# Find python library
-find_package(Python COMPONENTS Development REQUIRED)
-
-target_include_directories(${DENG_STATIC_TARGET}
-    PUBLIC include
-    PUBLIC deps
-    PUBLIC ${Python_INCLUDE_DIRS}
-    PUBLIC deps/${LIBLUA_DEP_DIR}/src
-)
-
-target_link_libraries(${DENG_STATIC_TARGET}
-    PUBLIC ${LIBNWIN_TARGET}
-    PUBLIC ${LIBDAS_TARGET}
-    PUBLIC ${IMGUI_TARGET}
-    PUBLIC ${LIBLUA_TARGET}
-    PUBLIC ${Python_LIBRARIES}
-)
-
-
-# Shared library build configuration
 add_library(${DENG_SHARED_TARGET} SHARED
     ${DENG_HEADERS}
     ${DENG_SOURCES}
 )
 
+# Compile definitions
+target_compile_definitions(${DENG_STATIC_TARGET} 
+    PUBLIC DENG_EXPORT_LIBRARY
+    PUBLIC DENG_STATIC
+)
 target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE DENG_EXPORT_LIBRARY)
+
+
+# Include directories
 target_include_directories(${DENG_SHARED_TARGET} 
     PUBLIC include
     PUBLIC deps
-    PUBLIC ${Python_INCLUDE_DIRS}
-    PUBLIC deps/${LIBLUA_DEP_DIR}/src
+    PUBLIC deps/nekowin/include/third_party
+    PUBLIC deps/libdas/include
+)
+
+target_include_directories(${DENG_STATIC_TARGET}
+    PUBLIC include
+    PUBLIC deps
+    PUBLIC deps/nekowin/include/third_party
+    PUBLIC deps/libdas/include
+)
+
+# Linking
+target_link_libraries(${DENG_STATIC_TARGET}
+    PUBLIC nwin-static
+    PUBLIC das-static
+    PUBLIC ${IMGUI_TARGET}
 )
 
 target_link_libraries(${DENG_SHARED_TARGET}
-    PUBLIC ${LIBNWIN_TARGET}
-    PUBLIC ${LIBDAS_TARGET}
+    PUBLIC nwin-static
+    PUBLIC das-static
     PUBLIC ${IMGUI_TARGET}
-    PUBLIC ${LIBLUA_TARGET}
-    PUBLIC ${Python_LIBRARIES}
 )
 
-# Link either shaderc_combined if on Linux or shaderc if building for windows platform
+
+# Link trunked libraries
 if(WIN32)
-	target_link_libraries(${DENG_SHARED_TARGET} 
-		PUBLIC shaderc)
+	if(CMAKE_BUILD_TYPE MATCHES Debug)
+		target_link_directories(${DENG_STATIC_TARGET} 
+            PUBLIC deps/trunk/Lib/Debug
+            PUBLIC deps/trunk/Lib/Debug/Python)
+		target_link_directories(${DENG_SHARED_TARGET} 
+            PUBLIC deps/trunk/Lib/Debug
+            PUBLIC deps/trunk/Lib/Debug/Python)
+		
+		target_link_libraries(${DENG_STATIC_TARGET} 
+			PUBLIC python39_d
+			PUBLIC shaderc_combined
+		)
+		
+		target_link_libraries(${DENG_SHARED_TARGET} 
+			PUBLIC python39_d
+			PUBLIC shaderc_combined
+		)
+	elseif(CMAKE_BUILD_TYPE MATCHES Release)
+		target_link_directories(${DENG_STATIC_TARGET} 
+            PUBLIC deps/trunk/Lib/Release
+            PUBLIC deps/trunk/Lib/Release/Python)
+		target_link_directories(${DENG_SHARED_TARGET} 
+            PUBLIC deps/trunk/Lib/Release
+            PUBLIC deps/trunk/Lib/Release/Python)
+		
+		target_link_libraries(${DENG_STATIC_TARGET} 
+			PUBLIC python39
+			PUBLIC shaderc_combined
+		)
+		
+		target_link_libraries(${DENG_SHARED_TARGET} 
+			PUBLIC python39
+			PUBLIC shaderc_combined
+		)
+	endif()
+	
 	target_link_libraries(${DENG_STATIC_TARGET} 
-		PUBLIC shaderc)
-else()
+		PUBLIC vulkan-1)
+	
 	target_link_libraries(${DENG_SHARED_TARGET} 
-		PUBLIC shaderc_combined)
-	target_link_libraries(${DENG_STATIC_TARGET} 
-		PUBLIC shaderc_combined)
+		PUBLIC vulkan-1)
+elseif(UNIX AND NOT MACOS)
+	message(FATAL_ERROR "Trunkated dependencies for GNU/Linux are not specified")
 endif()
+
 
 # Check if debug mode is used
 if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -148,49 +179,19 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${DENG_STATIC_TARGET} PRIVATE _DEBUG)
 endif()
 
-# Check if VulkanSDK path was explicitly specified
-if(NOT VULKAN_SDK_PATH STREQUAL "")
-    message(STATUS "Using Vulkan SDK from path ${VULKAN_SDK_PATH}")
-    if(UNIX AND NOT APPLE)
-        target_include_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/include)
-        target_include_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/include)
 
-        target_link_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
-        target_link_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/x86_64/lib)
-    elseif(WIN32)
-		target_include_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Include)
-		target_include_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Include)
-		
-		target_link_directories(${DENG_SHARED_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
-		target_link_directories(${DENG_STATIC_TARGET} PUBLIC ${VULKAN_SDK_PATH}/Lib)
-	endif()
-endif()
+add_dependencies(${DENG_STATIC_TARGET}
+    COPY_TARGET
+    das-static
+    dastool
+    nwin-static
+    ${IMGUI_TARGET}
+)
 
-
-if(BUILD_DEPS)
-    add_dependencies(${DENG_STATIC_TARGET}
-        ${LIBDAS_TARGET}
-        ${IMGUI_TARGET}
-        ${LIBNWIN_TARGET}
-    )
-    
-    add_dependencies(${DENG_SHARED_TARGET}
-        ${LIBDAS_TARGET}
-        ${IMGUI_TARGET}
-        ${LIBNWIN_TARGET}
-    )
-    
-    if(WIN32)
-        add_dependencies(${DENG_STATIC_TARGET} shaderc)
-        add_dependencies(${DENG_SHARED_TARGET} shaderc)
-    endif()
-endif()
-
-
-add_custom_command(TARGET ${DENG_SHARED_TARGET}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/ModelShaders
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy_directory ${CMAKE_SOURCE_DIR}/shaders/ModelShaders ${CMAKE_CURRENT_BINARY_DIR}/ModelShaders
+add_dependencies(${DENG_SHARED_TARGET}
+    COPY_TARGET
+    das-static
+    dastool
+    nwin-static
+    ${IMGUI_TARGET}
 )

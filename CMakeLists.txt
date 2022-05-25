@@ -11,18 +11,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_GENERATOR_PLATFORM x64)
 
-set(VULKAN_SDK_PATH CACHE STRING "")
-option(BUILD_DEPS "Build DENG dependencies" OFF)
 option(BUILD_TESTS "Build DENG testing applications" ON)
-option(BUILD_DENG "Build all DENG targets" ON)
-option(EXPERIMENTAL_BUILD_MODEL_LOADER "Build model loader testing applications" OFF)
-option(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS "Build cubic spline interpolation tests" OFF)
-option(EXPERIMENTAL_BUILD_MATRIX_TESTS "Build matrix tests" OFF)
+
 
 # Set appropriate compiler flags
 if(MSVC)
     add_compile_options(/W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c99>)
-	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH)
+	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH _CRT_SECURE_NO_WARNINGS)
 
     # Set correct optimisation flags
     if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -41,41 +36,30 @@ else()
 endif()
 
 
-# Set appropriate include and linking directories
-if(UNIX AND NOT APPLE)
-    include_directories(${VULKAN_PATH}/x86_64/include)
-    link_directories(${VULKAN_PATH}/x86_64/lib)
-elseif(WIN32)
-    include_directories(${VULKAN_PATH}/Include)
-    link_directories(${VULKAN_PATH}/Lib)
-endif()
-
-
 # Check if debugging definition should be considered
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-D_DEBUG)
 endif()
 
-# Check if current operating system is supported
-if(BUILD_DEPS)
-    include(cmake/libdas.cmake)
-    include(cmake/libnwin.cmake)
-    include(cmake/imgui.cmake)
-	
-	if(WIN32)
-		set(SHADERC_ENABLE_SHARED_CRT ON)
-		set(SHADERC_SKIP_TESTS ON)
-		set(SHADERC_SKIP_EXAMPLES ON)
-		set(SHADERC_SKIP_COPYRIGHT_CHECK ON)
-		add_subdirectory(deps/shaderc)
-	endif()
-endif()
 
-if(BUILD_DENG)
-    include(cmake/libdeng.cmake)
-    include(cmake/ViewModels.cmake)
-    include(cmake/TextureDump.cmake)
-endif()
+# Libnwin configuration
+set(NEKOWIN_BUILD_STATIC_LIB ON CACHE BOOL "Build static nekowin library")
+set(NEKOWIN_BUILD_SHARED_LIB OFF CACHE BOOL "Build shared nekowin library")
+set(NEKOWIN_BUILD_GLAPP OFF CACHE BOOL "Build glapp application")
+
+# Libdas and dastool configuration
+set(LIBDAS_BUILD_TESTS OFF CACHE BOOL "Build libdas tests")
+set(LIBDAS_BUILD_STATIC_LIB ON CACHE BOOL "Build static libdas library")
+set(LIBDAS_BUILD_SHARED_LIB OFF CACHE BOOL "Build shared libdas library")
+set(LIBDAS_BUILD_DASTOOL ON CACHE BOOL "Build dastool application")
+set(LIBDAS_BUILD_TESTS OFF CACHE BOOL "Build libdas testing applications")
+
+include(cmake/copy.cmake)
+include(cmake/FetchTrunk.cmake)
+include(cmake/imgui.cmake)
+include(cmake/libdeng.cmake)
+include(cmake/ViewModels.cmake)
+include(cmake/TextureDump.cmake)
 
 
 # Non-experimental tests

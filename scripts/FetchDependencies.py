@@ -20,6 +20,7 @@ IMGUI_GIT_URL = 'https://github.com/ocornut/imgui'
 NEKOWIN_GIT_URL = 'https://git.sadblog.xyz/nekowin'
 LIBDAS_GIT_URL = 'https://git.sadblog.xyz/libdas'
 SHADERC_GIT_URL = 'https://github.com/google/shaderc'
+WIN32_TRUNK_FETCH_URL = 'https://trunk.sadblog.xyz/win32/win32_0.0.1.tar.gz'
 
 
 # Check if target directory is present and if it isn't create new directory

@@ -32,4 +32,4 @@ target_compile_definitions(${IMGUI_TARGET}
     PUBLIC ImDrawIdx=unsigned\ int)
 
 target_include_directories(${IMGUI_TARGET} 
-    PUBLIC deps/imgui)
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui)

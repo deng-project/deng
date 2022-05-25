@@ -262,6 +262,10 @@ namespace Executable {
 
 
 int main() {
+    // Prompt the user, what backend to use
+    DENG::PythonScriptExecutor py;
+    int32_t backend = py.ExecuteFunction<int32_t>("BackendChooser", "Prompt");
+
     // loader.conf file parsing
     std::ifstream file("loader.conf");
     std::string file_name;
@@ -272,12 +276,8 @@ int main() {
     file.read(file_name.data(), fsize);
     file.close();
 
-    if(file_name.back() == '\n')
+    if (file_name.back() == '\n')
         file_name = file_name.substr(0, file_name.size() - 1);
-
-    // Prompt the user, what backend to use
-    DENG::PythonScriptExecutor py;
-    int32_t backend = py.ExecuteFunction<int32_t>("BackendChooser", "Prompt");
 
     // python layer to prompt api selection dialog
     DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };

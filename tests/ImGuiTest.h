@@ -13,6 +13,7 @@
 #include <string>
 #include <chrono>
 #include <vector>
+#include <array>
 #include <cstring>
 #include <variant>
 #include <unordered_map>

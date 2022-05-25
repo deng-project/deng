@@ -106,7 +106,7 @@ namespace DENG {
             }
 
             inline void SetVSync(bool _on) const {
-                neko_SetVSync(m_surface, _on);
+                // neko_SetVSync(m_surface, _on);
             }
 
             inline const std::string GetTitle() const {

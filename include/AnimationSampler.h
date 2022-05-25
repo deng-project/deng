@@ -59,8 +59,8 @@ namespace DENG {
             const Libdas::DasAnimationChannel &m_channel;
             Libdas::DasParser &m_parser;
             const std::vector<uint32_t> m_ubo_offsets;
-            std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::system_clock::now();
-            std::chrono::time_point<std::chrono::high_resolution_clock> m_active_time = std::chrono::system_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_active_time = std::chrono::high_resolution_clock::now();
 
             // needs some fixes later
             const uint32_t m_weight_target_count = 1;

@@ -61,11 +61,12 @@ if(UNIX)
     )
 elseif(WIN32)
     target_link_libraries(${LIBNWIN_TARGET}
-        PUBLIC vulkan-1
         PUBLIC gdi32
         PUBLIC kernel32
     )
 endif()
+
+target_include_directories(${LIBNWIN_TARGET} PRIVATE deps/trunk/Include)
 
 # Check if Vulkan SDK was explicitly specified
 if(NOT VULKAN_SDK_PATH STREQUAL "")

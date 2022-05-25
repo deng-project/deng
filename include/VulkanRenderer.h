@@ -17,6 +17,7 @@
     #include <cstring>
     #include <variant>
     #include <cmath>
+    #include <unordered_map>
     #include <utility>
     
     #define NOMINMAX
