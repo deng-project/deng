@@ -67,14 +67,10 @@ namespace DENG {
             std::vector<Vulkan::DescriptorSetLayoutCreator> m_descriptor_set_layout_creators;
 
             // per shader descriptor pools / sets creators
-            //std::vector<Vulkan::DescriptorPoolCreator> m_shader_descriptor_pool_creators;
-            //std::vector<Vulkan::DescriptorSetsCreator> m_shader_descriptor_sets_creators;
             std::vector<Vulkan::DescriptorAllocator> m_shader_desc_allocators;
             std::vector<uint32_t> m_shader_descriptor_set_index_table;
 
             // per mesh descriptor pools / sets creators
-            //std::vector<Vulkan::DescriptorPoolCreator> m_mesh_descriptor_pool_creators;
-            //std::vector<Vulkan::DescriptorSetsCreator> m_mesh_descriptor_sets_creators;
             std::vector<Vulkan::DescriptorAllocator> m_mesh_desc_allocators;
             std::vector<uint32_t> m_mesh_descriptor_set_index_table;
             
@@ -131,7 +127,7 @@ namespace DENG {
 
 
         public:
-            VulkanRenderer(const Window &_win, const RendererConfig &_conf);
+            VulkanRenderer(Window &_win, const RendererConfig &_conf);
             ~VulkanRenderer();
 
             virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) override;

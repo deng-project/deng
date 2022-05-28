@@ -45,7 +45,7 @@ namespace DENG {
     }
 #endif
 
-    OpenGLRenderer::OpenGLRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
+    OpenGLRenderer::OpenGLRenderer(Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
         GPUMemoryManager::GetInstance();
         // m_window.SetVSync(m_conf.enable_vsync);
         // Load all OpenGL functions

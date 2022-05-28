@@ -9,7 +9,7 @@
 
 namespace DENG {
 
-    VulkanRenderer::VulkanRenderer(const Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
+    VulkanRenderer::VulkanRenderer(Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
         GPUMemoryManager::GetInstance();
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
         mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count, m_conf);

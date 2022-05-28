@@ -65,7 +65,7 @@ namespace DENG {
             void _SetRenderState(uint32_t _shader_id);
 
         public:
-            OpenGLRenderer(const Window &_win, const RendererConfig &_conf);
+            OpenGLRenderer(Window &_win, const RendererConfig &_conf);
             ~OpenGLRenderer();
             
             virtual void PushTextureFromFile(const std::string &_name, const std::string& _file_name) override;

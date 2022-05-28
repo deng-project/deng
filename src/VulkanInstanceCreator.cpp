@@ -10,7 +10,7 @@ namespace DENG {
 
     namespace Vulkan {
 
-        InstanceCreator::InstanceCreator(const Window &_win) : m_window(_win) {
+        InstanceCreator::InstanceCreator(Window &_win) : m_window(_win) {
             // needed for swapchain creation later
             _CreateInstance();
             if(m_window.InitVkSurface(m_instance, m_surface) != VK_SUCCESS)

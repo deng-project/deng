@@ -75,13 +75,13 @@ namespace DENG {
     class Renderer {
         protected:
             static RendererBackend m_backend;
-            const Window &m_window;
+            Window &m_window;
             std::vector<MeshReference> m_meshes;
             std::vector<ShaderModule> m_shaders;
             const RendererConfig &m_conf;
 
         public:
-            Renderer(const Window &_win, const RendererConfig &_conf) : m_window(_win), m_conf(_conf) {}
+            Renderer(Window &_win, const RendererConfig &_conf) : m_window(_win), m_conf(_conf) {}
             ~Renderer() {}
 
             inline uint32_t PushMeshReference(const MeshReference &_mesh) {

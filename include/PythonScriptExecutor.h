@@ -9,6 +9,7 @@
 #include <type_traits>
 #ifdef PYTHON_SCRIPT_EXECUTOR_CPP
     #include <string>
+    #include <locale>
     #include <vector>
     #include <locale>
     #include <codecvt>
@@ -28,12 +29,16 @@
 namespace DENG {
 
     class DENG_API PythonScriptExecutor {
+        private: 
+            std::wstring m_exec_name;
+            PyConfig m_config;
+
         private:
-            std::vector<char> _ReadVariadicTypes(const char *_args);
-            std::vector<std::variant<const char*, int32_t, double>> _ReadVariadicValues(const char *_args, va_list args);
+            std::string _MakePlatformPath();
+            void _ExceptionCheck(PyStatus &_status);
 
         public:
-            PythonScriptExecutor();
+            PythonScriptExecutor(const std::string &_exec_name);
             ~PythonScriptExecutor();
 
             /**

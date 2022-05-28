@@ -8,18 +8,81 @@
 
 namespace DENG {
 
-    PythonScriptExecutor::PythonScriptExecutor() {
+    PythonScriptExecutor::PythonScriptExecutor(const std::string &_exec_name) {
         // set PYTHONPATH environment to current working directory
         std::string wd = Libdas::Algorithm::RelativePathToAbsolute("");
 
-        Py_Initialize();
-        std::string py_str = "import sys\nsys.path.append(\"" + wd + "\")";
-        PyRun_SimpleString(py_str.c_str());
+#ifdef _WIN32
+        // if using windows try to change all backslashes to normal slashes
+        for (char& c : wd) {
+            if (c == '\\')
+                c = '/';
+        }
+#endif
+        // NOTE: std::codecvt_utf8 is deprecated from C++17, string casting should be implemented into DENG
+        m_exec_name = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_exec_name);
+        std::wstring python_lib_path = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(wd) + L"Python/Lib";
+        std::wstring python_dll_path = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(wd) + L"Python/DLLs";
+
+        PyStatus status;
+        PyConfig_InitPythonConfig(&m_config);
+        // This embedded Python implementation should be isolated from system installation
+        m_config.isolated = 1;
+        
+        // program name
+        status = PyConfig_SetString(&m_config, &m_config.program_name, m_exec_name.data());
+        _ExceptionCheck(status);
+
+        // python module paths
+        wchar_t delim;
+#ifdef _WIN32
+        delim = ';';
+#else
+        delim = ':';
+#endif
+        std::wstring path = python_lib_path + delim + python_dll_path;
+        status = PyConfig_SetString(&m_config, &m_config.pythonpath_env, path.data());
+        _ExceptionCheck(status);
+
+        // sys.prefix where DENG installation is located at
+        std::string prefix = Libdas::Algorithm::GetProgramPath();
+        std::wstring wprefix = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(prefix);
+        status = PyConfig_SetString(&m_config, &m_config.base_prefix, wprefix.data());
+        _ExceptionCheck(status);
+        Py_InitializeFromConfig(&m_config);
+
     }
 
 
     PythonScriptExecutor::~PythonScriptExecutor() {
         Py_FinalizeEx();
+        PyConfig_Clear(&m_config);
+    }
+
+    std::string PythonScriptExecutor::_MakePlatformPath() {
+        std::string py_dir = Libdas::Algorithm::RelativePathToAbsolute("./Python");
+
+#ifdef _WIN32
+        // if using windows try to change all backslashes to normal slashes
+        for (char& c : py_dir) {
+            if (c == '\\')
+                c = '/';
+        }
+#endif
+
+        return py_dir;
+    }
+
+
+    void PythonScriptExecutor::_ExceptionCheck(PyStatus &_status) {
+        if (PyStatus_Exception(_status)) {
+            PyConfig_Clear(&m_config);
+
+            if (_status.func != NULL)
+                std::cerr << _status.func << ": ";
+            std::cerr << _status.err_msg << std::endl;
+            std::exit(_status.exitcode);
+        }
     }
 
 

@@ -15,14 +15,20 @@ if(WIN32 AND MSVC)
             ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Debug/Python/python39_d.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
             COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/scripts/BackendChooser.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
             COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Python ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/Lib
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/DLLs
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Python ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/Lib
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Debug/Python ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/DLLs
         )
     elseif(CMAKE_BUILD_TYPE MATCHES Release)
         add_custom_command(COPY_TARGET
             ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Release/python39.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
             COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/scripts/BackendChooser.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
             COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Python ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/Lib
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/DLLs
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Python ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/Lib
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Release/Python ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python/DLLs
         )
     endif()
 elseif(UNIX AND NOT APPLE)

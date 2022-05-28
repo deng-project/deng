@@ -98,9 +98,9 @@ namespace Executable {
             DENG::Renderer &m_renderer;
 
             const DENG::EditorCameraConfiguration m_editor_camera_conf = {
-                neko_CreateInputMask(1, NEKO_MOUSE_SCROLL_UP),
-                neko_CreateInputMask(1, NEKO_MOUSE_SCROLL_DOWN),
-                neko_CreateInputMask(1, NEKO_MOUSE_BTN_2)
+                DENG::Window::CreateInputMask(1, NEKO_MOUSE_SCROLL_UP),
+                DENG::Window::CreateInputMask(1, NEKO_MOUSE_SCROLL_DOWN),
+                DENG::Window::CreateInputMask(1, NEKO_MOUSE_BTN_2)
             };
 
             DENG::EditorCamera m_editor_camera;

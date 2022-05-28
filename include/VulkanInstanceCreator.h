@@ -32,7 +32,7 @@ namespace DENG {
 
         class InstanceCreator {
             private:
-                const Window &m_window;
+                Window &m_window;
 
                 // vulkan stuff
                 VkDevice m_device = {};
@@ -84,7 +84,7 @@ namespace DENG {
                 uint32_t _ScoreDevice(VkPhysicalDevice _gpu);
 
             public:
-                InstanceCreator(const Window &_win);
+                InstanceCreator(Window &_win);
                 ~InstanceCreator();
 
                 // inline methods

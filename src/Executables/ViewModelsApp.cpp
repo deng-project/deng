@@ -261,23 +261,18 @@ namespace Executable {
 }
 
 
-int main() {
+int main(int argv, char *argc[]) {
+    if (argv < 2) {
+        std::cout << "Usage ViewModels <ModelName>" << std::endl;
+        std::exit(0);
+    }
+
     // Prompt the user, what backend to use
-    DENG::PythonScriptExecutor py;
+    DENG::PythonScriptExecutor py(argc[0]);
     int32_t backend = py.ExecuteFunction<int32_t>("BackendChooser", "Prompt");
 
     // loader.conf file parsing
-    std::ifstream file("loader.conf");
-    std::string file_name;
-    file.seekg(0, std::ios_base::end);
-    const size_t fsize = file.tellg();
-    file_name.resize(fsize);
-    file.seekg(0, std::ios_base::beg);
-    file.read(file_name.data(), fsize);
-    file.close();
-
-    if (file_name.back() == '\n')
-        file_name = file_name.substr(0, file_name.size() - 1);
+    std::string file_name = argc[1];
 
     // python layer to prompt api selection dialog
     DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
