@@ -74,12 +74,12 @@ namespace DENG {
 
             public:
                 PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, ShaderModule &_module);
-                PipelineCreator(const PipelineCreator &_pc);
-                PipelineCreator(PipelineCreator &&_pc);
-                ~PipelineCreator();
+                PipelineCreator(const PipelineCreator &_pc) noexcept;
+                PipelineCreator(PipelineCreator &&_pc) noexcept;
+                ~PipelineCreator() noexcept;
 
-                PipelineCreator &operator=(const PipelineCreator &_pc);
-                PipelineCreator &operator=(PipelineCreator &&_pc);
+                PipelineCreator &operator=(const PipelineCreator &_pc) noexcept;
+                PipelineCreator &operator=(PipelineCreator &&_pc) noexcept;
 
                 void DestroyPipelineData();
                 void RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext);

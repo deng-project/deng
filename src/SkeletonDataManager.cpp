@@ -46,6 +46,38 @@ namespace DENG {
     }
 
 
+    SkeletonDataManager::SkeletonDataManager(const SkeletonDataManager &_sdm) noexcept :
+        m_parser(_sdm.m_parser),
+        m_skeleton(_sdm.m_skeleton),
+        m_node_transform(_sdm.m_node_transform),
+        m_inv_node_transform(_sdm.m_inv_node_transform),
+        m_joint_matrices(_sdm.m_joint_matrices),
+        m_joint_world_transforms(_sdm.m_joint_world_transforms),
+        m_joint_trs_transforms(_sdm.m_joint_trs_transforms),
+        m_inverse_bind_matrices(_sdm.m_inverse_bind_matrices),
+        m_joint_lookup(_sdm.m_joint_lookup),
+        m_joint_samplers(_sdm.m_joint_samplers),
+        m_skeleton_name(_sdm.m_skeleton_name),
+        m_max_joint(_sdm.m_max_joint),
+        m_is_bound(_sdm.m_is_bound) {}
+
+
+    SkeletonDataManager::SkeletonDataManager(SkeletonDataManager &&_sdm) noexcept :
+        m_parser(_sdm.m_parser),
+        m_skeleton(_sdm.m_skeleton),
+        m_node_transform(_sdm.m_node_transform),
+        m_inv_node_transform(_sdm.m_inv_node_transform),
+        m_joint_matrices(std::move(_sdm.m_joint_matrices)),
+        m_joint_world_transforms(std::move(_sdm.m_joint_world_transforms)),
+        m_joint_trs_transforms(std::move(_sdm.m_joint_trs_transforms)),
+        m_inverse_bind_matrices(std::move(_sdm.m_inverse_bind_matrices)),
+        m_joint_lookup(std::move(_sdm.m_joint_lookup)),
+        m_joint_samplers(std::move(_sdm.m_joint_samplers)),
+        m_skeleton_name(std::move(_sdm.m_skeleton_name)),
+        m_max_joint(_sdm.m_max_joint),
+        m_is_bound(_sdm.m_is_bound) {}
+
+
     void SkeletonDataManager::_FillJointTransformTableTRS() {
         m_joint_trs_transforms.resize(m_max_joint);
 

@@ -88,7 +88,7 @@ namespace DENG {
         }
 
 
-        void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkFormat _format, VkImageLayout _old, 
+        void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkImageLayout _old, 
                                     VkImageLayout _new, uint32_t _mip_l) 
         {
             // Begin recording cmd_buf
@@ -193,6 +193,10 @@ namespace DENG {
 
         void *_CopyToDeviceMemory(VkDevice _dev, VkDeviceSize _size, VkDeviceMemory _src, VkDeviceSize _offset) {
             void *device_data = std::malloc(_size);
+            if (!device_data) {
+                DENG_ASSERT(false);
+                return nullptr;
+            }
             void *data = nullptr;
 
             vkMapMemory(_dev, _src, _offset, _size, 0, &data);

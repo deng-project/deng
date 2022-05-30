@@ -58,7 +58,15 @@ namespace DENG {
 
     struct ModelAnimation {
         ModelAnimation(const std::string &_name) : name(_name) {}
-
+        ModelAnimation(const ModelAnimation &_ma) : 
+            name(_ma.name),
+            samplers(_ma.samplers),
+            is_animated(_ma.is_animated) {}
+        ModelAnimation(ModelAnimation &&_ma) :
+            name(std::move(_ma.name)),
+            samplers(std::move(_ma.samplers)),
+            is_animated(_ma.is_animated) {}
+ 
         std::string name = "Unnamed animation";
         std::vector<AnimationSampler> samplers;
         bool is_animated = true;
@@ -81,6 +89,8 @@ namespace DENG {
 
         public:
             ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _camera_offset);
+            ModelLoader(const ModelLoader& _ld) noexcept;
+            ModelLoader(ModelLoader&& _ld) noexcept;
             void Update();
 
             inline std::vector<std::string> &GetAttachedTextures() {

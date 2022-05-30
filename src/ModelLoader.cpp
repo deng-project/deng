@@ -51,6 +51,26 @@ namespace DENG {
     }
 
 
+    ModelLoader::ModelLoader(const ModelLoader &_ld) noexcept :
+        m_parser(_ld.m_parser),
+        m_renderer(_ld.m_renderer),
+        m_animations(_ld.m_animations),
+        m_scene_loaders(_ld.m_scene_loaders),
+        m_model_name(_ld.m_model_name),
+        m_texture_names(_ld.m_texture_names),
+        m_buffer_offsets(_ld.m_buffer_offsets) {}
+
+
+    ModelLoader::ModelLoader(ModelLoader &&_ld) noexcept :
+        m_parser(std::move(_ld.m_parser)),
+        m_renderer(_ld.m_renderer),
+        m_animations(std::move(_ld.m_animations)),
+        m_scene_loaders(std::move(_ld.m_scene_loaders)),
+        m_model_name(std::move(_ld.m_model_name)),
+        m_texture_names(std::move(_ld.m_texture_names)),
+        m_buffer_offsets(std::move(_ld.m_buffer_offsets)) {}
+
+
     void ModelLoader::_AttachBuffersAndTextures() {
         m_buffer_offsets.resize(m_parser.GetBufferCount());
         std::fill(m_buffer_offsets.begin(), m_buffer_offsets.end(), UINT32_MAX);
@@ -92,7 +112,7 @@ namespace DENG {
                 }
             } else {
                 GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
-                m_buffer_offsets[i] = mem_manager->RequestMainMemoryLocationP(1, buffer.data_ptrs.back().second);
+                m_buffer_offsets[i] = mem_manager->RequestMainMemoryLocationP(1, static_cast<uint32_t>(buffer.data_ptrs.back().second));
                 m_renderer.UpdateVertexDataBuffer(std::make_pair(buffer.data_ptrs.back().first, static_cast<uint32_t>(buffer.data_ptrs.back().second)), m_buffer_offsets[i]);
             }
         }

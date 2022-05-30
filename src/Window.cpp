@@ -21,12 +21,8 @@ namespace DENG {
     }
 
     // static method:
-    neko_InputBits Window::CreateInputMask(uint32_t _ev_c, ...) {
-        va_list args;
-        va_start(args, _ev_c);
-        neko_InputBits bits = neko_CreateInputMask(_ev_c, args);
-        va_end(args);
-        return bits;
+    neko_InputBits Window::CreateInputMask(neko_HidEvent evs[8]) {
+        return neko_CreateInputMask(evs);
     }
 
 
@@ -54,10 +50,8 @@ namespace DENG {
     }
 
 
-    char** Window::FindVulkanSurfaceExtensions(size_t* p_ext_c) const {
-        char** exts;
-        neko_FindRequiredVkExtensionsStrings(&exts, p_ext_c);
-        return exts;
+    char** Window::FindVulkanSurfaceExtensions(uint32_t* p_ext_c) const {
+        return neko_FindRequiredVkExtensionStrings(p_ext_c);
     }
 
 
@@ -102,6 +96,13 @@ namespace DENG {
         neko_FindDeltaMovement(m_surface, &pos.x, &pos.y);
         return pos;
     }
+
+
+#ifdef _WIN32
+    HWND Window::GetWin32Handle() const {
+        return neko_GetWin32Handle(m_surface);
+    }
+#endif
 
 
     neko_Hint Window::GetHints() const {

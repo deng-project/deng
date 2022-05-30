@@ -48,6 +48,46 @@ namespace DENG {
     }
 
 
+    NodeLoader::NodeLoader(const NodeLoader& _node) noexcept :
+        m_renderer(_node.m_renderer),
+        mp_skeleton(new SkeletonDataManager(*_node.mp_skeleton)),
+        mp_mesh_loader(new MeshLoader(*_node.mp_mesh_loader)),
+        m_node(_node.m_node),
+        m_parser(_node.m_parser),
+        m_child_nodes(_node.m_child_nodes),
+        m_node_lookup(_node.m_node_lookup),
+        m_animation_samplers(_node.m_animation_samplers),
+        m_node_name(_node.m_node_name),
+        m_custom_translation(_node.m_custom_translation),
+        m_custom_rotation(_node.m_custom_rotation),
+        m_custom_scale(_node.m_custom_scale),
+        m_parent(_node.m_parent),
+        m_custom(_node.m_custom),
+        m_transform(_node.m_transform),
+        m_morph_weights(_node.m_morph_weights),
+        m_max_node(_node.m_max_node) {}
+
+
+    NodeLoader::NodeLoader(NodeLoader &&_node) noexcept :
+        m_renderer(_node.m_renderer),
+        mp_skeleton(_node.mp_skeleton),
+        mp_mesh_loader(_node.mp_mesh_loader),
+        m_node(_node.m_node),
+        m_parser(_node.m_parser),
+        m_child_nodes(std::move(_node.m_child_nodes)),
+        m_node_lookup(std::move(_node.m_node_lookup)),
+        m_animation_samplers(std::move(_node.m_animation_samplers)),
+        m_node_name(std::move(_node.m_node_name)),
+        m_custom_translation(_node.m_custom_translation),
+        m_custom_rotation(_node.m_custom_rotation),
+        m_custom_scale(_node.m_custom_scale),
+        m_parent(_node.m_parent),
+        m_custom(_node.m_custom),
+        m_transform(_node.m_transform),
+        m_morph_weights(_node.m_morph_weights),
+        m_max_node(_node.m_max_node) {}
+
+
     NodeLoader::~NodeLoader() {
         delete mp_skeleton;
         delete mp_mesh_loader;
@@ -60,7 +100,6 @@ namespace DENG {
             mp_skeleton = new SkeletonDataManager(m_transform, m_parser, skeleton, _animations);
 
             if(m_node.mesh == UINT32_MAX) {
-                const Libdas::DasSkeleton &skeleton = mp_skeleton->GetSkeleton();
                 WARNME("Unbound skeleton: " + skeleton.name);
             }
         }

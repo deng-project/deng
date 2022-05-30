@@ -29,7 +29,7 @@
 namespace DENG {
 
     // singleton class
-    class GPUMemoryManager {
+    class DENG_API GPUMemoryManager {
         private:
             static GPUMemoryManager *m_instance;
             // first - offset in bytes
@@ -60,6 +60,14 @@ namespace DENG {
             // update methods
             void UpdateMainMemoryLocation(uint32_t _offset, uint32_t _size); 
             void UpdateUniformMemoryLocation(uint32_t _offset, uint32_t _size);
+
+            inline uint32_t GetMaxMainBufferOffset() {
+                return m_main_buffer_blocks.back().first + m_main_buffer_blocks.back().second;
+            }
+
+            inline uint32_t GetMaxUniformOffset() {
+                return m_ubo_buffer_blocks.back().first + m_ubo_buffer_blocks.back().second;
+            }
 
             // checking methods
             inline bool IsLastMainMemoryLocation(uint32_t _offset) {

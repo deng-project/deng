@@ -46,6 +46,7 @@
 #include <ErrorDefinitions.h>
 #include <ShaderDefinitions.h>
 #include <Window.h>
+#include <NativeGUICaller.h>
 #include <Renderer.h>
 #include <ModelUniforms.h>
 #include <ModelShaderGenerator.h>
@@ -62,6 +63,7 @@
 #include <FirstPersonCamera.h>
 #include <ImGuiLayer.h>
 #include <PythonScriptExecutor.h>
+#include <GPUMemoryManager.h>
 
 // backend specific includes
 #include <OpenGLRenderer.h>
@@ -76,14 +78,19 @@
 
 namespace Executable {
 
+    class ModelLoaderApp;
+
     struct ImGuiData {
         ImGuiData(bool &_use_camera) : use_camera(_use_camera) {}
 
         bool &use_camera;
         bool is_object_manager = true;
         bool is_texture_picker = false;
+        bool reload_shaders = false;
         DENG::EditorCamera *p_camera;
-        std::vector<DENG::ModelLoader*> model_loaders;
+        std::vector<DENG::ModelLoader> *p_model_loaders;
+        ModelLoaderApp* p_app = nullptr;
+        DENG::Window *p_win = nullptr;
 
         // for texture picker
         uint32_t enabled_texture_count = 0;
@@ -92,19 +99,33 @@ namespace Executable {
         uint32_t max_id = 1;
     };
 
+    struct ImGuiCaller {
+        static void ShowTransformationProperties(DENG::NodeLoader& _node);
+        static void ShowTexturePicker(ImGuiData *_p_data, DENG::ModelLoader &_loader, DENG::MeshLoader &_mesh);
+        static void RecursiveNodeIteration(ImGuiData *_p_data, DENG::ModelLoader &_loader, DENG::NodeLoader &_node);
+        static void ShowMenuBar(ImGuiData *_p_data);
+
+        // main ImGui callback method
+        static void Callback(void *_data);
+    };
+
     class ModelLoaderApp {
         private: 
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
 
+            neko_HidEvent m_zoom_in[8] = { NEKO_MOUSE_SCROLL_UP, 0, 0, 0, 0, 0, 0, 0 };
+            neko_HidEvent m_zoom_out[8] = { NEKO_MOUSE_SCROLL_DOWN, 0, 0, 0, 0, 0, 0, 0 };
+            neko_HidEvent m_rotate_toggle[8] = { NEKO_MOUSE_BTN_2, 0, 0, 0, 0, 0, 0, 0 };
+
             const DENG::EditorCameraConfiguration m_editor_camera_conf = {
-                DENG::Window::CreateInputMask(1, NEKO_MOUSE_SCROLL_UP),
-                DENG::Window::CreateInputMask(1, NEKO_MOUSE_SCROLL_DOWN),
-                DENG::Window::CreateInputMask(1, NEKO_MOUSE_BTN_2)
+                DENG::Window::CreateInputMask(m_zoom_in),
+                DENG::Window::CreateInputMask(m_zoom_out),
+                DENG::Window::CreateInputMask(m_rotate_toggle)
             };
 
             DENG::EditorCamera m_editor_camera;
-            DENG::ModelLoader m_loader;
+            std::vector<DENG::ModelLoader> m_loaders;
 
             DENG::ImGuiLayer m_imgui;
 
@@ -119,15 +140,15 @@ namespace Executable {
 
             ImGuiData m_imgui_user_data;
 
-        private:
-            static void _ImGuiShowTransformationProperties(DENG::NodeLoader &_node);
-            static void _ImGuiShowTexturePicker(ImGuiData *_p_data, DENG::ModelLoader *_p_loader, DENG::MeshLoader &_mesh);
-            static void _ImGuiRecursiveNodeIteration(ImGuiData *_p_data, DENG::ModelLoader *_p_loader, DENG::NodeLoader &_node);
-            static void _ImGuiCallback(void *_data);
-
         public:
-            ModelLoaderApp(const std::string &_file_name, DENG::Window &_win, DENG::Renderer &_rend);
+            ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend);
+            void PushModelLoader(const std::string &_fname);
             void Run();
+
+            inline std::vector<DENG::ModelLoader>& GetModelLoaders() {
+                return m_loaders;
+            }
+            
     };
 }
 

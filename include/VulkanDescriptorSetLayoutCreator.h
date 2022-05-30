@@ -47,11 +47,11 @@ namespace DENG {
             public:
                 DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module);
                 DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = default;
-                DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc);
+                DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc) noexcept;
                 ~DescriptorSetLayoutCreator();
 
-                DescriptorSetLayoutCreator &operator=(const DescriptorSetLayoutCreator &_dslc);
-                DescriptorSetLayoutCreator &operator=(DescriptorSetLayoutCreator &&_dslc);
+                DescriptorSetLayoutCreator &operator=(const DescriptorSetLayoutCreator &_dslc) noexcept;
+                DescriptorSetLayoutCreator &operator=(DescriptorSetLayoutCreator &&_dslc) noexcept;
 
                 inline VkDescriptorSetLayout GetPerShaderDescriptorSetLayout() { return m_per_shader_descriptor_set_layout; }
                 inline VkDescriptorSetLayout GetPerMeshDescriptorSetLayout() { return m_per_mesh_descriptor_set_layout; }

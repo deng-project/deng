@@ -27,6 +27,7 @@ namespace DENG {
             VkSampler sampler = VK_NULL_HANDLE;
         };
 
+
         struct HardwareInfo {
             uint32_t driver_version;
             uint32_t api_version;
@@ -47,7 +48,7 @@ namespace DENG {
         VkMemoryRequirements _CreateBuffer(VkDevice _dev, VkDeviceSize _size, VkBufferUsageFlags _flags, VkBuffer &_buffer);
         VkMemoryRequirements _CreateImage(VkDevice _dev, VkImage &_img, uint32_t _width, uint32_t _height, uint32_t _mip_l, VkFormat _format, 
                                           VkImageTiling _tiling, VkImageUsageFlags _usage, VkSampleCountFlagBits _sample_c);
-        void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkFormat _format, VkImageLayout _old, 
+        void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkImageLayout _old, 
                                     VkImageLayout _new, uint32_t _mip_l);
         void _CopyBufferToImage(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkBuffer _src, VkImage _dst, uint32_t _width, uint32_t _height);
 

@@ -20,7 +20,7 @@ namespace DENG {
         }
 
 
-        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc) : 
+        DescriptorSetLayoutCreator::DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc) noexcept : 
             m_device(_dslc.m_device),
             m_shader_module(_dslc.m_shader_module), 
             m_per_shader_descriptor_set_layout(_dslc.m_per_shader_descriptor_set_layout),
@@ -39,7 +39,7 @@ namespace DENG {
         }
 
 
-        DescriptorSetLayoutCreator &DescriptorSetLayoutCreator::operator=(const DescriptorSetLayoutCreator &_dslc) {
+        DescriptorSetLayoutCreator &DescriptorSetLayoutCreator::operator=(const DescriptorSetLayoutCreator &_dslc) noexcept {
             m_device = _dslc.m_device;
             m_shader_module = _dslc.m_shader_module;
             m_per_shader_descriptor_set_layout = _dslc.m_per_shader_descriptor_set_layout;
@@ -49,7 +49,7 @@ namespace DENG {
         }
 
 
-        DescriptorSetLayoutCreator &DescriptorSetLayoutCreator::operator=(DescriptorSetLayoutCreator &&_dslc) {
+        DescriptorSetLayoutCreator &DescriptorSetLayoutCreator::operator=(DescriptorSetLayoutCreator &&_dslc) noexcept {
             m_device = _dslc.m_device;
             m_shader_module = _dslc.m_shader_module;
             m_per_shader_descriptor_set_layout = _dslc.m_per_shader_descriptor_set_layout;

@@ -37,7 +37,7 @@ namespace DENG {
             static uint32_t m_point_nr;
 
         private:
-            static void _GenerateShaderModule(Renderer &_rend, uint32_t _main_offset, uint32_t _ubo_offset);
+            static void _GenerateShaderModule(Renderer &_rend, uint32_t _ubo_offset);
             void _CalculateVertices();
 
         public:

@@ -107,6 +107,7 @@ namespace DENG {
             std::vector<VkFramebuffer> m_framebuffers;
             std::vector<VkCommandBuffer> m_command_buffers;
             uint32_t m_current_frame = 0;
+            bool m_is_init = false;
 
             std::unordered_map<std::string, Vulkan::TextureData> m_vulkan_texture_handles;
 
@@ -116,6 +117,7 @@ namespace DENG {
             void _AllocateBufferResources();
             void _AllocateUniformBuffer();
             void _ReallocateBufferResources(VkDeviceSize _old_size);
+            void _ReallocateUniformBuffer();
             void _CreateColorResources();
             void _CreateDepthResources();
             void _CreateFrameBuffers();
@@ -137,7 +139,7 @@ namespace DENG {
             virtual std::vector<std::string> GetTextureNames() override;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void LoadShaders() override;
+            virtual void LoadShaders(uint32_t _ubo_size = 0) override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

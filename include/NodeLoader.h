@@ -82,6 +82,8 @@ namespace DENG {
         public:
             NodeLoader(Renderer &_rend, const Libdas::DasNode &_node, Libdas::DasParser &_parser, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, 
                        std::vector<Animation> &_animations, const Libdas::Matrix4<float> &_parent);
+            NodeLoader(const NodeLoader &_node) noexcept;
+            NodeLoader(NodeLoader&& _node) noexcept;
             ~NodeLoader();
             void Update();
             inline void NewParent(const Libdas::Matrix4<float> &_parent) {

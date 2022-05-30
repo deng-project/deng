@@ -22,7 +22,7 @@ namespace DENG {
         m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(m_point_indices), static_cast<uint32_t>(sizeof(uint32_t[6]))), m_main_buffer_offset + static_cast<uint32_t>(sizeof(Libdas::Point3D<float>[4])));
 
         if(m_shader_id == UINT32_MAX)
-            _GenerateShaderModule(m_renderer, _main_buffer_offset, _ubo_offset);
+            _GenerateShaderModule(m_renderer, _ubo_offset);
 
         // generate a mesh reference
         m_renderer.PushMeshReference(MeshReference());
@@ -40,7 +40,7 @@ namespace DENG {
     }
 
 
-    void PointViewer::_GenerateShaderModule(Renderer &_rend, uint32_t _main_offset, uint32_t _ubo_offset) {
+    void PointViewer::_GenerateShaderModule(Renderer &_rend, uint32_t _ubo_offset) {
         ShaderModule module;
         module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
         module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));

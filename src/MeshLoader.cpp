@@ -33,6 +33,50 @@ namespace DENG {
     }
 
 
+    MeshLoader::MeshLoader(const MeshLoader& _ml) noexcept :
+        m_mesh_ref_id(_ml.m_mesh_ref_id),
+        m_parser(_ml.m_parser),
+        m_mesh(_ml.m_mesh),
+        m_renderer(_ml.m_renderer),
+        m_name(_ml.m_name),
+        m_is_animation_target(_ml.m_is_animation_target),
+        m_shader_id(_ml.m_shader_id),
+        m_mesh_ubo_offset(_ml.m_mesh_ubo_offset),
+        m_mesh_joints_ubo_offset(_ml.m_mesh_joints_ubo_offset),
+        m_mesh_buffer_offsets(_ml.m_mesh_buffer_offsets),
+        m_skeleton_joint_count(_ml.m_skeleton_joint_count),
+        mp_prim(_ml.mp_prim),
+        m_use_color(_ml.m_use_color),
+        m_disable_joint_transforms(_ml.m_disable_joint_transforms),
+        m_supported_texture_count(_ml.m_supported_texture_count),
+        m_color(_ml.m_color) 
+    {
+        std::memcpy(m_morph_weights, _ml.m_morph_weights, sizeof(float) * MAX_MORPH_TARGETS);
+    }
+
+
+    MeshLoader::MeshLoader(MeshLoader &&_ml) noexcept :
+        m_mesh_ref_id(_ml.m_mesh_ref_id),
+        m_parser(_ml.m_parser),
+        m_mesh(_ml.m_mesh),
+        m_renderer(_ml.m_renderer),
+        m_name(std::move(_ml.m_name)),
+        m_is_animation_target(_ml.m_is_animation_target),
+        m_shader_id(_ml.m_shader_id),
+        m_mesh_ubo_offset(_ml.m_mesh_ubo_offset),
+        m_mesh_joints_ubo_offset(_ml.m_mesh_joints_ubo_offset),
+        m_mesh_buffer_offsets(_ml.m_mesh_buffer_offsets),
+        m_skeleton_joint_count(_ml.m_skeleton_joint_count),
+        mp_prim(_ml.mp_prim),
+        m_use_color(_ml.m_use_color),
+        m_disable_joint_transforms(_ml.m_disable_joint_transforms),
+        m_supported_texture_count(_ml.m_supported_texture_count),
+        m_color(_ml.m_color)
+    {
+        std::memcpy(m_morph_weights, _ml.m_morph_weights, sizeof(float) * MAX_MORPH_TARGETS);
+    }
+
+
     void MeshLoader::_CheckMeshPrimitives() {
         // if mesh is valid then each mesh primitive must contain same vertex attributes
         DENG_ASSERT(m_mesh.primitive_count);
@@ -182,11 +226,11 @@ namespace DENG {
 
     void MeshLoader::UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices) {
         if(!m_disable_joint_transforms) {
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), _matrices.size() * sizeof(Libdas::Matrix4<float>), m_mesh_joints_ubo_offset);
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), static_cast<uint32_t>(_matrices.size() * sizeof(Libdas::Matrix4<float>)), m_mesh_joints_ubo_offset);
         }
         else {
             std::vector<Libdas::Matrix4<float>> rmat(_matrices.size());
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), rmat.size() * sizeof(Libdas::Matrix4<float>), m_mesh_joints_ubo_offset);
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), static_cast<uint32_t>(rmat.size() * sizeof(Libdas::Matrix4<float>)), m_mesh_joints_ubo_offset);
         }
     }
 }

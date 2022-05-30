@@ -72,7 +72,7 @@ namespace DENG {
     };
 
 
-    class Renderer {
+    class DENG_API Renderer {
         protected:
             static RendererBackend m_backend;
             Window &m_window;
@@ -92,6 +92,13 @@ namespace DENG {
             inline uint32_t NewMeshReference() {
                 m_meshes.emplace_back();
                 return static_cast<uint32_t>(m_meshes.size() - 1);
+            }
+
+
+            inline MeshReference PopMeshReference(uint32_t _id) {
+                MeshReference mesh = m_meshes[_id];
+                m_meshes.erase(m_meshes.begin() + _id);
+                return mesh;
             }
 
             inline uint32_t PushShader(const ShaderModule &_module) {
@@ -119,7 +126,7 @@ namespace DENG {
             virtual std::vector<std::string> GetTextureNames() = 0;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;
-            virtual void LoadShaders() = 0;
+            virtual void LoadShaders(uint32_t _ubo_size = 0) = 0;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) = 0;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;

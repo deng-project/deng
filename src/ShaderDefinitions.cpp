@@ -141,6 +141,7 @@ namespace DENG {
 
             default:
                 DENG_ASSERT(false);
+                return 0;
                 break;
         }
     }

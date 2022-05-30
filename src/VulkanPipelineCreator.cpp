@@ -24,8 +24,9 @@ namespace DENG {
         }
 
 
-        PipelineCreator::PipelineCreator(const PipelineCreator &_pc) :
+        PipelineCreator::PipelineCreator(const PipelineCreator& _pc) noexcept :
             m_device(_pc.m_device),
+            m_desc_set_layouts(_pc.m_desc_set_layouts),
             m_viewport(_pc.m_viewport),
             m_scissor(_pc.m_scissor),
             m_ext(_pc.m_ext),
@@ -53,8 +54,9 @@ namespace DENG {
             m_render_pass(_pc.m_render_pass) {}
 
 
-        PipelineCreator::PipelineCreator(PipelineCreator &&_pc) :
+        PipelineCreator::PipelineCreator(PipelineCreator&& _pc) noexcept :
             m_device(_pc.m_device),
+            m_desc_set_layouts(_pc.m_desc_set_layouts),
             m_viewport(_pc.m_viewport),
             m_scissor(_pc.m_scissor),
             m_ext(_pc.m_ext),
@@ -83,7 +85,7 @@ namespace DENG {
 
 
 
-        PipelineCreator::~PipelineCreator() {
+        PipelineCreator::~PipelineCreator() noexcept {
             for(size_t i = 0; i < m_shader_modules.size(); i++)
                 vkDestroyShaderModule(m_device, m_shader_modules[i], NULL);
 
@@ -92,7 +94,7 @@ namespace DENG {
         } 
 
 
-        PipelineCreator &PipelineCreator::operator=(const PipelineCreator &_pc) {
+        PipelineCreator &PipelineCreator::operator=(const PipelineCreator &_pc) noexcept {
             m_device = _pc.m_device;
             m_viewport = _pc.m_viewport;
             m_scissor = _pc.m_scissor;
@@ -128,7 +130,7 @@ namespace DENG {
         }
 
 
-        PipelineCreator &PipelineCreator::operator=(PipelineCreator &&_pc) {
+        PipelineCreator &PipelineCreator::operator=(PipelineCreator &&_pc) noexcept {
             m_device = _pc.m_device;
             m_viewport = _pc.m_viewport;
             m_scissor = _pc.m_scissor;
@@ -206,7 +208,7 @@ namespace DENG {
                 uint32_t i = static_cast<uint32_t>(it - _module.attributes.begin());
                 m_input_binding_desc.emplace_back();
                 m_input_binding_desc.back().binding = i;
-                m_input_binding_desc.back().stride = _module.attribute_strides[i];
+                m_input_binding_desc.back().stride = static_cast<uint32_t>(_module.attribute_strides[i]);
                 m_input_binding_desc.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
             }
         }

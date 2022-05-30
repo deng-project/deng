@@ -28,6 +28,7 @@ set(DENG_HEADERS
     include/ModelShaderManager.h
     include/ModelShaderGenerator.h
     include/ModelUniforms.h
+    include/NativeGUICaller.h
     include/NodeLoader.h
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
@@ -66,6 +67,7 @@ set(DENG_SOURCES
     src/ModelLoader.cpp
     src/ModelShaderManager.cpp
     src/ModelShaderGenerator.cpp
+    src/NativeGUICaller.cpp
     src/NodeLoader.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp

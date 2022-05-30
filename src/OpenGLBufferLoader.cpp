@@ -49,7 +49,7 @@ namespace DENG {
 
 
         uint32_t BufferLoader::_CalculateNewCapacity(uint32_t _req_size) {
-            uint32_t msb = 0, mask = 1 << 31;
+            uint32_t msb = 0, mask = 1u << 31u;
             for(int i = 0; i < 32; i++) {
                 if((_req_size << i & mask) == mask) {
                     msb = i;

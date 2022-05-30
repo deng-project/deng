@@ -35,9 +35,9 @@ function(GitClone git_url git_tag target_dir repo_name)
 endfunction(GitClone)
 
 # Git clone embedded dependencies
-GitClone(https://github.com/ocornut/imgui eda7792b151d138e15df951578253b821ceed5a3 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
-GitClone(https://git.sadblog.xyz/nekowin 822bfa6fa71271cb29b6e8d3053fc1c3ed87962e ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
-GitClone(https://git.sadblog.xyz/libdas f44a290e9381623d4f4340d9c767b181abd99929 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
+GitClone(https://github.com/ocornut/imgui 250333d895b1067533533dcfab137512745b9689 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
+GitClone(https://git.sadblog.xyz/nekowin 6ed31a06b534777cb67fe099e866b3a3f2821e81 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.sadblog.xyz/libdas 1e4d3f971bddf3556ec96ebe3a78894942f2ec52 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
 
 # Windows dependencies
 if(WIN32)

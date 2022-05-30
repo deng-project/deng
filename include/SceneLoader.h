@@ -46,32 +46,26 @@
 
 namespace DENG {
 
-    class DENG_API SceneLoader {
+    class SceneLoader {
         private:
-            Renderer &m_renderer;
-            Libdas::DasParser &m_parser;
-            const Libdas::DasScene &m_scene;
-            NodeLoader *mp_root_node_loader = nullptr;
             static uint32_t m_scene_index;
-            std::string m_scene_name = "Unnamed scene";
 
         private:
-            uint32_t _FindRootNode();
+            std::vector<NodeLoader> m_root_node_loaders;
+            std::string m_scene_name = "Unnamed scene";
 
         public:
             SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, std::vector<Animation> &_animations);
-            ~SceneLoader();
-
-            inline void Update() {
-                mp_root_node_loader->Update();
-            }
+            SceneLoader(const SceneLoader &_sl) noexcept;
+            SceneLoader(SceneLoader&& _sl) noexcept;
+            void Update();
 
             inline const std::string &GetName() const {
                 return m_scene_name;
             }
 
-            inline NodeLoader &GetRootNode() {
-                return *mp_root_node_loader;
+            inline std::vector<NodeLoader> &GetRootNodes() {
+                return m_root_node_loaders;
             }
     };
 }

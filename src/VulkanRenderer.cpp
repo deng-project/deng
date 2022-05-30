@@ -132,7 +132,7 @@ namespace DENG {
 
         Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, texture_data.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         vkBindImageMemory(mp_instance_creator->GetDevice(), texture_data.image, texture_data.memory, 0);
-        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(), VK_FORMAT_R8G8B8A8_SRGB, 
+        Vulkan::_TransitionImageLayout(mp_instance_creator->GetDevice(), texture_data.image, m_command_pool, mp_instance_creator->GetGraphicsQueue(),
                                        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
 
         Vulkan::_CopyBufferToImage(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, texture_data.image, _width, _height);
@@ -188,8 +188,33 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::LoadShaders() {
-        _AllocateUniformBuffer();
+    void VulkanRenderer::LoadShaders(uint32_t _ubo_size) {
+        if (!m_is_init) {
+            _AllocateUniformBuffer();
+        }
+        else {
+            vkDeviceWaitIdle(mp_instance_creator->GetDevice());
+            while(!m_shader_desc_allocators.empty())
+                m_shader_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
+
+            while (!m_mesh_desc_allocators.empty())
+                m_mesh_desc_allocators.erase(m_mesh_desc_allocators.end() - 1);
+
+            while (!m_descriptor_set_layout_creators.empty())
+                m_descriptor_set_layout_creators.erase(m_descriptor_set_layout_creators.end() - 1);
+
+            while (!m_pipeline_creators.empty())
+                m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
+
+            m_shader_descriptor_set_index_table.clear();
+            m_mesh_descriptor_set_index_table.clear();
+            
+            // check if uniform buffer has to be reallocated or not
+            if (_ubo_size > m_uniform_size) {
+                m_uniform_size = _ubo_size * 3 / 2;
+                _ReallocateUniformBuffer();
+            }
+        }
 
         // reserve memory for shader descriptor set creators
         m_shader_desc_allocators.reserve(m_shaders.size());
@@ -241,6 +266,8 @@ namespace DENG {
                 m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
             }
         }
+
+        m_is_init = true;
     }
 
 
@@ -251,15 +278,7 @@ namespace DENG {
             m_uniform_size = (_size + _offset) * 3 / 2;
             void *data = Vulkan::_CopyToDeviceMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(old_size), m_uniform_memory, 0);
 
-            // free the current uniform buffer instance
-            vkFreeMemory(mp_instance_creator->GetDevice(), m_uniform_memory, nullptr);
-            vkDestroyBuffer(mp_instance_creator->GetDevice(), m_uniform_buffer, nullptr);
-
-            // allocate new uniform buffer instances
-            VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
-            Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-            vkBindBufferMemory(mp_instance_creator->GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
-
+            _ReallocateUniformBuffer();
             Vulkan::_CopyToBufferMemory(mp_instance_creator->GetDevice(), static_cast<VkDeviceSize>(_size), data, m_uniform_memory, 0);
             std::free(data);
 
@@ -428,6 +447,19 @@ namespace DENG {
 
         // step 3: copy data to new offsets in new buffer
         Vulkan::_CopyBufferToBuffer(mp_instance_creator->GetDevice(), m_command_pool, mp_instance_creator->GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_size, 0, 0);
+    }
+
+
+    void VulkanRenderer::_ReallocateUniformBuffer() {
+        // step 1: free all previous resources
+        vkFreeMemory(mp_instance_creator->GetDevice(), m_uniform_memory, nullptr);
+        vkDestroyBuffer(mp_instance_creator->GetDevice(), m_uniform_buffer, nullptr);
+
+        // step 2: allocate new uniform buffer
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(mp_instance_creator->GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
+        Vulkan::_AllocateMemory(mp_instance_creator->GetDevice(), mp_instance_creator->GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vkBindBufferMemory(mp_instance_creator->GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
+
     }
 
 

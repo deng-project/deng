@@ -75,6 +75,7 @@ namespace DENG {
 
 
     typedef uint8_t ShaderStage;
+    #define SHADER_STAGE_NULL       0x00
     #define SHADER_STAGE_VERTEX     0x01
     #define SHADER_STAGE_GEOMETRY   0x02
     #define SHADER_STAGE_FRAGMENT   0x04
@@ -88,8 +89,8 @@ namespace DENG {
     // Structure to be passed into the renderer
     struct UniformDataLayout {
         UniformBufferBlock block = {};
-        UniformDataType type;
-        ShaderStage stage;
+        UniformDataType type = UNIFORM_DATA_TYPE_BUFFER;
+        ShaderStage stage = SHADER_STAGE_NULL;
         UniformUsage usage = UNIFORM_USAGE_PER_SHADER;
     };
 

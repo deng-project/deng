@@ -78,6 +78,9 @@ namespace DENG {
 
         public:
             MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, uint32_t _skeleton_joint_count);
+            MeshLoader(const MeshLoader& _ml) noexcept;
+            MeshLoader(MeshLoader&& _ml) noexcept;
+
             void Attach();
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);

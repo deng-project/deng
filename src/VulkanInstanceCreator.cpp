@@ -29,9 +29,10 @@ namespace DENG {
 
         void InstanceCreator::_CreateInstance() {
             // Set up Vulkan application info
+            std::string title = m_window.GetTitle().c_str();
             VkApplicationInfo appinfo{};
             appinfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-            appinfo.pApplicationName = m_window.GetTitle().c_str();
+            appinfo.pApplicationName = title.c_str();
             appinfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
             appinfo.pEngineName = "DENG";
             appinfo.engineVersion = VK_MAKE_VERSION(0, 1, 0);
@@ -43,7 +44,7 @@ namespace DENG {
             instance_createinfo.pApplicationInfo = &appinfo;
 
             // Get all required extensions
-            size_t ext_c;
+            uint32_t ext_c;
             const char **extensions = (const char**) m_window.FindVulkanSurfaceExtensions(&ext_c);
 
             // Log all extensions to console
@@ -123,6 +124,7 @@ namespace DENG {
 
 
         VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, const CallbackData *_callback_data, void *_user) {
+            DENG_ASSERT(!_user);
             if((_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) && _type != VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
                 VK_VAL_LAYER(_callback_data->pMessage);
                 DENG_ASSERT(false);

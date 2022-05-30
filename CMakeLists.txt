@@ -16,7 +16,7 @@ option(BUILD_TESTS "Build DENG testing applications" ON)
 
 # Set appropriate compiler flags
 if(MSVC)
-    add_compile_options(/W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c99>)
+    add_compile_options(/W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c17> /wd4251)
 	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH _CRT_SECURE_NO_WARNINGS)
 
     # Set correct optimisation flags

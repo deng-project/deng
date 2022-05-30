@@ -10,44 +10,32 @@ namespace DENG {
 
     uint32_t SceneLoader::m_scene_index = 0;
 
-    SceneLoader::SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, std::vector<Animation> &_animations) : 
-        m_renderer(_rend),
-        m_parser(_parser),
-        m_scene(_scene)
-    {
-        uint32_t root = _FindRootNode();
-        DENG_ASSERT(root != UINT32_MAX);
-        const Libdas::DasNode &node = m_parser.AccessNode(root);
-        mp_root_node_loader = new NodeLoader(_rend, node, _parser, _main_buffer_offsets, _camera_offset, _animations, Libdas::Matrix4<float>());
+    SceneLoader::SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, std::vector<Animation> &_animations) {
+        m_root_node_loaders.reserve(_scene.node_count);
+        for (uint32_t i = 0; i < _scene.node_count; i++) {
+            const Libdas::DasNode& node = _parser.AccessNode(_scene.nodes[i]);
+            m_root_node_loaders.emplace_back(_rend, node, _parser, _main_buffer_offsets, _camera_offset, _animations, Libdas::Matrix4<float>());
+        }
 
         // give scene a name if possible
-        if(m_scene.name != "")
-            m_scene_name = m_scene.name;
+        if(_scene.name != "")
+            m_scene_name = _scene.name;
         else m_scene_name += std::to_string(m_scene_index++);
     }
 
 
-    SceneLoader::~SceneLoader() {
-        delete mp_root_node_loader;
-    }
+    SceneLoader::SceneLoader(const SceneLoader& _sl) noexcept :
+        m_root_node_loaders(_sl.m_root_node_loaders),
+        m_scene_name(_sl.m_scene_name) {}
 
 
-    uint32_t SceneLoader::_FindRootNode() {
-        uint32_t max = *std::max_element(m_scene.nodes, m_scene.nodes + m_scene.node_count);
-        max++;
-        std::vector<bool> child_node_table(max);
-        for(uint32_t i = 0; i < m_scene.node_count; i++) {
-            const Libdas::DasNode &node = m_parser.AccessNode(m_scene.nodes[i]);
-            for(uint32_t j = 0; j < node.children_count; j++)
-                child_node_table[node.children[j]] = true;
-        }
+    SceneLoader::SceneLoader(SceneLoader&& _sl) noexcept :
+        m_root_node_loaders(std::move(_sl.m_root_node_loaders)),
+        m_scene_name(std::move(_sl.m_scene_name)) {}
 
-        // find the nearest non-child node
-        for(uint32_t i = 0; i < m_scene.node_count; i++) {
-            if(!child_node_table[m_scene.nodes[i]])
-                return m_scene.nodes[i];
-        }
 
-        return UINT32_MAX;
+    void SceneLoader::Update() {
+        for (auto it = m_root_node_loaders.begin(); it != m_root_node_loaders.end(); it++)
+            it->Update();
     }
 }

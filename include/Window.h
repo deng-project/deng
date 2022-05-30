@@ -42,13 +42,13 @@ namespace DENG {
             Window(int32_t width, int32_t height, neko_Hint hints, const char *title);
             ~Window();
 
-            static neko_InputBits CreateInputMask(uint32_t _ev_c, ...);
+            static neko_InputBits CreateInputMask(neko_HidEvent evs[8]);
 
             /// Toggle virtual cursor mode
             void ToggleVCMode();
 
             /// Search for all required vulkan extensions
-            char **FindVulkanSurfaceExtensions(size_t *p_ext_c) const;
+            char **FindVulkanSurfaceExtensions(uint32_t *p_ext_c) const;
             void ChangeSizeHints(neko_Hint _hints);
 
             /// Explicitly change virtual cursor mode
@@ -71,6 +71,11 @@ namespace DENG {
             VkResult InitVkSurface(VkInstance _instance, VkSurfaceKHR &_surface);
             Libdas::Point2D<uint64_t> GetMousePosition() const;
             Libdas::Point2D<int64_t> GetMouseDelta() const;
+            
+            // these methods are meant for platform specific reasons
+#ifdef _WIN32
+            HWND GetWin32Handle() const;
+#endif
             neko_Hint GetHints() const;
             const std::string GetTitle() const;
             const Libdas::Point2D<int32_t> GetSize() const;

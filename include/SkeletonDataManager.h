@@ -70,6 +70,8 @@ namespace DENG {
 
         public:
             SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations);
+            SkeletonDataManager(const SkeletonDataManager& _sdm) noexcept;
+            SkeletonDataManager(SkeletonDataManager&& _sdm) noexcept;
             void Update();
             void SetNewParentTransform(const Libdas::Matrix4<float> &_parent);
 

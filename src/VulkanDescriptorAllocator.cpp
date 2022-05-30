@@ -331,7 +331,7 @@ namespace DENG {
                 }
 
                 // free all primary descriptor sets
-                vkFreeDescriptorSets(m_device, m_primary_pool, primary_pool_descriptors.size(), primary_pool_descriptors.data());
+                vkFreeDescriptorSets(m_device, m_primary_pool, static_cast<uint32_t>(primary_pool_descriptors.size()), primary_pool_descriptors.data());
                 vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
                 m_descriptor_sets = secondary_pool_descriptors;
                 m_primary_pool = m_secondary_pool;
@@ -427,7 +427,7 @@ namespace DENG {
 
                 // check if descriptor pool reallocation is required
                 if(m_texture_bound_desc_sets.size() + _reserve_pool_size + 1 > m_pool_capacity) {
-                    m_pool_capacity += m_texture_bound_desc_sets.size() + _reserve_pool_size + 1;
+                    m_pool_capacity += static_cast<uint32_t>(m_texture_bound_desc_sets.size()) + _reserve_pool_size + 1;
                     _AllocateDescriptorPool(m_secondary_pool);
                     const size_t rel_offset = _CreateDescriptorSets(m_secondary_pool);
                     m_descriptor_set_pool_flags.resize(old_size + m_swapchain_image_count);

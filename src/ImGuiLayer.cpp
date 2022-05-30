@@ -74,8 +74,12 @@ namespace DENG {
                     // clamp to viewport
                     if(clip.x < 0.0f) clip.x = 0.0f;
                     if(clip.y < 0.0f) clip.y = 0.0f;
-                    if(clip.z > mp_window->GetSize().x) clip.z = mp_window->GetSize().x;
-                    if(clip.w > mp_window->GetSize().y) clip.w = mp_window->GetSize().y;
+
+                    float x = static_cast<float>(mp_window->GetSize().x);
+                    float y = static_cast<float>(mp_window->GetSize().y);
+
+                    if(clip.z > mp_window->GetSize().x) clip.z = x;
+                    if(clip.w > mp_window->GetSize().y) clip.w = y;
 
                     if(clip.z <= clip.x || clip.w <= clip.y)
                         continue;
@@ -103,8 +107,9 @@ namespace DENG {
 
     void ImGuiLayer::_UpdateIO() {
         m_io->DeltaTime = 1.0f;
-        m_io->DisplaySize.x = mp_window->GetSize().x;
-        m_io->DisplaySize.y = mp_window->GetSize().y;
+        m_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        m_io->DisplaySize.x = static_cast<float>(mp_window->GetSize().x);
+        m_io->DisplaySize.y = static_cast<float>(mp_window->GetSize().y);
         m_io->MousePos.x = static_cast<float>(mp_window->GetMousePosition().x);
         m_io->MousePos.y = static_cast<float>(mp_window->GetMousePosition().y);
         m_io->MouseDown[0] = mp_window->IsKeyPressed(NEKO_MOUSE_BTN_1);
@@ -174,12 +179,19 @@ namespace DENG {
         m_end = std::chrono::system_clock::now();
         m_delta_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_beg).count());
         m_beg = std::chrono::system_clock::now();
+
         _UpdateIO();
         ImGui::NewFrame();
             m_callback(m_user_data);
         ImGui::EndFrame();
 
         ImGui::Render();
+
+        // check if the imgui mesh is the last one in the array
+        if (m_mesh_id != static_cast<uint32_t>(mp_renderer->GetMeshes().size() - 1)) {
+            MeshReference mesh = mp_renderer->PopMeshReference(m_mesh_id);
+            m_mesh_id = mp_renderer->PushMeshReference(mesh);
+        }
 
         ImDrawData *draw_data = ImGui::GetDrawData();
         _CreateDrawCommands(draw_data);
