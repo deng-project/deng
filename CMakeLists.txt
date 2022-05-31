@@ -9,7 +9,6 @@ project(deng LANGUAGES CXX C)
 # Constant config values
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_GENERATOR_PLATFORM x64)
 
 option(BUILD_TESTS "Build DENG testing applications" ON)
 

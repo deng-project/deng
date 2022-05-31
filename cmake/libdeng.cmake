@@ -179,12 +179,12 @@ if(WIN32)
             PUBLIC deps/trunk/Lib/Release/Python)
 		
 		target_link_libraries(${DENG_STATIC_TARGET} 
-			PUBLIC python39
+            PRIVATE python39
 			PRIVATE shaderc_combined
 		)
 		
 		target_link_libraries(${DENG_SHARED_TARGET} 
-			PUBLIC python39
+            PRIVATE python39
 		    PRIVATE shaderc_combined
 		)
 	endif()
@@ -195,7 +195,21 @@ if(WIN32)
 	target_link_libraries(${DENG_SHARED_TARGET} 
 		PUBLIC vulkan-1)
 elseif(UNIX AND NOT MACOS)
-	message(FATAL_ERROR "Trunkated dependencies for GNU/Linux are not specified")
+    target_link_directories(${DENG_STATIC_TARGET}
+        PUBLIC deps/trunk/Lib
+        PUBLIC deps/trunk/Python)
+
+    target_link_directories(${DENG_SHARED_TARGET}
+        PUBLIC deps/trunk/Lib
+        PUBLIC deps/trunk/Python)
+
+    target_link_libraries(${DENG_STATIC_TARGET}
+        PRIVATE python3.9
+        PRIVATE shaderc_combined)
+
+    target_link_libraries(${DENG_SHARED_TARGET}
+        PRIVATE python3.9
+        PRIVATE shaderc_combined)
 endif()
 
 

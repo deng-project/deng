@@ -62,7 +62,7 @@ namespace DENG {
 
 
     ModelLoader::ModelLoader(ModelLoader &&_ld) noexcept :
-        m_parser(std::move(_ld.m_parser)),
+        m_parser(_ld.m_parser),
         m_renderer(_ld.m_renderer),
         m_animations(std::move(_ld.m_animations)),
         m_scene_loaders(std::move(_ld.m_scene_loaders)),

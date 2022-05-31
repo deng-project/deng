@@ -34,5 +34,11 @@ if(WIN32 AND MSVC)
         )
     endif()
 elseif(UNIX AND NOT APPLE)
-    message(FATAL_ERROR "[For developer] Please add GNU/Linux dependencies to trunked dependency list")
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/trunk/Include)
+
+    add_custom_target(COPY_TARGET
+        ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/Python
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Python
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/deps/trunk/Lib/Python ${CMAKE_CURRENT_BINARY_DIR}/Python
+    )
 endif()

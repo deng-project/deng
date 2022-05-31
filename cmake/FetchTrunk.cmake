@@ -14,11 +14,9 @@ function(DownloadAndExtract download_url hash file_name target)
 		SOURCE_DIR ${target}
 		URL ${download_url}
 		URL_HASH SHA256=${hash}
-		DOWNLOAD_NO_EXTRACT false
+        DOWNLOAD_NO_EXTRACT FALSE
 	)
 	FetchContent_MakeAvailable(download) 
-	
-	# file(ARCHIVE_EXTRACT INPUT ${target}/${file_name} DESTINATION ${target})
 endfunction(DownloadAndExtract)
 
 
@@ -37,7 +35,7 @@ endfunction(GitClone)
 # Git clone embedded dependencies
 GitClone(https://github.com/ocornut/imgui 250333d895b1067533533dcfab137512745b9689 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
 GitClone(https://git.sadblog.xyz/nekowin 6ed31a06b534777cb67fe099e866b3a3f2821e81 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
-GitClone(https://git.sadblog.xyz/libdas 1e4d3f971bddf3556ec96ebe3a78894942f2ec52 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
+GitClone(https://git.sadblog.xyz/libdas 5a9da4704eb7bd3f7416482c0b7aa4748e6aca4f ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
 
 # Windows dependencies
 if(WIN32)
@@ -48,4 +46,12 @@ if(WIN32)
 		${TRUNK_NAME}
 		${CMAKE_CURRENT_SOURCE_DIR}/deps/trunk
 	)
+elseif(UNIX AND NOT APPLE)
+    set(TRUNK_NAME linux_deps_a0.0.1.tar.gz)
+    DownloadAndExtract(
+        https://trunk.sadblog.xyz/${TRUNK_NAME}
+        c1a72786111769f4124c2b076423511d8ffe819037e1e8fc71b1c1b22a6850d3
+        ${TRUNK_NAME}
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/trunk
+    )
 endif()
