@@ -3,6 +3,11 @@
 // file: FilePickerTest.cpp - Testing application that display's custom imgui file picker dialog
 // author: Karl-Mihkel Ott
 
+// win32 and release mode is used - make sure that cmd does not spawn
+#if defined(_WIN32) && !defined(_DEBUG)
+    #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+#endif
+
 #include <string>
 #include <vector>
 #include <cmath>

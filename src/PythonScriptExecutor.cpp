@@ -13,7 +13,7 @@ namespace DENG {
 
 #ifdef _WIN32
         // if using windows try to change all backslashes to normal slashes
-        for (char& c : program_path) {
+        for (wchar_t& c : program_path) {
             if (c == '\\')
                 c = '/';
         }

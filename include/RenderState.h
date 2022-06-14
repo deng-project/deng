@@ -12,6 +12,7 @@
     #include <utility>
     #include <cstdint>
     
+    #include <Api.h>
     #include <ErrorDefinitions.h>
 #endif
 
@@ -24,7 +25,7 @@ namespace DENG {
         RENDERER_TYPE_UNKNOWN
     };
 
-    class RenderState {
+    class DENG_API RenderState {
         private:
             static RenderState *m_instance;
             RendererType m_primary = RENDERER_TYPE_UNKNOWN;

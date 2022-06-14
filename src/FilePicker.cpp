@@ -3,7 +3,6 @@
 // file: FilePicker.cpp - File picker gui class implementation
 // author: Karl-Mihkel Ott
 
-#include "imgui.h"
 #define FILE_PICKER_CPP
 #include <FilePicker.h>
 
@@ -21,7 +20,7 @@ namespace DENG {
 
         if(!std::filesystem::is_directory(fs) && _types.size() && _types[0] != "*") {
             // check if file extension is in types
-            const std::string ext = fs.extension();
+            const std::string ext = fs.extension().u8string();
             auto it = std::find(_types.begin(), _types.end(), ext);
             if(it == _types.end())
                 return false;
@@ -52,10 +51,15 @@ namespace DENG {
         gui_data->contents.clear();
         for(auto const &it : std::filesystem::directory_iterator(active, std::filesystem::directory_options::skip_permission_denied)) {
             ++count;
-            if(std::filesystem::is_directory(it)) {
-                gui_data->contents.insert("[DIR]  " + it.path().u8string());
-            } else {
-                gui_data->contents.insert("[FILE]  " + it.path().u8string());
+            try {
+                if (std::filesystem::is_directory(it)) {
+                    gui_data->contents.insert("[DIR]  " + it.path().u8string());
+                }
+                else {
+                    gui_data->contents.insert("[FILE]  " + it.path().u8string());
+                }
+            } catch (std::filesystem::filesystem_error& e) {
+                std::cerr << e.what() << std::endl;
             }
         }
         
