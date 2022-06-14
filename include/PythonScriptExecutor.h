@@ -31,11 +31,12 @@ namespace DENG {
     class DENG_API PythonScriptExecutor {
         private: 
             std::wstring m_exec_name;
-            PyConfig m_config;
+            PyConfig m_config = {};
 
         private:
             std::string _MakePlatformPath();
             void _ExceptionCheck(PyStatus &_status);
+            std::wstring _WidenString(const std::string &_str);
 
         public:
             PythonScriptExecutor(const std::string &_exec_name);

@@ -10,7 +10,6 @@ namespace DENG {
 
     ImGuiLayer::ImGuiLayer() : m_gui_texture_name(IMGUI_TEXTURE_NAME) {
         m_beg = std::chrono::system_clock::now();
-        m_end = std::chrono::system_clock::now();
     }
 
 
@@ -106,14 +105,13 @@ namespace DENG {
 
 
     void ImGuiLayer::_UpdateIO() {
-        m_io->DeltaTime = 1.0f;
+        m_io->DeltaTime = m_delta_time;
         m_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         m_io->DisplaySize.x = static_cast<float>(mp_window->GetSize().x);
         m_io->DisplaySize.y = static_cast<float>(mp_window->GetSize().y);
-        m_io->MousePos.x = static_cast<float>(mp_window->GetMousePosition().x);
-        m_io->MousePos.y = static_cast<float>(mp_window->GetMousePosition().y);
-        m_io->MouseDown[0] = mp_window->IsKeyPressed(NEKO_MOUSE_BTN_1);
-        m_io->MouseDown[1] = mp_window->IsKeyPressed(NEKO_MOUSE_BTN_2);
+        m_io->AddMouseButtonEvent(0, mp_window->IsKeyPressed(NEKO_MOUSE_BTN_1));
+        m_io->AddMouseButtonEvent(1, mp_window->IsKeyPressed(NEKO_MOUSE_BTN_2));
+        m_io->AddMousePosEvent(static_cast<float>(mp_window->GetMousePosition().x), static_cast<float>(mp_window->GetMousePosition().y));
 
         if(mp_window->IsKeyPressed(NEKO_MOUSE_SCROLL_DOWN))
             m_io->MouseWheel = -1;
@@ -177,7 +175,10 @@ namespace DENG {
 
     void ImGuiLayer::Update() {
         m_end = std::chrono::system_clock::now();
-        m_delta_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_beg).count());
+        std::chrono::duration<float, std::milli> dur = m_end - m_beg;
+        m_delta_time = dur.count() / 1000.f;
+        if(m_delta_time < 0.0f)
+            m_delta_time = 0.0f;
         m_beg = std::chrono::system_clock::now();
 
         _UpdateIO();

@@ -10,7 +10,6 @@
 namespace DENG {
 
     VulkanRenderer::VulkanRenderer(Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
-        GPUMemoryManager::GetInstance();
         mp_instance_creator = new Vulkan::InstanceCreator(m_window);
         mp_swapchain_creator = new Vulkan::SwapchainCreator(mp_instance_creator, m_window.GetSize(), m_sample_count, m_conf);
 
@@ -26,11 +25,17 @@ namespace DENG {
         int x, y, size;
         const char *data = GetMissingTexture(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
-        m_backend = RENDERER_BACKEND_VULKAN;
+
+        RenderState *rs = RenderState::GetInstance();
+        if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
+            rs->SetPrimary(RENDERER_TYPE_VULKAN);
+        m_id = rs->RegisterRenderer(RENDERER_TYPE_VULKAN, time(NULL));
     }
 
 
     VulkanRenderer::~VulkanRenderer() {
+        RenderState *rs = RenderState::GetInstance();
+        rs->RemoveRenderer(m_id);
         GPUMemoryManager::DeleteInstance();
         vkDeviceWaitIdle(mp_instance_creator->GetDevice());
         // depth image resources
@@ -126,7 +131,7 @@ namespace DENG {
         Vulkan::TextureData texture_data;
 
         uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
-        mem_req = Vulkan::_CreateImage(mp_instance_creator->GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_R8G8B8A8_SRGB, 
+        mem_req = Vulkan::_CreateImage(mp_instance_creator->GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_R8G8B8A8_UNORM, 
                                        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                                        VK_SAMPLE_COUNT_1_BIT);
 
@@ -144,7 +149,7 @@ namespace DENG {
         _CreateMipmaps(texture_data.image, _width, _height, mip_levels);
 
         // create texture image view
-        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
         if(vkCreateImageView(mp_instance_creator->GetDevice(), &image_view_info, nullptr, &texture_data.image_view) != VK_SUCCESS)
             VK_RES_ERR("Failed to create texture image view");
 
@@ -393,7 +398,9 @@ namespace DENG {
                vkCreateSemaphore(mp_instance_creator->GetDevice(), &semaphore_info, NULL, &m_render_finished_semaphores[i]) != VK_SUCCESS ||
                vkCreateFence(mp_instance_creator->GetDevice(), &fence_createinfo, NULL, &m_flight_fences[i]) != VK_SUCCESS) 
                 VK_DRAWCMD_ERR("Failed to create semaphores or fences");
-            else LOG("Successfully created semaphores");
+            else {
+                LOG("Successfully created semaphores");
+            }
         }
     }
 
@@ -509,8 +516,9 @@ namespace DENG {
 
             if(vkCreateFramebuffer(mp_instance_creator->GetDevice(), &framebuffer_createinfo, NULL, &m_framebuffers[i]) != VK_SUCCESS)
                 VK_RES_ERR("failed to create framebuffer!");
-            
-            else LOG("Framebuffer successfully created");
+            else {
+                LOG("Framebuffer successfully created");
+            }
         }
     }
 

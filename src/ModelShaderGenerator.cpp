@@ -172,12 +172,13 @@ namespace DENG {
         for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 uv" + std::to_string(i) + ";\n";
             const std::string id = std::to_string(i);
-            switch(Renderer::GetBackend()) {
-                case RENDERER_BACKEND_VULKAN:
+            RenderState *rs = RenderState::GetInstance();
+            switch(rs->GetPrimary()) {
+                case RENDERER_TYPE_VULKAN:
                     _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
                     break;
 
-                case RENDERER_BACKEND_OPENGL:
+                case RENDERER_TYPE_OPENGL:
                     _shader += "layout(binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
                     break;
 
@@ -263,8 +264,9 @@ namespace DENG {
         std::size_t pos = 0;
         std::size_t fpos = 0;
         while((fpos = shader.find("${SET}", pos)) != std::string::npos) {
-            switch(Renderer::GetBackend()) {
-                case RENDERER_BACKEND_VULKAN:
+            RenderState *rs = RenderState::GetInstance();
+            switch(rs->GetPrimary()) {
+                case RENDERER_TYPE_VULKAN:
                     if(pos == 0) {
                         shader = shader.replace(fpos, std::strlen("${SET}"), "set = 0,");
                     } else {
@@ -272,7 +274,7 @@ namespace DENG {
                     }
                     break;
 
-                case RENDERER_BACKEND_OPENGL:
+                case RENDERER_TYPE_OPENGL:
                     shader = shader.replace(fpos, std::strlen("${SET}"), "");
                     break;
 
@@ -296,8 +298,9 @@ namespace DENG {
         std::string shader;  
 
         // correct shader uniform declaration according to the backend used
-        switch(Renderer::GetBackend()) {
-            case RENDERER_BACKEND_VULKAN:
+        RenderState *rs = RenderState::GetInstance();
+        switch(rs->GetPrimary()) {
+            case RENDERER_TYPE_VULKAN:
                 shader = "#version 450\n"\
                          "#extension GL_ARB_separate_shader_objects : enable\n"\
                          "layout(std140, set = 1, binding = 1) uniform ModelUbo {\n"\
@@ -309,7 +312,7 @@ namespace DENG {
                          "layout(location = " + std::to_string(m_out_id++) + ") out vec4 out_color;\n";
                 break;
 
-            case RENDERER_BACKEND_OPENGL:
+            case RENDERER_TYPE_OPENGL:
                 shader = "#version 450\n"\
                          "#extension GL_ARB_separate_shader_objects : enable\n"\
                          "layout(std140, binding = 1) uniform ModelUbo {\n"\

@@ -64,17 +64,9 @@ namespace DENG {
         Libdas::Vector4<float> clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
-    enum RendererBackend {
-        RENDERER_BACKEND_OPENGL,
-        RENDERER_BACKEND_VULKAN,
-        RENDERER_BACKEND_DIRECTX,
-        RENDERER_BACKEND_UNKNOWN
-    };
-
-
     class DENG_API Renderer {
         protected:
-            static RendererBackend m_backend;
+            uint32_t m_id = UINT32_MAX;
             Window &m_window;
             std::vector<MeshReference> m_meshes;
             std::vector<ShaderModule> m_shaders;
@@ -104,10 +96,6 @@ namespace DENG {
             inline uint32_t PushShader(const ShaderModule &_module) {
                 m_shaders.push_back(_module);
                 return static_cast<uint32_t>(m_shaders.size() - 1);
-            }
-
-            inline static RendererBackend GetBackend() {
-                return m_backend;
             }
 
             virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) = 0;

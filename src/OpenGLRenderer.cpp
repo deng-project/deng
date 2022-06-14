@@ -46,8 +46,12 @@ namespace DENG {
 #endif
 
     OpenGLRenderer::OpenGLRenderer(Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
-        GPUMemoryManager::GetInstance();
-        // m_window.SetVSync(m_conf.enable_vsync);
+        RenderState *rs = RenderState::GetInstance();
+        if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
+            rs->SetPrimary(RENDERER_TYPE_OPENGL);
+
+        m_id = rs->RegisterRenderer(RENDERER_TYPE_OPENGL, static_cast<uint64_t>(time(NULL)));
+
         // Load all OpenGL functions
         int status = deng_LoadGL();
         if(!status) {
@@ -70,18 +74,19 @@ namespace DENG {
         int x, y, size;
         const char *tex = GetMissingTexture(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, tex, x, y, 4);
-        m_backend = RENDERER_BACKEND_OPENGL;
     }
 
 
     OpenGLRenderer::~OpenGLRenderer() {
-        GPUMemoryManager::DeleteInstance();
         // delete texture objects
         for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
             glDeleteTextures(1, &it->second);
 
         delete mp_shader_loader;
         delete mp_buffer_loader;
+
+        RenderState *rs = RenderState::GetInstance();
+        rs->RemoveRenderer(m_id);
     }
 
 
@@ -278,6 +283,7 @@ namespace DENG {
 
     void OpenGLRenderer::_SetRenderState(uint32_t _shader_id) {
         // scissor test
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         if(m_shaders[_shader_id].enable_scissor) {
             glEnable(GL_SCISSOR_TEST);
             glErrorCheck("glEnable");

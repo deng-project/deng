@@ -53,7 +53,7 @@ namespace DENG {
 
             // check if found surface formats support SRGB coloring and nonlinear color space
             for(const VkSurfaceFormatKHR &sformat : mp_instance_creator->GetSurfaceFormats()) {
-                if(sformat.format == VK_FORMAT_B8G8R8A8_SRGB && sformat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                if(sformat.format == VK_FORMAT_B8G8R8A8_UNORM && sformat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                     m_selected_surface_format = sformat;
                     found_suitable_format = true;
                     break;

@@ -89,7 +89,6 @@ namespace DENG {
 
         public:
             ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _camera_offset);
-            ModelLoader(const ModelLoader& _ld) noexcept;
             ModelLoader(ModelLoader&& _ld) noexcept;
             void Update();
 

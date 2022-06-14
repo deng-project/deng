@@ -33,9 +33,9 @@ function(GitClone git_url git_tag target_dir repo_name)
 endfunction(GitClone)
 
 # Git clone embedded dependencies
-GitClone(https://github.com/ocornut/imgui 250333d895b1067533533dcfab137512745b9689 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
-GitClone(https://git.sadblog.xyz/nekowin 6ed31a06b534777cb67fe099e866b3a3f2821e81 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
-GitClone(https://git.sadblog.xyz/libdas 5a9da4704eb7bd3f7416482c0b7aa4748e6aca4f ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
+GitClone(https://github.com/ocornut/imgui e900ca355e3c7be7672e25800af346f1179e91d8 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
+GitClone(https://git.sadblog.xyz/nekowin ad035e81ef8dc90540ffb38e9350b401fbefdcd9 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.sadblog.xyz/libdas f5929b8d2b4ecb1e4bf8b1cf168745c49ea22092 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
 
 # Windows dependencies
 if(WIN32)
@@ -50,7 +50,7 @@ elseif(UNIX AND NOT APPLE)
     set(TRUNK_NAME linux_deps_a0.0.1.tar.gz)
     DownloadAndExtract(
         https://trunk.sadblog.xyz/${TRUNK_NAME}
-        c1a72786111769f4124c2b076423511d8ffe819037e1e8fc71b1c1b22a6850d3
+        49ec949f67f00988e95ff46def6a049718327de210b335183598c376a24855d8
         ${TRUNK_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/trunk
     )

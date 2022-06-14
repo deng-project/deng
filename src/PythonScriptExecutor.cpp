@@ -9,48 +9,43 @@
 namespace DENG {
 
     PythonScriptExecutor::PythonScriptExecutor(const std::string &_exec_name) {
-        // set PYTHONPATH environment to current working directory
-        std::string wd = Libdas::Algorithm::RelativePathToAbsolute("");
+        std::wstring program_path = _WidenString(Libdas::Algorithm::GetProgramPath());
 
 #ifdef _WIN32
         // if using windows try to change all backslashes to normal slashes
-        for (char& c : wd) {
+        for (char& c : program_path) {
             if (c == '\\')
                 c = '/';
         }
 #endif
-        // NOTE: std::codecvt_utf8 is deprecated from C++17, string casting should be implemented into DENG
-        m_exec_name = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_exec_name);
-        std::wstring python_lib_path = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(wd) + L"Python/Lib";
-        std::wstring python_dll_path = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(wd) + L"Python/DLLs";
 
-        PyStatus status;
-        PyConfig_InitPythonConfig(&m_config);
-        // This embedded Python implementation should be isolated from system installation
-        m_config.isolated = 1;
-        
-        // program name
-        status = PyConfig_SetString(&m_config, &m_config.program_name, m_exec_name.data());
-        _ExceptionCheck(status);
+        // initialize isolated python configuration
+        PyConfig_InitIsolatedConfig(&m_config);
 
-        // python module paths
-        wchar_t delim;
-#ifdef _WIN32
-        delim = ';';
-#else
-        delim = ':';
+        // PYTHONHOME variable
+        PyStatus status = PyStatus_Ok();
+        std::wstring str; //= program_path + L"/Python:" + program_path;
+        //status = PyConfig_SetString(&m_config, &m_config.home, str.data());
+        //_ExceptionCheck(status);
+
+        // PYTHONPATH variable
+#if defined(__linux__)
+        const wchar_t delim = L':';
+#elif defined(_WIN32)
+        const wchar_t delim = L';';
 #endif
-        std::wstring path = python_lib_path + delim + python_dll_path;
-        status = PyConfig_SetString(&m_config, &m_config.pythonpath_env, path.data());
+        str = program_path + L"/Python" + delim + program_path;
+        status = PyConfig_SetString(&m_config, &m_config.pythonpath_env, str.data());
+
+        // set program name variable
+        str = _WidenString(_exec_name);
+        status = PyConfig_SetString(&m_config, &m_config.program_name, str.data());
         _ExceptionCheck(status);
 
-        // sys.prefix where DENG installation is located at
-        std::string prefix = Libdas::Algorithm::GetProgramPath();
-        std::wstring wprefix = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(prefix);
-        status = PyConfig_SetString(&m_config, &m_config.base_prefix, wprefix.data());
-        _ExceptionCheck(status);
-        Py_InitializeFromConfig(&m_config);
 
+        // Initialize python
+        status = Py_InitializeFromConfig(&m_config);
+        _ExceptionCheck(status);
     }
 
 
@@ -58,6 +53,7 @@ namespace DENG {
         Py_FinalizeEx();
         PyConfig_Clear(&m_config);
     }
+
 
     std::string PythonScriptExecutor::_MakePlatformPath() {
         std::string py_dir = Libdas::Algorithm::RelativePathToAbsolute("./Python");
@@ -83,6 +79,18 @@ namespace DENG {
             std::cerr << _status.err_msg << std::endl;
             std::exit(_status.exitcode);
         }
+    }
+
+
+    std::wstring PythonScriptExecutor::_WidenString(const std::string &_str) {
+        std::wstring wstr;
+        wstr.reserve(_str.size() + 1);
+
+        for(char ch : _str) {
+            wstr += static_cast<wchar_t>(ch);
+        }
+
+        return wstr;
     }
 
 

@@ -9,15 +9,18 @@
 
 namespace DENG {
 
-    Window::Window(int32_t x, int32_t y, neko_Hint hints, const char *title) {
+    Window::Window(int32_t _x, int32_t _y, neko_Hint _hints, const char *_title) {
         neko_InitAPI();
-        m_surface = neko_NewWindow(x, y, hints, title);
-        neko_SetMouseCursorMode(m_surface, NEKO_CURSOR_MODE_STANDARD);
+        m_window = neko_NewWindow(_x, _y, _hints, 0, 0, _title);
     }
 
     Window::~Window() {
-        neko_DestroyWindow(m_surface);
+        neko_DestroyWindow(&m_window);
         neko_DeinitAPI();
+    }
+
+    void Window::glMakeCurrent() {
+        neko_glMakeCurrent(&m_window);
     }
 
     // static method:
@@ -26,108 +29,58 @@ namespace DENG {
     }
 
 
-
     void Window::ToggleVCMode() {
-        if (neko_IsVCMode(m_surface)) {
-            neko_SetMouseCursorMode(m_surface, NEKO_CURSOR_MODE_HIDDEN);
-            neko_ToggleVCMode(m_surface);
+        m_window.vc_data.is_enabled = !m_window.vc_data.is_enabled;
+
+        if (m_window.vc_data.is_enabled) {
+            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_HIDDEN);
+        } else {
+            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_STANDARD);
+            neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
         }
-
-        else {
-            neko_SetMouseCursorMode(m_surface, NEKO_CURSOR_MODE_STANDARD);
-            neko_ToggleVCMode(m_surface);
-        }
     }
 
 
-    void Window::ChangeSizeHints(neko_Hint _hints) {
-        neko_UpdateSizeMode(m_surface, _hints);
-    }
-
-
-    void Window::ChangeVCMode(bool _is_vcp) {
-        neko_ChangeVCMode(_is_vcp, m_surface);
-    }
-
-
-    char** Window::FindVulkanSurfaceExtensions(uint32_t* p_ext_c) const {
+    char **Window::FindVulkanSurfaceExtensions(uint32_t* p_ext_c) const {
         return neko_FindRequiredVkExtensionStrings(p_ext_c);
     }
 
 
+    void Window::ChangeSizeHints(neko_Hint _hints) {
+        neko_UpdateSizeMode(&m_window, _hints);
+    }
+
+
+    void Window::ChangeVCMode(bool _is_vcp) {
+        m_window.vc_data.is_enabled = _is_vcp;
+        if (m_window.vc_data.is_enabled) {
+            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_HIDDEN);
+        } else {
+            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_STANDARD);
+            neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
+        }
+    }
+
+
     void Window::ChangeCursor(neko_CursorMode _cur) {
-        neko_SetMouseCursorMode(m_surface, _cur);
+        neko_SetMouseCursorMode(&m_window, _cur);
     }
 
 
     void Window::Update() {
-        neko_UpdateWindow(m_surface);
+        neko_UpdateWindow(&m_window);
     }
 
-
-    bool Window::IsRunning() const {
-        return neko_IsRunning(m_surface);
-    }
-
-
-    bool Window::IsVirtualCursor() const {
-        return neko_IsVCMode(m_surface);
-    }
-
-
-    bool Window::IsResized() const {
-        return neko_ResizeNotify(m_surface);
-    }
 
     VkResult Window::InitVkSurface(VkInstance _instance, VkSurfaceKHR& _surface) {
-        return neko_InitVKSurface(m_surface, _instance, &_surface);
+        return neko_InitVkSurface(&m_window, _instance, &_surface);
     }
 
 
-    Libdas::Point2D<uint64_t> Window::GetMousePosition() const {
+    Libdas::Point2D<int64_t> Window::GetMouseDelta() {
         Libdas::Point2D<int64_t> pos;
-        neko_GetMousePos(m_surface, &pos.x, &pos.y);
-        return Libdas::Point2D<uint64_t>(static_cast<uint64_t>(pos.x), static_cast<uint64_t>(pos.y));
-    }
-
-
-    Libdas::Point2D<int64_t> Window::GetMouseDelta() const {
-        Libdas::Point2D<int64_t> pos;
-        neko_FindDeltaMovement(m_surface, &pos.x, &pos.y);
+        neko_FindDeltaMovement(&m_window, &pos.x, &pos.y);
         return pos;
-    }
-
-
-#ifdef _WIN32
-    HWND Window::GetWin32Handle() const {
-        return neko_GetWin32Handle(m_surface);
-    }
-#endif
-
-
-    neko_Hint Window::GetHints() const {
-        neko_Hint hints;
-        neko_GetWindowHints(m_surface, &hints);
-        return hints;
-    }
-
-
-    const std::string Window::GetTitle() const {
-        return std::string(neko_GetTitle(m_surface));
-    }
-
-
-    const Libdas::Point2D<int32_t> Window::GetSize() const {
-        Libdas::Point2D<int32_t> pos;
-        neko_GetWindowSize(m_surface, &pos.x, &pos.y);
-        return pos;
-    }
-
-
-    const Libdas::Point2D<float> Window::GetPixelSize() const {
-        Libdas::Point2D<float> pix;
-        neko_GetPixelSize(m_surface, &pix.x, &pix.y);
-        return pix;
     }
     
     

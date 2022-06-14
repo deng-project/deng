@@ -8,6 +8,7 @@
 
 int main() {
     DENG::Window win = DENG::Window(1280, 720, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "OpenGLImGui");
+    win.glMakeCurrent();
     DENG::RendererConfig conf = {}; // keep default
     DENG::OpenGLRenderer renderer = DENG::OpenGLRenderer(win, conf);
     ImGuiApp app(win, renderer);

@@ -29,6 +29,7 @@
 #undef DENG_DEFS_ONLY
     #include <ShaderDefinitions.h>
     #include <Window.h>
+    #include <RenderState.h>
     #include <Renderer.h>
 
     // Declarations ${ID} and ${CUSTOM_CODE} specify layout id and custom code in main() correspondingly

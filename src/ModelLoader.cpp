@@ -51,18 +51,8 @@ namespace DENG {
     }
 
 
-    ModelLoader::ModelLoader(const ModelLoader &_ld) noexcept :
-        m_parser(_ld.m_parser),
-        m_renderer(_ld.m_renderer),
-        m_animations(_ld.m_animations),
-        m_scene_loaders(_ld.m_scene_loaders),
-        m_model_name(_ld.m_model_name),
-        m_texture_names(_ld.m_texture_names),
-        m_buffer_offsets(_ld.m_buffer_offsets) {}
-
-
     ModelLoader::ModelLoader(ModelLoader &&_ld) noexcept :
-        m_parser(_ld.m_parser),
+        m_parser(std::move(_ld.m_parser)),
         m_renderer(_ld.m_renderer),
         m_animations(std::move(_ld.m_animations)),
         m_scene_loaders(std::move(_ld.m_scene_loaders)),

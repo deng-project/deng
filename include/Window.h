@@ -13,6 +13,7 @@
     #include <vulkan/vulkan.h>
 #endif
 
+#include <csignal>
 #include <nekowin/include/nwin.h>
 
 #define NOMINMAX
@@ -35,12 +36,14 @@ namespace DENG {
     
     class DENG_API Window {
         private:
-            neko_Window m_surface;
+            neko_Window m_window;
             Libdas::Point2D<uint64_t> m_prev_vc_pos;
 
         public:
             Window(int32_t width, int32_t height, neko_Hint hints, const char *title);
             ~Window();
+
+            void glMakeCurrent();
 
             static neko_InputBits CreateInputMask(neko_HidEvent evs[8]);
 
@@ -61,25 +64,58 @@ namespace DENG {
             void Update();
 
             /// Check if the current window is still active and running
-            bool IsRunning() const;
+            inline bool IsRunning() const {
+                return m_window.is_running;
+            }
 
             /// Check if virtual cursor mode is enabled
-            bool IsVirtualCursor() const;
-            bool IsResized() const;
+            inline bool IsVirtualCursor() const {
+                return m_window.vc_data.is_enabled;
+            }
+
+            inline bool IsResized() const {
+                return m_window.resize_notify;
+            }
 
             /// Create new vulkan surface instance
             VkResult InitVkSurface(VkInstance _instance, VkSurfaceKHR &_surface);
-            Libdas::Point2D<uint64_t> GetMousePosition() const;
-            Libdas::Point2D<int64_t> GetMouseDelta() const;
+
+            inline Libdas::Point2D<uint64_t> GetMousePosition() const {
+                Libdas::Point2D<uint64_t> pos;
+                if(m_window.vc_data.is_enabled) {
+                    pos.x = static_cast<uint64_t>(m_window.vc_data.x);
+                    pos.y = static_cast<uint64_t>(m_window.vc_data.y);
+                } else {
+                    pos.x = static_cast<uint64_t>(m_window.mx);
+                    pos.y = static_cast<uint64_t>(m_window.my);
+                }
+                return pos;
+            }
+
+            Libdas::Point2D<int64_t> GetMouseDelta();
             
-            // these methods are meant for platform specific reasons
-#ifdef _WIN32
-            HWND GetWin32Handle() const;
-#endif
-            neko_Hint GetHints() const;
-            const std::string GetTitle() const;
-            const Libdas::Point2D<int32_t> GetSize() const;
-            const Libdas::Point2D<float> GetPixelSize() const;
+            inline neko_Hint GetHints() const {
+                return m_window.hints;
+            }
+
+            inline std::string GetTitle() const {
+                return std::string(m_window.window_title);
+            }
+
+            inline Libdas::Point2D<int32_t> GetSize() const {
+                Libdas::Point2D<int32_t> size = { m_window.cwidth, m_window.cheight };
+                return size;
+            }
+
+            inline Libdas::Point2D<float> GetPixelSize() const {
+                Libdas::Point2D<float> pix = { 
+                    2.0f / static_cast<float>(m_window.cwidth),
+                    2.0f / static_cast<float>(m_window.cheight)
+                };
+
+                return pix;
+            }
+
             bool IsHidEventActive(neko_InputBits _bits) const;
             bool IsKeyPressed(neko_HidEvent _hid) const;
             bool IsKeyReleased(neko_HidEvent _hid) const;

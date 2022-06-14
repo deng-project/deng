@@ -67,6 +67,7 @@ if(BUILD_TESTS)
     include(cmake/tests/VulkanImGui.cmake)
     include(cmake/tests/OpenGLImGui.cmake)
     include(cmake/tests/ShaderGenerator.cmake)
+    include(cmake/tests/FilePickerTest.cmake)
 
     if(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS)
         include(cmake/tests/CubicsInterp.cmake)

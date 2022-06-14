@@ -46,7 +46,6 @@
 #include <ErrorDefinitions.h>
 #include <ShaderDefinitions.h>
 #include <Window.h>
-#include <NativeGUICaller.h>
 #include <Renderer.h>
 #include <ModelUniforms.h>
 #include <ModelShaderGenerator.h>
@@ -72,8 +71,8 @@
 #define USE_VULKAN  1
 #define USE_OPENGL  2
 
-#define WIDTH   1280
-#define HEIGHT  720
+#define WIDTH   1880
+#define HEIGHT  1080
 
 
 namespace Executable {
@@ -85,6 +84,7 @@ namespace Executable {
 
         bool &use_camera;
         bool is_object_manager = true;
+        bool is_scene_editor = true;
         bool is_texture_picker = false;
         bool reload_shaders = false;
         DENG::EditorCamera *p_camera;
@@ -100,10 +100,8 @@ namespace Executable {
     };
 
     struct ImGuiCaller {
-        static void ShowTransformationProperties(DENG::NodeLoader& _node);
-        static void ShowTexturePicker(ImGuiData *_p_data, DENG::ModelLoader &_loader, DENG::MeshLoader &_mesh);
-        static void RecursiveNodeIteration(ImGuiData *_p_data, DENG::ModelLoader &_loader, DENG::NodeLoader &_node);
         static void ShowMenuBar(ImGuiData *_p_data);
+        static void MainImGuiContext(ImGuiData *_p_data);
 
         // main ImGui callback method
         static void Callback(void *_data);

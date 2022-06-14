@@ -120,8 +120,8 @@ namespace DENG {
             
             if(!success) {
                 glGetShaderInfoLog(_shader_id, 512, NULL, log);
-                LOG("Shader compilation error in shader: " + _file_name);
-                LOG(std::string(log));
+                std::cerr << "Shader compilation error in shader: " << _file_name << std::endl;
+                std::cerr << log << std::endl;
                 exit(EXIT_FAILURE);
             }
         }

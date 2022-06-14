@@ -19,6 +19,7 @@ set(DENG_HEADERS
     include/Camera3D.h
     include/EditorCamera.h
     include/ErrorDefinitions.h
+    include/FilePicker.h
     include/FirstPersonCamera.h
     include/GPUMemoryManager.h
     include/ImGuiLayer.h
@@ -28,7 +29,6 @@ set(DENG_HEADERS
     include/ModelShaderManager.h
     include/ModelShaderGenerator.h
     include/ModelUniforms.h
-    include/NativeGUICaller.h
     include/NodeLoader.h
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
@@ -36,6 +36,7 @@ set(DENG_HEADERS
     include/PointViewer.h
     include/PythonScriptExecutor.h
     include/Renderer.h
+    include/RenderState.h
     include/SceneLoader.h
     include/ShaderDefinitions.h
     include/SkeletonDataManager.h
@@ -59,6 +60,7 @@ set(DENG_SOURCES
     src/AnimationSampler.cpp
     src/Camera3D.cpp
     src/EditorCamera.cpp
+    src/FilePicker.cpp
     src/FirstPersonCamera.cpp
     src/GPUMemoryManager.cpp
     src/ImGuiLayer.cpp
@@ -67,14 +69,13 @@ set(DENG_SOURCES
     src/ModelLoader.cpp
     src/ModelShaderManager.cpp
     src/ModelShaderGenerator.cpp
-    src/NativeGUICaller.cpp
     src/NodeLoader.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/PointViewer.cpp
     src/PythonScriptExecutor.cpp
-    src/Renderer.cpp
+    src/RenderState.cpp
     src/SceneLoader.cpp
     src/ShaderDefinitions.cpp
     src/SkeletonDataManager.cpp
@@ -205,10 +206,12 @@ elseif(UNIX AND NOT MACOS)
 
     target_link_libraries(${DENG_STATIC_TARGET}
         PRIVATE python3.9
+        PRIVATE util
         PRIVATE shaderc_combined)
 
     target_link_libraries(${DENG_SHARED_TARGET}
         PRIVATE python3.9
+        PRIVATE util
         PRIVATE shaderc_combined)
 endif()
 

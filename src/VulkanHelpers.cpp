@@ -119,18 +119,15 @@ namespace DENG {
 
                 src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-            }
-
-            else if(_old == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _new == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            } else if(_old == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _new == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
                 memory_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
                 memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
                 src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-            }
-
-            else 
+            } else {
                 VK_BUFFER_ERR("invalid image layout transition");
+            }
         
             // Change image layout
             vkCmdPipelineBarrier(tmp_cmd_buf, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &memory_barrier);
