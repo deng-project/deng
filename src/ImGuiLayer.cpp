@@ -90,7 +90,7 @@ namespace DENG {
                     mesh.commands.back().attribute_offsets.push_back(base_vertex_offset + offsetof(ImDrawVert, uv));
                     mesh.commands.back().attribute_offsets.push_back(base_vertex_offset + offsetof(ImDrawVert, col));
                     mesh.commands.back().indices_offset = cmd_idx_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
-                    mesh.commands.back().indices_count = pcmd->ElemCount;
+                    mesh.commands.back().draw_count = pcmd->ElemCount;
                     mesh.commands.back().texture_names.push_back(std::string(reinterpret_cast<char*>(pcmd->TextureId)));
                     mesh.commands.back().scissor.offset = { static_cast<int32_t>(clip.x), static_cast<int32_t>(clip.y) };
                     mesh.commands.back().scissor.ext = { static_cast<uint32_t>(clip.z - clip.x), static_cast<uint32_t>(clip.w - clip.y) };
@@ -149,8 +149,8 @@ namespace DENG {
         module.attribute_strides.push_back(sizeof(ImDrawVert));
         module.enable_blend = true;
         module.enable_scissor = true;
+        module.enable_texture_mapping = true;
         module.load_shaders_from_file = false;
-        module.use_texture_mapping = true;
 
         module.ubo_data_layouts.reserve(2);
         module.ubo_data_layouts.emplace_back();

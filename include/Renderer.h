@@ -39,7 +39,7 @@ namespace DENG {
 
     struct DrawCommand {
         uint32_t indices_offset = 0;
-        uint32_t indices_count = 0;
+        uint32_t draw_count = 0; // if used with indices, this property specifies index count, otherwise it describes attribute count
         std::vector<std::string> texture_names;
         std::vector<std::size_t> attribute_offsets;
 

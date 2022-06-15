@@ -73,6 +73,19 @@ namespace DENG {
         UNIFORM_USAGE_PER_MESH
     };
 
+    enum CullMode {
+        CULL_MODE_NONE,
+        CULL_MODE_COUNTER_CLOCKWISE,
+        CULL_MODE_CLOCKWISE
+    };
+
+
+    enum PrimitiveMode {
+        PRIMITIVE_MODE_POINTS,
+        PRIMITIVE_MODE_LINES,
+        PRIMITIVE_MODE_TRIANGLES
+    };
+
 
     typedef uint8_t ShaderStage;
     #define SHADER_STAGE_NULL       0x00
@@ -94,10 +107,12 @@ namespace DENG {
         UniformUsage usage = UNIFORM_USAGE_PER_SHADER;
     };
 
-    enum CullMode {
-        CULL_MODE_NONE,
-        CULL_MODE_COUNTER_CLOCKWISE,
-        CULL_MODE_CLOCKWISE
+
+    struct Viewport {
+        uint32_t x = 0;
+        uint32_t y = 0;
+        uint32_t width = 0;
+        uint32_t height = 0;
     };
 
 
@@ -113,13 +128,17 @@ namespace DENG {
         std::string vertex_shader_src;
         std::string geometry_shader_src;
         std::string fragment_shader_src;
-        bool use_texture_mapping = false;
-        bool load_shaders_from_file = false;
+        Viewport viewport;
+        bool enable_custom_viewport = false;
+        bool enable_texture_mapping = false;
         bool enable_scissor = false;
         bool enable_depth_testing = false;
         bool enable_stencil_testing = false;
         bool enable_blend = false;
+        bool enable_indexing = true;
+        bool load_shaders_from_file = false;
         CullMode cull_mode = CULL_MODE_NONE;
+        PrimitiveMode prim_mode = PRIMITIVE_MODE_TRIANGLES;
     };
 
     std::size_t CalculatePackedStride(const ShaderModule &_module);

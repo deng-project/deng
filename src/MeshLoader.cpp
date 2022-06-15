@@ -160,7 +160,7 @@ namespace DENG {
             const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[i]);
             uint32_t abs = m_mesh_buffer_offsets[prim.index_buffer_id] + prim.index_buffer_offset;
             mesh.commands.back().indices_offset = abs;
-            mesh.commands.back().indices_count = prim.indices_count;
+            mesh.commands.back().draw_count = prim.indices_count;
             mesh.commands.back().attribute_offsets.reserve(3 + prim.texture_count + prim.color_mul_count + prim.joint_set_count * 2);
             abs = m_mesh_buffer_offsets[prim.vertex_buffer_id] + prim.vertex_buffer_offset;
             mesh.commands.back().attribute_offsets.push_back(abs);

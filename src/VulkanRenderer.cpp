@@ -581,6 +581,24 @@ namespace DENG {
             // Iterate through every mesh, bind resources and issue an index draw to commandbuffer
             for(size_t i = 0; i < m_meshes.size(); i++) {
                 const uint32_t shader_id = m_meshes[i].shader_module_id;
+
+                // set the viewport
+                VkViewport vp = {};
+                if(m_shaders[shader_id].enable_custom_viewport) {
+                    vp.x = static_cast<float>(m_shaders[shader_id].viewport.x);
+                    vp.y = static_cast<float>(m_shaders[shader_id].viewport.y);
+                    vp.width = static_cast<float>(m_shaders[shader_id].viewport.width);
+                    vp.height = static_cast<float>(m_shaders[shader_id].viewport.height);
+                    vp.minDepth = 0.0f;
+                    vp.maxDepth = 1.0f;
+                } else {
+                    vp.x = 0.0f;
+                    vp.y = 0.0f;
+                    vp.width = static_cast<float>(m_window.GetSize().x);
+                    vp.height = static_cast<float>(m_window.GetSize().y);
+                }
+                vkCmdSetViewport(m_command_buffers[m_current_frame], 0, 1, &vp);
+
                 for(size_t j = 0; j < m_meshes[i].commands.size(); j++) {
                     vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipeline());
                     VkDeviceSize offset = 0;
@@ -591,15 +609,12 @@ namespace DENG {
                     std::vector<VkBuffer> buffers(m_shaders[shader_id].attributes.size(), m_main_buffer);
                     vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, static_cast<uint32_t>(m_shaders[shader_id].attributes.size()), buffers.data(), m_meshes[i].commands[j].attribute_offsets.data());
 
-                    offset = m_meshes[i].commands[j].indices_offset;
-                    vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
-
                     // check if descriptor sets should be bound
                     std::vector<VkDescriptorSet> desc_sets;
 
                     // per shader descriptor sets
                     if(m_shaders[shader_id].ubo_data_layouts.size()) {
-                        if(m_shaders[shader_id].use_texture_mapping) {
+                        if(m_shaders[shader_id].enable_texture_mapping) {
                             std::vector<std::string> names;
                             std::vector<Vulkan::TextureData> textures;
                             names.reserve(m_meshes[i].commands[j].texture_names.size());
@@ -626,19 +641,22 @@ namespace DENG {
                     if(desc_sets.size())
                         vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, static_cast<uint32_t>(desc_sets.size()), desc_sets.data(), 0, nullptr);
 
+                    // check if scissor technique should be used
                     if(m_shaders[shader_id].enable_scissor) {
                         VkRect2D rect = {};
-                        if(m_meshes[i].commands[j].scissor.enabled) {
-                            rect.offset = VkOffset2D { m_meshes[i].commands[j].scissor.offset.x, m_meshes[i].commands[j].scissor.offset.y };
-                            rect.extent = VkExtent2D { m_meshes[i].commands[j].scissor.ext.x, m_meshes[i].commands[j].scissor.ext.y };
-                        } else {
-                            rect.offset = { 0, 0 };
-                            rect.extent = { static_cast<uint32_t>(m_window.GetSize().x), static_cast<uint32_t>(m_window.GetSize().y) };
-                        }
+                        rect.offset = VkOffset2D { m_meshes[i].commands[j].scissor.offset.x, m_meshes[i].commands[j].scissor.offset.y };
+                        rect.extent = VkExtent2D { m_meshes[i].commands[j].scissor.ext.x, m_meshes[i].commands[j].scissor.ext.y };
                         vkCmdSetScissor(m_command_buffers[m_current_frame], 0, 1, &rect);
-                    }
+                    } 
 
-                    vkCmdDrawIndexed(m_command_buffers[m_current_frame], m_meshes[i].commands[j].indices_count, 1, 0, 0, 0);
+                    // check if indexed draw is required
+                    if(m_shaders[shader_id].enable_indexing) {
+                        offset = m_meshes[i].commands[j].indices_offset;
+                        vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
+                        vkCmdDrawIndexed(m_command_buffers[m_current_frame], m_meshes[i].commands[j].draw_count, 1, 0, 0, 0);
+                    } else {
+                        vkCmdDraw(m_command_buffers[m_current_frame], m_meshes[i].commands[j].draw_count, 1, 0, 0);
+                    }
                 }
             }
 

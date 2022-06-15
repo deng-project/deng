@@ -491,14 +491,23 @@ namespace DENG {
 
         // draw each mesh to the screen
         for(auto mesh_it = m_meshes.begin(); mesh_it < m_meshes.end(); mesh_it++) {
-            const uint32_t shader_i = mesh_it->shader_module_id;
+            const uint32_t shader_id = mesh_it->shader_module_id;
 
-            _SetRenderState(shader_i);
-            glUseProgram(mp_shader_loader->GetShaderProgramById(shader_i));
+            // check if custom viewport was requested
+            if(m_shaders[shader_id].enable_custom_viewport) {
+                GLint x = static_cast<GLint>(m_shaders[shader_id].viewport.x);
+                GLint y = static_cast<GLint>(m_window.GetSize().y) - static_cast<GLint>(m_shaders[shader_id].viewport.y) - static_cast<GLint>(m_shaders[shader_id].viewport.height);
+                glViewport(x, y, (GLsizei) m_shaders[shader_id].viewport.width, (GLsizei) m_shaders[shader_id].viewport.height);
+            } else {
+                glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
+            }
+
+            _SetRenderState(shader_id);
+            glUseProgram(mp_shader_loader->GetShaderProgramById(shader_id));
             glErrorCheck("glUseProgram");
 
             for(auto cmd_it = mesh_it->commands.begin(); cmd_it < mesh_it->commands.end(); cmd_it++) {
-                _BindVertexAttributes(*cmd_it, shader_i, 0);
+                _BindVertexAttributes(*cmd_it, shader_id, 0);
 
                 // for each mesh uniform object bind appropriate buffer ranges
                 for(auto ubo = mesh_it->ubo_blocks.begin(); ubo != mesh_it->ubo_blocks.end(); ubo++) {
@@ -511,7 +520,7 @@ namespace DENG {
                 }
 
                 // for each shader uniform object bind appropriate uniform buffer ranges
-                for(auto ubo = m_shaders[shader_i].ubo_data_layouts.begin(); ubo != m_shaders[shader_i].ubo_data_layouts.end(); ubo++) {
+                for(auto ubo = m_shaders[shader_id].ubo_data_layouts.begin(); ubo != m_shaders[shader_id].ubo_data_layouts.end(); ubo++) {
                     const GLuint binding = static_cast<GLuint>(ubo->block.binding);
 
                     if(ubo->usage == UNIFORM_USAGE_PER_SHADER && ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
@@ -520,11 +529,9 @@ namespace DENG {
 
                         glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");
-                    } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && m_shaders[shader_i].use_texture_mapping) {
-                        // tmp
+                    } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && m_shaders[shader_id].enable_texture_mapping) {
                         for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
                             const GLuint tex_id = m_opengl_textures[*tex_it];
-
                             glActiveTexture(GL_TEXTURE0 + binding);
                             glErrorCheck("glActiveTexture");
                             glBindTexture(GL_TEXTURE_2D, tex_id);
@@ -533,8 +540,8 @@ namespace DENG {
                     }
                 }
 
-                // check if scissoring was required
-                if(cmd_it->scissor.enabled) {
+                // check if scissor technique is required
+                if(m_shaders[shader_id].enable_scissor) {
                     glScissor((GLint) cmd_it->scissor.offset.x, (GLint) (m_window.GetSize().y - (cmd_it->scissor.ext.y + cmd_it->scissor.offset.y)), (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
                     glErrorCheck("glScissor");
                 } else {
@@ -542,11 +549,42 @@ namespace DENG {
                     glErrorCheck("glScissor");
                 }
 
-                const size_t ioffset = static_cast<size_t>(cmd_it->indices_offset);
-                glDrawElements(GL_TRIANGLES, (GLsizei) cmd_it->indices_count, GL_UNSIGNED_INT, reinterpret_cast<const void*>(ioffset));
-                glErrorCheck("glDrawElements");
+                // check if indexed draw was requested
+                if(m_shaders[shader_id].enable_indexing) {
+                    const size_t ioffset = static_cast<size_t>(cmd_it->indices_offset);
+                    switch(m_shaders[shader_id].prim_mode) {
+                        case PRIMITIVE_MODE_TRIANGLES:
+                            glDrawElements(GL_TRIANGLES, (GLsizei) cmd_it->draw_count, GL_UNSIGNED_INT, reinterpret_cast<const void*>(ioffset));
+                            break;
 
-                _UnbindVertexAttributes(shader_i);
+                        case PRIMITIVE_MODE_LINES:
+                            glDrawElements(GL_LINES, (GLsizei) cmd_it->draw_count, GL_UNSIGNED_INT, reinterpret_cast<const void*>(ioffset));
+                            break;
+
+                        case PRIMITIVE_MODE_POINTS:
+                            DENG_ASSERT(false);
+                            break;
+                    }
+
+                    glErrorCheck("glDrawElements");
+                } else {
+                    switch(m_shaders[shader_id].prim_mode) {
+                        case PRIMITIVE_MODE_TRIANGLES:
+                            glDrawArrays(GL_TRIANGLES, 0, (GLsizei) cmd_it->draw_count);
+                            break;
+
+                        case PRIMITIVE_MODE_POINTS:
+                            glDrawArrays(GL_POINTS, 0, (GLsizei) cmd_it->draw_count);
+                            break;
+
+                        case PRIMITIVE_MODE_LINES:
+                            glDrawArrays(GL_LINES, 0, (GLsizei) cmd_it->draw_count);
+                            break;
+                    }
+                    glErrorCheck("glDrawArrays");
+                }
+
+                _UnbindVertexAttributes(shader_id);
             }
         }
 

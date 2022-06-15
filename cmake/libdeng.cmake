@@ -22,6 +22,7 @@ set(DENG_HEADERS
     include/FilePicker.h
     include/FirstPersonCamera.h
     include/GPUMemoryManager.h
+    include/GridGenerator.h
     include/ImGuiLayer.h
     include/MeshLoader.h
     include/Missing.h
@@ -33,7 +34,6 @@ set(DENG_HEADERS
     include/OpenGLBufferLoader.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
-    include/PointViewer.h
     include/PythonScriptExecutor.h
     include/Renderer.h
     include/RenderState.h
@@ -63,6 +63,7 @@ set(DENG_SOURCES
     src/FilePicker.cpp
     src/FirstPersonCamera.cpp
     src/GPUMemoryManager.cpp
+    src/GridGenerator.cpp
     src/ImGuiLayer.cpp
     src/MeshLoader.cpp
     src/Missing.cpp
@@ -73,7 +74,6 @@ set(DENG_SOURCES
     src/OpenGLBufferLoader.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
-    src/PointViewer.cpp
     src/PythonScriptExecutor.cpp
     src/RenderState.cpp
     src/SceneLoader.cpp

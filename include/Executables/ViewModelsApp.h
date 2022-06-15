@@ -63,6 +63,7 @@
 #include <ImGuiLayer.h>
 #include <PythonScriptExecutor.h>
 #include <GPUMemoryManager.h>
+#include <GridGenerator.h>
 
 // backend specific includes
 #include <OpenGLRenderer.h>
@@ -76,36 +77,6 @@
 
 
 namespace Executable {
-
-    class ModelLoaderApp;
-
-    struct ImGuiData {
-        ImGuiData(bool &_use_camera) : use_camera(_use_camera) {}
-
-        bool &use_camera;
-        bool is_object_manager = true;
-        bool is_scene_editor = true;
-        bool is_texture_picker = false;
-        bool reload_shaders = false;
-        DENG::EditorCamera *p_camera;
-        std::vector<DENG::ModelLoader> *p_model_loaders;
-        ModelLoaderApp* p_app = nullptr;
-        DENG::Window *p_win = nullptr;
-
-        // for texture picker
-        uint32_t enabled_texture_count = 0;
-        std::vector<bool> texture_picker_data;
-
-        uint32_t max_id = 1;
-    };
-
-    struct ImGuiCaller {
-        static void ShowMenuBar(ImGuiData *_p_data);
-        static void MainImGuiContext(ImGuiData *_p_data);
-
-        // main ImGui callback method
-        static void Callback(void *_data);
-    };
 
     class ModelLoaderApp {
         private: 
@@ -123,30 +94,16 @@ namespace Executable {
             };
 
             DENG::EditorCamera m_editor_camera;
-            std::vector<DENG::ModelLoader> m_loaders;
+            DENG::GridGenerator m_grid;
 
-            DENG::ImGuiLayer m_imgui;
-
-            std::string m_file_name;
-            const float m_key_interval = 1000;    // ms
-            std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
-
-
-            // 0 - first person camera / 1 - editor camera
+            std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
+            const float m_key_interval = 1000; // ms
             bool m_use_camera = false;
-
-            ImGuiData m_imgui_user_data;
 
         public:
             ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend);
-            void PushModelLoader(const std::string &_fname);
             void Run();
-
-            inline std::vector<DENG::ModelLoader>& GetModelLoaders() {
-                return m_loaders;
-            }
-            
     };
 }
 

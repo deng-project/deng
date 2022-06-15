@@ -108,7 +108,7 @@ class TriangleApp {
             m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
             m_module.load_shaders_from_file = true;
-            m_module.use_texture_mapping = true;
+            m_module.enable_texture_mapping = true;
 
             m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))), 0);
             m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))), static_cast<uint32_t>(sizeof(g_verts)));
@@ -120,7 +120,7 @@ class TriangleApp {
             m_mesh.commands.back().attribute_offsets.push_back(0);
             m_mesh.commands.back().attribute_offsets.push_back(sizeof(float) * 3);
             m_mesh.commands.back().indices_offset = sizeof(g_verts);
-            m_mesh.commands.back().indices_count = 3;
+            m_mesh.commands.back().draw_count = 3;
             m_mesh.commands.back().texture_names.push_back(TEXTURE_NAME);
             m_mesh.shader_module_id = shader_id;
             m_mesh.name = MESH_NAME;

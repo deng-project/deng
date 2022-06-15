@@ -33,9 +33,6 @@ namespace DENG {
         m_window.vc_data.is_enabled = !m_window.vc_data.is_enabled;
 
         if (m_window.vc_data.is_enabled) {
-            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_HIDDEN);
-        } else {
-            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_STANDARD);
             neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
         }
     }
@@ -54,9 +51,6 @@ namespace DENG {
     void Window::ChangeVCMode(bool _is_vcp) {
         m_window.vc_data.is_enabled = _is_vcp;
         if (m_window.vc_data.is_enabled) {
-            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_HIDDEN);
-        } else {
-            neko_SetMouseCursorMode(&m_window, NEKO_CURSOR_MODE_STANDARD);
             neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
         }
     }

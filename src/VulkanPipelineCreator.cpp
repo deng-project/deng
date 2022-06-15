@@ -485,7 +485,19 @@ namespace DENG {
 
             // Set up input assembly createinfo object
             m_input_asm_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-            m_input_asm_createinfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            switch(m_module.prim_mode) {
+                case PRIMITIVE_MODE_TRIANGLES:
+                    m_input_asm_createinfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                    break;
+
+                case PRIMITIVE_MODE_LINES:
+                    m_input_asm_createinfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+                    break;
+
+                case PRIMITIVE_MODE_POINTS:
+                    m_input_asm_createinfo.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+                    break;
+            }
             m_input_asm_createinfo.primitiveRestartEnable = VK_FALSE;
 
             // Set viewport values
@@ -571,15 +583,24 @@ namespace DENG {
                 m_depth_stencil.stencilTestEnable = VK_FALSE;
             }
 
-            // Check if the dynamic pipeline state createinfo should be created
+            m_dynamic_state_createinfo = {};
+            m_dynamic_states.clear();
+            m_dynamic_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+
+            // check if scissor technique is enabled
             if(m_module.enable_scissor) {
-                m_dynamic_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-                m_dynamic_states.clear();
                 m_dynamic_states.push_back(VK_DYNAMIC_STATE_SCISSOR);
-                m_dynamic_state_createinfo.dynamicStateCount = static_cast<uint32_t>(m_dynamic_states.size());
+                m_dynamic_state_createinfo.dynamicStateCount++;
+                m_dynamic_state_createinfo.pDynamicStates = m_dynamic_states.data();
+            } 
+
+            // check if custom viewports are enabled
+            if(m_module.enable_custom_viewport) {
+                m_dynamic_states.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+                m_dynamic_state_createinfo.dynamicStateCount++;
                 m_dynamic_state_createinfo.pDynamicStates = m_dynamic_states.data();
             }
-            
+
             // Set up colorblend state createinfo
             m_colorblend_state_createinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
             m_colorblend_state_createinfo.logicOpEnable = VK_FALSE;
@@ -599,7 +620,7 @@ namespace DENG {
             graphics_pipeline_createinfo.pMultisampleState = &m_multisample_createinfo;
             graphics_pipeline_createinfo.pDepthStencilState = &m_depth_stencil;
             
-            if(m_module.enable_scissor)
+            if(m_module.enable_scissor || m_module.enable_custom_viewport)
                 graphics_pipeline_createinfo.pDynamicState = &m_dynamic_state_createinfo;
             else graphics_pipeline_createinfo.pDynamicState = nullptr;
 
