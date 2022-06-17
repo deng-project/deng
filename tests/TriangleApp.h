@@ -40,6 +40,7 @@
 #include <ShaderDefinitions.h>
 #include <Missing.h>
 #include <Renderer.h>
+#include <GPUMemoryManager.h>
 
 // backend specific includes
 #ifdef USE_OPENGL
@@ -115,9 +116,13 @@ class TriangleApp {
             uint32_t shader_id = m_renderer.PushShader(m_module);
             m_renderer.PushTextureFromFile(TEXTURE_NAME, TEXTURE_FILE);
 
+            DENG::GPUMemoryManager *mem_man = DENG::GPUMemoryManager::GetInstance();
+            const uint32_t main_offset = mem_man->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(sizeof(g_verts)));
+            const uint32_t ubo_offset = mem_man->RequestUniformMemoryLocationF(m_renderer, 1);
+
             // create the mesh object
             m_mesh.commands.emplace_back();
-            m_mesh.commands.back().attribute_offsets.push_back(0);
+            m_mesh.commands.back().attribute_offsets.push_back(main_offset);
             m_mesh.commands.back().attribute_offsets.push_back(sizeof(float) * 3);
             m_mesh.commands.back().indices_offset = sizeof(g_verts);
             m_mesh.commands.back().draw_count = 3;

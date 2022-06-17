@@ -48,7 +48,7 @@ namespace DENG {
 
                 VkPipelineDynamicStateCreateInfo        m_dynamic_state_createinfo = {};
                 std::vector<VkDynamicState> m_dynamic_states;
-                ShaderModule &m_module;
+                ShaderModule m_module;
 
                 std::vector<uint32_t> m_vertex_bin;
                 std::vector<uint32_t> m_geometry_bin;
@@ -67,19 +67,16 @@ namespace DENG {
 #ifdef VULKAN_PIPELINE_CREATOR_CPP
                 static void _CompileShader(std::vector<uint32_t> &_target, const std::string &_src, const std::string &_file_name, shaderc_shader_kind _kind);
 #endif
-                void _CheckAndCompileShaderSources(ShaderModule &_module);
+                void _CheckAndCompileShaderSources();
                 std::string _ReadShaderSource(const std::string &_file_name);
                 void _CreatePipelineLayout();
                 VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(bool _create_shader_modules = true);
 
             public:
-                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, ShaderModule &_module);
-                PipelineCreator(const PipelineCreator &_pc) noexcept;
-                PipelineCreator(PipelineCreator &&_pc) noexcept;
+                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, const ShaderModule &_module);
+                PipelineCreator(PipelineCreator &&_pc) noexcept = default;
                 ~PipelineCreator() noexcept;
-
-                PipelineCreator &operator=(const PipelineCreator &_pc) noexcept;
-                PipelineCreator &operator=(PipelineCreator &&_pc) noexcept;
+                PipelineCreator &operator=(PipelineCreator &&_pc) noexcept = default;
 
                 void DestroyPipelineData();
                 void RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext);

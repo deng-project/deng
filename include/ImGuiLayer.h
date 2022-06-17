@@ -11,6 +11,7 @@
     #include <string>
     #include <vector>
     #include <chrono>
+    #include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -21,6 +22,7 @@
 
     #include <Api.h>
     #include <Window.h>
+    #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Renderer.h>
     #include <GPUMemoryManager.h>

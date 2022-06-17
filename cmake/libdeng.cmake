@@ -43,6 +43,7 @@ set(DENG_HEADERS
     include/ThirdPersonCamera.h
     include/VulkanDescriptorAllocator.h
     include/VulkanDescriptorSetLayoutCreator.h
+    include/VulkanFramebuffer.h
     include/VulkanHelpers.h
     include/VulkanInstanceCreator.h
     include/VulkanPipelineCreator.h
@@ -82,6 +83,7 @@ set(DENG_SOURCES
     src/ThirdPersonCamera.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
+    src/VulkanFramebuffer.cpp
     src/VulkanHelpers.cpp
     src/VulkanInstanceCreator.cpp
     src/VulkanPipelineCreator.cpp

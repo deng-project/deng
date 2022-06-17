@@ -87,32 +87,32 @@ namespace DENG {
                 InstanceCreator(Window &_win);
                 ~InstanceCreator();
 
-                // inline methods
-                inline VkDevice GetDevice() {
+                // inlined methods
+                inline VkDevice GetDevice() const {
                     return m_device;
                 }
 
-                inline VkPhysicalDevice GetPhysicalDevice() {
+                inline VkPhysicalDevice GetPhysicalDevice() const {
                     return m_gpu;
                 }
 
-                inline VkSurfaceKHR GetSurface() {
+                inline VkSurfaceKHR GetSurface() const {
                     return m_surface;
                 }
 
-                inline uint32_t GetGraphicsFamilyIndex() {
+                inline uint32_t GetGraphicsFamilyIndex() const {
                     return m_graphics_family_index;
                 }
 
-                inline uint32_t GetPresentationFamilyIndex() {
+                inline uint32_t GetPresentationFamilyIndex() const {
                     return m_presentation_family_index;
                 }
 
-                inline VkQueue GetGraphicsQueue() {
+                inline VkQueue GetGraphicsQueue() const {
                     return m_graphics_queue;
                 }
 
-                inline VkQueue GetPresentationQueue() {
+                inline VkQueue GetPresentationQueue() const {
                     return m_presentation_queue;
                 }
 
@@ -132,11 +132,11 @@ namespace DENG {
                     return m_surface_capabilities;
                 }
 
-                inline uint32_t GetMinimalUniformBufferAlignment() {
+                inline uint32_t GetMinimalUniformBufferAlignment() const {
                     return static_cast<uint32_t>(m_gpu_properties.limits.minUniformBufferOffsetAlignment);
                 }
 
-                inline float GetMaxSamplerAnisotropy() {
+                inline float GetMaxSamplerAnisotropy() const {
                     return m_gpu_properties.limits.maxSamplerAnisotropy;
                 }
         };

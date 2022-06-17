@@ -10,8 +10,13 @@
 namespace DENG {
     namespace Vulkan {
 
-        PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, ShaderModule &_module) :
-            m_device(_dev), m_desc_set_layouts(_desc_set_layouts), m_ext(_ext), m_samples(_samples), m_module(_module), m_render_pass(_render_pass)
+        PipelineCreator::PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, const ShaderModule &_module) :
+            m_device(_dev), 
+            m_desc_set_layouts(_desc_set_layouts), 
+            m_ext(_ext), 
+            m_samples(_samples), 
+            m_module(_module), 
+            m_render_pass(_render_pass)
         {
             _CreatePipelineLayout();
 
@@ -24,67 +29,6 @@ namespace DENG {
         }
 
 
-        PipelineCreator::PipelineCreator(const PipelineCreator& _pc) noexcept :
-            m_device(_pc.m_device),
-            m_desc_set_layouts(_pc.m_desc_set_layouts),
-            m_viewport(_pc.m_viewport),
-            m_scissor(_pc.m_scissor),
-            m_ext(_pc.m_ext),
-            m_samples(_pc.m_samples),
-            m_shader_stage_createinfos(_pc.m_shader_stage_createinfos),
-            m_shader_modules(_pc.m_shader_modules),
-            m_input_binding_desc(_pc.m_input_binding_desc),
-            m_input_attr_descs(_pc.m_input_attr_descs),
-            m_vert_input_create_info(_pc.m_vert_input_create_info),
-            m_input_asm_createinfo(_pc.m_input_asm_createinfo),
-            m_viewport_state_createinfo(_pc.m_viewport_state_createinfo),
-            m_rasterization_createinfo(_pc.m_rasterization_createinfo),
-            m_multisample_createinfo(_pc.m_multisample_createinfo),
-            m_colorblend_attachment(_pc.m_colorblend_attachment),
-            m_depth_stencil(_pc.m_depth_stencil),
-            m_colorblend_state_createinfo(_pc.m_colorblend_state_createinfo),
-            m_dynamic_state_createinfo(_pc.m_dynamic_state_createinfo),
-            m_dynamic_states(_pc.m_dynamic_states),
-            m_module(_pc.m_module),
-            m_vertex_bin(_pc.m_vertex_bin),
-            m_geometry_bin(_pc.m_geometry_bin),
-            m_fragment_bin(_pc.m_fragment_bin),
-            m_pipeline_layout(_pc.m_pipeline_layout),
-            m_pipeline(_pc.m_pipeline),
-            m_render_pass(_pc.m_render_pass) {}
-
-
-        PipelineCreator::PipelineCreator(PipelineCreator&& _pc) noexcept :
-            m_device(_pc.m_device),
-            m_desc_set_layouts(_pc.m_desc_set_layouts),
-            m_viewport(_pc.m_viewport),
-            m_scissor(_pc.m_scissor),
-            m_ext(_pc.m_ext),
-            m_samples(_pc.m_samples),
-            m_shader_stage_createinfos(std::move(_pc.m_shader_stage_createinfos)),
-            m_shader_modules(std::move(_pc.m_shader_modules)),
-            m_input_binding_desc(std::move(_pc.m_input_binding_desc)),
-            m_input_attr_descs(std::move(_pc.m_input_attr_descs)),
-            m_vert_input_create_info(_pc.m_vert_input_create_info),
-            m_input_asm_createinfo(_pc.m_input_asm_createinfo),
-            m_viewport_state_createinfo(_pc.m_viewport_state_createinfo),
-            m_rasterization_createinfo(_pc.m_rasterization_createinfo),
-            m_multisample_createinfo(_pc.m_multisample_createinfo),
-            m_colorblend_attachment(_pc.m_colorblend_attachment),
-            m_depth_stencil(_pc.m_depth_stencil),
-            m_colorblend_state_createinfo(_pc.m_colorblend_state_createinfo),
-            m_dynamic_state_createinfo(_pc.m_dynamic_state_createinfo),
-            m_dynamic_states(std::move(_pc.m_dynamic_states)),
-            m_module(_pc.m_module),
-            m_vertex_bin(std::move(_pc.m_vertex_bin)),
-            m_geometry_bin(std::move(_pc.m_geometry_bin)),
-            m_fragment_bin(std::move(_pc.m_fragment_bin)),
-            m_pipeline_layout(_pc.m_pipeline_layout),
-            m_pipeline(_pc.m_pipeline),
-            m_render_pass(_pc.m_render_pass) {}
-
-
-
         PipelineCreator::~PipelineCreator() noexcept {
             for(size_t i = 0; i < m_shader_modules.size(); i++)
                 vkDestroyShaderModule(m_device, m_shader_modules[i], NULL);
@@ -92,78 +36,6 @@ namespace DENG {
             vkDestroyPipeline(m_device, m_pipeline, nullptr);
             vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
         } 
-
-
-        PipelineCreator &PipelineCreator::operator=(const PipelineCreator &_pc) noexcept {
-            m_device = _pc.m_device;
-            m_viewport = _pc.m_viewport;
-            m_scissor = _pc.m_scissor;
-            m_ext = _pc.m_ext;
-            m_samples = _pc.m_samples;
-
-            m_shader_stage_createinfos = _pc.m_shader_stage_createinfos;
-            m_shader_modules = _pc.m_shader_modules;
-            m_input_binding_desc = _pc.m_input_binding_desc;
-            m_input_attr_descs = _pc.m_input_attr_descs;
-
-            m_vert_input_create_info = _pc.m_vert_input_create_info;
-            m_input_asm_createinfo = _pc.m_input_asm_createinfo;
-            m_viewport_state_createinfo = _pc.m_viewport_state_createinfo;
-            m_rasterization_createinfo = _pc.m_rasterization_createinfo;
-            m_multisample_createinfo = _pc.m_multisample_createinfo;
-            m_colorblend_attachment = _pc.m_colorblend_attachment;
-            m_depth_stencil = _pc.m_depth_stencil;
-            m_colorblend_state_createinfo = _pc.m_colorblend_state_createinfo;
-            m_dynamic_state_createinfo = _pc.m_dynamic_state_createinfo;
-
-            m_dynamic_states = _pc.m_dynamic_states;
-            m_module = _pc.m_module;
-            m_vertex_bin = _pc.m_vertex_bin;
-            m_geometry_bin = _pc.m_geometry_bin;
-            m_fragment_bin = _pc.m_fragment_bin;
-
-            m_pipeline_layout = _pc.m_pipeline_layout;
-            m_pipeline = _pc.m_pipeline;
-            m_render_pass = _pc.m_render_pass;
-
-            return *this;
-        }
-
-
-        PipelineCreator &PipelineCreator::operator=(PipelineCreator &&_pc) noexcept {
-            m_device = _pc.m_device;
-            m_viewport = _pc.m_viewport;
-            m_scissor = _pc.m_scissor;
-            m_ext = _pc.m_ext;
-            m_samples = _pc.m_samples;
-
-            m_shader_stage_createinfos = std::move(_pc.m_shader_stage_createinfos);
-            m_shader_modules = std::move(_pc.m_shader_modules);
-            m_input_binding_desc = std::move(_pc.m_input_binding_desc);
-            m_input_attr_descs = std::move(_pc.m_input_attr_descs);
-
-            m_vert_input_create_info = _pc.m_vert_input_create_info;
-            m_input_asm_createinfo = _pc.m_input_asm_createinfo;
-            m_viewport_state_createinfo = _pc.m_viewport_state_createinfo;
-            m_rasterization_createinfo = _pc.m_rasterization_createinfo;
-            m_multisample_createinfo = _pc.m_multisample_createinfo;
-            m_colorblend_attachment = _pc.m_colorblend_attachment;
-            m_depth_stencil = _pc.m_depth_stencil;
-            m_colorblend_state_createinfo = _pc.m_colorblend_state_createinfo;
-            m_dynamic_state_createinfo = _pc.m_dynamic_state_createinfo;
-
-            m_dynamic_states = std::move(_pc.m_dynamic_states);
-            m_module = _pc.m_module;
-            m_vertex_bin = std::move(_pc.m_vertex_bin);
-            m_geometry_bin = std::move(_pc.m_geometry_bin);
-            m_fragment_bin = std::move(_pc.m_fragment_bin);
-
-            m_pipeline_layout = _pc.m_pipeline_layout;
-            m_pipeline = _pc.m_pipeline;
-            m_render_pass = _pc.m_render_pass;
-
-            return *this;
-        }
 
 
         void PipelineCreator::DestroyPipelineData() {
@@ -389,22 +261,25 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_CheckAndCompileShaderSources(ShaderModule &_module) {
-            if(_module.load_shaders_from_file) {
-                _module.vertex_shader_src = _ReadShaderSource(_module.vertex_shader_file);
-                if(_module.geometry_shader_file != "")
-                    _module.geometry_shader_src = _ReadShaderSource(_module.geometry_shader_file);
-                _module.fragment_shader_src = _ReadShaderSource(_module.fragment_shader_file);
+        void PipelineCreator::_CheckAndCompileShaderSources() {
+            std::string vertex_shader_src;
+            std::string geometry_shader_src;
+            std::string fragment_shader_src;
+            if(m_module.load_shaders_from_file) {
+                vertex_shader_src = _ReadShaderSource(m_module.vertex_shader_file);
+                if(m_module.geometry_shader_file != "")
+                    geometry_shader_src = _ReadShaderSource(m_module.geometry_shader_file);
+                fragment_shader_src = _ReadShaderSource(m_module.fragment_shader_file);
+            } else {
+                vertex_shader_src = m_module.vertex_shader_src;
+                geometry_shader_src = m_module.geometry_shader_src;
+                fragment_shader_src = m_module.fragment_shader_src;
             }
 
-            _CompileShader(m_vertex_bin, _module.vertex_shader_src, _module.vertex_shader_file, shaderc_glsl_vertex_shader);
-            if(_module.geometry_shader_src.size())
-                _CompileShader(m_geometry_bin, _module.geometry_shader_src, _module.geometry_shader_file, shaderc_glsl_geometry_shader);
-            _CompileShader(m_fragment_bin, _module.fragment_shader_src, _module.fragment_shader_file, shaderc_glsl_fragment_shader);
-
-            _module.vertex_shader_src.reserve(1);
-            _module.geometry_shader_src.reserve(1);
-            _module.fragment_shader_src.reserve(1);
+            _CompileShader(m_vertex_bin, vertex_shader_src, m_module.vertex_shader_file, shaderc_glsl_vertex_shader);
+            if(m_module.geometry_shader_src.size())
+                _CompileShader(m_geometry_bin, geometry_shader_src, m_module.geometry_shader_file, shaderc_glsl_geometry_shader);
+            _CompileShader(m_fragment_bin, fragment_shader_src, m_module.fragment_shader_file, shaderc_glsl_fragment_shader);
         }
 
 
@@ -434,7 +309,7 @@ namespace DENG {
 
         VkGraphicsPipelineCreateInfo PipelineCreator::_GeneratePipelineCreateInfo(bool _create_shader_modules) {
             if(_create_shader_modules) {
-                _CheckAndCompileShaderSources(m_module);
+                _CheckAndCompileShaderSources();
 
                 // Create vertex and fragment shader modules
                 m_shader_modules.reserve(3);

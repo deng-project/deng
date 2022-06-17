@@ -8,7 +8,7 @@
 #define VULKAN_RENDERER_H
 
 
-#ifdef VULKAN_RENDERER_CPP
+//#ifdef VULKAN_RENDERER_CPP
     #include <string>
     #include <vector>
     #include <array>
@@ -47,7 +47,7 @@
     #include <Renderer.h>
     #include <RenderState.h>
     #include <GPUMemoryManager.h>
-#endif
+//#endif
 
 #include <VulkanHelpers.h>
 #include <VulkanInstanceCreator.h>
@@ -55,28 +55,24 @@
 #include <VulkanPipelineCreator.h>
 #include <VulkanDescriptorSetLayoutCreator.h>
 #include <VulkanDescriptorAllocator.h>
-
+#include <VulkanFramebuffer.h>
 
 
 namespace DENG {
 
     class DENG_API VulkanRenderer : public Renderer {
         private:
-            Vulkan::InstanceCreator *mp_instance_creator;
-            Vulkan::SwapchainCreator *mp_swapchain_creator;
-            std::vector<Vulkan::PipelineCreator> m_pipeline_creators;
-            std::vector<Vulkan::DescriptorSetLayoutCreator> m_descriptor_set_layout_creators;
+            const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT;
+            Vulkan::InstanceCreator m_instance_creator;
+            Vulkan::SwapchainCreator m_swapchain_creator;
 
-            // per shader descriptor pools / sets creators
-            std::vector<Vulkan::DescriptorAllocator> m_shader_desc_allocators;
-            std::vector<uint32_t> m_shader_descriptor_set_index_table;
+            // texture handles
+            std::unordered_map<std::string, Vulkan::TextureData> m_vulkan_texture_handles;
 
-            // per mesh descriptor pools / sets creators
-            std::vector<Vulkan::DescriptorAllocator> m_mesh_desc_allocators;
-            std::vector<uint32_t> m_mesh_descriptor_set_index_table;
+            // framebuffers
+            std::unordered_map<std::string, Vulkan::Framebuffer> m_framebuffers;
             
             // locally managed vulkan resources
-            VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT; // tmp
             VkDeviceSize m_uniform_size = DEFAULT_UNIFORM_SIZE;
             VkDeviceSize m_buffer_size = DEFAULT_BUFFER_SIZE;
 
@@ -88,42 +84,14 @@ namespace DENG {
             // uniform buffer
             VkBuffer m_uniform_buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_uniform_memory = VK_NULL_HANDLE;
-
-            VkCommandPool m_command_pool = VK_NULL_HANDLE;
-            std::vector<VkSemaphore> m_render_finished_semaphores;
-            std::vector<VkSemaphore> m_image_available_semaphores;
-            std::vector<VkFence> m_flight_fences;
-            std::vector<VkCommandBuffer> m_cmd_buffers;
-
-            // color and depth image resources
-            VkImage m_color_image = VK_NULL_HANDLE;
-            VkDeviceMemory m_color_image_memory = VK_NULL_HANDLE;
-            VkImageView m_color_image_view = VK_NULL_HANDLE;
-
-            VkImage m_depth_image = VK_NULL_HANDLE;
-            VkDeviceMemory m_depth_image_memory = VK_NULL_HANDLE;
-            VkImageView m_depth_image_view = VK_NULL_HANDLE;
-
-            // framebuffers and command buffers
-            std::vector<VkFramebuffer> m_framebuffers;
-            std::vector<VkCommandBuffer> m_command_buffers;
             uint32_t m_current_frame = 0;
             bool m_is_init = false;
 
-            std::unordered_map<std::string, Vulkan::TextureData> m_vulkan_texture_handles;
-
         private:
-            void _CreateCommandPool();
-            void _CreateSemaphores();
             void _AllocateBufferResources();
             void _AllocateUniformBuffer();
             void _ReallocateBufferResources(VkDeviceSize _old_size);
             void _ReallocateUniformBuffer();
-            void _CreateColorResources();
-            void _CreateDepthResources();
-            void _CreateFrameBuffers();
-            void _AllocateCommandBuffers();
-            void _RecordCommandBuffer(uint32_t _imgi);
             void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels);
             void _CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels);
             void _Resize();
@@ -133,6 +101,7 @@ namespace DENG {
             VulkanRenderer(Window &_win, const RendererConfig &_conf);
             ~VulkanRenderer();
 
+            virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;
             virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) override;
             virtual void PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
             virtual void RemoveTexture(const std::string &_name) override;

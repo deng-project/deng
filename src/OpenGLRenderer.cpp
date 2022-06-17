@@ -6,6 +6,8 @@
 #define OPENGL_RENDERER_CPP
 #include <OpenGLRenderer.h>
 
+
+// NOTE: OpenGLRenderer class does not support custom framebuffers ! ! !
 namespace DENG {
 
 #ifdef _DEBUG
@@ -74,6 +76,19 @@ namespace DENG {
         int x, y, size;
         const char *tex = GetMissingTexture(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, tex, x, y, 4);
+
+        // create main framebuffer instance
+        m_framebuffer_draws.insert({
+            MAIN_FRAMEBUFFER_NAME,
+            {
+                MAIN_FRAMEBUFFER_NAME,
+                {}, {},
+                {
+                    static_cast<uint32_t>(m_window.GetSize().x),
+                    static_cast<uint32_t>(m_window.GetSize().y)
+                }
+            }
+        });
     }
 
 
@@ -91,20 +106,22 @@ namespace DENG {
 
 
     void OpenGLRenderer::_BindVertexAttributes(const DrawCommand &_cmd, uint32_t _shader_id, uint32_t _base_offset) {
+        const ShaderModule &module = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[_shader_id];
+
         glBindBuffer(GL_ARRAY_BUFFER, mp_buffer_loader->GetBufferData().vert_buffer);
         glErrorCheck("glBindBuffer");
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mp_buffer_loader->GetBufferData().vert_buffer);
         glBindVertexArray(mp_buffer_loader->GetBufferData().vert_array);
 
-        DENG_ASSERT(m_shaders[_shader_id].attributes.size() == m_shaders[_shader_id].attribute_strides.size());
+        DENG_ASSERT(module.attributes.size() == module.attribute_strides.size());
 
-        for(uint32_t i = 0; i < static_cast<uint32_t>(m_shaders[_shader_id].attributes.size()); i++) {
+        for(uint32_t i = 0; i < static_cast<uint32_t>(module.attributes.size()); i++) {
             // enable vertex attribute array
             glEnableVertexAttribArray(i);
             glErrorCheck("glEnableVertexAttribArray");
-            GLsizei stride = static_cast<GLsizei>(m_shaders[_shader_id].attribute_strides[i]);
+            GLsizei stride = static_cast<GLsizei>(module.attribute_strides[i]);
 
-            switch(m_shaders[_shader_id].attributes[i]) {
+            switch(module.attributes[i]) {
                 // single element attribute
                 case ATTRIBUTE_TYPE_FLOAT:
                     glVertexAttribPointer(i, 1, GL_FLOAT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
@@ -274,7 +291,7 @@ namespace DENG {
 
 
     void OpenGLRenderer::_UnbindVertexAttributes(uint32_t _shader_id) {
-        for (size_t i = 0; i < m_shaders[_shader_id].attributes.size(); i++) {
+        for (size_t i = 0; i < m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[_shader_id].attributes.size(); i++) {
             glDisableVertexAttribArray(static_cast<GLuint>(i));
             glErrorCheck("glDisableVertexAttribArray");
         }
@@ -282,9 +299,10 @@ namespace DENG {
 
 
     void OpenGLRenderer::_SetRenderState(uint32_t _shader_id) {
+        const ShaderModule &module = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[_shader_id];
         // scissor test
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        if(m_shaders[_shader_id].enable_scissor) {
+        if(module.enable_scissor) {
             glEnable(GL_SCISSOR_TEST);
             glErrorCheck("glEnable");
         } else {
@@ -293,7 +311,7 @@ namespace DENG {
         }
 
         // depth test
-        if(m_shaders[_shader_id].enable_depth_testing) {
+        if(module.enable_depth_testing) {
             glEnable(GL_DEPTH_TEST);
             glErrorCheck("glEnable");
             glDepthFunc(GL_LESS);
@@ -304,7 +322,7 @@ namespace DENG {
         }
 
         // stencil testing
-        if(m_shaders[_shader_id].enable_stencil_testing) {
+        if(module.enable_stencil_testing) {
             glEnable(GL_STENCIL_TEST);
             glErrorCheck("glEnable");
         } else {
@@ -313,7 +331,7 @@ namespace DENG {
         }
 
         // blending
-        if(m_shaders[_shader_id].enable_blend) {
+        if(module.enable_blend) {
             glEnable(GL_BLEND);
             glErrorCheck("glEnable");
             glBlendEquation(GL_FUNC_ADD);
@@ -326,7 +344,7 @@ namespace DENG {
         }
 
         // culling
-        switch(m_shaders[_shader_id].cull_mode) {
+        switch(module.cull_mode) {
             case CULL_MODE_NONE:
                 glDisable(GL_CULL_FACE);
                 glErrorCheck("glDisable");
@@ -350,6 +368,18 @@ namespace DENG {
                 glErrorCheck("glFrontFace");
                 break;
         }
+    }
+
+
+    void OpenGLRenderer::PushFramebuffer(const FramebufferDrawData &_fb) {}
+
+
+    void OpenGLRenderer::PushTextureFromFile(const std::string &_name, const std::string &_file_name) {
+        Libdas::TextureReader reader(Libdas::Algorithm::RelativePathToAbsolute(_file_name));
+        size_t len;
+        int x, y;
+        const char *buf = reader.GetRawBuffer(x, y, len);
+        PushTextureFromMemory(_name, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
     }
 
 
@@ -401,15 +431,6 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::PushTextureFromFile(const std::string &_name, const std::string &_file_name) {
-        Libdas::TextureReader reader(Libdas::Algorithm::RelativePathToAbsolute(_file_name));
-        size_t len;
-        int x, y;
-        const char *buf = reader.GetRawBuffer(x, y, len);
-        PushTextureFromMemory(_name, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
-    }
-
-
     void OpenGLRenderer::RemoveTexture(const std::string &_name) {
         // check if texture does not exist in current hash map
         if(m_opengl_textures.find(_name) == m_opengl_textures.end()) {
@@ -443,7 +464,7 @@ namespace DENG {
             mp_buffer_loader->RequestMemory(_ubo_size, GL_UNIFORM_BUFFER);
         }
 
-        mp_shader_loader->LoadShaders(m_shaders);
+        mp_shader_loader->LoadShaders(m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders);
     }
 
 
@@ -490,14 +511,15 @@ namespace DENG {
         glErrorCheck("glGetIntegerv");
 
         // draw each mesh to the screen
-        for(auto mesh_it = m_meshes.begin(); mesh_it < m_meshes.end(); mesh_it++) {
+        for(auto mesh_it = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].meshes.begin(); mesh_it < m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].meshes.end(); mesh_it++) {
             const uint32_t shader_id = mesh_it->shader_module_id;
+            const ShaderModule &module = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[shader_id];
 
             // check if custom viewport was requested
-            if(m_shaders[shader_id].enable_custom_viewport) {
-                GLint x = static_cast<GLint>(m_shaders[shader_id].viewport.x);
-                GLint y = static_cast<GLint>(m_window.GetSize().y) - static_cast<GLint>(m_shaders[shader_id].viewport.y) - static_cast<GLint>(m_shaders[shader_id].viewport.height);
-                glViewport(x, y, (GLsizei) m_shaders[shader_id].viewport.width, (GLsizei) m_shaders[shader_id].viewport.height);
+            if(module.enable_custom_viewport) {
+                GLint x = static_cast<GLint>(module.viewport.x);
+                GLint y = static_cast<GLint>(m_window.GetSize().y) - static_cast<GLint>(module.viewport.y) - static_cast<GLint>(module.viewport.height);
+                glViewport(x, y, (GLsizei) module.viewport.width, (GLsizei) module.viewport.height);
             } else {
                 glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
             }
@@ -520,7 +542,7 @@ namespace DENG {
                 }
 
                 // for each shader uniform object bind appropriate uniform buffer ranges
-                for(auto ubo = m_shaders[shader_id].ubo_data_layouts.begin(); ubo != m_shaders[shader_id].ubo_data_layouts.end(); ubo++) {
+                for(auto ubo = module.ubo_data_layouts.begin(); ubo != module.ubo_data_layouts.end(); ubo++) {
                     const GLuint binding = static_cast<GLuint>(ubo->block.binding);
 
                     if(ubo->usage == UNIFORM_USAGE_PER_SHADER && ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
@@ -529,7 +551,7 @@ namespace DENG {
 
                         glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
                         glErrorCheck("glBindBufferRange");
-                    } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && m_shaders[shader_id].enable_texture_mapping) {
+                    } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && module.enable_texture_mapping) {
                         for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
                             const GLuint tex_id = m_opengl_textures[*tex_it];
                             glActiveTexture(GL_TEXTURE0 + binding);
@@ -541,7 +563,7 @@ namespace DENG {
                 }
 
                 // check if scissor technique is required
-                if(m_shaders[shader_id].enable_scissor) {
+                if(module.enable_scissor) {
                     glScissor((GLint) cmd_it->scissor.offset.x, (GLint) (m_window.GetSize().y - (cmd_it->scissor.ext.y + cmd_it->scissor.offset.y)), (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
                     glErrorCheck("glScissor");
                 } else {
@@ -550,9 +572,9 @@ namespace DENG {
                 }
 
                 // check if indexed draw was requested
-                if(m_shaders[shader_id].enable_indexing) {
+                if(module.enable_indexing) {
                     const size_t ioffset = static_cast<size_t>(cmd_it->indices_offset);
-                    switch(m_shaders[shader_id].prim_mode) {
+                    switch(module.prim_mode) {
                         case PRIMITIVE_MODE_TRIANGLES:
                             glDrawElements(GL_TRIANGLES, (GLsizei) cmd_it->draw_count, GL_UNSIGNED_INT, reinterpret_cast<const void*>(ioffset));
                             break;
@@ -568,7 +590,7 @@ namespace DENG {
 
                     glErrorCheck("glDrawElements");
                 } else {
-                    switch(m_shaders[shader_id].prim_mode) {
+                    switch(module.prim_mode) {
                         case PRIMITIVE_MODE_TRIANGLES:
                             glDrawArrays(GL_TRIANGLES, 0, (GLsizei) cmd_it->draw_count);
                             break;

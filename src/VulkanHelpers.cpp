@@ -249,7 +249,7 @@ namespace DENG {
 
         void _BeginCommandBufferSingleCommand(VkDevice _dev, VkCommandPool _cmd_pool, VkCommandBuffer &_cmd_buf) {
             // Set up cmd_buf allocation info
-            VkCommandBufferAllocateInfo cmd_buf_allocinfo{};
+            VkCommandBufferAllocateInfo cmd_buf_allocinfo = {};
             cmd_buf_allocinfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             cmd_buf_allocinfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cmd_buf_allocinfo.commandPool = _cmd_pool;

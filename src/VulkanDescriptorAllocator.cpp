@@ -10,7 +10,7 @@
 namespace DENG {
     namespace Vulkan {
     
-        DescriptorAllocator::DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, const std::variant<std::vector<UniformDataLayout>*, std::vector<UniformBufferBlock>*> &_ubo_desc, 
+        DescriptorAllocator::DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, std::variant<const std::vector<UniformDataLayout>*, const std::vector<UniformBufferBlock>*> _ubo_desc, 
                                                  uint32_t _sc_img_c, const Vulkan::TextureData &_missing, uint32_t _pool_cap) :
             m_device(_dev),
             m_uniform_buffer(_u_buffer),
@@ -70,7 +70,7 @@ namespace DENG {
             switch(m_ubo_desc.index()) {
                 case 0:
                 {
-                    std::vector<UniformDataLayout>* desc = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
+                    const std::vector<UniformDataLayout>* desc = std::get<const std::vector<UniformDataLayout>*>(m_ubo_desc);
                     for(auto it = desc->begin(); it != desc->end(); it++) {
                         if(it->type == UNIFORM_DATA_TYPE_IMAGE_SAMPLER) {
                             m_sampler_count++;
@@ -93,7 +93,7 @@ namespace DENG {
                 // per shader descriptor
                 case 0:
                     {
-                        std::vector<UniformDataLayout> *layouts = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
+                        const std::vector<UniformDataLayout> *layouts = std::get<const std::vector<UniformDataLayout>*>(m_ubo_desc);
                         desc_sizes.reserve(layouts->size());
 
                         for(size_t i = 0; i < layouts->size(); i++) {
@@ -122,7 +122,7 @@ namespace DENG {
                 // per mesh descriptor
                 case 1:
                     {
-                        std::vector<UniformBufferBlock> *block = std::get<std::vector<UniformBufferBlock>*>(m_ubo_desc);
+                        const std::vector<UniformBufferBlock> *block = std::get<const std::vector<UniformBufferBlock>*>(m_ubo_desc);
                         desc_sizes.resize(block->size());
 
                         for(auto it = desc_sizes.begin(); it != desc_sizes.end(); it++) {
@@ -178,7 +178,7 @@ namespace DENG {
                 // per shader uniform
                 case 0:
                     {
-                        std::vector<UniformDataLayout> *layout = std::get<std::vector<UniformDataLayout>*>(m_ubo_desc);
+                        const std::vector<UniformDataLayout> *layout = std::get<const std::vector<UniformDataLayout>*>(m_ubo_desc);
                         size_t texture_index = 0;
                         std::string bound_texture_name = "";
 
@@ -257,7 +257,7 @@ namespace DENG {
                 // per mesh uniform
                 case 1:
                     {
-                        std::vector<UniformBufferBlock> *block = std::get<std::vector<UniformBufferBlock>*>(m_ubo_desc);
+                        const std::vector<UniformBufferBlock> *block = std::get<const std::vector<UniformBufferBlock>*>(m_ubo_desc);
                         buffer_infos.reserve(block->size());
 
                         for(auto it = block->begin(); it != block->end(); it++) {

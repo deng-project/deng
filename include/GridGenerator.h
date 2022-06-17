@@ -11,6 +11,7 @@
     #include <cstring>
     #include <cmath>
     #include <vector>
+    #include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -19,6 +20,7 @@
     #include <libdas/include/Matrix.h>
 
     #include <Api.h>
+    #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
     #include <Window.h>
     #include <Renderer.h>

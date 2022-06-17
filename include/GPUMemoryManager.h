@@ -11,6 +11,7 @@
     #include <cstring>
     #include <vector>
     #include <string>
+    #include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -85,3 +86,4 @@ namespace DENG {
 }
 
 #endif
+

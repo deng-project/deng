@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstring>
 #include <chrono>
+#include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif

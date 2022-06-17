@@ -78,8 +78,21 @@
 
 namespace Executable {
 
+    struct EditorGuiData {
+        std::vector<DENG::ModelLoader> *model_loaders = nullptr;
+        DENG::Window *win = nullptr;
+        DENG::Viewport viewport;
+        bool once = true;
+    };
+
+    struct ImGuiCallback {
+        static void _ShowModelPanel(void *_data);
+        static void _ShowCoreUI(void *_data);
+    };
+
     class ModelLoaderApp {
-        private: 
+        private:
+            EditorGuiData m_imgui_data;
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
 
@@ -94,12 +107,16 @@ namespace Executable {
             };
 
             DENG::EditorCamera m_editor_camera;
+            DENG::ImGuiLayer m_imgui;
             DENG::GridGenerator m_grid;
 
             std::chrono::time_point<std::chrono::system_clock> m_cur_time = std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             const float m_key_interval = 1000; // ms
             bool m_use_camera = false;
+
+            // data loading
+            std::vector<DENG::ModelLoader> m_model_loaders;
 
         public:
             ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend);

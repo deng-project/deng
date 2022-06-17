@@ -12,6 +12,7 @@
     #include <queue>
     #include <utility>
     #include <cstring>
+    #include <unordered_map>
 
 #ifdef _DEBUG
     #include <iostream>

@@ -12,6 +12,7 @@
     #include <vector>
     #include <string>
     #include <cstring>
+    #include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif

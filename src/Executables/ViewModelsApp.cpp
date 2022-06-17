@@ -7,13 +7,68 @@
 
 namespace Executable {
 
+    /*************************/
+    /***** ImGuiCallback *****/
+    /*************************/
+    void ImGuiCallback::_ShowCoreUI(void *_gui) {
+        EditorGuiData *gui_data = reinterpret_cast<EditorGuiData*>(_gui);
+        ImVec2 size = { static_cast<float>(gui_data->win->GetSize().x), static_cast<float>(gui_data->win->GetSize().y) };
+        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+        ImGui::Begin("Editor context", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
+            ImGuiID id = ImGui::GetID("EditorDockspace");
+            ImGui::DockSpace(id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+            if(gui_data->once) {
+                ImGui::DockBuilderRemoveNode(id);
+                ImGui::DockBuilderAddNode(id, ImGuiDockNodeFlags_None);
+
+                ImGuiID inspector = ImGui::DockBuilderSplitNode(id, ImGuiDir_Right, 0.25f, nullptr, &id);
+                ImGuiID viewport = ImGui::DockBuilderSplitNode(id, ImGuiDir_Left, 0.75f, nullptr, &id);
+                ImGuiID hierarchy = ImGui::DockBuilderSplitNode(viewport, ImGuiDir_Left, 0.15f, nullptr, &viewport);
+                ImGuiID assets = ImGui::DockBuilderSplitNode(viewport, ImGuiDir_Down, 0.25f, nullptr, &viewport);
+
+                ImGui::DockBuilderDockWindow("inspector", inspector);
+                ImGui::DockBuilderDockWindow("viewport", viewport);
+                ImGui::DockBuilderDockWindow("hierarchy", hierarchy);
+                ImGui::DockBuilderDockWindow("assets", assets);
+
+                gui_data->once = false;
+            }
+        ImGui::End();
+
+        ImGui::Begin("inspector");
+            ImGui::Text("Inspector");
+        ImGui::End();
+
+        ImGui::Begin("viewport");
+            ImGuiViewport *vp = ImGui::GetWindowViewport();
+            gui_data->viewport.x = static_cast<uint32_t>(vp->WorkPos.x);
+            gui_data->viewport.y = static_cast<uint32_t>(vp->WorkPos.y);
+            gui_data->viewport.width = static_cast<uint32_t>(vp->WorkSize.x);
+            gui_data->viewport.height = static_cast<uint32_t>(vp->WorkSize.y);
+        ImGui::End();
+
+        ImGui::Begin("hierarchy");
+            ImGui::Text("Hierarchy");
+        ImGui::End();
+
+        ImGui::Begin("assets");
+            ImGui::Text("Assets");
+        ImGui::End();
+    }
+
+
     ModelLoaderApp::ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend) : 
         m_window(_win), 
-        m_renderer(_rend), 
+        m_renderer(_rend),
         m_editor_camera(m_renderer, m_window, m_editor_camera_conf, "Editor camera"),
+        m_imgui(),
         m_grid(50.0f, 50.0f, 0.5f, 0.5f, m_editor_camera.GetUboOffset())
     {
         m_editor_camera.DisableCamera();
+        m_imgui_data.model_loaders = &m_model_loaders;
+        m_imgui_data.win = &m_window;
+        m_imgui.Attach(m_window, m_renderer, ImGuiCallback::_ShowCoreUI, &m_imgui_data);
         m_grid.Attach(m_renderer);
         m_renderer.GetShaderModules()[m_grid.GetShaderId()].enable_custom_viewport = true;
         m_renderer.LoadShaders();
@@ -21,11 +76,8 @@ namespace Executable {
 
 
     void ModelLoaderApp::Run() {
-        const DENG::Viewport vp = { 50, 50, 720, 480 };
         while(m_window.IsRunning()) {
             m_renderer.ClearFrame();
-
-            m_renderer.GetShaderModules()[m_grid.GetShaderId()].viewport = vp;
 
             m_cur_time = std::chrono::system_clock::now();
             std::chrono::duration<float, std::milli> delta_time = m_cur_time - m_beg_time;
@@ -57,6 +109,9 @@ namespace Executable {
 
             m_editor_camera.Update();
             m_grid.Update(m_renderer, { 0.0f, 0.5f, 0.0f, 1.0f });
+            m_imgui.Update();
+            m_renderer.GetShaderModules()[m_grid.GetShaderId()].viewport = m_imgui_data.viewport;
+            //m_renderer.GetShaderModules()[m_grid.GetShaderId()].viewport = { 0, 0, WIDTH, HEIGHT };
             m_renderer.RenderFrame();
             m_window.Update();
         }

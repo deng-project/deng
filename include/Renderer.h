@@ -22,20 +22,11 @@
     #include <ShaderDefinitions.h>
     #include <Window.h>
 #endif
+
+#define MAIN_FRAMEBUFFER_NAME   "__main_fb__"
 #include <Missing.h>
 
 namespace DENG {
-
-    struct CameraComponent {
-        typedef Libdas::Matrix4<float> Matrix;
-        CameraComponent() {}
-        CameraComponent(Matrix &_cam, Matrix &_view) :
-            camera_matrix(_cam), camera_view_matrix(_view) {}
-
-        Matrix camera_matrix;
-        Matrix camera_view_matrix;
-    };
-
 
     struct DrawCommand {
         uint32_t indices_offset = 0;
@@ -59,58 +50,74 @@ namespace DENG {
     };
 
 
+    struct FramebufferDrawData {
+        std::string image_name;
+        std::vector<MeshReference> meshes;
+        std::vector<ShaderModule> shaders;
+        Libdas::Point2D<uint32_t> extent;
+    };
+
+
     struct RendererConfig {
         bool enable_vsync = false;
         Libdas::Vector4<float> clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
+
     class DENG_API Renderer {
         protected:
             uint32_t m_id = UINT32_MAX;
             Window &m_window;
-            std::vector<MeshReference> m_meshes;
-            std::vector<ShaderModule> m_shaders;
+            std::unordered_map<std::string, FramebufferDrawData> m_framebuffer_draws;
             const RendererConfig &m_conf;
 
         public:
             Renderer(Window &_win, const RendererConfig &_conf) : m_window(_win), m_conf(_conf) {}
             ~Renderer() {}
 
-            inline uint32_t PushMeshReference(const MeshReference &_mesh) {
-                m_meshes.push_back(_mesh);
-                return static_cast<uint32_t>(m_meshes.size() - 1);
+            virtual void PushFramebuffer(const FramebufferDrawData &_fb) = 0;
+
+            inline uint32_t PushMeshReference(const MeshReference &_mesh, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
+                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
+                m_framebuffer_draws[_framebuffer].meshes.push_back(_mesh);
+                return static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].meshes.size() - 1);
             }
 
-            inline uint32_t NewMeshReference() {
-                m_meshes.emplace_back();
-                return static_cast<uint32_t>(m_meshes.size() - 1);
+            inline uint32_t NewMeshReference(const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
+                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
+                m_framebuffer_draws[_framebuffer].meshes.emplace_back();
+                return static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].meshes.size() - 1);
             }
 
-
-            inline MeshReference PopMeshReference(uint32_t _id) {
-                MeshReference mesh = m_meshes[_id];
-                m_meshes.erase(m_meshes.begin() + _id);
+            inline MeshReference RemoveMeshReference(uint32_t _id, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
+                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
+                DENG_ASSERT(_id < static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].meshes.size()));
+                MeshReference mesh = m_framebuffer_draws[_framebuffer].meshes[_id];
+                m_framebuffer_draws[_framebuffer].meshes.erase(m_framebuffer_draws[_framebuffer].meshes.begin() + _id);
                 return mesh;
             }
 
-            inline uint32_t PushShader(const ShaderModule &_module) {
-                m_shaders.push_back(_module);
-                return static_cast<uint32_t>(m_shaders.size() - 1);
+            inline uint32_t PushShader(const ShaderModule &_module, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
+                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
+                m_framebuffer_draws[_framebuffer].shaders.push_back(_module);
+                return static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].shaders.size() - 1);
             }
 
             virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) = 0;
             virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
             virtual void RemoveTexture(const std::string &_name) = 0;
 
-            std::vector<MeshReference> &GetMeshes() {
-                return m_meshes;
+            std::vector<MeshReference> &GetMeshes(const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
+                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
+                return m_framebuffer_draws[_framebuffer].meshes;
             }
 
-            std::vector<ShaderModule> &GetShaderModules() {
-                return m_shaders;
+            std::vector<ShaderModule> &GetShaderModules(const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
+                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
+                return m_framebuffer_draws[_framebuffer].shaders;
             }
 
-            // slow
+            // slow due to the heap allocation
             virtual std::vector<std::string> GetTextureNames() = 0;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;

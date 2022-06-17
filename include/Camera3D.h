@@ -14,6 +14,7 @@
     #include <vector>
     #include <variant>
     #include <string>
+    #include <unordered_map>
 #ifdef _DEBUG
     #include <iostream>
 #endif

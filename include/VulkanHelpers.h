@@ -21,6 +21,7 @@ namespace DENG {
     namespace Vulkan {
 
         struct TextureData {
+            VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
             VkImage image = VK_NULL_HANDLE;
             VkDeviceMemory memory = VK_NULL_HANDLE;
             VkImageView image_view = VK_NULL_HANDLE;

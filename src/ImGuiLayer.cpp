@@ -32,6 +32,7 @@ namespace DENG {
     
     void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data) {
         DENG::MeshReference &mesh = mp_renderer->GetMeshes()[m_mesh_id];
+        mesh.name = "__imgui__";
         mesh.shader_module_id = m_shader_id;
         mesh.commands.clear();
 
@@ -124,7 +125,7 @@ namespace DENG {
     void ImGuiLayer::Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data) {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
         m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(_rend, static_cast<uint32_t>(sizeof(Libdas::Point2D<float>)));
-        m_main_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), 0);
+        m_main_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), 1);
         mp_window = &_win;
         mp_renderer = &_rend;
         m_callback = _callback;
@@ -189,10 +190,10 @@ namespace DENG {
         ImGui::Render();
 
         // check if the imgui mesh is the last one in the array
-        if (m_mesh_id != static_cast<uint32_t>(mp_renderer->GetMeshes().size() - 1)) {
-            MeshReference mesh = mp_renderer->PopMeshReference(m_mesh_id);
-            m_mesh_id = mp_renderer->PushMeshReference(mesh);
-        }
+        //if (m_mesh_id != static_cast<uint32_t>(mp_renderer->GetMeshes().size() - 1)) {
+            //MeshReference mesh = mp_renderer->PopMeshReference(m_mesh_id);
+            //m_mesh_id = mp_renderer->PushMeshReference(mesh);
+        //}
 
         ImDrawData *draw_data = ImGui::GetDrawData();
         _CreateDrawCommands(draw_data);

@@ -129,6 +129,7 @@ namespace DENG {
         std::string geometry_shader_src;
         std::string fragment_shader_src;
         Viewport viewport;
+        uint32_t framebuffer_id = UINT32_MAX;       // UINT32_MAX means the main framebuffer, any other value is an id to a custom framebuffer image resouce
         bool enable_custom_viewport = false;
         bool enable_texture_mapping = false;
         bool enable_scissor = false;
