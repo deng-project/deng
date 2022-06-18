@@ -41,11 +41,7 @@ namespace Executable {
         ImGui::End();
 
         ImGui::Begin("viewport");
-            ImGuiViewport *vp = ImGui::GetWindowViewport();
-            gui_data->viewport.x = static_cast<uint32_t>(vp->WorkPos.x);
-            gui_data->viewport.y = static_cast<uint32_t>(vp->WorkPos.y);
-            gui_data->viewport.width = static_cast<uint32_t>(vp->WorkSize.x);
-            gui_data->viewport.height = static_cast<uint32_t>(vp->WorkSize.y);
+            ImGui::Image();
         ImGui::End();
 
         ImGui::Begin("hierarchy");
@@ -111,7 +107,6 @@ namespace Executable {
             m_grid.Update(m_renderer, { 0.0f, 0.5f, 0.0f, 1.0f });
             m_imgui.Update();
             m_renderer.GetShaderModules()[m_grid.GetShaderId()].viewport = m_imgui_data.viewport;
-            //m_renderer.GetShaderModules()[m_grid.GetShaderId()].viewport = { 0, 0, WIDTH, HEIGHT };
             m_renderer.RenderFrame();
             m_window.Update();
         }

@@ -95,19 +95,18 @@ namespace DENG {
 
         // create a new framebuffer image
         Vulkan::TextureData texture = {};
-        const uint32_t mip_level = static_cast<uint32_t>(std::floor(std::log2(std::max(_fb.extent.x, _fb.extent.y)))) + 1;
-        VkMemoryRequirements mem_req = Vulkan::_CreateImage(m_instance_creator.GetDevice(), texture.image, _fb.extent.x, _fb.extent.y, mip_level, VK_FORMAT_R8G8B8A8_UNORM, 
-                                                            VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, m_sample_count);
+        VkMemoryRequirements mem_req = Vulkan::_CreateImage(m_instance_creator.GetDevice(), texture.image, _fb.extent.x, _fb.extent.y, 1, VK_FORMAT_R8G8B8A8_UNORM, 
+                                                            VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT);
         Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, texture.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         vkBindImageMemory(m_instance_creator.GetDevice(), texture.image, texture.memory, 0);
 
         // create image view
-        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mip_level);
+        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, 1);
         if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &texture.image_view) != VK_SUCCESS)
             VK_RES_ERR("Failed to create a framebuffer image for framebuffer draw " + _fb.image_name);
 
         // create sampler
-        _CreateTextureSampler(texture, mip_level);
+        _CreateTextureSampler(texture, 1);
 
         // create a framebuffer
         std::vector<Vulkan::TextureData> images = { texture };
@@ -117,8 +116,6 @@ namespace DENG {
             std::forward_as_tuple(m_instance_creator, m_uniform_buffer, m_main_buffer, VK_FORMAT_R8G8B8A8_UNORM, m_sample_count, _fb.image_name, m_framebuffer_draws, images, m_vulkan_texture_handles, true)
         );
 
-        // create mipmaps
-        _CreateMipmaps(texture.image, _fb.extent.x, _fb.extent.y, mip_level);
         m_vulkan_texture_handles[_fb.image_name] = texture;
     }
 

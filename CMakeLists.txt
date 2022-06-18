@@ -68,6 +68,7 @@ if(BUILD_TESTS)
     include(cmake/tests/OpenGLImGui.cmake)
     include(cmake/tests/ShaderGenerator.cmake)
     include(cmake/tests/FilePickerTest.cmake)
+    include(cmake/tests/MultiFramebuffer.cmake)
 
     if(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS)
         include(cmake/tests/CubicsInterp.cmake)

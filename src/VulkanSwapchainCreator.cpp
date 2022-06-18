@@ -31,7 +31,7 @@ namespace DENG {
 
 
         VkRenderPass SwapchainCreator::CreateRenderPass(VkDevice _dev, VkFormat _format, VkSampleCountFlagBits _msaa_samples, bool _use_non_default_fb) {
-            std::array<VkAttachmentDescription, 3> attachments = {};
+            std::array<VkAttachmentDescription, 2> attachments = {};
             // color attachment
             attachments[0].format = _format;
             attachments[0].samples = _msaa_samples;
@@ -40,7 +40,11 @@ namespace DENG {
             attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            if(!_use_non_default_fb) {
+                attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            } else {
+                attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            }
 
             // depth attachment
             attachments[1].format = VK_FORMAT_D32_SFLOAT;
@@ -53,16 +57,16 @@ namespace DENG {
             attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
             // color attachment resolver attachment
-            attachments[2].format = _format;
-            attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
-            attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachments[2].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            //attachments[2].format = _format;
+            //attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+            //attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            //attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            //attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            //attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            //attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            //attachments[2].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-            std::array<VkAttachmentReference, 3> references = {};
+            std::array<VkAttachmentReference, 2> references = {};
             // color attachment reference
             references[0].attachment = 0;
             references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -72,15 +76,15 @@ namespace DENG {
             references[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
             // color attachment resolver attachment reference
-            references[2].attachment = 2;
-            references[2].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            //references[2].attachment = 2;
+            //references[2].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
             VkSubpassDescription subpass_desc = {};
             subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
             subpass_desc.colorAttachmentCount = 1;
             subpass_desc.pColorAttachments = &references[0];
             subpass_desc.pDepthStencilAttachment = &references[1];
-            subpass_desc.pResolveAttachments = &references[2];
+            //subpass_desc.pResolveAttachments = &references[2];
 
             std::array<VkSubpassDependency, 2> subpass_dependencies = {};
             if(_use_non_default_fb) {
@@ -116,7 +120,7 @@ namespace DENG {
             renderpass_createinfo.subpassCount = 1;
             renderpass_createinfo.pSubpasses = &subpass_desc;
             if(_use_non_default_fb) renderpass_createinfo.dependencyCount = 2;
-            else renderpass_createinfo.dependencyCount = 1;
+            else renderpass_createinfo.dependencyCount = 0;
             renderpass_createinfo.pDependencies = subpass_dependencies.data();
 
             VkRenderPass renderpass = VK_NULL_HANDLE;

@@ -8,7 +8,7 @@
 #define VULKAN_RENDERER_H
 
 
-//#ifdef VULKAN_RENDERER_CPP
+#ifdef VULKAN_RENDERER_CPP
     #include <string>
     #include <vector>
     #include <array>
@@ -47,7 +47,7 @@
     #include <Renderer.h>
     #include <RenderState.h>
     #include <GPUMemoryManager.h>
-//#endif
+#endif
 
 #include <VulkanHelpers.h>
 #include <VulkanInstanceCreator.h>
@@ -62,7 +62,7 @@ namespace DENG {
 
     class DENG_API VulkanRenderer : public Renderer {
         private:
-            const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_2_BIT;
+            const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_1_BIT;
             Vulkan::InstanceCreator m_instance_creator;
             Vulkan::SwapchainCreator m_swapchain_creator;
 

@@ -35,7 +35,11 @@ namespace DENG {
             m_current_frame(0)
         {
             DENG_ASSERT(m_framebuffer_draws.find(m_framebuffer_name) != m_framebuffer_draws.end());
-            m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, m_sample_count, m_no_swapchain);
+            if(m_no_swapchain) {
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, VK_SAMPLE_COUNT_1_BIT, m_no_swapchain);
+            } else {
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, m_sample_count, m_no_swapchain);
+            }
             _CreateColorResources();
             _CreateDepthResources();
             _CreateFramebuffers();
@@ -70,8 +74,10 @@ namespace DENG {
 
             // destroy semaphores and fences
             for(size_t i = 0; i < m_framebuffer_images.size(); i++) {
-                vkDestroySemaphore(device, m_render_finished_semaphores[i], nullptr);
-                vkDestroySemaphore(device, m_image_available_semaphores[i], nullptr);
+                if(!m_no_swapchain) {
+                    vkDestroySemaphore(device, m_render_finished_semaphores[i], nullptr);
+                    vkDestroySemaphore(device, m_image_available_semaphores[i], nullptr);
+                }
                 vkDestroyFence(device, m_flight_fences[i], nullptr);
             }
         }
@@ -116,13 +122,13 @@ namespace DENG {
         void Framebuffer::_CreateFramebuffers() {
             const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
             m_framebuffers.resize(m_framebuffer_images.size());
-            std::array<VkImageView, 3> attachments;
+            std::array<VkImageView, 2> attachments;
 
             for(size_t i = 0; i < m_framebuffer_images.size(); i++) {
                 attachments = { 
-                    m_color_resolve_image_view, 
-                    m_depth_image_view,
-                    m_framebuffer_images[i].image_view
+                    m_framebuffer_images[i].image_view,
+                    m_depth_image_view
+                    //m_color_resolve_image_view
                 };
 
                 VkFramebufferCreateInfo framebuffer_createinfo = {};
@@ -270,9 +276,9 @@ namespace DENG {
                     VkViewport vp = {};
                     if(shader.enable_custom_viewport) {
                         vp.x = static_cast<float>(shader.viewport.x);
-                        vp.y = static_cast<float>(shader.viewport.y);
+                        vp.y = static_cast<float>(shader.viewport.height) + static_cast<float>(shader.viewport.y);
                         vp.width = static_cast<float>(shader.viewport.width);
-                        vp.height = static_cast<float>(shader.viewport.height);
+                        vp.height = -static_cast<float>(shader.viewport.height);
                         vp.minDepth = 0.0f;
                         vp.maxDepth = 1.0f;
                         vkCmdSetViewport(m_command_buffers[m_current_frame], 0, 1, &vp);
@@ -421,7 +427,11 @@ namespace DENG {
             _CreateColorResources();
             _CreateDepthResources();
             const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
-            m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, m_sample_count);
+            if(m_no_swapchain) {
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, VK_SAMPLE_COUNT_1_BIT);
+            } else {
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, m_sample_count);
+            }
             _CreateFramebuffers();
             for(auto &pc : m_pipeline_creators) {
                 const VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
