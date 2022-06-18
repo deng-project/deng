@@ -47,30 +47,34 @@ namespace DENG {
     }
 #endif
 
-    OpenGLRenderer::OpenGLRenderer(Window &_win, const RendererConfig &_conf) : Renderer(_win, _conf) {
-        RenderState *rs = RenderState::GetInstance();
-        if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
-            rs->SetPrimary(RENDERER_TYPE_OPENGL);
+    namespace OpenGL {
+        void Initialise(Window &_win) {
+            RenderState *rs = RenderState::GetInstance();
+            if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
+                rs->SetPrimary(RENDERER_TYPE_OPENGL);
 
-        m_id = rs->RegisterRenderer(RENDERER_TYPE_OPENGL, static_cast<uint64_t>(time(NULL)));
+            _win.glMakeCurrent();
 
-        // Load all OpenGL functions
-        int status = deng_LoadGL();
-        if(!status) {
-            std::cerr << "Unexpected error occured, when loading OpenGL functions" << std::endl;
-            std::exit(-1);
+            // load OpenGL functions
+            int status = deng_LoadGL();
+            if(!status) {
+                std::cerr << "Unexpected error occured when loading OpenGL functions" << std::endl;
+                std::exit(-1);
+            }
         }
+    }
 
+
+    OpenGLRenderer::OpenGLRenderer(Window &_win, const RendererConfig &_conf) : 
+        Renderer(_win, _conf),
+        m_buffer_loader()
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glErrorCheck("glTexParameteri");
-
-        // Load all shaders into OpenGL and intialise buffer
-        mp_buffer_loader = new OpenGL::BufferLoader();
-        mp_shader_loader = new OpenGL::ShaderLoader();
 
         // load missing texture
         int x, y, size;
@@ -89,6 +93,19 @@ namespace DENG {
                 }
             }
         });
+
+        m_framebuffers.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(MAIN_FRAMEBUFFER_NAME),
+            std::forward_as_tuple(
+                MAIN_FRAMEBUFFER_NAME,
+                m_framebuffer_draws,
+                m_opengl_textures,
+                m_buffer_loader.GetBufferData(),
+                0,
+                true
+            )
+        );
     }
 
 
@@ -96,282 +113,46 @@ namespace DENG {
         // delete texture objects
         for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
             glDeleteTextures(1, &it->second);
-
-        delete mp_shader_loader;
-        delete mp_buffer_loader;
-
-        RenderState *rs = RenderState::GetInstance();
-        rs->RemoveRenderer(m_id);
     }
 
 
-    void OpenGLRenderer::_BindVertexAttributes(const DrawCommand &_cmd, uint32_t _shader_id, uint32_t _base_offset) {
-        const ShaderModule &module = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[_shader_id];
+    void OpenGLRenderer::PushFramebuffer(const FramebufferDrawData &_fb) {
+        DENG_ASSERT(m_framebuffer_draws.find(_fb.image_name) == m_framebuffer_draws.end());
+        DENG_ASSERT(m_framebuffers.find(_fb.image_name) == m_framebuffers.end());
+        DENG_ASSERT(m_opengl_textures.find(_fb.image_name) == m_opengl_textures.end());
 
-        glBindBuffer(GL_ARRAY_BUFFER, mp_buffer_loader->GetBufferData().vert_buffer);
-        glErrorCheck("glBindBuffer");
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mp_buffer_loader->GetBufferData().vert_buffer);
-        glBindVertexArray(mp_buffer_loader->GetBufferData().vert_array);
+        // submit framebuffer draw to hashmap
+        m_framebuffer_draws.insert(std::make_pair(_fb.image_name, _fb));
 
-        DENG_ASSERT(module.attributes.size() == module.attribute_strides.size());
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glErrorCheck("glGenTextures");
 
-        for(uint32_t i = 0; i < static_cast<uint32_t>(module.attributes.size()); i++) {
-            // enable vertex attribute array
-            glEnableVertexAttribArray(i);
-            glErrorCheck("glEnableVertexAttribArray");
-            GLsizei stride = static_cast<GLsizei>(module.attribute_strides[i]);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glErrorCheck("glBindTextures");
 
-            switch(module.attributes[i]) {
-                // single element attribute
-                case ATTRIBUTE_TYPE_FLOAT:
-                    glVertexAttribPointer(i, 1, GL_FLOAT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei) _fb.extent.x, (GLsizei) _fb.extent.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glErrorCheck("glTexImage2D");
 
-                case ATTRIBUTE_TYPE_DOUBLE:
-                    glVertexAttribPointer(i, 1, GL_DOUBLE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glErrorCheck("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glErrorCheck("glTexParameteri");
 
-                case ATTRIBUTE_TYPE_BYTE:
-                    glVertexAttribPointer(i, 1, GL_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_UBYTE:
-                    glVertexAttribPointer(i, 1, GL_UNSIGNED_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_SHORT:
-                    glVertexAttribPointer(i, 1, GL_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_USHORT:
-                    glVertexAttribPointer(i, 1, GL_UNSIGNED_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_UINT:
-                    glVertexAttribPointer(i, 1, GL_UNSIGNED_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_INT:
-                    glVertexAttribPointer(i, 1, GL_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                // two element attribute
-                case ATTRIBUTE_TYPE_VEC2_FLOAT:
-                    glVertexAttribPointer(i, 2, GL_FLOAT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_DOUBLE:
-                    glVertexAttribPointer(i, 2, GL_DOUBLE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_BYTE:
-                    glVertexAttribPointer(i, 2, GL_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_UBYTE:
-                    glVertexAttribPointer(i, 2, GL_UNSIGNED_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_SHORT:
-                    glVertexAttribPointer(i, 2, GL_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_USHORT:
-                    glVertexAttribPointer(i, 2, GL_UNSIGNED_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_UINT:
-                    glVertexAttribPointer(i, 2, GL_UNSIGNED_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC2_INT:
-                    glVertexAttribPointer(i, 2, GL_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                // three element attribute
-                case ATTRIBUTE_TYPE_VEC3_FLOAT:
-                    glVertexAttribPointer(i, 3, GL_FLOAT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_DOUBLE:
-                    glVertexAttribPointer(i, 3, GL_DOUBLE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_BYTE:
-                    glVertexAttribPointer(i, 3, GL_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_UBYTE:
-                    glVertexAttribPointer(i, 3, GL_UNSIGNED_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_SHORT:
-                    glVertexAttribPointer(i, 3, GL_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_USHORT:
-                    glVertexAttribPointer(i, 3, GL_UNSIGNED_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_UINT:
-                    glVertexAttribPointer(i, 3, GL_UNSIGNED_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC3_INT:
-                    glVertexAttribPointer(i, 3, GL_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                // four element attribute
-                case ATTRIBUTE_TYPE_VEC4_FLOAT:
-                    glVertexAttribPointer(i, 4, GL_FLOAT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_DOUBLE:
-                    glVertexAttribPointer(i, 4, GL_DOUBLE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_BYTE:
-                    glVertexAttribPointer(i, 4, GL_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_UBYTE:
-                    glVertexAttribPointer(i, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_SHORT:
-                    glVertexAttribPointer(i, 4, GL_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_USHORT:
-                    glVertexAttribPointer(i, 4, GL_UNSIGNED_SHORT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_UINT:
-                    glVertexAttribPointer(i, 4, GL_UNSIGNED_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-
-                case ATTRIBUTE_TYPE_VEC4_INT:
-                    glVertexAttribPointer(i, 4, GL_INT, GL_TRUE, stride, reinterpret_cast<const void*>(_base_offset + _cmd.attribute_offsets[i]));
-                    glErrorCheck("glVertexAttribPointer");
-                    break;
-            }
-        }
+        m_opengl_textures.insert(std::make_pair(_fb.image_name, texture));
+        m_framebuffers.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(_fb.image_name),
+            std::forward_as_tuple(
+                _fb.image_name,
+                m_framebuffer_draws,
+                m_opengl_textures,
+                m_buffer_loader.GetBufferData(),
+                texture,
+                false
+            )
+        );
     }
-
-
-    void OpenGLRenderer::_UnbindVertexAttributes(uint32_t _shader_id) {
-        for (size_t i = 0; i < m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[_shader_id].attributes.size(); i++) {
-            glDisableVertexAttribArray(static_cast<GLuint>(i));
-            glErrorCheck("glDisableVertexAttribArray");
-        }
-    }
-
-
-    void OpenGLRenderer::_SetRenderState(uint32_t _shader_id) {
-        const ShaderModule &module = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[_shader_id];
-        // scissor test
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        if(module.enable_scissor) {
-            glEnable(GL_SCISSOR_TEST);
-            glErrorCheck("glEnable");
-        } else {
-            glDisable(GL_SCISSOR_TEST);
-            glErrorCheck("glDisable");
-        }
-
-        // depth test
-        if(module.enable_depth_testing) {
-            glEnable(GL_DEPTH_TEST);
-            glErrorCheck("glEnable");
-            glDepthFunc(GL_LESS);
-            glErrorCheck("glDepthFunc");
-        } else {
-            glDisable(GL_DEPTH_TEST);
-            glErrorCheck("glDisable");
-        }
-
-        // stencil testing
-        if(module.enable_stencil_testing) {
-            glEnable(GL_STENCIL_TEST);
-            glErrorCheck("glEnable");
-        } else {
-            glDisable(GL_STENCIL_TEST);
-            glErrorCheck("glDisable");
-        }
-
-        // blending
-        if(module.enable_blend) {
-            glEnable(GL_BLEND);
-            glErrorCheck("glEnable");
-            glBlendEquation(GL_FUNC_ADD);
-            glErrorCheck("glBlendEquation");
-            glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-            glErrorCheck("glBlendFuncSeparate");
-        } else {
-            glDisable(GL_BLEND);
-            glErrorCheck("glBlend");
-        }
-
-        // culling
-        switch(module.cull_mode) {
-            case CULL_MODE_NONE:
-                glDisable(GL_CULL_FACE);
-                glErrorCheck("glDisable");
-                break;
-
-            case CULL_MODE_COUNTER_CLOCKWISE:
-                glEnable(GL_CULL_FACE);
-                glErrorCheck("glEnable");
-                glCullFace(GL_FRONT);
-                glErrorCheck("glCullFace");
-                glFrontFace(GL_CCW);
-                glErrorCheck("glFrontFace");
-                break;
-
-            case CULL_MODE_CLOCKWISE:
-                glEnable(GL_CULL_FACE);
-                glErrorCheck("glEnable");
-                glCullFace(GL_FRONT);
-                glErrorCheck("glCullFace");
-                glFrontFace(GL_CW);
-                glErrorCheck("glFrontFace");
-                break;
-        }
-    }
-
-
-    void OpenGLRenderer::PushFramebuffer(const FramebufferDrawData &_fb) {}
 
 
     void OpenGLRenderer::PushTextureFromFile(const std::string &_name, const std::string &_file_name) {
@@ -454,36 +235,38 @@ namespace DENG {
 
 
     uint32_t OpenGLRenderer::AlignUniformBufferOffset(uint32_t _req) {
-        return AlignData(_req, mp_buffer_loader->GetUniformBufferOffsetAlignment());
+        return AlignData(_req, m_buffer_loader.GetUniformBufferOffsetAlignment());
     }
 
 
     void OpenGLRenderer::LoadShaders(uint32_t _ubo_size) {
         // check if buffer reallocation is required
         if (_ubo_size) {
-            mp_buffer_loader->RequestMemory(_ubo_size, GL_UNIFORM_BUFFER);
+            m_buffer_loader.RequestMemory(_ubo_size, GL_UNIFORM_BUFFER);
         }
 
-        mp_shader_loader->LoadShaders(m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders);
+        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
+            it->second.LoadData();
+        }
     }
 
 
     void OpenGLRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
-        mp_buffer_loader->RequestMemory(_offset + _size, GL_UNIFORM_BUFFER);
-        void *data = glMapNamedBufferRange(mp_buffer_loader->GetBufferData().ubo_buffer, (GLintptr) _offset, (GLsizeiptr) _size, GL_MAP_WRITE_BIT);
+        m_buffer_loader.RequestMemory(_offset + _size, GL_UNIFORM_BUFFER);
+        void *data = glMapNamedBufferRange(m_buffer_loader.GetBufferData().ubo_buffer, (GLintptr) _offset, (GLsizeiptr) _size, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapBufferRange");
         std::memcpy(data, _raw_data, static_cast<size_t>(_size));
-        glUnmapNamedBuffer(mp_buffer_loader->GetBufferData().ubo_buffer);
+        glUnmapNamedBuffer(m_buffer_loader.GetBufferData().ubo_buffer);
         glErrorCheck("glUnmapNamedBuffer");
     }
 
 
     void OpenGLRenderer::UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        mp_buffer_loader->RequestMemory(_offset + _raw_data.second, GL_ARRAY_BUFFER);
-        void *data = glMapNamedBufferRange(mp_buffer_loader->GetBufferData().vert_buffer, (GLintptr) _offset, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
+        m_buffer_loader.RequestMemory(_offset + _raw_data.second, GL_ARRAY_BUFFER);
+        void *data = glMapNamedBufferRange(m_buffer_loader.GetBufferData().vert_buffer, (GLintptr) _offset, (GLsizeiptr) _raw_data.second, GL_MAP_WRITE_BIT);
         glErrorCheck("glMapNamedBufferRange");
             std::memcpy(data, _raw_data.first, static_cast<size_t>(_raw_data.second));
-        glUnmapNamedBuffer(mp_buffer_loader->GetBufferData().vert_buffer);
+        glUnmapNamedBuffer(m_buffer_loader.GetBufferData().vert_buffer);
         glErrorCheck("glUnmapeNamedBuffer");
     }
 
@@ -502,118 +285,13 @@ namespace DENG {
 
 
     void OpenGLRenderer::RenderFrame() {
-        GLint last_scissor_box[4];
-        glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
-        glErrorCheck("glGetIntegerv");
-
-        GLint last_viewport[4];
-        glGetIntegerv(GL_VIEWPORT, last_viewport);
-        glErrorCheck("glGetIntegerv");
-
-        // draw each mesh to the screen
-        for(auto mesh_it = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].meshes.begin(); mesh_it < m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].meshes.end(); mesh_it++) {
-            const uint32_t shader_id = mesh_it->shader_module_id;
-            const ShaderModule &module = m_framebuffer_draws[MAIN_FRAMEBUFFER_NAME].shaders[shader_id];
-
-            // check if custom viewport was requested
-            if(module.enable_custom_viewport) {
-                GLint x = static_cast<GLint>(module.viewport.x);
-                GLint y = static_cast<GLint>(m_window.GetSize().y) - static_cast<GLint>(module.viewport.y) - static_cast<GLint>(module.viewport.height);
-                glViewport(x, y, (GLsizei) module.viewport.width, (GLsizei) module.viewport.height);
-            } else {
-                glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
-            }
-
-            _SetRenderState(shader_id);
-            glUseProgram(mp_shader_loader->GetShaderProgramById(shader_id));
-            glErrorCheck("glUseProgram");
-
-            for(auto cmd_it = mesh_it->commands.begin(); cmd_it < mesh_it->commands.end(); cmd_it++) {
-                _BindVertexAttributes(*cmd_it, shader_id, 0);
-
-                // for each mesh uniform object bind appropriate buffer ranges
-                for(auto ubo = mesh_it->ubo_blocks.begin(); ubo != mesh_it->ubo_blocks.end(); ubo++) {
-                    const GLuint binding = static_cast<GLuint>(ubo->binding);
-                    const GLintptr offset = static_cast<GLintptr>(ubo->offset);
-                    const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->size);
-
-                    glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
-                    glErrorCheck("glBindBufferRange");
-                }
-
-                // for each shader uniform object bind appropriate uniform buffer ranges
-                for(auto ubo = module.ubo_data_layouts.begin(); ubo != module.ubo_data_layouts.end(); ubo++) {
-                    const GLuint binding = static_cast<GLuint>(ubo->block.binding);
-
-                    if(ubo->usage == UNIFORM_USAGE_PER_SHADER && ubo->type == DENG::UNIFORM_DATA_TYPE_BUFFER) {
-                        const GLintptr offset = static_cast<GLintptr>(ubo->block.offset);
-                        const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->block.size);
-
-                        glBindBufferRange(GL_UNIFORM_BUFFER, binding, mp_buffer_loader->GetBufferData().ubo_buffer, offset, size);
-                        glErrorCheck("glBindBufferRange");
-                    } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && module.enable_texture_mapping) {
-                        for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
-                            const GLuint tex_id = m_opengl_textures[*tex_it];
-                            glActiveTexture(GL_TEXTURE0 + binding);
-                            glErrorCheck("glActiveTexture");
-                            glBindTexture(GL_TEXTURE_2D, tex_id);
-                            glErrorCheck("glBindTexture");
-                        }
-                    }
-                }
-
-                // check if scissor technique is required
-                if(module.enable_scissor) {
-                    glScissor((GLint) cmd_it->scissor.offset.x, (GLint) (m_window.GetSize().y - (cmd_it->scissor.ext.y + cmd_it->scissor.offset.y)), (GLsizei) cmd_it->scissor.ext.x, (GLsizei) cmd_it->scissor.ext.y);
-                    glErrorCheck("glScissor");
-                } else {
-                    glScissor(0, 0, (GLsizei) m_window.GetSize().x, (GLsizei) m_window.GetSize().y);
-                    glErrorCheck("glScissor");
-                }
-
-                // check if indexed draw was requested
-                if(module.enable_indexing) {
-                    const size_t ioffset = static_cast<size_t>(cmd_it->indices_offset);
-                    switch(module.prim_mode) {
-                        case PRIMITIVE_MODE_TRIANGLES:
-                            glDrawElements(GL_TRIANGLES, (GLsizei) cmd_it->draw_count, GL_UNSIGNED_INT, reinterpret_cast<const void*>(ioffset));
-                            break;
-
-                        case PRIMITIVE_MODE_LINES:
-                            glDrawElements(GL_LINES, (GLsizei) cmd_it->draw_count, GL_UNSIGNED_INT, reinterpret_cast<const void*>(ioffset));
-                            break;
-
-                        case PRIMITIVE_MODE_POINTS:
-                            DENG_ASSERT(false);
-                            break;
-                    }
-
-                    glErrorCheck("glDrawElements");
-                } else {
-                    switch(module.prim_mode) {
-                        case PRIMITIVE_MODE_TRIANGLES:
-                            glDrawArrays(GL_TRIANGLES, 0, (GLsizei) cmd_it->draw_count);
-                            break;
-
-                        case PRIMITIVE_MODE_POINTS:
-                            glDrawArrays(GL_POINTS, 0, (GLsizei) cmd_it->draw_count);
-                            break;
-
-                        case PRIMITIVE_MODE_LINES:
-                            glDrawArrays(GL_LINES, 0, (GLsizei) cmd_it->draw_count);
-                            break;
-                    }
-                    glErrorCheck("glDrawArrays");
-                }
-
-                _UnbindVertexAttributes(shader_id);
-            }
+        // update all non-default framebuffers
+        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
+            if(it->first == MAIN_FRAMEBUFFER_NAME)
+                continue;
+            it->second.Render();
         }
 
-        glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3]);
-        glErrorCheck("glScissor");
-
-        glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
-        glErrorCheck("glViewport");
+        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.Render();
     }
 }

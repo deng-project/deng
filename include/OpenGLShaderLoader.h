@@ -10,13 +10,25 @@
     #include <string>
     #include <array>
     #include <vector>
+    #include <unordered_map>
     #include <fstream>
-    #include <glad/glad.h>
+    #include <cstring>
+    #include <cmath>
+#ifdef _DEBUG
+    #include <iostream>
+#endif
 
     #include <libdas/include/Api.h>
     #include <libdas/include/Algorithm.h>
+    #include <libdas/include/Points.h>
+    #include <libdas/include/Vector.h>
+    #include <libdas/include/Matrix.h>
+
+    #include <Api.h>
     #include <ErrorDefinitions.h>
     #include <ShaderDefinitions.h>
+    #include <Window.h>
+    #include <Renderer.h>
 
 #define DEBUG_ONLY
     #include <OpenGLRenderer.h>
@@ -34,13 +46,13 @@ namespace DENG {
 
             private:
                 std::string _ReadShaderSource(const std::string &_file_name);
-                void _CompileShadersToProgram(ShaderModule &_module);
+                void _CompileShadersToProgram(const ShaderModule &_module);
                 void _CheckCompileStatus(uint32_t _shader_id, const std::string &_shader);
                 void _CheckLinkingStatus(uint32_t _program_id);
                 void _CalculateStride(const ShaderModule &_module);
 
             public:
-                void LoadShaders(std::vector<ShaderModule> &_modules);
+                void LoadShaders(const std::vector<ShaderModule> &_modules);
 
                 inline GLuint &GetShaderProgramById(uint32_t _id) {
                     DENG_ASSERT(static_cast<size_t>(_id) < m_programs.size());

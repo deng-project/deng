@@ -32,6 +32,7 @@ set(DENG_HEADERS
     include/ModelUniforms.h
     include/NodeLoader.h
     include/OpenGLBufferLoader.h
+    include/OpenGLFramebuffer.h
     include/OpenGLRenderer.h
     include/OpenGLShaderLoader.h
     include/PythonScriptExecutor.h
@@ -73,6 +74,7 @@ set(DENG_SOURCES
     src/ModelShaderGenerator.cpp
     src/NodeLoader.cpp
     src/OpenGLBufferLoader.cpp
+    src/OpenGLFramebuffer.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/PythonScriptExecutor.cpp

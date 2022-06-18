@@ -41,8 +41,11 @@
     #include <GPUMemoryManager.h>
 #endif
 
-#include <OpenGLShaderLoader.h>
-#include <OpenGLBufferLoader.h>
+#ifndef DEBUG_ONLY
+    #include <OpenGLShaderLoader.h>
+    #include <OpenGLBufferLoader.h>
+    #include <OpenGLFramebuffer.h>
+#endif
 
 namespace DENG {
 
@@ -53,17 +56,20 @@ namespace DENG {
 
 #ifndef DEBUG_ONLY
 
+    namespace OpenGL {
+        void Initialise(Window &_win);
+    }
+
     class DENG_API OpenGLRenderer : public Renderer {
         private:
-            OpenGL::ShaderLoader *mp_shader_loader = nullptr;
-            OpenGL::BufferLoader *mp_buffer_loader = nullptr;
+            OpenGL::BufferLoader m_buffer_loader;
             std::vector<std::vector<uint32_t>> m_ubo_offsets;
+
+            // texture handles
             std::unordered_map<std::string, GLuint> m_opengl_textures;
 
-        private:
-            void _BindVertexAttributes(const DrawCommand &_cmd, uint32_t _shader_id, uint32_t _base_offset);
-            void _UnbindVertexAttributes(uint32_t _shader_id);
-            void _SetRenderState(uint32_t _shader_id);
+            // framebuffers
+            std::unordered_map<std::string, OpenGL::Framebuffer> m_framebuffers;
 
         public:
             OpenGLRenderer(Window &_win, const RendererConfig &_conf);

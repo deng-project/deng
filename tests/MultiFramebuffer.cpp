@@ -63,9 +63,9 @@ const static float verts[] = {
 const static uint32_t indices[] = { 0, 1, 2, 2, 3, 0 };
 
 int main() {
-    DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_VULKAN | NEKO_HINT_RESIZEABLE, "Vulkan multiple framebuffers");
-    DENG::RendererConfig conf = {};
-    DENG::VulkanRenderer rend(win, conf);
+    DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "Vulkan multiple framebuffers");
+    DENG::OpenGL::Initialise(win);
+    DENG::OpenGLRenderer rend(win, {});
     DENG::GPUMemoryManager *mem_manager = DENG::GPUMemoryManager::GetInstance();
     const uint32_t vert_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(sizeof(verts)));
     const uint32_t idx_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(sizeof(indices)));

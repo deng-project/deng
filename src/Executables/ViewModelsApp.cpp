@@ -41,7 +41,7 @@ namespace Executable {
         ImGui::End();
 
         ImGui::Begin("viewport");
-            ImGui::Image();
+            ImGui::Text("Viewport");
         ImGui::End();
 
         ImGui::Begin("hierarchy");
