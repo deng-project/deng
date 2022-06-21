@@ -17,4 +17,10 @@ namespace DENG {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
         m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelCameraUbo)));
     }
+
+
+    Camera3D::~Camera3D() {
+        GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
+        mem_man->DeleteUniformMemoryLocation(m_ubo_offset);
+    }
 }

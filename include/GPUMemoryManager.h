@@ -58,10 +58,6 @@ namespace DENG {
             uint32_t RequestMainMemoryLocationP(uint32_t _component_stride, uint32_t _size);
             uint32_t RequestUniformMemoryLocationP(Renderer &_rend, uint32_t _size);
 
-            // update methods
-            void UpdateMainMemoryLocation(uint32_t _offset, uint32_t _size); 
-            void UpdateUniformMemoryLocation(uint32_t _offset, uint32_t _size);
-
             inline uint32_t GetMaxMainBufferOffset() {
                 return m_main_buffer_blocks.back().first + m_main_buffer_blocks.back().second;
             }

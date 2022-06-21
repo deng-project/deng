@@ -3,9 +3,23 @@
 # file: MultiFramebuffer.cmake - Multi framebuffer application build config
 # author: Karl-Mihkel Ott
 
-set(MULTI_FRAMEBUFFER_TARGET MultiFramebufferTest)
-set(MULTI_FRAMEBUFFER_SOURCES tests/MultiFramebuffer.cpp)
+set(OPENGL_MULTI_FRAMEBUFFER_TARGET OpenGLMultiFramebufferTest)
+set(OPENGL_MULTI_FRAMEBUFFER_SOURCES 
+    tests/MultiFramebuffer.h
+    tests/OpenGLMultiFramebuffer.cpp)
 
-add_executable(${MULTI_FRAMEBUFFER_TARGET} ${MULTI_FRAMEBUFFER_SOURCES})
-add_dependencies(${MULTI_FRAMEBUFFER_TARGET} ${DENG_SHARED_TARGET})
-target_link_libraries(${MULTI_FRAMEBUFFER_TARGET} PRIVATE ${DENG_SHARED_TARGET})
+set(VULKAN_MULTI_FRAMEBUFFER_TARGET VulkanMultiFramebufferTest)
+set(VULKAN_MULTI_FRAMEBUFFER_SOURCES 
+    tests/MultiFramebuffer.h
+    tests/VulkanMultiFramebuffer.cpp)
+
+
+# OpenGL test
+add_executable(${OPENGL_MULTI_FRAMEBUFFER_TARGET} ${OPENGL_MULTI_FRAMEBUFFER_SOURCES})
+add_dependencies(${OPENGL_MULTI_FRAMEBUFFER_TARGET} ${DENG_SHARED_TARGET})
+target_link_libraries(${OPENGL_MULTI_FRAMEBUFFER_TARGET} PRIVATE ${DENG_SHARED_TARGET})
+
+# Vulkan test
+add_executable(${VULKAN_MULTI_FRAMEBUFFER_TARGET} ${VULKAN_MULTI_FRAMEBUFFER_SOURCES})
+add_dependencies(${VULKAN_MULTI_FRAMEBUFFER_TARGET} ${DENG_SHARED_TARGET})
+target_link_libraries(${VULKAN_MULTI_FRAMEBUFFER_TARGET} PRIVATE ${DENG_SHARED_TARGET})

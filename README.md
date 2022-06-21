@@ -70,5 +70,9 @@ $ cmake -GVisual Studio 17 2022 -DCMAKE_BUILD_TYPE=<Release|Debug> -DBUILD_DEPS=
 
 Build DENG using specified toolchain.
 
+## Note on using custom framebuffers
+Since OpenGL textures are read in bottom-row first order, the framebuffer uv coordinates must start from (0; 1) coordinates if using 
+top-left coordinate order. There is no good performance workaround available for this problem.
+
 ## Usage
 Refer to [USAGE.md](USAGE.md) for more information.

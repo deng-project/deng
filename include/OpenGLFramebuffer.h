@@ -49,7 +49,7 @@ namespace DENG {
                 ShaderLoader m_shader_loader;
 
                 GLuint m_framebuffer = 0;
-                GLuint m_depth_buffer = UINT32_MAX;
+                GLuint m_rbo = 0;
                 GLenum m_color_attachment_id = 0;
 
             private:
@@ -67,6 +67,8 @@ namespace DENG {
                     const bool _is_default = false
                 );
                 Framebuffer(Framebuffer &&_fb) noexcept = default;
+
+                void ClearFrame(const Libdas::Vector4<float> _clear_color);
                 void LoadData();
                 void Render();
         };

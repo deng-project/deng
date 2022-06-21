@@ -8,12 +8,20 @@
 
 namespace DENG {
 
-    GridGenerator::GridGenerator(float _width, float _height, float _margin_x, float _margin_y, uint32_t _camera_offset) :
+    GridGenerator::GridGenerator(float _width, float _height, float _margin_x, float _margin_y, uint32_t _camera_offset, const std::string &_framebuffer_id) :
         m_width(_width),
         m_height(_height),
         m_margin_x(_margin_x),
         m_margin_y(_margin_y),
-        m_camera_ubo_offset(_camera_offset) {}
+        m_camera_ubo_offset(_camera_offset),
+        m_framebuffer_id(_framebuffer_id) {}
+
+
+    GridGenerator::~GridGenerator() {
+        GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
+        mem_man->DeleteUniformMemoryLocation(m_ubo_offset);
+        mem_man->DeleteMainMemoryLocation(m_main_offset);
+    }
 
 
     void GridGenerator::_GenerateVertices(Renderer &_rend) {
@@ -42,7 +50,7 @@ namespace DENG {
 
         GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
         m_vert_count = static_cast<uint32_t>(vertices.size());
-        m_main_offset = mem_man->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(vertices.size() * sizeof(Libdas::Vector3<float>)));
+        m_main_offset = mem_man->RequestMainMemoryLocationP(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(vertices.size() * sizeof(Libdas::Vector3<float>)));
         _rend.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<char*>(vertices.data()), static_cast<uint32_t>(vertices.size() * sizeof(Libdas::Vector3<float>))), m_main_offset);
     }
 
@@ -108,12 +116,12 @@ namespace DENG {
         module.prim_mode = PRIMITIVE_MODE_LINES;
 
         // push the shader module
-        m_shader_id = _rend.PushShader(module);
+        m_shader_id = _rend.PushShader(module, m_framebuffer_id);
         _GenerateVertices(_rend);
 
         // generate mesh and draw command to submit to renderer
-        m_mesh_id = _rend.PushMeshReference(MeshReference());
-        MeshReference &ref = _rend.GetMeshes()[m_mesh_id];
+        m_mesh_id = _rend.PushMeshReference(MeshReference(), m_framebuffer_id);
+        MeshReference &ref = _rend.GetMeshes(m_framebuffer_id)[m_mesh_id];
         ref.name = "__grid__";
         ref.shader_module_id = m_shader_id;
         ref.commands.emplace_back();

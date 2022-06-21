@@ -9,11 +9,22 @@
 
 namespace DENG {
 
+    namespace Vulkan {
+        void Initialise() {
+            RenderState *rs = RenderState::GetInstance();
+            if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
+                rs->SetPrimary(RENDERER_TYPE_VULKAN);
+        }
+    }
+
     VulkanRenderer::VulkanRenderer(Window &_win, const RendererConfig &_conf) : 
         Renderer(_win, _conf),
         m_instance_creator(m_window),
         m_swapchain_creator(m_instance_creator, m_window.GetSize(), m_sample_count, m_conf)
     {
+        RenderState *rs = RenderState::GetInstance();
+        m_id = rs->RegisterRenderer(RENDERER_TYPE_VULKAN, time(NULL));
+
         // create main swapchain framebuffer
         m_framebuffer_draws.insert({
             MAIN_FRAMEBUFFER_NAME,
@@ -48,18 +59,12 @@ namespace DENG {
         int x, y, size;
         const char *data = GetMissingTexture(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
-
-        RenderState *rs = RenderState::GetInstance();
-        if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
-            rs->SetPrimary(RENDERER_TYPE_VULKAN);
-        m_id = rs->RegisterRenderer(RENDERER_TYPE_VULKAN, time(NULL));
     }
 
 
     VulkanRenderer::~VulkanRenderer() {
         RenderState *rs = RenderState::GetInstance();
         rs->RemoveRenderer(m_id);
-        GPUMemoryManager::DeleteInstance();
         vkDeviceWaitIdle(m_instance_creator.GetDevice());
 
         // destroy all secondary framebuffers
@@ -220,10 +225,6 @@ namespace DENG {
         if (!m_is_init) {
             _AllocateUniformBuffer();
         }
-        else {
-            // disable dynamic loading for now
-            DENG_ASSERT(false);
-        }
 
         // load framebuffers
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++)
@@ -267,13 +268,14 @@ namespace DENG {
 
 
     void VulkanRenderer::ClearFrame() {
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.ClearFrame();
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
             if(it->first == MAIN_FRAMEBUFFER_NAME)
                 continue;
 
             it->second.ClearFrame();
         }
+
+        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.ClearFrame();
     }
 
 
@@ -283,10 +285,10 @@ namespace DENG {
         uint32_t imgi;
         VkResult res = vkAcquireNextImageKHR(m_instance_creator.GetDevice(), m_swapchain_creator.GetSwapchain(), UINT64_MAX, swapchain_image_semaphore, VK_NULL_HANDLE, &imgi);
 
-        if(res == VK_ERROR_OUT_OF_DATE_KHR) {
+        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
             _Resize();
             return;
-        } else if(res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
+        } else if(res != VK_SUCCESS) {
             VK_FRAME_ERR("Failed to acquire next swapchain image");
         }
 
@@ -298,8 +300,15 @@ namespace DENG {
             it->second.Render(m_conf.clear_color);
         }
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.Render(m_conf.clear_color);
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.Present(m_swapchain_creator.GetSwapchain(), imgi);
+        Vulkan::Framebuffer &fb = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
+
+        fb.Render(m_conf.clear_color, imgi);
+        res = fb.Present(m_swapchain_creator.GetSwapchain(), imgi);
+
+        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || m_window.IsResized())
+            _Resize();
+        else if(res != VK_SUCCESS)
+            VK_FRAME_ERR("Failed to present swapchain image");
     }
 
 
@@ -359,7 +368,6 @@ namespace DENG {
         VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
         Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         vkBindBufferMemory(m_instance_creator.GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
-
     }
 
 
@@ -467,15 +475,16 @@ namespace DENG {
 
         vkDeviceWaitIdle(m_instance_creator.GetDevice());
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.DestroyFramebuffer();
+        Vulkan::Framebuffer &fb = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
+        fb.DestroyFramebuffer();
         m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = { 
             static_cast<uint32_t>(m_window.GetSize().x),
             static_cast<uint32_t>(m_window.GetSize().y)
         };
 
         m_swapchain_creator.RecreateSwapchain(m_window.GetSize());
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.NewFramebufferImages(m_swapchain_creator.GetSwapchainImages());
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.RecreateFramebuffer();
+        fb.NewFramebufferImages(m_swapchain_creator.GetSwapchainImages());
+        fb.RecreateFramebuffer();
 
         vkDeviceWaitIdle(m_instance_creator.GetDevice());
     }

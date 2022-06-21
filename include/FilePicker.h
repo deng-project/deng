@@ -11,12 +11,14 @@
     #include <string>
     #include <vector>
     #include <array>
+    #include <mutex>
     #include <variant>
     #include <set>
     #include <unordered_map>
     #include <chrono>
     #include <algorithm>
     #include <filesystem>
+    #include <atomic>
 #if defined(__linux__)
     #include <unistd.h>
     #include <sys/types.h>
@@ -84,7 +86,7 @@ namespace DENG {
 
         public:
             FilePicker() = default;
-            void SelectFile(const std::string &_type_list, int32_t _width, int32_t _height, const std::string &_title);
+            void SelectFile(const std::string &_type_list, int32_t _width, int32_t _height, const std::string &_title, std::atomic<bool> *p_finished = nullptr);
             void SaveFile(const std::string &_type_list, const std::string &_title);
 
             inline const std::string &GetPickedFile() {

@@ -107,76 +107,49 @@ namespace DENG {
     }
 
 
-    void GPUMemoryManager::UpdateMainMemoryLocation(uint32_t _offset, uint32_t _size) {
-        // search for memory location using binary search
-        size_t index = m_main_buffer_blocks.size() / 2;
-        size_t l = 0;
-        size_t r = m_main_buffer_blocks.size() - 1;
-
-        while(index < m_main_buffer_blocks.size()) {
-            if(m_main_buffer_blocks[index].first == _offset) {
-                m_main_buffer_blocks[index].second = _size;
-                return;
-            }
-            // look for left
-            else if(m_main_buffer_blocks[index].first > _offset) {
-                DENG_ASSERT(r != 0);
-                r = index;
-                index /= 2;
-            }
-            // look for right
-            else if(m_main_buffer_blocks[index].first < _offset) {
-                DENG_ASSERT(l != m_main_buffer_blocks.size() - 1);
-                l = index;
-                if((r - index) / 2 == 0)
-                    index = r;
-                else index = (r - index) / 2;
-            }
-        }
-    }
-
-
-    void GPUMemoryManager::UpdateUniformMemoryLocation(uint32_t _offset, uint32_t _size) {
+    void GPUMemoryManager::DeleteUniformMemoryLocation(uint32_t _offset) {
         size_t index = m_ubo_buffer_blocks.size() / 2;
         size_t l = 0;
         size_t r = m_ubo_buffer_blocks.size() - 1;
 
         while(index < m_ubo_buffer_blocks.size()) {
-            if(m_ubo_buffer_blocks[index].first == _offset) {
-                m_ubo_buffer_blocks[index].second = _size;
+            if(m_ubo_buffer_blocks[index].first == _offset) { // found
+                m_ubo_buffer_blocks.erase(m_ubo_buffer_blocks.begin() + index);
                 return;
-            }
-            // look for left
-            else if(m_ubo_buffer_blocks[index].first > _offset) {
+            } else if(m_ubo_buffer_blocks[index].first > _offset) { // look left
                 DENG_ASSERT(r != 0);
                 r = index;
-                index /= 2;
-            }
-            // look for right
-            else if(m_ubo_buffer_blocks[index].first < _offset) {
-                DENG_ASSERT(l != m_main_buffer_blocks.size() - 1);
+                uint32_t sub = (r - l) >> 1;
+                index -= sub ? sub : 1;
+            } else if(m_ubo_buffer_blocks[index].first < _offset) { // look right
+                DENG_ASSERT(l != m_ubo_buffer_blocks.size() - 1);
                 l = index;
-                index += (r - index) / 2;
-            }
-        }
-    }
-
-
-    void GPUMemoryManager::DeleteUniformMemoryLocation(uint32_t _offset) {
-        for(uint32_t i = 0; i < m_ubo_buffer_blocks.size(); i++) {
-            if(m_ubo_buffer_blocks[i].first == _offset) {
-                m_ubo_buffer_blocks.erase(m_ubo_buffer_blocks.begin() + i);
-                break;
+                uint32_t add = (r - l) >> 1;
+                index += add ? add : 1;
             }
         }
     }
 
 
     void GPUMemoryManager::DeleteMainMemoryLocation(uint32_t _offset) {
-        for(uint32_t i = 0; i < m_main_buffer_blocks.size(); i++) {
-            if(m_main_buffer_blocks[i].first == _offset) {
-                m_main_buffer_blocks.erase(m_main_buffer_blocks.begin() + i);
-                break;
+        size_t index = m_main_buffer_blocks.size() / 2;
+        size_t l = 0;
+        size_t r = m_main_buffer_blocks.size() - 1;
+
+        while(index < m_main_buffer_blocks.size()) {
+            if(m_main_buffer_blocks[index].first == _offset) { // found
+                m_main_buffer_blocks.erase(m_main_buffer_blocks.begin() + index);
+                return;
+            } else if(m_main_buffer_blocks[index].first > _offset) { // look left
+                DENG_ASSERT(r != 0);
+                r = index;
+                const uint32_t sub = (r - l) >> 1;
+                index -= sub ? sub : 1;
+            } else if(m_main_buffer_blocks[index].first < _offset) { // look right
+                DENG_ASSERT(l != m_main_buffer_blocks.size() - 1);
+                l = index;
+                const uint32_t add = (r - l) >> 1;
+                index += add ? add : 1;
             }
         }
     }

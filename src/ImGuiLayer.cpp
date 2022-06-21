@@ -8,12 +8,20 @@
 
 namespace DENG {
 
-    ImGuiLayer::ImGuiLayer() : m_gui_texture_name(IMGUI_TEXTURE_NAME) {
-        m_beg = std::chrono::system_clock::now();
-    }
+    ImGuiLayer::ImGuiLayer(const std::string &_framebuffer_name) : 
+        m_gui_texture_name(IMGUI_TEXTURE_NAME),
+        m_framebuffer_name(_framebuffer_name)
+    { m_beg = std::chrono::system_clock::now(); }
 
 
     ImGuiLayer::~ImGuiLayer() {
+        // delete reserved memory locations
+        GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
+        mem_man->DeleteUniformMemoryLocation(m_ubo_offset);
+        if(m_main_offset != UINT32_MAX)
+            mem_man->DeleteMainMemoryLocation(m_main_offset);
+
+        ImGui::SetCurrentContext(m_context);
         ImGui::DestroyContext();
     }
 
@@ -31,20 +39,18 @@ namespace DENG {
 
     
     void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data) {
-        DENG::MeshReference &mesh = mp_renderer->GetMeshes()[m_mesh_id];
+        DENG::MeshReference &mesh = mp_renderer->GetMeshes(m_framebuffer_name)[m_mesh_id];
         mesh.name = "__imgui__";
         mesh.shader_module_id = m_shader_id;
         mesh.commands.clear();
 
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
-        if(mem_manager->IsLastMainMemoryLocation(m_main_offset)) {
-            uint32_t total_size = _CalculateUsedMemory(_draw_data);
-            mem_manager->UpdateMainMemoryLocation(m_main_offset, total_size);
-        } else {
+        // check if main memory was already requested and if so, delete it
+        if(m_main_offset != UINT32_MAX)
             mem_manager->DeleteMainMemoryLocation(m_main_offset);
-            uint32_t total_size = _CalculateUsedMemory(_draw_data);
-            m_main_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), total_size);
-        }
+
+        const uint32_t total_size = _CalculateUsedMemory(_draw_data);
+        m_main_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), total_size);
 
         uint32_t cmd_vert_offset = m_main_offset;
         uint32_t cmd_idx_offset = m_main_offset;
@@ -125,13 +131,13 @@ namespace DENG {
     void ImGuiLayer::Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data) {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
         m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(_rend, static_cast<uint32_t>(sizeof(Libdas::Point2D<float>)));
-        m_main_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), 1);
         mp_window = &_win;
         mp_renderer = &_rend;
         m_callback = _callback;
         m_user_data = _user_data;
 
-        ImGui::CreateContext();
+        m_context = ImGui::CreateContext();
+        ImGui::SetCurrentContext(m_context);
         m_io = &ImGui::GetIO();
 
         // retrieve texture atlas data
@@ -166,9 +172,9 @@ namespace DENG {
         module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
-        m_shader_id = mp_renderer->PushShader(module);
+        m_shader_id = mp_renderer->PushShader(module, m_framebuffer_name);
 
-        m_mesh_id = mp_renderer->PushMeshReference(DENG::MeshReference());
+        m_mesh_id = mp_renderer->PushMeshReference(DENG::MeshReference(), m_framebuffer_name);
         mp_renderer->PushTextureFromMemory(IMGUI_TEXTURE_NAME, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
         m_io->Fonts->SetTexID(const_cast<char*>(m_gui_texture_name.c_str()));
     }
@@ -182,18 +188,13 @@ namespace DENG {
             m_delta_time = 0.0f;
         m_beg = std::chrono::system_clock::now();
 
+        ImGui::SetCurrentContext(m_context);
         _UpdateIO();
         ImGui::NewFrame();
             m_callback(m_user_data);
         ImGui::EndFrame();
 
         ImGui::Render();
-
-        // check if the imgui mesh is the last one in the array
-        //if (m_mesh_id != static_cast<uint32_t>(mp_renderer->GetMeshes().size() - 1)) {
-            //MeshReference mesh = mp_renderer->PopMeshReference(m_mesh_id);
-            //m_mesh_id = mp_renderer->PushMeshReference(mesh);
-        //}
 
         ImDrawData *draw_data = ImGui::GetDrawData();
         _CreateDrawCommands(draw_data);

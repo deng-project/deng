@@ -43,12 +43,15 @@ namespace DENG {
             uint32_t m_ubo_offset = 0;
             uint32_t m_main_offset = 0;
             Libdas::Vector4<float> m_color = { 1.0f, 1.0f, 1.0f, 1.0f };
+            const std::string m_framebuffer_id;
 
         private:
             void _GenerateVertices(Renderer &_rend);
 
         public:
-            GridGenerator(float _width, float _height, float _margin_x, float _margin_y, uint32_t _camera_offset);
+            GridGenerator(float _width, float _height, float _margin_x, float _margin_y, uint32_t _camera_offset, const std::string &_framebuffer_id = MAIN_FRAMEBUFFER_NAME);
+            ~GridGenerator();
+
             void Attach(Renderer &_rend);
             void Update(Renderer &_rend, const Libdas::Vector4<float> _color);
 

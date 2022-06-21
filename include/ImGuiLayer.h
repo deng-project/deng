@@ -9,6 +9,7 @@
 #ifdef IMGUI_LAYER_CPP
     #include <cstring>
     #include <string>
+    #include <mutex>
     #include <vector>
     #include <chrono>
     #include <unordered_map>
@@ -74,18 +75,21 @@ namespace DENG {
             Window *mp_window = nullptr;
             Renderer *mp_renderer = nullptr;
             ImGuiIO *m_io = nullptr;
+            ImGuiContext *m_context = nullptr;
+
             PFN_ImGuiDrawCallback m_callback = nullptr;
             uint32_t m_mesh_id = UINT32_MAX;
             uint32_t m_shader_id = UINT32_MAX;
             void *m_user_data = nullptr;
-            uint32_t m_ubo_offset = 0;
-            uint32_t m_main_offset = 0;
+            uint32_t m_ubo_offset = UINT32_MAX;
+            uint32_t m_main_offset = UINT32_MAX;
             Libdas::Point2D<float> m_ubo;
             float m_delta_time = 1.0f;
             std::chrono::time_point<std::chrono::system_clock> m_beg;
             std::chrono::time_point<std::chrono::system_clock> m_end;
             const std::string m_gui_texture_name;
             std::pair<uint32_t, uint32_t> m_main_region = std::make_pair(UINT32_MAX, UINT32_MAX);
+            const std::string m_framebuffer_name;
 
         private:
             uint32_t _CalculateUsedMemory(ImDrawData *_draw_data);
@@ -93,10 +97,18 @@ namespace DENG {
             void _UpdateIO();
 
         public:
-            ImGuiLayer();
+            ImGuiLayer(const std::string &_framebuffer_name = MAIN_FRAMEBUFFER_NAME);
             ~ImGuiLayer();
             void Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data);
             void Update();
+
+            inline ImGuiContext *GetContext() {
+                return m_context;
+            }
+
+            inline void SetContext(ImGuiContext *_ctx) {
+                ImGui::SetCurrentContext(_ctx);
+            }
     };
 }
 

@@ -3,7 +3,6 @@
 // file: OpenGLRenderer.cpp - OpenGL renderer class implementation
 // author: Karl-Mihkel Ott
 
-
 #ifndef OPENGL_RENDERER_H
 #define OPENGL_RENDERER_H
 

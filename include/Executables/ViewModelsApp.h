@@ -21,6 +21,9 @@
 #include <chrono>
 #include <variant>
 #include <any>
+#include <thread>
+#include <atomic>
+#include <mutex>
 
 #ifdef _DEBUG
     #include <iostream>
@@ -64,6 +67,8 @@
 #include <PythonScriptExecutor.h>
 #include <GPUMemoryManager.h>
 #include <GridGenerator.h>
+#include <FilePicker.h>
+#include <RenderState.h>
 
 // backend specific includes
 #include <OpenGLRenderer.h>
@@ -74,24 +79,34 @@
 
 #define WIDTH   1880
 #define HEIGHT  1080
+#define FILEPICKER_WIDTH    720
+#define FILEPICKER_HEIGHT   480
+#define VIEWPORT_NAME "GameViewport"
 
 
 namespace Executable {
 
     struct EditorGuiData {
-        std::vector<DENG::ModelLoader> *model_loaders = nullptr;
+        std::vector<DENG::ModelLoader> model_loaders;
         DENG::Window *win = nullptr;
-        DENG::Viewport viewport;
+        DENG::Renderer *rend = nullptr;
+        DENG::ImGuiLayer *imgui = nullptr;
+        ImVec2 uv = ImVec2();
+        ImTextureID viewport = nullptr;
+        DENG::FilePicker fp;
+        std::atomic<bool> load_flag = false;
         bool once = true;
     };
 
     struct ImGuiCallback {
+        static void _OpenFile(EditorGuiData *_data);
         static void _ShowModelPanel(void *_data);
         static void _ShowCoreUI(void *_data);
     };
 
     class ModelLoaderApp {
         private:
+            const std::string m_viewport_framebuffer_name = VIEWPORT_NAME;
             EditorGuiData m_imgui_data;
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
@@ -114,9 +129,6 @@ namespace Executable {
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
             const float m_key_interval = 1000; // ms
             bool m_use_camera = false;
-
-            // data loading
-            std::vector<DENG::ModelLoader> m_model_loaders;
 
         public:
             ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend);

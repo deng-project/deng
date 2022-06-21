@@ -10,12 +10,20 @@
 namespace DENG {
 
     Window::Window(int32_t _x, int32_t _y, neko_Hint _hints, const char *_title) {
-        neko_InitAPI();
+        //neko_InitAPI();
         m_window = neko_NewWindow(_x, _y, _hints, 0, 0, _title);
     }
 
     Window::~Window() {
         neko_DestroyWindow(&m_window);
+        //neko_DeinitAPI();
+    }
+
+    void Window::Initialise() {
+        neko_InitAPI();
+    }
+
+    void Window::Deinitialise() {
         neko_DeinitAPI();
     }
 

@@ -89,7 +89,7 @@ namespace DENG {
                 void _CreateCommandPool();
                 void _AllocateCommandBuffers();
                 void _CreateSynchronisationPrimitives();
-                void _RecordCommandBuffers(const Libdas::Vector4<float> _clear_color);
+                void _RecordCommandBuffers(const Libdas::Vector4<float> _clear_color, uint32_t _imgi);
 
             public:
                 Framebuffer(
@@ -115,7 +115,7 @@ namespace DENG {
                 inline void ClearFrame() {
                     vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
                 }
-                void Render(const Libdas::Vector4<float> _clear_color);
+                void Render(const Libdas::Vector4<float> _clear_color, uint32_t _imgi = 0);
 
                 // only call this function if using swapchain images ! ! !
                 VkResult Present(VkSwapchainKHR &_swapchain, uint32_t _imgi);

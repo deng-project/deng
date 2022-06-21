@@ -43,9 +43,11 @@ namespace DENG {
             Window(int32_t width, int32_t height, neko_Hint hints, const char *title);
             ~Window();
 
-            void glMakeCurrent();
-
             static neko_InputBits CreateInputMask(neko_HidEvent evs[8]);
+            static void Initialise();
+            static void Deinitialise();
+
+            void glMakeCurrent();
 
             /// Toggle virtual cursor mode
             void ToggleVCMode();

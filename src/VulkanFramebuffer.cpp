@@ -128,7 +128,6 @@ namespace DENG {
                 attachments = { 
                     m_framebuffer_images[i].image_view,
                     m_depth_image_view
-                    //m_color_resolve_image_view
                 };
 
                 VkFramebufferCreateInfo framebuffer_createinfo = {};
@@ -225,7 +224,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::_RecordCommandBuffers(const Libdas::Vector4<float> _clear_color) {
+        void Framebuffer::_RecordCommandBuffers(const Libdas::Vector4<float> _clear_color, uint32_t _imgi) {
             const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
             // Record each command buffer
             VkCommandBufferBeginInfo cmd_buf_info = {};
@@ -244,7 +243,7 @@ namespace DENG {
             VkRenderPassBeginInfo renderpass_begininfo = {};
             renderpass_begininfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             renderpass_begininfo.renderPass = m_renderpass;
-            renderpass_begininfo.framebuffer = m_framebuffers[m_current_frame];
+            renderpass_begininfo.framebuffer = m_framebuffers[_imgi];
             renderpass_begininfo.renderArea.offset = { 0, 0 };
             const VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
             renderpass_begininfo.renderArea.extent = ext;
@@ -457,13 +456,16 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Render(const Libdas::Vector4<float> _clear_color) {
+        void Framebuffer::Render(const Libdas::Vector4<float> _clear_color, uint32_t _imgi) {
             const VkDevice device = m_instance_creator.GetDevice();
             const VkQueue graphics_queue = m_instance_creator.GetGraphicsQueue();
 
             vkResetFences(device, 1, &m_flight_fences[m_current_frame]);
+
             vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
-            _RecordCommandBuffers(_clear_color);
+
+            if(!m_no_swapchain) _RecordCommandBuffers(_clear_color, _imgi);
+            else _RecordCommandBuffers(_clear_color, m_current_frame);
 
             VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 

@@ -7,7 +7,6 @@
 #include <OpenGLRenderer.h>
 
 
-// NOTE: OpenGLRenderer class does not support custom framebuffers ! ! !
 namespace DENG {
 
 #ifdef _DEBUG
@@ -69,6 +68,9 @@ namespace DENG {
         Renderer(_win, _conf),
         m_buffer_loader()
     {
+        RenderState *rs = RenderState::GetInstance();
+        m_id = rs->RegisterRenderer(RENDERER_TYPE_OPENGL, time(NULL));
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
@@ -110,6 +112,9 @@ namespace DENG {
 
 
     OpenGLRenderer::~OpenGLRenderer() {
+        RenderState *rs = RenderState::GetInstance();
+        rs->RemoveRenderer(m_id);
+
         // delete texture objects
         for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
             glDeleteTextures(1, &it->second);
@@ -131,13 +136,11 @@ namespace DENG {
         glBindTexture(GL_TEXTURE_2D, texture);
         glErrorCheck("glBindTextures");
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei) _fb.extent.x, (GLsizei) _fb.extent.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei) _fb.extent.x, (GLsizei) _fb.extent.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
         glErrorCheck("glTexImage2D");
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glErrorCheck("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glErrorCheck("glTexParameteri");
 
         m_opengl_textures.insert(std::make_pair(_fb.image_name, texture));
         m_framebuffers.emplace(
@@ -275,12 +278,10 @@ namespace DENG {
         glViewport(0, 0, static_cast<GLsizei>(m_window.GetSize().x), static_cast<GLsizei>(m_window.GetSize().y));
         glErrorCheck("glViewport");
 
-        // right now the clear color will be black
-        glClearColor(0, 0, 0, 0);
-        glErrorCheck("glClearColor");
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glErrorCheck("glClear");
+        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.ClearFrame(m_conf.clear_color);
+        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
+            it->second.ClearFrame(m_conf.clear_color);
+        }
     }
 
 
@@ -291,6 +292,11 @@ namespace DENG {
                 continue;
             it->second.Render();
         }
+
+        m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = {
+            static_cast<uint32_t>(m_window.GetSize().x),
+            static_cast<uint32_t>(m_window.GetSize().y)
+        };
 
         m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.Render();
     }

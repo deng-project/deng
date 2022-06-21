@@ -60,6 +60,10 @@
 
 namespace DENG {
 
+    namespace Vulkan {
+        void Initialise();
+    }
+
     class DENG_API VulkanRenderer : public Renderer {
         private:
             const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_1_BIT;

@@ -105,6 +105,7 @@ namespace DENG {
 
         public:
             Camera3D(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);
+            ~Camera3D();
 
             virtual void EnableCamera() = 0;
             virtual void DisableCamera() = 0;

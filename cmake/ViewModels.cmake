@@ -10,3 +10,7 @@ set(VIEW_MODELS_SOURCES src/Executables/ViewModelsApp.cpp)
 add_executable(${VIEW_MODELS_TARGET} ${VIEW_MODELS_HEADERS} ${VIEW_MODELS_SOURCES})
 add_dependencies(${VIEW_MODELS_TARGET} ${DENG_SHARED_TARGET})
 target_link_libraries(${VIEW_MODELS_TARGET} PRIVATE ${DENG_SHARED_TARGET})
+
+if(UNIX AND NOT MACOS)
+    target_link_libraries(${VIEW_MODELS_TARGET} PRIVATE pthread)
+endif()

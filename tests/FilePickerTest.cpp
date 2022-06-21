@@ -14,6 +14,8 @@
 #include <cstring>
 #include <chrono>
 #include <unordered_map>
+#include <atomic>
+#include <mutex>
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -32,13 +34,15 @@
 #include <FilePicker.h>
 
 int main() {
+    DENG::Window::Initialise();
     DENG::RenderState *rs = DENG::RenderState::GetInstance();
     rs->SetPrimary(DENG::RENDERER_TYPE_VULKAN);
 
     DENG::FilePicker fp;
-    fp.SelectFile("*", 720, 480, "File picker test");
+    fp.SelectFile("*", 720, 480, "File picker test", nullptr);
     std::cout << fp.GetPickedFile() << std::endl;
 
     DENG::RenderState::DeleteInstance();
+    DENG::Window::Deinitialise();
     return 0;
 }

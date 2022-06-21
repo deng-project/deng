@@ -68,38 +68,38 @@ namespace DENG {
         count = 0;
         ImGui::BeginChild("Files child context", ImVec2(0.0f, -50.0f));
             for(auto &it : gui_data->contents) {
+                std::string rel_path;
+                std::string abs_path;
+                if(it.find("[DIR]  ") != std::string::npos) {
+                    abs_path = it.substr(dirkwlen);
+                    std::filesystem::path pth(abs_path);
+                    rel_path = "[DIR]  " + pth.filename().u8string();
+                } else {
+                    abs_path = it.substr(filekwlen);
+                    std::filesystem::path pth(abs_path);
+                    rel_path = "[FILE]  " + pth.filename().u8string();
+                }
+
                 // check if the directory content passes filtering
-                if(_FilterDirContent(it, gui_data->types, gui_data->show_hidden)) {
-                    std::string rel_path;
-                    std::string abs_path;
-                    if(it.find("[DIR]  ") != std::string::npos) {
-                        abs_path = it.substr(dirkwlen);
-                        std::filesystem::path pth(abs_path);
-                        rel_path = "[DIR]  " + pth.filename().u8string();
+                if(_FilterDirContent(abs_path, gui_data->types, gui_data->show_hidden) &&
+                   ImGui::Selectable(rel_path.c_str(), gui_data->selected_file_table[count], ImGuiSelectableFlags_AllowDoubleClick)) 
+                {
+                    std::fill(gui_data->selected_file_table.begin(), gui_data->selected_file_table.end(), false);
+                    gui_data->selected_file_table[count] = true;
+                    if(std::filesystem::is_directory(abs_path)) {
+                        gui_data->selected_dir = abs_path;
+                        gui_data->selected_file = "";
                     } else {
-                        abs_path = it.substr(filekwlen);
-                        std::filesystem::path pth(abs_path);
-                        rel_path = "[FILE]  " + pth.filename().u8string();
+                        gui_data->selected_file = abs_path;
+                        gui_data->selected_dir = "";
                     }
 
-                    if(ImGui::Selectable(rel_path.c_str(), gui_data->selected_file_table[count], ImGuiSelectableFlags_AllowDoubleClick)) {
-                        std::fill(gui_data->selected_file_table.begin(), gui_data->selected_file_table.end(), false);
-                        gui_data->selected_file_table[count] = true;
+                    if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
                         if(std::filesystem::is_directory(abs_path)) {
-                            gui_data->selected_dir = abs_path;
-                            gui_data->selected_file = "";
+                            gui_data->active_path = gui_data->selected_dir;
                         } else {
-                            gui_data->selected_file = abs_path;
-                            gui_data->selected_dir = "";
-                        }
-
-                        if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                            if(std::filesystem::is_directory(abs_path)) {
-                                gui_data->active_path = gui_data->selected_dir;
-                            } else {
-                                gui_data->saved = true;
-                                break;
-                            }
+                            gui_data->saved = true;
+                            break;
                         }
                     }
                 }
@@ -242,7 +242,7 @@ namespace DENG {
     }
 
 
-    void FilePicker::SelectFile(const std::string &_type_list, int32_t _width, int32_t _height, const std::string &_title) {
+    void FilePicker::SelectFile(const std::string &_type_list, int32_t _width, int32_t _height, const std::string &_title, std::atomic<bool> *p_finished) {
         _FilePickerGuiData gui_data;
         gui_data.types = _ParseFileTypeList(_type_list);
         gui_data.active_path = _GetHomeDirectory();
@@ -256,8 +256,8 @@ namespace DENG {
                 {
                     Window win(_width, _height, NEKO_HINT_FIXED_SIZE | NEKO_HINT_API_OPENGL, _title.c_str());
                     win.glMakeCurrent();
-                    gui_data.win = &win;
                     OpenGLRenderer rend(win, { false, { 0.0f, 0.0f, 0.0f, 0.0f } } );
+                    gui_data.win = &win;
                     ImGuiLayer imgui;
                     imgui.Attach(win, rend, FilePicker::_FilePickerCoreUI, reinterpret_cast<void*>(&gui_data));
                     rend.LoadShaders();
@@ -268,6 +268,7 @@ namespace DENG {
             case RENDERER_TYPE_VULKAN:
                 {
                     Window win(_width, _height, NEKO_HINT_FIXED_SIZE | NEKO_HINT_API_VULKAN, _title.c_str());
+                    Vulkan::Initialise();
                     gui_data.win = &win;
                     VulkanRenderer rend(win, { false, { 0.0f, 0.0f, 0.0f, 0.0f } } );
                     ImGuiLayer imgui;
@@ -282,6 +283,7 @@ namespace DENG {
                 break;
         }
 
+        if(p_finished) *p_finished = true;
         m_picked_file = gui_data.selected_file;
     }
 }

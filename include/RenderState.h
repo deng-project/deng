@@ -29,6 +29,7 @@ namespace DENG {
         private:
             static RenderState *m_instance;
             RendererType m_primary = RENDERER_TYPE_UNKNOWN;
+
             // first: RendererType specifying the backend
             // second: Timestamp of initialization
             std::vector<std::pair<RendererType, uint64_t>> m_registered_renderers;

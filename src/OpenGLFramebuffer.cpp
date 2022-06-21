@@ -43,13 +43,13 @@ namespace DENG {
                 glErrorCheck("glBindTexture");
 
                 // generate depth buffer
-                glGenRenderbuffers(1, &m_depth_buffer);
+                glGenRenderbuffers(1, &m_rbo);
                 glErrorCheck("glGenRenderbuffers");
-                glBindRenderbuffer(GL_RENDERBUFFER, m_depth_buffer);
+                glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
                 glErrorCheck("glBindRenderbuffer");
-                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, (GLsizei) draw.extent.x, (GLsizei) draw.extent.y);
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, (GLsizei) draw.extent.x, (GLsizei) draw.extent.y);
                 glErrorCheck("glRenderbufferStorage");
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth_buffer);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
                 glErrorCheck("glFramebufferRenderbuffer");
 
                 // set color attachment buffer id
@@ -60,6 +60,8 @@ namespace DENG {
                 // set the list of draw buffers
                 glDrawBuffers(1, &m_color_attachment_id);
                 glErrorCheck("glDrawBuffers");
+
+                DENG_ASSERT(glCheckNamedFramebufferStatus(m_framebuffer, GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
             }
         }
 
@@ -81,14 +83,6 @@ namespace DENG {
                 glErrorCheck("glEnable");
                 glDepthFunc(GL_LESS);
                 glErrorCheck("glDepthFunc");
-
-                // bind depth buffer if using non-default framebuffer
-                if(!m_is_default_framebuffer) {
-                    glBindRenderbuffer(GL_RENDERBUFFER, m_depth_buffer);
-                    glErrorCheck("glBindRenderbuffer");
-                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth_buffer);
-                    glErrorCheck("glFramebufferRenderbuffer");
-                }
             } else {
                 glDisable(GL_DEPTH_TEST);
                 glErrorCheck("glDisable");
@@ -158,7 +152,7 @@ namespace DENG {
                 // enable vertex attribute array
                 glEnableVertexAttribArray(i);
                 glErrorCheck("glEnableVertexAttribArray");
-                GLsizei stride = static_cast<GLsizei>(module.attribute_strides[i]);
+                const GLsizei stride = static_cast<GLsizei>(module.attribute_strides[i]);
 
                 switch(module.attributes[i]) {
                     // single element attribute
@@ -337,6 +331,17 @@ namespace DENG {
         }
 
 
+        void Framebuffer::ClearFrame(const Libdas::Vector4<float> _clear_color) {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+            glErrorCheck("glBindFramebuffer");
+            glClearColor(_clear_color.first, _clear_color.second, _clear_color.third, _clear_color.fourth);
+            glErrorCheck("glClearColor");
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glErrorCheck("glClear");
+        }
+
+
         void Framebuffer::LoadData() {
             const FramebufferDrawData &draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
             m_shader_loader.LoadShaders(draw.shaders);
@@ -346,6 +351,11 @@ namespace DENG {
         void Framebuffer::Render() {
             const FramebufferDrawData &draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
             glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+            glErrorCheck("glBindFramebuffer");
+            glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+            glErrorCheck("glBindRenderbuffer");
+            glEnable(GL_DEPTH_TEST);
+            glErrorCheck("glEnable");
 
             GLint last_scissor_box[4];
             glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
@@ -366,7 +376,7 @@ namespace DENG {
                     GLint y = static_cast<GLint>(draw.extent.y) - static_cast<GLint>(module.viewport.y) - static_cast<GLint>(module.viewport.height);
                     glViewport(x, y, (GLsizei) module.viewport.width, (GLsizei) module.viewport.height);
                 } else {
-                    glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
+                    glViewport(0, 0, (GLsizei) draw.extent.x, (GLsizei) draw.extent.y);
                 }
 
                 _SetRenderState(draw.shaders[shader_id]);
