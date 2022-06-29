@@ -41,7 +41,7 @@ GitClone(https://git.sadblog.xyz/libdas f5929b8d2b4ecb1e4bf8b1cf168745c49ea22092
 if(WIN32)
 	set(TRUNK_NAME win32_deps_a0.0.1.zip)
 	DownloadAndExtract(
-		https://trunk.sadblog.xyz/${TRUNK_NAME}
+		https://trunk.karlott.net/${TRUNK_NAME}
 		b1e6eff83530a37a2500acecea050974a8d756c71fca151119cfefaef2b45bf4
 		${TRUNK_NAME}
 		${CMAKE_CURRENT_SOURCE_DIR}/deps/trunk
@@ -49,7 +49,7 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     set(TRUNK_NAME linux_deps_a0.0.1.tar.gz)
     DownloadAndExtract(
-        https://trunk.sadblog.xyz/${TRUNK_NAME}
+        https://trunk.karlott.net/${TRUNK_NAME}
         49ec949f67f00988e95ff46def6a049718327de210b335183598c376a24855d8
         ${TRUNK_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/trunk

@@ -14,7 +14,7 @@ namespace DENG {
 
         Framebuffer::Framebuffer(
             const std::string &_fb_name,
-            const std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
+            std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
             const std::unordered_map<std::string, GLuint> &_misc_textures,
             const BufferData &_bd,
             const GLuint _image,
@@ -139,7 +139,7 @@ namespace DENG {
 
 
         void Framebuffer::_BindVertexAttributes(const DrawCommand &_cmd, uint32_t _shader_id) {
-            const ShaderModule &module = m_framebuffer_draws.find(m_framebuffer_name)->second.shaders[_shader_id];
+            const ShaderModule &module = m_framebuffer_draws.find(m_framebuffer_name)->second.shaders[_shader_id].first;
 
             glBindBuffer(GL_ARRAY_BUFFER, m_buffer_data.vert_buffer);
             glErrorCheck("glBindBuffer");
@@ -343,8 +343,13 @@ namespace DENG {
 
 
         void Framebuffer::LoadData() {
-            const FramebufferDrawData &draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
-            m_shader_loader.LoadShaders(draw.shaders);
+            FramebufferDrawData &draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
+            for(auto it = draw.shaders.begin(); it != draw.shaders.end(); it++) {
+                if(it->second == RESOURCE_ADDED) {
+                    m_shader_loader.CompileShaderToProgram(it->first);
+                    it->second = RESOURCE_LOADED;
+                }
+            }
         }
 
 
@@ -367,8 +372,8 @@ namespace DENG {
 
             // draw each mesh to the screen
             for(auto mesh_it = draw.meshes.begin(); mesh_it < draw.meshes.end(); mesh_it++) {
-                const uint32_t shader_id = mesh_it->shader_module_id;
-                const ShaderModule &module = draw.shaders[shader_id];
+                const uint32_t shader_id = mesh_it->first.shader_module_id;
+                const ShaderModule &module = draw.shaders[shader_id].first;
 
                 // check if custom viewport was requested
                 if(module.enable_custom_viewport) {
@@ -379,15 +384,15 @@ namespace DENG {
                     glViewport(0, 0, (GLsizei) draw.extent.x, (GLsizei) draw.extent.y);
                 }
 
-                _SetRenderState(draw.shaders[shader_id]);
+                _SetRenderState(module);
                 glUseProgram(m_shader_loader.GetShaderProgramById(shader_id));
                 glErrorCheck("glUseProgram");
 
-                for(auto cmd_it = mesh_it->commands.begin(); cmd_it < mesh_it->commands.end(); cmd_it++) {
+                for(auto cmd_it = mesh_it->first.commands.begin(); cmd_it < mesh_it->first.commands.end(); cmd_it++) {
                     _BindVertexAttributes(*cmd_it, shader_id);
 
                     // for each mesh uniform object bind appropriate buffer ranges
-                    for(auto ubo = mesh_it->ubo_blocks.begin(); ubo != mesh_it->ubo_blocks.end(); ubo++) {
+                    for(auto ubo = mesh_it->first.ubo_blocks.begin(); ubo != mesh_it->first.ubo_blocks.end(); ubo++) {
                         const GLuint binding = static_cast<GLuint>(ubo->binding);
                         const GLintptr offset = static_cast<GLintptr>(ubo->offset);
                         const GLsizeiptr size = static_cast<GLsizeiptr>(ubo->size);
@@ -461,7 +466,7 @@ namespace DENG {
                         glErrorCheck("glDrawArrays");
                     }
 
-                    _UnbindVertexAttributes(draw.shaders[shader_id]);
+                    _UnbindVertexAttributes(module);
                 }
             }
 

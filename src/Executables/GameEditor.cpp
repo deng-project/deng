@@ -3,7 +3,7 @@
 // file: ViewModelsApp.cpp - View models application implementation
 // author: Karl-Mihkel Ott
 
-#include <Executables/ViewModelsApp.h>
+#include <Executables/GameEditor.h>
 
 namespace Executable {
 
@@ -162,13 +162,13 @@ int main(int argv, char *argc[]) {
 
     DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
     if(backend == USE_VULKAN) {
-        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "VulkanModelLoader");
+        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "DENG: Untitled project (Vulkan)");
         DENG::Vulkan::Initialise();
         DENG::VulkanRenderer rend(win, conf);
         Executable::ModelLoaderApp app(win, rend);
         app.Run();
     } else if(backend == USE_OPENGL) {
-        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "OpenGLModelLoader");
+        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "DENG: Untitled project (OpenGL)");
         DENG::OpenGL::Initialise(win);
         DENG::OpenGLRenderer rend(win, conf);
         Executable::ModelLoaderApp app(win, rend);

@@ -55,8 +55,16 @@ namespace DENG {
             std::string m_scene_name = "Unnamed scene";
 
         public:
-            SceneLoader(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasScene &_scene, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, std::vector<Animation> &_animations);
-            SceneLoader(const SceneLoader &_sl) noexcept;
+            SceneLoader(
+                Renderer &_rend, 
+                Libdas::DasParser &_parser, 
+                const Libdas::DasScene &_scene, 
+                const std::vector<uint32_t> &_main_buffer_offsets, 
+                uint32_t _camera_offset, 
+                std::vector<Animation> &_animations,
+                const std::string &_framebuffer_id
+            );
+            SceneLoader(const SceneLoader &_sl) = delete;
             SceneLoader(SceneLoader&& _sl) noexcept;
             void Update();
 

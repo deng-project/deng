@@ -11,8 +11,15 @@ namespace DENG {
     uint32_t ModelLoader::m_model_index = 0;
     uint32_t ModelLoader::m_animation_index = 0;
 
-    ModelLoader::ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _camera_offset) : 
-        m_parser(_file_name), m_renderer(_rend)
+    ModelLoader::ModelLoader(
+        const std::string &_file_name, 
+        Renderer &_rend, 
+        uint32_t _camera_offset,
+        const std::string &_framebuffer
+    ) : 
+        m_parser(_file_name), 
+        m_renderer(_rend),
+        m_framebuffer_id(_framebuffer)
     {
         // reserve enough memory for meshes and animation samplers
         m_parser.Parse();
@@ -42,7 +49,7 @@ namespace DENG {
         m_scene_loaders.reserve(m_parser.GetSceneCount());
         for(uint32_t i = 0; i < m_parser.GetSceneCount(); i++) {
             const Libdas::DasScene &scene = m_parser.AccessScene(i);
-            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animations);
+            m_scene_loaders.emplace_back(m_renderer, m_parser, scene, m_buffer_offsets, _camera_offset, m_animations, m_framebuffer_id);
         }
 
         if(m_parser.GetProperties().model != "")
@@ -58,7 +65,15 @@ namespace DENG {
         m_scene_loaders(std::move(_ld.m_scene_loaders)),
         m_model_name(std::move(_ld.m_model_name)),
         m_texture_names(std::move(_ld.m_texture_names)),
-        m_buffer_offsets(std::move(_ld.m_buffer_offsets)) {}
+        m_buffer_offsets(std::move(_ld.m_buffer_offsets)),
+        m_framebuffer_id(_ld.m_framebuffer_id) {}
+
+
+    ModelLoader::~ModelLoader() {
+        GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
+        for(uint32_t offset : m_buffer_offsets)
+            mem_man->DeleteMainMemoryLocation(offset);
+    }
 
 
     void ModelLoader::_AttachBuffersAndTextures() {

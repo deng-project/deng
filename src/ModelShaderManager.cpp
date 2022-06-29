@@ -114,7 +114,7 @@ namespace DENG {
     }
 
 
-    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _camera_offset, uint32_t _skeleton_joint_count) {
+    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _camera_offset, uint32_t _skeleton_joint_count, bool &_is_new) {
         // assemble MeshPrimitiveAttributeDescriptor object
         MeshPrimitiveAttributeDescriptor attr_desc;
         attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
@@ -134,8 +134,12 @@ namespace DENG {
         }
         
         // check if current MeshPrimitiveAttributeDescriptor object is present
-        if(m_shader_map.find(attr_desc) == m_shader_map.end())
+        if(m_shader_map.find(attr_desc) == m_shader_map.end()) {
             m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _camera_offset);
+            _is_new = true;
+        } else {
+            _is_new = false;
+        }
 
         return m_shader_map[attr_desc];
     }

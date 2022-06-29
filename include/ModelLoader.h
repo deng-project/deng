@@ -83,13 +83,22 @@ namespace DENG {
             std::string m_model_name = "Unnamed model";
             std::vector<std::string> m_texture_names;
             std::vector<uint32_t> m_buffer_offsets;
+            const std::string &m_framebuffer_id;
 
         private:
             void _AttachBuffersAndTextures();
 
         public:
-            ModelLoader(const std::string &_file_name, Renderer &_rend, uint32_t _camera_offset);
+            ModelLoader(
+                const std::string &_file_name, 
+                Renderer &_rend, 
+                uint32_t _camera_offset,
+                const std::string &_framebuffer
+            );
+            ModelLoader(const ModelLoader &_ld) = delete;
             ModelLoader(ModelLoader&& _ld) noexcept;
+            ~ModelLoader();
+
             void Update();
 
             inline std::vector<std::string> &GetAttachedTextures() {

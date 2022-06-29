@@ -56,7 +56,7 @@ set(LIBDAS_BUILD_TESTS OFF CACHE BOOL "Build libdas testing applications")
 include(cmake/copy.cmake)
 include(cmake/FetchTrunk.cmake)
 include(cmake/libdeng.cmake)
-include(cmake/ViewModels.cmake)
+include(cmake/GameEditor.cmake)
 include(cmake/TextureDump.cmake)
 
 

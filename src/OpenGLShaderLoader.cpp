@@ -32,7 +32,35 @@ namespace DENG {
         }
 
 
-        void ShaderLoader::_CompileShadersToProgram(const ShaderModule &_module) {
+        void ShaderLoader::_CheckCompileStatus(uint32_t _shader_id, const std::string &_file_name) {
+            int success;
+            char log[512] = { 0 };
+            glGetShaderiv(_shader_id, GL_COMPILE_STATUS, &success);
+            
+            if(!success) {
+                glGetShaderInfoLog(_shader_id, 512, NULL, log);
+                std::cerr << "Shader compilation error in shader: " << _file_name << std::endl;
+                std::cerr << log << std::endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+
+
+        void ShaderLoader::_CheckLinkingStatus(uint32_t _program_id) {
+            int success;
+            char log[512];
+            glGetProgramiv(_program_id, GL_LINK_STATUS, &success);
+
+            if(!success) {
+                glGetProgramInfoLog(_program_id, 512, NULL, log);
+                LOG("Failed to link shaders from sources");
+                LOG(std::string(log));
+                exit(EXIT_FAILURE);
+            }
+        }
+
+
+        void ShaderLoader::CompileShaderToProgram(const ShaderModule &_module) {
             // 0: vertex shader
             // 1: geometry shader
             // 2: fragment shader
@@ -117,41 +145,6 @@ namespace DENG {
             glErrorCheck("glDeleteShader");
 
             m_programs.push_back(program);
-        }
-
-
-        void ShaderLoader::_CheckCompileStatus(uint32_t _shader_id, const std::string &_file_name) {
-            int success;
-            char log[512] = { 0 };
-            glGetShaderiv(_shader_id, GL_COMPILE_STATUS, &success);
-            
-            if(!success) {
-                glGetShaderInfoLog(_shader_id, 512, NULL, log);
-                std::cerr << "Shader compilation error in shader: " << _file_name << std::endl;
-                std::cerr << log << std::endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-
-
-        void ShaderLoader::_CheckLinkingStatus(uint32_t _program_id) {
-            int success;
-            char log[512];
-            glGetProgramiv(_program_id, GL_LINK_STATUS, &success);
-
-            if(!success) {
-                glGetProgramInfoLog(_program_id, 512, NULL, log);
-                LOG("Failed to link shaders from sources");
-                LOG(std::string(log));
-                exit(EXIT_FAILURE);
-            }
-        }
-
-
-        void ShaderLoader::LoadShaders(const std::vector<ShaderModule> &_modules) {
-            for(const ShaderModule &module : _modules) {
-                _CompileShadersToProgram(module);
-            }
         }
     }
 }

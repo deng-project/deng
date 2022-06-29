@@ -125,35 +125,37 @@ namespace Executable {
 
                 // write the shader specification for Framebuffer#1
                 fb_draw.shaders.emplace_back();
-                fb_draw.shaders.back().attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
-                fb_draw.shaders.back().attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
-                fb_draw.shaders.back().attribute_strides.push_back(sizeof(float) * 5);
-                fb_draw.shaders.back().attribute_strides.push_back(sizeof(float) * 5);
-                fb_draw.shaders.back().vertex_shader_src = VERTEX_SHADER;
-                fb_draw.shaders.back().fragment_shader_src = FRAGMENT_SHADER;
-                fb_draw.shaders.back().ubo_data_layouts.push_back({ 
+                fb_draw.shaders.back().first.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
+                fb_draw.shaders.back().first.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
+                fb_draw.shaders.back().first.attribute_strides.push_back(sizeof(float) * 5);
+                fb_draw.shaders.back().first.attribute_strides.push_back(sizeof(float) * 5);
+                fb_draw.shaders.back().first.vertex_shader_src = VERTEX_SHADER;
+                fb_draw.shaders.back().first.fragment_shader_src = FRAGMENT_SHADER;
+                fb_draw.shaders.back().first.ubo_data_layouts.push_back({ 
                     { 0, 0, 0 }, 
                     DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER, 
                     SHADER_STAGE_FRAGMENT,
                     DENG::UNIFORM_USAGE_PER_SHADER
                 });
 
-                fb_draw.shaders.back().enable_blend = true;
-                fb_draw.shaders.back().enable_indexing = true;
-                fb_draw.shaders.back().enable_texture_mapping = true;
+                fb_draw.shaders.back().first.enable_blend = true;
+                fb_draw.shaders.back().first.enable_indexing = true;
+                fb_draw.shaders.back().first.enable_texture_mapping = true;
+                fb_draw.shaders.back().second = DENG::RESOURCE_ADDED;
                 fb_draw.extent = { FB_WIDTH, FB_HEIGHT };
 
                 // write mesh specification for Framebuffer#1
                 fb_draw.meshes.emplace_back();
-                fb_draw.meshes.back().name = FRAMEBUFFER_MESH_NAME;
-                fb_draw.meshes.back().shader_module_id = 0;
-                fb_draw.meshes.back().commands.emplace_back();
+                fb_draw.meshes.back().first.name = FRAMEBUFFER_MESH_NAME;
+                fb_draw.meshes.back().first.shader_module_id = 0;
+                fb_draw.meshes.back().first.commands.emplace_back();
 
-                fb_draw.meshes.back().commands.back().indices_offset = m_idx_offset;
-                fb_draw.meshes.back().commands.back().draw_count = static_cast<uint32_t>(sizeof(g_indices) / sizeof(uint32_t));
-                fb_draw.meshes.back().commands.back().texture_names.push_back("Framebuffer#1_Texture");
-                fb_draw.meshes.back().commands.back().attribute_offsets.push_back(static_cast<std::size_t>(m_vert_offset));
-                fb_draw.meshes.back().commands.back().attribute_offsets.push_back(static_cast<std::size_t>(m_vert_offset) + sizeof(float) * 3);
+                fb_draw.meshes.back().first.commands.back().indices_offset = m_idx_offset;
+                fb_draw.meshes.back().first.commands.back().draw_count = static_cast<uint32_t>(sizeof(g_indices) / sizeof(uint32_t));
+                fb_draw.meshes.back().first.commands.back().texture_names.push_back("Framebuffer#1_Texture");
+                fb_draw.meshes.back().first.commands.back().attribute_offsets.push_back(static_cast<std::size_t>(m_vert_offset));
+                fb_draw.meshes.back().first.commands.back().attribute_offsets.push_back(static_cast<std::size_t>(m_vert_offset) + sizeof(float) * 3);
+                fb_draw.meshes.back().second = DENG::RESOURCE_ADDED;
                 m_renderer.PushTextureFromFile(FRAMEBUFFER_TEXTURE_NAME, TEXTURE_FILE_NAME);
                 m_renderer.PushFramebuffer(fb_draw);
             }
@@ -187,7 +189,7 @@ namespace Executable {
                 };
                 m_main_shader_id = m_renderer.PushShader(module);
 
-                DENG::MeshReference &mesh = m_renderer.GetMeshes()[mesh_id];
+                DENG::MeshReference &mesh = m_renderer.GetMesh(mesh_id);
                 mesh.name = "SwapchainMesh";
                 mesh.shader_module_id = 0;
                 mesh.commands.emplace_back();
@@ -226,7 +228,7 @@ namespace Executable {
             void Run() {
                 while(m_window.IsRunning()) {
                     m_renderer.ClearFrame();
-                    DENG::ShaderModule &module = m_renderer.GetShaderModules()[m_main_shader_id];
+                    DENG::ShaderModule &module = m_renderer.GetShaderModule(m_main_shader_id);
                     module.viewport = {
                         static_cast<uint32_t>((m_window.GetSize().x - FB_WIDTH) / 2),
                         static_cast<uint32_t>((m_window.GetSize().y - FB_HEIGHT) / 2),

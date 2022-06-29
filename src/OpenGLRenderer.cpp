@@ -242,12 +242,7 @@ namespace DENG {
     }
 
 
-    void OpenGLRenderer::LoadShaders(uint32_t _ubo_size) {
-        // check if buffer reallocation is required
-        if (_ubo_size) {
-            m_buffer_loader.RequestMemory(_ubo_size, GL_UNIFORM_BUFFER);
-        }
-
+    void OpenGLRenderer::LoadShaders() {
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
             it->second.LoadData();
         }

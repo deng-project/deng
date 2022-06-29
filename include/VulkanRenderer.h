@@ -3,7 +3,6 @@
 // file: VulkanRenderer.h - Vulkan renderer class header
 // author: Karl-Mihkel Ott
 
-
 #ifndef VULKAN_RENDERER_H
 #define VULKAN_RENDERER_H
 
@@ -113,7 +112,7 @@ namespace DENG {
             virtual std::vector<std::string> GetTextureNames() override;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void LoadShaders(uint32_t _ubo_size = 0) override;
+            virtual void LoadShaders() override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

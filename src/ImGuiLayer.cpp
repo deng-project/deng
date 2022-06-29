@@ -39,7 +39,7 @@ namespace DENG {
 
     
     void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data) {
-        DENG::MeshReference &mesh = mp_renderer->GetMeshes(m_framebuffer_name)[m_mesh_id];
+        DENG::MeshReference &mesh = mp_renderer->GetMesh(m_mesh_id, m_framebuffer_name);
         mesh.name = "__imgui__";
         mesh.shader_module_id = m_shader_id;
         mesh.commands.clear();

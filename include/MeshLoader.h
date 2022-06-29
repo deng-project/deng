@@ -58,9 +58,11 @@ namespace DENG {
             bool m_is_animation_target = false;
             uint32_t m_shader_id = UINT32_MAX;
 
-            // singleton instance of ubo offset
+            uint32_t m_main_memory_offset = 0;
             uint32_t m_mesh_ubo_offset = 0;
             uint32_t m_mesh_joints_ubo_offset = UINT32_MAX;
+
+            // singleton instance of ubo offset
             const std::vector<uint32_t> &m_mesh_buffer_offsets;
             const uint32_t m_skeleton_joint_count;
             const Libdas::DasMeshPrimitive *mp_prim = nullptr;
@@ -69,21 +71,39 @@ namespace DENG {
             uint32_t m_supported_texture_count = 0;
 
             float m_morph_weights[MAX_MORPH_TARGETS] = {};
+            bool m_is_attached = false;
+            bool m_is_new_shader = false;
 
             // Uniform node data
             Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
+
+            // framebuffer id
+            const std::string &m_framebuffer_id;
 
         private:
             void _CheckMeshPrimitives();
 
         public:
-            MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, uint32_t _skeleton_joint_count);
-            MeshLoader(const MeshLoader& _ml) noexcept;
+            MeshLoader(
+                const Libdas::DasMesh &_mesh, 
+                Libdas::DasParser &_parser, 
+                Renderer &_renderer, 
+                const std::vector<uint32_t> &_main_buffer_offsets, 
+                uint32_t _camera_offset, 
+                uint32_t _skeleton_joint_count,
+                const std::string &_framebuffer_name
+            );
+            MeshLoader(const MeshLoader &_ml) = delete;
             MeshLoader(MeshLoader&& _ml) noexcept;
+            ~MeshLoader();
 
             void Attach();
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);
+
+            inline bool IsNewShaderModule() {
+                return m_is_new_shader;
+            }
 
             inline float *GetMorphWeights() {
                 return m_morph_weights;

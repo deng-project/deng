@@ -17,6 +17,7 @@ namespace DENG {
         }
     }
 
+
     VulkanRenderer::VulkanRenderer(Window &_win, const RendererConfig &_conf) : 
         Renderer(_win, _conf),
         m_instance_creator(m_window),
@@ -221,7 +222,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::LoadShaders(uint32_t _ubo_size) {
+    void VulkanRenderer::LoadShaders() {
         if (!m_is_init) {
             _AllocateUniformBuffer();
         }

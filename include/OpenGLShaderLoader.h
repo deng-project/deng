@@ -46,13 +46,12 @@ namespace DENG {
 
             private:
                 std::string _ReadShaderSource(const std::string &_file_name);
-                void _CompileShadersToProgram(const ShaderModule &_module);
                 void _CheckCompileStatus(uint32_t _shader_id, const std::string &_shader);
                 void _CheckLinkingStatus(uint32_t _program_id);
                 void _CalculateStride(const ShaderModule &_module);
 
             public:
-                void LoadShaders(const std::vector<ShaderModule> &_modules);
+                void CompileShaderToProgram(const ShaderModule &_module);
 
                 inline GLuint &GetShaderProgramById(uint32_t _id) {
                     DENG_ASSERT(static_cast<size_t>(_id) < m_programs.size());

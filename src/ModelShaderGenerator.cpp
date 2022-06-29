@@ -131,6 +131,23 @@ namespace DENG {
                 }
             }
 
+            // write morphed vertex tangents if possible
+            if(is_tang) {
+                _custom_code += "\ttang += ";
+                for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
+                    const size_t index = it - _mesh_attr_desc.morph_targets.begin();
+                    const size_t arr_index = index / 4;
+
+                    char suf = 'x' + (index % 4);
+                    if((index % 4) == 3)
+                        suf = 'w';
+
+                    if(it != _mesh_attr_desc.morph_targets.end() - 1)
+                        _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + suf + " * in_morph_tangent" + std::to_string(index) + " + ";
+                    else _custom_code += "model.morph_weights[" + std::to_string(arr_index) + "]." + suf + " * in_morph_tangent" + std::to_string(index) + ";\n";
+                }
+            }
+
             // write morphed uv attributes
             if(morphed_uv_count) {
                 for(uint32_t i = 0; i < morphed_uv_count; i++) {

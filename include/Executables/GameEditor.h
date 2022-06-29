@@ -3,8 +3,8 @@
 // file: ViewModelsApp.h - API neutral DAS model loading header
 // author: Karl-Mihkel Ott
 
-#ifndef MODEL_LOADER_APP_H
-#define MODEL_LOADER_APP_H
+#ifndef GAME_EDITOR_H
+#define GAME_EDITOR_H
 
 #if defined(_WIN32) && !defined(_DEBUG)
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")

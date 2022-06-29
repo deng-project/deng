@@ -40,7 +40,7 @@ namespace DENG {
             private:
                 static uint32_t m_color_attachment_counter;
                 const std::string m_framebuffer_name;
-                const std::unordered_map<std::string, FramebufferDrawData> &m_framebuffer_draws;
+                std::unordered_map<std::string, FramebufferDrawData> &m_framebuffer_draws;
                 const std::unordered_map<std::string, GLuint> &m_textures;
                 const BufferData m_buffer_data;
                 const GLuint m_image;
@@ -60,7 +60,7 @@ namespace DENG {
             public:
                 Framebuffer(
                     const std::string &_fb_name,
-                    const std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
+                    std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
                     const std::unordered_map<std::string, GLuint> &_misc_textures,
                     const BufferData &_bd,
                     const GLuint _image,

@@ -17,7 +17,7 @@ namespace DENG {
             VkFormat _format, 
             VkSampleCountFlagBits _sample_c, 
             const std::string &_fb_name,
-            const std::unordered_map<std::string, FramebufferDrawData> &_fb_draws, 
+            std::unordered_map<std::string, FramebufferDrawData> &_fb_draws, 
             const std::vector<Vulkan::TextureData> &_fb_images, 
             const std::unordered_map<std::string, Vulkan::TextureData> &_misc_images, 
             bool _no_swapchain
@@ -267,9 +267,9 @@ namespace DENG {
 
                 // Iterate through every mesh, bind resources and issue a draw call to commandbuffer
                 for(auto mesh_it = fb_draw.meshes.begin(); mesh_it != fb_draw.meshes.end(); mesh_it++) {
-                    const uint32_t shader_id = mesh_it->shader_module_id;
+                    const uint32_t shader_id = mesh_it->first.shader_module_id;
                     const uint32_t mesh_id = static_cast<uint32_t>(mesh_it - fb_draw.meshes.begin());
-                    const ShaderModule &shader = fb_draw.shaders[shader_id];
+                    const ShaderModule &shader = fb_draw.shaders[shader_id].first;
 
                     // set the viewport
                     VkViewport vp = {};
@@ -283,7 +283,7 @@ namespace DENG {
                         vkCmdSetViewport(m_command_buffers[m_current_frame], 0, 1, &vp);
                     }
 
-                    for(auto cmd_it = mesh_it->commands.begin(); cmd_it != mesh_it->commands.end(); cmd_it++) {
+                    for(auto cmd_it = mesh_it->first.commands.begin(); cmd_it != mesh_it->first.commands.end(); cmd_it++) {
                         vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipeline());
                         VkDeviceSize offset = 0;
 
@@ -318,7 +318,7 @@ namespace DENG {
                         }
 
                         // per mesh descriptor sets
-                        if(mesh_it->ubo_blocks.size()) {
+                        if(mesh_it->first.ubo_blocks.size()) {
                             desc_sets.push_back(m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[mesh_id]].RequestDescriptorSetByFrame(m_current_frame));
                         }
 
@@ -326,7 +326,7 @@ namespace DENG {
                             vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, static_cast<uint32_t>(desc_sets.size()), desc_sets.data(), 0, nullptr);
 
                         // check if scissor technique should be used
-                        if(fb_draw.shaders[shader_id].enable_scissor) {
+                        if(fb_draw.shaders[shader_id].first.enable_scissor) {
                             VkRect2D rect = {};
                             rect.offset = VkOffset2D { cmd_it->scissor.offset.x, cmd_it->scissor.offset.y };
                             rect.extent = VkExtent2D { cmd_it->scissor.ext.x, cmd_it->scissor.ext.y };
@@ -334,7 +334,7 @@ namespace DENG {
                         } 
 
                         // check if indexed draw is required
-                        if(fb_draw.shaders[shader_id].enable_indexing) {
+                        if(fb_draw.shaders[shader_id].first.enable_indexing) {
                             offset = cmd_it->indices_offset;
                             vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
                             vkCmdDrawIndexed(m_command_buffers[m_current_frame], cmd_it->draw_count, 1, 0, 0, 0);
@@ -354,7 +354,7 @@ namespace DENG {
 
 
         void Framebuffer::LoadData() {
-            const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
+            FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
             m_shader_desc_allocators.reserve(fb_draw.shaders.size());
             m_descriptor_set_layout_creators.reserve(fb_draw.shaders.size());
             m_pipeline_creators.reserve(fb_draw.shaders.size());
@@ -366,42 +366,49 @@ namespace DENG {
 
             // for each shader create pipelines
             for(auto it = fb_draw.shaders.begin(); it != fb_draw.shaders.end(); it++) {
-                m_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), *it);
+                // is new shader?
+                if(it->second == RESOURCE_ADDED) {
+                    m_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), it->first);
 
-                // construct a temporary array containing all descriptor set layouts [ per shader, per mesh ]
-                std::array<VkDescriptorSetLayout, 2> layouts = { 
-                    m_descriptor_set_layout_creators.back().GetPerShaderDescriptorSetLayout(), 
-                    m_descriptor_set_layout_creators.back().GetPerMeshDescriptorSetLayout() 
-                };
+                    // construct a temporary array containing all descriptor set layouts [ per shader, per mesh ]
+                    std::array<VkDescriptorSetLayout, 2> layouts = { 
+                        m_descriptor_set_layout_creators.back().GetPerShaderDescriptorSetLayout(), 
+                        m_descriptor_set_layout_creators.back().GetPerMeshDescriptorSetLayout() 
+                    };
 
-                {
-                    VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
-                    m_pipeline_creators.emplace_back(m_instance_creator.GetDevice(), m_renderpass, ext, m_sample_count, layouts, *it);
-                }
-
-                if(it->ubo_data_layouts.size()) {
-                    // check if per shader descriptor set layout is present
-                    if(layouts[0] != VK_NULL_HANDLE) {
-                        const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
-
-                        m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], &it->ubo_data_layouts, fb_img_count, missing, pool_cap);
-                        m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
-                    } else {
-                        m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
+                    {
+                        VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
+                        m_pipeline_creators.emplace_back(m_instance_creator.GetDevice(), m_renderpass, ext, m_sample_count, layouts, it->first);
                     }
+
+                    if(it->first.ubo_data_layouts.size()) {
+                        // check if per shader descriptor set layout is present
+                        if(layouts[0] != VK_NULL_HANDLE) {
+                            const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
+                            m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], &it->first.ubo_data_layouts, fb_img_count, missing, pool_cap);
+                            m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
+                        } else {
+                            m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
+                        }
+                    }
+                    it->second = RESOURCE_LOADED;
                 }
             }
 
             // for each mesh create descriptor sets if required
             for(auto it = fb_draw.meshes.begin(); it != fb_draw.meshes.end(); it++) {
-                if(it->ubo_blocks.size()) {
-                    const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
+                // is new mesh?
+                if(it->second == RESOURCE_ADDED) {
+                    if(it->first.ubo_blocks.size()) {
+                        const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
 
-                    const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[it->shader_module_id].GetPerMeshDescriptorSetLayout();
-                    m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, &it->ubo_blocks, fb_img_count, missing, pool_cap);
-                    m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
-                } else {
-                    m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
+                        const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[it->first.shader_module_id].GetPerMeshDescriptorSetLayout();
+                        m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, &it->first.ubo_blocks, fb_img_count, missing, pool_cap);
+                        m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
+                    } else {
+                        m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
+                    }
+                    it->second = RESOURCE_LOADED;
                 }
             }
         }

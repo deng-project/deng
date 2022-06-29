@@ -45,7 +45,7 @@ namespace DENG {
                 VkFormat m_format;
                 VkSampleCountFlagBits m_sample_count;
                 std::string m_framebuffer_name;
-                const std::unordered_map<std::string, FramebufferDrawData> &m_framebuffer_draws;
+                std::unordered_map<std::string, FramebufferDrawData> &m_framebuffer_draws;
                 std::vector<Vulkan::TextureData> m_framebuffer_images;
                 const std::unordered_map<std::string, Vulkan::TextureData> &m_misc_textures;
 
@@ -99,7 +99,7 @@ namespace DENG {
                     VkFormat _format, 
                     VkSampleCountFlagBits _sample_c, 
                     const std::string &_fb_name,
-                    const std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
+                    std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
                     const std::vector<Vulkan::TextureData> &_fb_images,
                     const std::unordered_map<std::string, Vulkan::TextureData> &_misc_images, 
                     bool _no_swapchain = false

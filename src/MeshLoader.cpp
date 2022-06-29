@@ -10,12 +10,21 @@ namespace DENG {
 
     uint32_t MeshLoader::m_mesh_index = 0;
 
-    MeshLoader::MeshLoader(const Libdas::DasMesh &_mesh, Libdas::DasParser &_parser, Renderer &_renderer, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset, uint32_t _skeleton_joint_count) : 
+    MeshLoader::MeshLoader(
+        const Libdas::DasMesh &_mesh, 
+        Libdas::DasParser &_parser, 
+        Renderer &_renderer, 
+        const std::vector<uint32_t> &_main_buffer_offsets, 
+        uint32_t _camera_offset, 
+        uint32_t _skeleton_joint_count,
+        const std::string &_framebuffer_id
+    ) : 
         m_parser(_parser),
         m_mesh(_mesh),
         m_renderer(_renderer),
         m_mesh_buffer_offsets(_main_buffer_offsets),
-        m_skeleton_joint_count(_skeleton_joint_count)
+        m_skeleton_joint_count(_skeleton_joint_count),
+        m_framebuffer_id(_framebuffer_id)
     {
         if(m_mesh.name != "") {
             m_name = m_mesh.name;
@@ -26,32 +35,10 @@ namespace DENG {
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
         mp_prim = &m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
-        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count);
+        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count, m_is_new_shader);
 
         for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
             m_morph_weights[i] = mp_prim->morph_weights[i];
-    }
-
-
-    MeshLoader::MeshLoader(const MeshLoader& _ml) noexcept :
-        m_mesh_ref_id(_ml.m_mesh_ref_id),
-        m_parser(_ml.m_parser),
-        m_mesh(_ml.m_mesh),
-        m_renderer(_ml.m_renderer),
-        m_name(_ml.m_name),
-        m_is_animation_target(_ml.m_is_animation_target),
-        m_shader_id(_ml.m_shader_id),
-        m_mesh_ubo_offset(_ml.m_mesh_ubo_offset),
-        m_mesh_joints_ubo_offset(_ml.m_mesh_joints_ubo_offset),
-        m_mesh_buffer_offsets(_ml.m_mesh_buffer_offsets),
-        m_skeleton_joint_count(_ml.m_skeleton_joint_count),
-        mp_prim(_ml.mp_prim),
-        m_use_color(_ml.m_use_color),
-        m_disable_joint_transforms(_ml.m_disable_joint_transforms),
-        m_supported_texture_count(_ml.m_supported_texture_count),
-        m_color(_ml.m_color) 
-    {
-        std::memcpy(m_morph_weights, _ml.m_morph_weights, sizeof(float) * MAX_MORPH_TARGETS);
     }
 
 
@@ -71,9 +58,21 @@ namespace DENG {
         m_use_color(_ml.m_use_color),
         m_disable_joint_transforms(_ml.m_disable_joint_transforms),
         m_supported_texture_count(_ml.m_supported_texture_count),
-        m_color(_ml.m_color)
+        m_color(_ml.m_color),
+        m_framebuffer_id(_ml.m_framebuffer_id)
     {
         std::memcpy(m_morph_weights, _ml.m_morph_weights, sizeof(float) * MAX_MORPH_TARGETS);
+    }
+
+
+    MeshLoader::~MeshLoader() {
+        GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
+        // remove joint ubo region from memory manager
+        if(m_mesh_joints_ubo_offset != UINT32_MAX)
+            mem_manager->DeleteUniformMemoryLocation(m_mesh_joints_ubo_offset);
+
+        // remove mesh ubo region from memory manager
+        mem_manager->DeleteUniformMemoryLocation(m_mesh_ubo_offset);
     }
 
 
@@ -129,9 +128,10 @@ namespace DENG {
 
     void MeshLoader::Attach() {
         m_mesh_ref_id = m_renderer.NewMeshReference();
-        MeshReference &mesh = m_renderer.GetMeshes()[m_mesh_ref_id];
+        MeshReference &mesh = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
+        m_is_attached = true;
 
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
 
@@ -216,7 +216,7 @@ namespace DENG {
 
 
     void MeshLoader::UseTextures(const std::vector<std::string> &_names) {
-        MeshReference &mesh = m_renderer.GetMeshes()[m_mesh_ref_id];
+        MeshReference &mesh = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
 
         for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++) {
             cmd->texture_names = _names;

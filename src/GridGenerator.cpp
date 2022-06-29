@@ -121,7 +121,7 @@ namespace DENG {
 
         // generate mesh and draw command to submit to renderer
         m_mesh_id = _rend.PushMeshReference(MeshReference(), m_framebuffer_id);
-        MeshReference &ref = _rend.GetMeshes(m_framebuffer_id)[m_mesh_id];
+        MeshReference &ref = _rend.GetMesh(m_mesh_id, m_framebuffer_id);
         ref.name = "__grid__";
         ref.shader_module_id = m_shader_id;
         ref.commands.emplace_back();
