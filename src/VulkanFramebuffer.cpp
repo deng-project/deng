@@ -150,16 +150,12 @@ namespace DENG {
 
         void Framebuffer::_CleanPipelineResources() {
             // free all allocated descriptor sets and pools
-            while(!m_shader_desc_allocators.empty())
-                m_shader_desc_allocators.erase(m_shader_desc_allocators.end() - 1);
-            while(!m_mesh_desc_allocators.empty())
-                m_mesh_desc_allocators.erase(m_mesh_desc_allocators.end() - 1);
+            m_shader_desc_allocators.clear();
+            m_mesh_desc_allocators.clear();
 
             // destroy pipelines and descriptor set layouts
-            while(!m_pipeline_creators.empty())
-                m_pipeline_creators.erase(m_pipeline_creators.end() - 1);
-            while(!m_descriptor_set_layout_creators.empty())
-                m_descriptor_set_layout_creators.erase(m_descriptor_set_layout_creators.end() - 1);
+            m_pipeline_creators.clear();
+            m_descriptor_set_layout_creators.clear();
         }
 
 

@@ -32,21 +32,21 @@ namespace DENG {
                 VkExtent2D m_ext = {};
                 VkSampleCountFlagBits m_samples = {};
 
-                std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_createinfos;
+                std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_create_infos;
                 std::vector<VkShaderModule> m_shader_modules;
-                std::vector<VkVertexInputBindingDescription> m_input_binding_desc;
+                std::vector<VkVertexInputBindingDescription> m_input_binding_descs;
                 std::vector<VkVertexInputAttributeDescription> m_input_attr_descs;
 
                 VkPipelineVertexInputStateCreateInfo    m_vert_input_create_info = {};
-                VkPipelineInputAssemblyStateCreateInfo  m_input_asm_createinfo = {};
-                VkPipelineViewportStateCreateInfo       m_viewport_state_createinfo = {};
-                VkPipelineRasterizationStateCreateInfo  m_rasterization_createinfo = {};
-                VkPipelineMultisampleStateCreateInfo    m_multisample_createinfo = {};
+                VkPipelineInputAssemblyStateCreateInfo  m_input_asm_create_info = {};
+                VkPipelineViewportStateCreateInfo       m_viewport_state_create_info = {};
+                VkPipelineRasterizationStateCreateInfo  m_rasterization_create_info = {};
+                VkPipelineMultisampleStateCreateInfo    m_multisample_create_info = {};
                 VkPipelineColorBlendAttachmentState     m_colorblend_attachment = {};
                 VkPipelineDepthStencilStateCreateInfo   m_depth_stencil = {};
-                VkPipelineColorBlendStateCreateInfo     m_colorblend_state_createinfo = {};
+                VkPipelineColorBlendStateCreateInfo     m_colorblend_state_create_info = {};
 
-                VkPipelineDynamicStateCreateInfo        m_dynamic_state_createinfo = {};
+                VkPipelineDynamicStateCreateInfo        m_dynamic_state_create_info = {};
                 std::vector<VkDynamicState> m_dynamic_states;
                 ShaderModule m_module;
 
@@ -74,9 +74,10 @@ namespace DENG {
 
             public:
                 PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, const ShaderModule &_module);
-                PipelineCreator(PipelineCreator &&_pc) noexcept = default;
+                PipelineCreator(PipelineCreator &&_pc) noexcept;
+                PipelineCreator(const PipelineCreator &_pc) = delete;
                 ~PipelineCreator() noexcept;
-                PipelineCreator &operator=(PipelineCreator &&_pc) noexcept = default;
+                //PipelineCreator &operator=(PipelineCreator &&_pc) noexcept = default;
 
                 void DestroyPipelineData();
                 void RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext);

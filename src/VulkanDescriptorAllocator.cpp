@@ -49,20 +49,33 @@ namespace DENG {
         }
 
 
-        DescriptorAllocator::~DescriptorAllocator() {
-            vkFreeDescriptorSets(m_device, m_primary_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
-            vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
+        DescriptorAllocator::DescriptorAllocator(DescriptorAllocator &&_da) noexcept :
+            m_device(_da.m_device),
+            m_uniform_buffer(_da.m_uniform_buffer),
+            m_descriptor_set_layout(_da.m_descriptor_set_layout),
+            m_ubo_desc(_da.m_ubo_desc),
+            m_swapchain_image_count(_da.m_swapchain_image_count),
+            m_missing(_da.m_missing),
+            m_is_sampled(_da.m_is_sampled),
+            m_is_pool_transfer(_da.m_is_pool_transfer),
+            m_primary_pool(_da.m_primary_pool),
+            m_secondary_pool(_da.m_secondary_pool),
+            m_pool_capacity(_da.m_pool_capacity),
+            m_descriptor_sets(std::move(_da.m_descriptor_sets)),
+            m_descriptor_set_pool_flags(std::move(_da.m_descriptor_set_pool_flags)),
+            m_texture_bound_desc_sets(std::move(_da.m_texture_bound_desc_sets)),
+            m_sampler_count(_da.m_sampler_count)
+        {
+            m_primary_pool = VK_NULL_HANDLE;
+            m_secondary_pool = VK_NULL_HANDLE;
         }
 
 
-        DescriptorAllocator &DescriptorAllocator::operator=(const DescriptorAllocator &_da) {
-            m_is_sampled = _da.m_is_sampled;
-            m_primary_pool = _da.m_primary_pool,
-            m_secondary_pool = _da.m_secondary_pool,
-            m_pool_capacity = _da.m_pool_capacity;
-            m_descriptor_sets = _da.m_descriptor_sets;
-            m_texture_bound_desc_sets = _da.m_texture_bound_desc_sets;
-            return *this;
+        DescriptorAllocator::~DescriptorAllocator() {
+            if(m_descriptor_sets.size() && m_primary_pool != VK_NULL_HANDLE) {
+                vkFreeDescriptorSets(m_device, m_primary_pool, static_cast<uint32_t>(m_descriptor_sets.size()), m_descriptor_sets.data());
+                vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
+            }
         }
 
 

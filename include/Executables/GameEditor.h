@@ -21,9 +21,6 @@
 #include <chrono>
 #include <variant>
 #include <any>
-#include <thread>
-#include <atomic>
-#include <mutex>
 
 #ifdef _DEBUG
     #include <iostream>
@@ -94,11 +91,12 @@ namespace Executable {
         ImVec2 uv = ImVec2();
         ImTextureID viewport = nullptr;
         DENG::FilePicker fp;
-        std::atomic<bool> load_flag = false;
+        uint32_t camera_offset = 0;
         bool once = true;
     };
 
     struct ImGuiCallback {
+        static void _NewProject(EditorGuiData *_data);
         static void _OpenFile(EditorGuiData *_data);
         static void _ShowModelPanel(void *_data);
         static void _ShowCoreUI(void *_data);

@@ -35,7 +35,7 @@ namespace DENG {
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
         mp_prim = &m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
-        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count, m_is_new_shader);
+        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count, m_framebuffer_id);
 
         for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
             m_morph_weights[i] = mp_prim->morph_weights[i];
@@ -127,11 +127,10 @@ namespace DENG {
 
 
     void MeshLoader::Attach() {
-        m_mesh_ref_id = m_renderer.NewMeshReference();
+        m_mesh_ref_id = m_renderer.NewMeshReference(m_framebuffer_id);
         MeshReference &mesh = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
-        m_is_attached = true;
 
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
 

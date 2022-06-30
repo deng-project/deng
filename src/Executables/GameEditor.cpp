@@ -10,10 +10,18 @@ namespace Executable {
     /*************************/
     /***** ImGuiCallback *****/
     /*************************/
+    //void ImGuiCallback::_NewProject(EditorGuiData *_data) {
+    //}
+
     void ImGuiCallback::_OpenFile(EditorGuiData *_data) {
         _data->fp.SelectFile(".das", FILEPICKER_WIDTH, FILEPICKER_HEIGHT, "DENG: Open a 3D model");
-        std::cout << _data->fp.GetPickedFile() << std::endl;
+        const std::string file = _data->fp.GetPickedFile();
         _data->imgui->SetContext(_data->imgui->GetContext());
+
+        if(file != "") {
+            _data->model_loaders.emplace_back(file, *_data->rend, _data->camera_offset, VIEWPORT_NAME);
+            _data->rend->LoadShaders();
+        }
 
         DENG::RenderState *rs = DENG::RenderState::GetInstance();
         if(rs->GetPrimary() == DENG::RENDERER_TYPE_OPENGL)
@@ -32,7 +40,14 @@ namespace Executable {
             ImGui::Begin("Editor context", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
                 if(ImGui::BeginMenuBar()) {
                     if(ImGui::BeginMenu("File")) {
-                        if(ImGui::MenuItem("Open")) _OpenFile(gui_data);
+                        ImGui::MenuItem("New");     // TASK: create new project
+                        if(ImGui::MenuItem("Open")) // TASK: open existing project
+                            _OpenFile(gui_data);
+                        ImGui::MenuItem("Import");  // TASK: import resources (das, gltf, obj, stl)
+                        ImGui::MenuItem("Export");  // TASK: export resources (das)
+                        ImGui::MenuItem("Save");    // TASK: save project
+                        ImGui::MenuItem("Save as"); // TASK: save project as
+                        ImGui::MenuItem("Quit");    // TASK: quit editor
                         ImGui::EndMenu();
                     }
                     ImGui::EndMenuBar();
@@ -70,7 +85,6 @@ namespace Executable {
         ImGui::End();
 
         ImGui::Begin("hierarchy");
-            ImGui::Text("Hierarchy");
         ImGui::End();
 
         ImGui::Begin("assets");
@@ -90,6 +104,7 @@ namespace Executable {
         m_imgui_data.rend = &m_renderer;
         m_imgui_data.win = &m_window;
         m_imgui_data.imgui = &m_imgui;
+        m_imgui_data.camera_offset = m_editor_camera.GetUboOffset();
 
         // add #VIEWPORT_NAME framebuffer to renderer
         DENG::FramebufferDrawData fb;
@@ -109,11 +124,6 @@ namespace Executable {
 
             m_cur_time = std::chrono::system_clock::now();
             std::chrono::duration<float, std::milli> delta_time = m_cur_time - m_beg_time;
-
-            // check if new models have to be loaded
-            if(m_imgui_data.load_flag) {
-                std::cout << m_imgui_data.fp.GetPickedFile() << std::endl;
-            }
 
             // check for any input events
             if(delta_time.count() >= m_key_interval) {
@@ -138,6 +148,10 @@ namespace Executable {
                     }
                     m_beg_time = std::chrono::system_clock::now();
                 }
+            }
+
+            for(auto it = m_imgui_data.model_loaders.begin(); it != m_imgui_data.model_loaders.end(); it++) {
+                it->Update();
             }
 
             m_editor_camera.Update();

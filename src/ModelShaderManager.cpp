@@ -9,7 +9,12 @@
 namespace DENG {
     ModelShaderManager::map_t ModelShaderManager::m_shader_map = {};
 
-    uint32_t ModelShaderManager::_GenerateShaderModule(Renderer &_rend, const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, uint32_t _camera_offset) {
+    uint32_t ModelShaderManager::_GenerateShaderModule(
+        Renderer &_rend, 
+        const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, 
+        uint32_t _camera_offset,
+        const std::string &_framebuffer_id
+    ) {
         ShaderModule module;
         module.enable_depth_testing = true;
         module.enable_blend = true;
@@ -110,11 +115,18 @@ namespace DENG {
 
         module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(_mesh_attr_desc);
         module.fragment_shader_src = ModelShaderGenerator::GenerateFragmentShaderSource(_mesh_attr_desc);
-        return _rend.PushShader(module);
+        return _rend.PushShader(module, _framebuffer_id);
     }
 
 
-    uint32_t ModelShaderManager::RequestShaderModule(Renderer &_rend, Libdas::DasParser &_parser, const Libdas::DasMeshPrimitive &_prim, uint32_t _camera_offset, uint32_t _skeleton_joint_count, bool &_is_new) {
+    uint32_t ModelShaderManager::RequestShaderModule(
+        Renderer &_rend, 
+        Libdas::DasParser &_parser, 
+        const Libdas::DasMeshPrimitive &_prim, 
+        uint32_t _camera_offset, 
+        uint32_t _skeleton_joint_count,
+        const std::string &_framebuffer_id
+    ) {
         // assemble MeshPrimitiveAttributeDescriptor object
         MeshPrimitiveAttributeDescriptor attr_desc;
         attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
@@ -135,10 +147,7 @@ namespace DENG {
         
         // check if current MeshPrimitiveAttributeDescriptor object is present
         if(m_shader_map.find(attr_desc) == m_shader_map.end()) {
-            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _camera_offset);
-            _is_new = true;
-        } else {
-            _is_new = false;
+            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _camera_offset, _framebuffer_id);
         }
 
         return m_shader_map[attr_desc];

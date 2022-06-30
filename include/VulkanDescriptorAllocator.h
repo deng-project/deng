@@ -49,10 +49,18 @@ namespace DENG {
                 void _ReallocateDescriptorPool(); // new pool capacity is m_pool_capacity * m_swapchain_image_count
 
             public:
-                DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, std::variant<const std::vector<UniformDataLayout>*, const std::vector<UniformBufferBlock>*> _ubo_desc, 
-                                    uint32_t _sc_img_c, const Vulkan::TextureData &_missing, uint32_t _pool_cap = 1);
+                DescriptorAllocator(
+                    VkDevice _dev, 
+                    VkBuffer _u_buffer, 
+                    VkDescriptorSetLayout _layout, 
+                    std::variant<const std::vector<UniformDataLayout>*, const std::vector<UniformBufferBlock>*> _ubo_desc, 
+                    uint32_t _sc_img_c, 
+                    const Vulkan::TextureData &_missing, 
+                    uint32_t _pool_cap = 1
+                );
+                DescriptorAllocator(DescriptorAllocator &&_da) noexcept;
+                DescriptorAllocator(const DescriptorAllocator&) = delete;
                 ~DescriptorAllocator();
-                DescriptorAllocator &operator=(const DescriptorAllocator &_da);
                 void CompletePoolTransfer();
 
                 // whenever new uniform buffer is allocated

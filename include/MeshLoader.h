@@ -71,8 +71,7 @@ namespace DENG {
             uint32_t m_supported_texture_count = 0;
 
             float m_morph_weights[MAX_MORPH_TARGETS] = {};
-            bool m_is_attached = false;
-            bool m_is_new_shader = false;
+            //bool m_is_attached = false;
 
             // Uniform node data
             Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
@@ -100,10 +99,6 @@ namespace DENG {
             void Attach();
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices);
-
-            inline bool IsNewShaderModule() {
-                return m_is_new_shader;
-            }
 
             inline float *GetMorphWeights() {
                 return m_morph_weights;

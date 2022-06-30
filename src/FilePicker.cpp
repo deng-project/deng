@@ -242,7 +242,7 @@ namespace DENG {
     }
 
 
-    void FilePicker::SelectFile(const std::string &_type_list, int32_t _width, int32_t _height, const std::string &_title, std::atomic<bool> *p_finished) {
+    void FilePicker::SelectFile(const std::string &_type_list, int32_t _width, int32_t _height, const std::string &_title) {
         _FilePickerGuiData gui_data;
         gui_data.types = _ParseFileTypeList(_type_list);
         gui_data.active_path = _GetHomeDirectory();
@@ -283,7 +283,6 @@ namespace DENG {
                 break;
         }
 
-        if(p_finished) *p_finished = true;
         m_picked_file = gui_data.selected_file;
     }
 }

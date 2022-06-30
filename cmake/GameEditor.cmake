@@ -3,7 +3,7 @@
 # file: ViewModels.cmake - ModelLoader application build config
 # author: Karl-Mihkel Ott
 
-set(GAME_EDITOR_TARGET ViewModels)
+set(GAME_EDITOR_TARGET deng-game-editor)
 set(GAME_EDITOR_HEADERS include/Executables/GameEditor.h)
 set(GAME_EDITOR_SOURCES src/Executables/GameEditor.cpp)
 

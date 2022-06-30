@@ -47,7 +47,7 @@ namespace DENG {
 
             public:
                 DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module);
-                DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = default;
+                DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = delete;
                 DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc) noexcept;
                 ~DescriptorSetLayoutCreator();
 
