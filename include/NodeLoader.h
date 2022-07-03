@@ -48,12 +48,13 @@ namespace DENG {
 
     // recursive class
     class DENG_API NodeLoader {
+        friend class SceneLoader;
         private:
             Renderer &m_renderer;
             SkeletonLoader *mp_skeleton = nullptr;
             MeshLoader *mp_mesh_loader = nullptr;
             const Libdas::DasNode &m_node;
-            Libdas::DasParser &m_parser;
+            Libdas::DasParser *mp_parser;
 
             std::vector<NodeLoader> m_child_nodes;
             std::vector<uint32_t> m_node_lookup;
@@ -79,12 +80,13 @@ namespace DENG {
             void _CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset);
             void _SearchForBoundAnimationSamplers(std::vector<Animation> &_animations);
             void _UpdateTransformTRS(Libdas::Vector3<float> _translation, Libdas::Quaternion _rotation, float _scale);
+            void _SetParser(Libdas::DasParser &_parser);
  
         public:
             NodeLoader(
                 Renderer &_rend, 
                 const Libdas::DasNode &_node, 
-                Libdas::DasParser &_parser, 
+                Libdas::DasParser *_p_parser, 
                 const std::vector<uint32_t> &_main_buffer_offsets, 
                 uint32_t _camera_offset, 
                 std::vector<Animation> &_animations, 

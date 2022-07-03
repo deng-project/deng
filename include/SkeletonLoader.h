@@ -42,6 +42,7 @@
 namespace DENG {
 
     class SkeletonLoader {
+        friend class NodeLoader;
         private:
             struct JointTransformation {
                 Libdas::Vector3<float> t = { 0.0f, 0.0f, 0.0f };
@@ -49,7 +50,7 @@ namespace DENG {
                 float s = 1.0f;
             };
 
-            Libdas::DasParser &m_parser;
+            Libdas::DasParser *mp_parser;
             const Libdas::DasSkeleton &m_skeleton;
             const Libdas::Matrix4<float> m_node_transform;
             const Libdas::Matrix4<float> m_inv_node_transform;
@@ -70,9 +71,14 @@ namespace DENG {
             void _ApplyJointTransforms(uint32_t _joint_id);
 
         public:
-            SkeletonLoader(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations);
-            SkeletonLoader(const SkeletonLoader& _sdm) noexcept;
-            SkeletonLoader(SkeletonLoader&& _sdm) noexcept;
+            SkeletonLoader(
+                const Libdas::Matrix4<float> &_node, 
+                Libdas::DasParser *_p_parser, 
+                const Libdas::DasSkeleton &_skeleton, 
+                std::vector<Animation> &_animations
+            );
+            SkeletonLoader(const SkeletonLoader&) = delete;
+            SkeletonLoader(SkeletonLoader&& _sm) noexcept;
             void Update();
             void SetNewParentTransform(const Libdas::Matrix4<float> &_parent);
 

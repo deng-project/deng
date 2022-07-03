@@ -47,12 +47,18 @@
 namespace DENG {
 
     class SceneLoader {
+        friend class ModelLoader;
         private:
             static uint32_t m_scene_index;
 
         private:
             std::vector<NodeLoader> m_root_node_loaders;
             std::string m_scene_name = "Unnamed scene";
+
+        private:
+            // recursive parser setting method
+            // meant for ModelLoader classes move constructor
+            void _SetParser(Libdas::DasParser &_parser);
 
         public:
             SceneLoader(

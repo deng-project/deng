@@ -12,14 +12,14 @@ namespace DENG {
 
     MeshLoader::MeshLoader(
         const Libdas::DasMesh &_mesh, 
-        Libdas::DasParser &_parser, 
+        Libdas::DasParser *_p_parser, 
         Renderer &_renderer, 
         const std::vector<uint32_t> &_main_buffer_offsets, 
         uint32_t _camera_offset, 
         uint32_t _skeleton_joint_count,
         const std::string &_framebuffer_id
     ) : 
-        m_parser(_parser),
+        mp_parser(_p_parser),
         m_mesh(_mesh),
         m_renderer(_renderer),
         m_mesh_buffer_offsets(_main_buffer_offsets),
@@ -32,8 +32,8 @@ namespace DENG {
 
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
-        mp_prim = &m_parser.AccessMeshPrimitive(m_mesh.primitives[0]);
-        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, m_parser, *mp_prim, _camera_offset, m_skeleton_joint_count, m_framebuffer_id);
+        mp_prim = &mp_parser->AccessMeshPrimitive(m_mesh.primitives[0]);
+        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, *mp_parser, *mp_prim, _camera_offset, m_skeleton_joint_count, m_framebuffer_id);
 
         for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
             m_morph_weights[i] = mp_prim->morph_weights[i];
@@ -53,7 +53,7 @@ namespace DENG {
 
     MeshLoader::MeshLoader(MeshLoader &&_ml) noexcept :
         m_mesh_ref_id(_ml.m_mesh_ref_id),
-        m_parser(_ml.m_parser),
+        mp_parser(_ml.mp_parser),
         m_mesh(_ml.m_mesh),
         m_renderer(_ml.m_renderer),
         m_name(std::move(_ml.m_name)),
@@ -101,7 +101,7 @@ namespace DENG {
         DENG_ASSERT(m_mesh.primitive_count);
         MeshPrimitiveAttributeDescriptor attr_desc;
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
-            const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[i]);
+            const Libdas::DasMeshPrimitive &prim = mp_parser->AccessMeshPrimitive(m_mesh.primitives[i]);
             if(!i) {
                 attr_desc.normal = (prim.vertex_normal_buffer_id != UINT32_MAX);
                 attr_desc.tangent = (prim.vertex_tangent_buffer_id != UINT32_MAX);
@@ -110,7 +110,7 @@ namespace DENG {
                 attr_desc.joint_set_count = prim.joint_set_count;
 
                 for(uint32_t j = 0; j < prim.morph_target_count; j++) {
-                    const Libdas::DasMorphTarget &morph = m_parser.AccessMorphTarget(prim.morph_targets[i]);
+                    const Libdas::DasMorphTarget &morph = mp_parser->AccessMorphTarget(prim.morph_targets[i]);
                     attr_desc.morph_targets.emplace_back();
                     attr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
                     attr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
@@ -126,7 +126,7 @@ namespace DENG {
                 cattr_desc.joint_set_count = prim.joint_set_count;
 
                 for(uint32_t j = 0; j < prim.morph_target_count; j++) {
-                    const Libdas::DasMorphTarget &morph = m_parser.AccessMorphTarget(prim.morph_targets[i]);
+                    const Libdas::DasMorphTarget &morph = mp_parser->AccessMorphTarget(prim.morph_targets[i]);
                     cattr_desc.morph_targets.emplace_back();
                     cattr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
                     cattr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
@@ -165,7 +165,7 @@ namespace DENG {
         m_renderer.UpdateUniform(nullptr, static_cast<uint32_t>(sizeof(ModelUbo)), mesh.ubo_blocks.back().offset);
 
         // check if joint matrix ubos should be created
-        if(m_parser.AccessMeshPrimitive(m_mesh.primitives[0]).joint_set_count) {
+        if(mp_parser->AccessMeshPrimitive(m_mesh.primitives[0]).joint_set_count) {
             mesh.ubo_blocks.emplace_back();
             mesh.ubo_blocks.back().binding = binding_id++;
             mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
@@ -178,7 +178,7 @@ namespace DENG {
         mesh.commands.reserve(m_mesh.primitive_count);
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
             mesh.commands.emplace_back();
-            const Libdas::DasMeshPrimitive &prim = m_parser.AccessMeshPrimitive(m_mesh.primitives[i]);
+            const Libdas::DasMeshPrimitive &prim = mp_parser->AccessMeshPrimitive(m_mesh.primitives[i]);
             uint32_t abs = m_mesh_buffer_offsets[prim.index_buffer_id] + prim.index_buffer_offset;
             mesh.commands.back().indices_offset = abs;
             mesh.commands.back().draw_count = prim.indices_count;
@@ -211,7 +211,7 @@ namespace DENG {
 
             // add morph targets
             for(uint32_t j = 0; j < prim.morph_target_count; j++) {
-                const Libdas::DasMorphTarget &morph = m_parser.AccessMorphTarget(prim.morph_targets[j]);
+                const Libdas::DasMorphTarget &morph = mp_parser->AccessMorphTarget(prim.morph_targets[j]);
                 abs = m_mesh_buffer_offsets[morph.vertex_buffer_id] + morph.vertex_buffer_offset;
                 mesh.commands.back().attribute_offsets.push_back(abs);
                 if(morph.vertex_normal_buffer_id != UINT32_MAX) {

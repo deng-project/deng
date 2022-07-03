@@ -22,7 +22,7 @@ namespace DENG {
         m_root_node_loaders.reserve(_scene.node_count);
         for (uint32_t i = 0; i < _scene.node_count; i++) {
             const Libdas::DasNode& node = _parser.AccessNode(_scene.nodes[i]);
-            m_root_node_loaders.emplace_back(_rend, node, _parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, Libdas::Matrix4<float>());
+            m_root_node_loaders.emplace_back(_rend, node, &_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, Libdas::Matrix4<float>());
         }
 
         // give scene a name if possible
@@ -35,6 +35,13 @@ namespace DENG {
     SceneLoader::SceneLoader(SceneLoader&& _sl) noexcept :
         m_root_node_loaders(std::move(_sl.m_root_node_loaders)),
         m_scene_name(std::move(_sl.m_scene_name)) {}
+
+
+    void SceneLoader::_SetParser(Libdas::DasParser &_parser) {
+        for(auto it = m_root_node_loaders.begin(); it != m_root_node_loaders.end(); it++) {
+            it->_SetParser(_parser);
+        }
+    }
 
 
     void SceneLoader::Update() {

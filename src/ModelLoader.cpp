@@ -66,7 +66,12 @@ namespace DENG {
         m_model_name(std::move(_ld.m_model_name)),
         m_texture_names(std::move(_ld.m_texture_names)),
         m_buffer_offsets(std::move(_ld.m_buffer_offsets)),
-        m_framebuffer_id(_ld.m_framebuffer_id) {}
+        m_framebuffer_id(std::move(_ld.m_framebuffer_id)) 
+    {
+        for(auto it = m_scene_loaders.begin(); it != m_scene_loaders.end(); it++) {
+            it->_SetParser(m_parser);
+        }
+    }
 
 
     ModelLoader::~ModelLoader() {

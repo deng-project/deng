@@ -10,8 +10,13 @@ namespace DENG {
 
     uint32_t SkeletonLoader::m_skeleton_index = 0;
 
-    SkeletonLoader::SkeletonLoader(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations) : 
-        m_parser(_parser),
+    SkeletonLoader::SkeletonLoader(
+        const Libdas::Matrix4<float> &_node, 
+        Libdas::DasParser *_p_parser, 
+        const Libdas::DasSkeleton &_skeleton, 
+        std::vector<Animation> &_animations
+    ) : 
+        mp_parser(_p_parser),
         m_skeleton(_skeleton),
         m_node_transform(_node),
         m_inv_node_transform(_node.Inverse())
@@ -51,36 +56,20 @@ namespace DENG {
     }
 
 
-    SkeletonLoader::SkeletonLoader(const SkeletonLoader &_sdm) noexcept :
-        m_parser(_sdm.m_parser),
-        m_skeleton(_sdm.m_skeleton),
-        m_node_transform(_sdm.m_node_transform),
-        m_inv_node_transform(_sdm.m_inv_node_transform),
-        m_joint_matrices(_sdm.m_joint_matrices),
-        m_joint_world_transforms(_sdm.m_joint_world_transforms),
-        m_joint_trs_transforms(_sdm.m_joint_trs_transforms),
-        m_inverse_bind_matrices(_sdm.m_inverse_bind_matrices),
-        m_joint_lookup(_sdm.m_joint_lookup),
-        m_joint_samplers(_sdm.m_joint_samplers),
-        m_skeleton_name(_sdm.m_skeleton_name),
-        m_max_joint(_sdm.m_max_joint),
-        m_is_bound(_sdm.m_is_bound) {}
-
-
-    SkeletonLoader::SkeletonLoader(SkeletonLoader &&_sdm) noexcept :
-        m_parser(_sdm.m_parser),
-        m_skeleton(_sdm.m_skeleton),
-        m_node_transform(_sdm.m_node_transform),
-        m_inv_node_transform(_sdm.m_inv_node_transform),
-        m_joint_matrices(std::move(_sdm.m_joint_matrices)),
-        m_joint_world_transforms(std::move(_sdm.m_joint_world_transforms)),
-        m_joint_trs_transforms(std::move(_sdm.m_joint_trs_transforms)),
-        m_inverse_bind_matrices(std::move(_sdm.m_inverse_bind_matrices)),
-        m_joint_lookup(std::move(_sdm.m_joint_lookup)),
-        m_joint_samplers(std::move(_sdm.m_joint_samplers)),
-        m_skeleton_name(std::move(_sdm.m_skeleton_name)),
-        m_max_joint(_sdm.m_max_joint),
-        m_is_bound(_sdm.m_is_bound) {}
+    SkeletonLoader::SkeletonLoader(SkeletonLoader &&_sm) noexcept :
+        mp_parser(_sm.mp_parser),
+        m_skeleton(_sm.m_skeleton),
+        m_node_transform(_sm.m_node_transform),
+        m_inv_node_transform(_sm.m_inv_node_transform),
+        m_joint_matrices(std::move(_sm.m_joint_matrices)),
+        m_joint_world_transforms(std::move(_sm.m_joint_world_transforms)),
+        m_joint_trs_transforms(std::move(_sm.m_joint_trs_transforms)),
+        m_inverse_bind_matrices(std::move(_sm.m_inverse_bind_matrices)),
+        m_joint_lookup(std::move(_sm.m_joint_lookup)),
+        m_joint_samplers(std::move(_sm.m_joint_samplers)),
+        m_skeleton_name(std::move(_sm.m_skeleton_name)),
+        m_max_joint(_sm.m_max_joint),
+        m_is_bound(_sm.m_is_bound) {}
 
 
     void SkeletonLoader::_FillJointTransformTableTRS() {
@@ -88,7 +77,7 @@ namespace DENG {
 
         // fill the TRS table
         for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
-            const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(m_skeleton.joints[i]);
+            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(m_skeleton.joints[i]);
             JointTransformation &trs = m_joint_trs_transforms[m_joint_lookup[m_skeleton.joints[i]]];
             trs.t = { joint.translation.x, joint.translation.y, joint.translation.z };
             trs.r = joint.rotation;
@@ -107,7 +96,7 @@ namespace DENG {
             const std::pair<uint32_t, uint32_t> child = children.front();
             children.pop();
 
-            const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(child.first);
+            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(child.first);
             const JointTransformation &trs = m_joint_trs_transforms[m_joint_lookup[child.first]];
 
             const Libdas::Matrix4<float> t = {
@@ -146,7 +135,7 @@ namespace DENG {
             uint32_t curr_id = children.front();
             children.pop();
 
-            const Libdas::DasSkeletonJoint &joint = m_parser.AccessSkeletonJoint(curr_id);
+            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(curr_id);
             if(m_is_bound)
                 m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * /* m_inverse_bind_matrices[m_joint_lookup[curr_id]]; */joint.inverse_bind_pos;
             else m_joint_matrices[m_joint_lookup[curr_id]] = Libdas::Matrix4<float>();
