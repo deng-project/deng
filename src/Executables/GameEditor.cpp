@@ -103,44 +103,50 @@ namespace Executable {
                     ImGui::ColorEdit4(mesh->GetColorPickerId().c_str(), &color.first);
                     mesh->SetColor(color);
                 } else if(ImGui::Button(mesh->GetTextureButtonId().c_str())) {
-                    if(ImGui::BeginPopup(mesh->GetTexturePickerId().c_str())) {
-                        ImGui::Text("Pick textures");
-                        uint32_t &used = mesh->GetUsedTextureCount();
-                        const std::string info = "This mesh can use " + std::to_string(mesh->GetSupportedTextureCount()) + " texture; " + std::to_string(mesh->GetSupportedTextureCount() - used) + " are available";
-                        ImGui::TextColored(ImVec4(1, 1, 0, 1), info.c_str());
+                    ImGui::OpenPopup(mesh->GetTexturePickerId().c_str());
+                }
 
-                        std::vector<bool> &tbl = mesh->GetTextureTable();
-                        tbl.resize(_data->model_loaders[_data->inspector.model_id].GetAttachedTextures().size());
+                if(ImGui::BeginPopup(mesh->GetTexturePickerId().c_str())) {
+                    ImGui::Text("Pick textures");
+                    uint32_t &used = mesh->GetUsedTextureCount();
+                    const std::string info = "This mesh can use " + std::to_string(mesh->GetSupportedTextureCount()) + " texture; " + std::to_string(mesh->GetSupportedTextureCount() - used) + " are available";
+                    ImGui::TextColored(ImVec4(1, 1, 0, 1), info.c_str());
+
+                    std::vector<bool> &tbl = mesh->GetTextureTable();
+                    tbl.resize(_data->model_loaders[_data->inspector.model_id].GetAttachedTextures().size());
+                    for(auto it = _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin(); it != _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().end(); it++) {
+                        const size_t index = it - _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin();
+                        const std::string title = "Use texture no. " + std::to_string(index);
+                        bool prev = tbl[index];
+                        bool box = tbl[index];
+                        if(mesh->GetSupportedTextureCount() - used || box) {
+                            ImGui::Checkbox(title.c_str(), &box);
+                            tbl[index] = box;
+                        } else {
+                            ImGui::BeginDisabled(true);
+                            ImGui::Checkbox(title.c_str(), &box);
+                            ImGui::EndDisabled();
+                        }
+
+                        if(prev != box && box) used++;
+                        else if(prev != box && !box) used--;
+                        ImGui::Image(const_cast<char*>(it->c_str()), ImVec2(64, 64));
+                    }
+
+                    if(ImGui::Button(mesh->GetTextureSaveId().c_str())) {
+                        std::vector<std::string> names;
+                        names.reserve(_data->model_loaders[_data->inspector.model_id].GetAttachedTextures().size());
                         for(auto it = _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin(); it != _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().end(); it++) {
                             const size_t index = it - _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin();
-                            const std::string title = "Use texture no. " + std::to_string(index);
-                            bool box = tbl[index];
-                            if(mesh->GetSupportedTextureCount() - used) {
-                                ImGui::Checkbox(title.c_str(), &box);
-                                tbl[index] = box;
-                            } else {
-                                ImGui::BeginDisabled(true);
-                                ImGui::Checkbox(title.c_str(), &box);
-                                ImGui::EndDisabled();
+                            if(tbl[index]) {
+                                names.push_back(*it);
                             }
-
-                            if(box) used++;
-                            ImGui::Image(const_cast<char*>(it->c_str()), ImVec2(64, 64));
                         }
 
-                        if(ImGui::Button(mesh->GetTextureSaveId().c_str())) {
-                            std::vector<std::string> names;
-                            names.reserve(_data->model_loaders[_data->inspector.model_id].GetAttachedTextures().size());
-                            for(auto it = _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin(); it != _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().end(); it++) {
-                                const size_t index = it - _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin();
-                                if(tbl[index]) {
-                                    names.push_back(*it);
-                                }
-                            }
-
-                            mesh->UseTextures(names);
-                        }
+                        mesh->UseTextures(names);
+                        ImGui::CloseCurrentPopup();
                     }
+                    ImGui::EndPopup();
                 }
                 break;
             }
