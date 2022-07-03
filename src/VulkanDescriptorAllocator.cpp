@@ -10,10 +10,17 @@
 namespace DENG {
     namespace Vulkan {
     
-        DescriptorAllocator::DescriptorAllocator(VkDevice _dev, VkBuffer _u_buffer, VkDescriptorSetLayout _layout, std::variant<const std::vector<UniformDataLayout>*, const std::vector<UniformBufferBlock>*> _ubo_desc, 
-                                                 uint32_t _sc_img_c, const Vulkan::TextureData &_missing, uint32_t _pool_cap) :
+        DescriptorAllocator::DescriptorAllocator(
+            VkDevice _dev, 
+            VkBuffer _ubo_buffer, 
+            VkDescriptorSetLayout _layout, 
+            const std::variant<std::vector<UniformDataLayout>, std::vector<UniformBufferBlock>> &_ubo_desc, 
+            uint32_t _sc_img_c, 
+            const Vulkan::TextureData &_missing, 
+            uint32_t _pool_cap
+        ) :
             m_device(_dev),
-            m_uniform_buffer(_u_buffer),
+            m_uniform_buffer(_ubo_buffer),
             m_descriptor_set_layout(_layout),
             m_ubo_desc(_ubo_desc),
             m_swapchain_image_count(_sc_img_c),
@@ -83,8 +90,8 @@ namespace DENG {
             switch(m_ubo_desc.index()) {
                 case 0:
                 {
-                    const std::vector<UniformDataLayout>* desc = std::get<const std::vector<UniformDataLayout>*>(m_ubo_desc);
-                    for(auto it = desc->begin(); it != desc->end(); it++) {
+                    const std::vector<UniformDataLayout> &desc = std::get<std::vector<UniformDataLayout>>(m_ubo_desc);
+                    for(auto it = desc.begin(); it != desc.end(); it++) {
                         if(it->type == UNIFORM_DATA_TYPE_IMAGE_SAMPLER) {
                             m_sampler_count++;
                         }
@@ -106,13 +113,13 @@ namespace DENG {
                 // per shader descriptor
                 case 0:
                     {
-                        const std::vector<UniformDataLayout> *layouts = std::get<const std::vector<UniformDataLayout>*>(m_ubo_desc);
-                        desc_sizes.reserve(layouts->size());
+                        const std::vector<UniformDataLayout> &layouts = std::get<std::vector<UniformDataLayout>>(m_ubo_desc);
+                        desc_sizes.reserve(layouts.size());
 
-                        for(size_t i = 0; i < layouts->size(); i++) {
-                            if(layouts->at(i).usage != UNIFORM_USAGE_PER_MESH) {
+                        for(size_t i = 0; i < layouts.size(); i++) {
+                            if(layouts.at(i).usage != UNIFORM_USAGE_PER_MESH) {
                                 desc_sizes.emplace_back();
-                                switch(layouts->at(i).type) {
+                                switch(layouts.at(i).type) {
                                     case UNIFORM_DATA_TYPE_BUFFER:
                                         desc_sizes.back().type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                                         break;
@@ -135,8 +142,8 @@ namespace DENG {
                 // per mesh descriptor
                 case 1:
                     {
-                        const std::vector<UniformBufferBlock> *block = std::get<const std::vector<UniformBufferBlock>*>(m_ubo_desc);
-                        desc_sizes.resize(block->size());
+                        const std::vector<UniformBufferBlock> &block = std::get<std::vector<UniformBufferBlock>>(m_ubo_desc);
+                        desc_sizes.resize(block.size());
 
                         for(auto it = desc_sizes.begin(); it != desc_sizes.end(); it++) {
                             it->type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;       // per mesh descriptor is always uniform buffer type
@@ -191,16 +198,16 @@ namespace DENG {
                 // per shader uniform
                 case 0:
                     {
-                        const std::vector<UniformDataLayout> *layout = std::get<const std::vector<UniformDataLayout>*>(m_ubo_desc);
+                        const std::vector<UniformDataLayout> &layout = std::get<std::vector<UniformDataLayout>>(m_ubo_desc);
                         size_t texture_index = 0;
                         std::string bound_texture_name = "";
 
-                        buffer_infos.reserve(layout->size());
-                        img_infos.reserve(layout->size());
-                        write_sets.reserve(m_swapchain_image_count * layout->size());
+                        buffer_infos.reserve(layout.size());
+                        img_infos.reserve(layout.size());
+                        write_sets.reserve(m_swapchain_image_count * layout.size());
 
                         // for each data layout create appropriate write infos
-                        for(auto it = layout->begin(); it != layout->end(); it++) {
+                        for(auto it = layout.begin(); it != layout.end(); it++) {
                             if(it->usage == UNIFORM_USAGE_PER_SHADER) {
                                 switch(it->type) {
                                     case UNIFORM_DATA_TYPE_BUFFER:
@@ -235,7 +242,7 @@ namespace DENG {
                         for(auto desc_it = m_descriptor_sets.begin() + _rel_offset; desc_it < m_descriptor_sets.end(); desc_it++) {
                             uint32_t used_buffers = 0;
                             uint32_t used_imgs = 0;
-                            for(auto ubo_it = layout->begin(); ubo_it != layout->end(); ubo_it++) {
+                            for(auto ubo_it = layout.begin(); ubo_it != layout.end(); ubo_it++) {
                                 if(ubo_it->usage == UNIFORM_USAGE_PER_SHADER) {
                                     write_sets.emplace_back();
                                     write_sets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -270,10 +277,10 @@ namespace DENG {
                 // per mesh uniform
                 case 1:
                     {
-                        const std::vector<UniformBufferBlock> *block = std::get<const std::vector<UniformBufferBlock>*>(m_ubo_desc);
-                        buffer_infos.reserve(block->size());
+                        const std::vector<UniformBufferBlock> &block = std::get<std::vector<UniformBufferBlock>>(m_ubo_desc);
+                        buffer_infos.reserve(block.size());
 
-                        for(auto it = block->begin(); it != block->end(); it++) {
+                        for(auto it = block.begin(); it != block.end(); it++) {
                             buffer_infos.emplace_back();
                             buffer_infos.back().buffer = m_uniform_buffer;
                             buffer_infos.back().offset = it->offset;
@@ -282,7 +289,7 @@ namespace DENG {
 
                         for(auto desc_it = m_descriptor_sets.begin() + _rel_offset; desc_it < m_descriptor_sets.end(); desc_it++) {
                             uint32_t used_buffers = 0;
-                            for(auto ubo_it = block->begin(); ubo_it != block->end(); ubo_it++) {
+                            for(auto ubo_it = block.begin(); ubo_it != block.end(); ubo_it++) {
                                 write_sets.emplace_back();
                                 write_sets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                                 write_sets.back().dstSet = *desc_it;
@@ -313,10 +320,12 @@ namespace DENG {
                 std::vector<VkDescriptorSet> secondary_pool_descriptors;
                 primary_pool_descriptors.reserve(m_descriptor_sets.size());
                 secondary_pool_descriptors.reserve(m_descriptor_sets.size());
-                for(size_t i = 0; i < m_descriptor_sets.size(); i++) {
-                    if(m_descriptor_set_pool_flags[i])
+                for(size_t i = 0; i < m_descriptor_set_pool_flags.size(); i++) {
+                    if(m_descriptor_set_pool_flags[i]) {
                         primary_pool_descriptors.push_back(m_descriptor_sets[i]);
-                    else secondary_pool_descriptors.push_back(m_descriptor_sets[i]);
+                    } else {
+                        secondary_pool_descriptors.push_back(m_descriptor_sets[i]);
+                    }
                 }
 
                 // create a vector to use for sorting
@@ -336,8 +345,7 @@ namespace DENG {
                     const size_t index = it->second - m_descriptor_sets.data();
                     if(m_descriptor_set_pool_flags[index]) {
                         shift += m_swapchain_image_count;
-                    }
-                    else {
+                    } else {
                         it->second -= shift;
                         m_texture_bound_desc_sets[it->first] = it->second;
                     }
@@ -346,6 +354,8 @@ namespace DENG {
                 // free all primary descriptor sets
                 vkFreeDescriptorSets(m_device, m_primary_pool, static_cast<uint32_t>(primary_pool_descriptors.size()), primary_pool_descriptors.data());
                 vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
+                m_descriptor_set_pool_flags.resize(secondary_pool_descriptors.size());
+                std::fill(m_descriptor_set_pool_flags.begin(), m_descriptor_set_pool_flags.end(), true);
                 m_descriptor_sets = secondary_pool_descriptors;
                 m_primary_pool = m_secondary_pool;
                 m_secondary_pool = VK_NULL_HANDLE;
@@ -385,6 +395,8 @@ namespace DENG {
                 vkFreeDescriptorSets(m_device, m_secondary_pool, static_cast<uint32_t>(secondary_pool_sets.size()), secondary_pool_sets.data());
                 if(primary_pool_sets.size())
                     vkDestroyDescriptorPool(m_device, m_primary_pool, nullptr);
+
+                // set secondary pool as primary
                 m_primary_pool = m_secondary_pool;
             }
 

@@ -28,9 +28,7 @@ namespace DENG {
     {
         if(m_mesh.name != "") {
             m_name = m_mesh.name;
-        } else {
-            m_name += std::to_string(m_mesh_index++);
-        }
+        } 
 
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
@@ -39,6 +37,17 @@ namespace DENG {
 
         for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
             m_morph_weights[i] = mp_prim->morph_weights[i];
+
+#ifdef DENG_EDITOR
+        std::string id;
+        std::transform(m_name.begin(), m_name.end(), id.begin(), [](char c) { return std::tolower(c); });
+        m_inspector_name = "Mesh: " + m_name + "##" + id;
+        m_color_checkbox_id = "Use a color##" + id;
+        m_color_picker_id = "Pick a color##" + id;
+        m_texture_button_id = "Select textures##" + id;
+        m_texture_picker_id = "Texture picker##" + id;
+        m_texture_save_id = "Save##" + id;
+#endif
     }
 
 
@@ -55,11 +64,22 @@ namespace DENG {
         m_mesh_buffer_offsets(_ml.m_mesh_buffer_offsets),
         m_skeleton_joint_count(_ml.m_skeleton_joint_count),
         mp_prim(_ml.mp_prim),
-        m_use_color(_ml.m_use_color),
         m_disable_joint_transforms(_ml.m_disable_joint_transforms),
         m_supported_texture_count(_ml.m_supported_texture_count),
         m_color(_ml.m_color),
+#ifdef DENG_EDITOR
+        m_framebuffer_id(_ml.m_framebuffer_id),
+        m_is_colored(_ml.m_is_colored),
+        m_used_textures(_ml.m_used_textures),
+        m_inspector_name(std::move(_ml.m_inspector_name)),
+        m_color_checkbox_id(std::move(_ml.m_color_checkbox_id)),
+        m_color_picker_id(std::move(_ml.m_color_picker_id)),
+        m_texture_picker_id(std::move(_ml.m_texture_picker_id)),
+        m_texture_table(std::move(_ml.m_texture_table)),
+        m_texture_save_id(std::move(_ml.m_texture_save_id))
+#else
         m_framebuffer_id(_ml.m_framebuffer_id)
+#endif
     {
         std::memcpy(m_morph_weights, _ml.m_morph_weights, sizeof(float) * MAX_MORPH_TARGETS);
     }
@@ -142,6 +162,7 @@ namespace DENG {
         mesh.ubo_blocks.back().size = static_cast<uint32_t>(sizeof(ModelUbo));
         mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelUbo)));
         m_mesh_ubo_offset = mesh.ubo_blocks.back().offset;
+        m_renderer.UpdateUniform(nullptr, static_cast<uint32_t>(sizeof(ModelUbo)), mesh.ubo_blocks.back().offset);
 
         // check if joint matrix ubos should be created
         if(m_parser.AccessMeshPrimitive(m_mesh.primitives[0]).joint_set_count) {
@@ -150,6 +171,7 @@ namespace DENG {
             mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
             mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)));
             m_mesh_joints_ubo_offset = mesh.ubo_blocks.back().offset;
+            m_renderer.UpdateUniform(nullptr, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)), mesh.ubo_blocks.back().offset);
         }
 
         // create mesh draw commands

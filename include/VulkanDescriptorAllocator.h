@@ -28,7 +28,7 @@ namespace DENG {
                 const VkDevice m_device;
                 VkBuffer m_uniform_buffer;
                 const VkDescriptorSetLayout m_descriptor_set_layout;
-                const std::variant<const std::vector<UniformDataLayout>*, const std::vector<UniformBufferBlock>*> m_ubo_desc; // 0 - per shader ubo; 1 - per mesh ubo
+                const std::variant<std::vector<UniformDataLayout>, std::vector<UniformBufferBlock>> m_ubo_desc; // 0 - per shader ubo; 1 - per mesh ubo
                 const uint32_t m_swapchain_image_count;
                 const Vulkan::TextureData &m_missing;
                 bool m_is_sampled = false;
@@ -53,7 +53,7 @@ namespace DENG {
                     VkDevice _dev, 
                     VkBuffer _u_buffer, 
                     VkDescriptorSetLayout _layout, 
-                    std::variant<const std::vector<UniformDataLayout>*, const std::vector<UniformBufferBlock>*> _ubo_desc, 
+                    const std::variant<std::vector<UniformDataLayout>, std::vector<UniformBufferBlock>> &_ubo_desc, 
                     uint32_t _sc_img_c, 
                     const Vulkan::TextureData &_missing, 
                     uint32_t _pool_cap = 1
@@ -68,7 +68,13 @@ namespace DENG {
                 //void RemoveDescriptorSetByTexture(const std::string &_name);
 
                 // pool reallocation must be done separately if required
-                VkDescriptorSet RequestDescriptorSetByTextures(const std::vector<std::string> &_names, const std::vector<Vulkan::TextureData> &_texture_datas, uint32_t _current_frame, uint32_t _reserve_pool_size = 0);
+                VkDescriptorSet RequestDescriptorSetByTextures(
+                    const std::vector<std::string> &_names, 
+                    const std::vector<Vulkan::TextureData> &_texture_datas, 
+                    uint32_t _current_frame, 
+                    uint32_t _reserve_pool_size = 0
+                );
+
                 inline VkDescriptorSet RequestDescriptorSetByFrame(uint32_t _current_frame) {
                     return m_descriptor_sets[_current_frame];
                 }

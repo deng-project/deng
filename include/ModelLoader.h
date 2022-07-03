@@ -49,28 +49,12 @@
     #include <ModelShaderGenerator.h>
     #include <ModelShaderManager.h>
     #include <MeshLoader.h>
-    #include <SkeletonDataManager.h>
+    #include <SkeletonLoader.h>
     #include <NodeLoader.h>
     #include <SceneLoader.h>
 #endif
 
 namespace DENG {
-
-    struct ModelAnimation {
-        ModelAnimation(const std::string &_name) : name(_name) {}
-        ModelAnimation(const ModelAnimation &_ma) : 
-            name(_ma.name),
-            samplers(_ma.samplers),
-            is_animated(_ma.is_animated) {}
-        ModelAnimation(ModelAnimation &&_ma) :
-            name(std::move(_ma.name)),
-            samplers(std::move(_ma.samplers)),
-            is_animated(_ma.is_animated) {}
- 
-        std::string name = "Unnamed animation";
-        std::vector<AnimationSampler> samplers;
-        bool is_animated = true;
-    };
 
     class DENG_API ModelLoader {
         private:
@@ -115,6 +99,10 @@ namespace DENG {
 
             inline std::vector<Animation> &GetAnimations() {
                 return m_animations;
+            }
+
+            inline Libdas::DasParser &GetParser() {
+                return m_parser;
             }
     };
 }

@@ -41,7 +41,7 @@
     #include <ModelUniforms.h>
     #include <AnimationSampler.h>
     #include <MeshLoader.h>
-    #include <SkeletonDataManager.h>
+    #include <SkeletonLoader.h>
 #endif
 
 namespace DENG {
@@ -50,7 +50,7 @@ namespace DENG {
     class DENG_API NodeLoader {
         private:
             Renderer &m_renderer;
-            SkeletonDataManager *mp_skeleton = nullptr;
+            SkeletonLoader *mp_skeleton = nullptr;
             MeshLoader *mp_mesh_loader = nullptr;
             const Libdas::DasNode &m_node;
             Libdas::DasParser &m_parser;
@@ -109,7 +109,7 @@ namespace DENG {
                 return mp_mesh_loader;
             }
 
-            inline SkeletonDataManager *GetSkeleton() const {
+            inline SkeletonLoader *GetSkeleton() const {
                 return mp_skeleton;
             }
 

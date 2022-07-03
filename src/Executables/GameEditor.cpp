@@ -29,6 +29,202 @@ namespace Executable {
     }
 
 
+    void ImGuiCallback::_CreateInspector(EditorGuiData *_data) {
+        switch(_data->inspector.entity_type) {
+            case EditorInspectorData::ENTITY_TYPE_ANIMATION: 
+            {
+                DENG::Animation *ani = reinterpret_cast<DENG::Animation*>(_data->inspector.entity);
+                
+                const std::string txt = "Animation: " + ani->name;
+                ImGui::Text(txt.c_str());
+                static bool repeat;
+                ImGui::Checkbox("Repeat animation", &repeat);
+
+                if(!ani->is_bound && ImGui::Button("Animate")) {
+                    ani->is_bound = !ani->is_bound;
+                    // animate
+                    for(auto it = ani->samplers.begin(); it != ani->samplers.end(); it++)
+                        it->Animate(repeat);
+                } else if(ani->is_bound && ImGui::Button("Stop animation")) {
+                    ani->is_bound = !ani->is_bound;
+                    // stop animation
+                    for(auto it = ani->samplers.begin(); it != ani->samplers.end(); it++)
+                        it->Stop();
+                }
+
+                break;
+            }
+
+            case EditorInspectorData::ENTITY_TYPE_SCENE:
+            {
+                DENG::SceneLoader *scene = reinterpret_cast<DENG::SceneLoader*>(_data->inspector.entity);
+                const std::string txt = "Scene: " + scene->GetName();
+                ImGui::Text(txt.c_str());
+                break;
+            }
+
+            case EditorInspectorData::ENTITY_TYPE_NODE:
+            {
+                DENG::NodeLoader *node = reinterpret_cast<DENG::NodeLoader*>(_data->inspector.entity);
+                const std::string txt = "Node: " + node->GetName();
+                ImGui::Text(txt.c_str());
+
+                // custom transformations
+                ImGui::Text("Translation: ");
+                static Libdas::Vector3<float> t = node->GetCustomTranslation();
+                ImGui::DragFloat("X##translation", &t.first, 0.2f);
+                ImGui::DragFloat("Y##translation", &t.second, 0.2f);
+                ImGui::DragFloat("Z##translation", &t.third, 0.2f);
+                node->SetCustomTranslation(t);
+
+                ImGui::Text("Rotation (quaternion): ");
+                static Libdas::Quaternion rot = node->GetCustomRotation();
+                const float sc45 = 0.707106f;
+                ImGui::SliderFloat("X##rot", &rot.x, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
+                ImGui::SliderFloat("Y##rot", &rot.y, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
+                ImGui::SliderFloat("Z##rot", &rot.z, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
+                ImGui::SliderFloat("W##rot", &rot.w, -1, 1, "%.002f", ImGuiSliderFlags_Logarithmic);
+                node->SetCustomRotation(rot);
+
+                static float s = node->GetCustomScale();
+                ImGui::Text("Scale: ");
+                ImGui::DragFloat("##scale", &s, 0.2f);
+                node->SetCustomScale(s);
+                break;
+            }
+
+            case EditorInspectorData::ENTITY_TYPE_MESH:
+            {
+                DENG::MeshLoader *mesh = reinterpret_cast<DENG::MeshLoader*>(_data->inspector.entity);
+                ImGui::Text(mesh->GetInspectorName().c_str());
+
+                // color picker
+                ImGui::Checkbox(mesh->GetColorCheckboxId().c_str(), &mesh->GetUseColor());
+                if(mesh->GetUseColor()) {
+                    Libdas::Vector4<float> color = mesh->GetColor();
+                    ImGui::ColorEdit4(mesh->GetColorPickerId().c_str(), &color.first);
+                    mesh->SetColor(color);
+                } else if(ImGui::Button(mesh->GetTextureButtonId().c_str())) {
+                    if(ImGui::BeginPopup(mesh->GetTexturePickerId().c_str())) {
+                        ImGui::Text("Pick textures");
+                        uint32_t &used = mesh->GetUsedTextureCount();
+                        const std::string info = "This mesh can use " + std::to_string(mesh->GetSupportedTextureCount()) + " texture; " + std::to_string(mesh->GetSupportedTextureCount() - used) + " are available";
+                        ImGui::TextColored(ImVec4(1, 1, 0, 1), info.c_str());
+
+                        std::vector<bool> &tbl = mesh->GetTextureTable();
+                        tbl.resize(_data->model_loaders[_data->inspector.model_id].GetAttachedTextures().size());
+                        for(auto it = _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin(); it != _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().end(); it++) {
+                            const size_t index = it - _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin();
+                            const std::string title = "Use texture no. " + std::to_string(index);
+                            bool box = tbl[index];
+                            if(mesh->GetSupportedTextureCount() - used) {
+                                ImGui::Checkbox(title.c_str(), &box);
+                                tbl[index] = box;
+                            } else {
+                                ImGui::BeginDisabled(true);
+                                ImGui::Checkbox(title.c_str(), &box);
+                                ImGui::EndDisabled();
+                            }
+
+                            if(box) used++;
+                            ImGui::Image(const_cast<char*>(it->c_str()), ImVec2(64, 64));
+                        }
+
+                        if(ImGui::Button(mesh->GetTextureSaveId().c_str())) {
+                            std::vector<std::string> names;
+                            names.reserve(_data->model_loaders[_data->inspector.model_id].GetAttachedTextures().size());
+                            for(auto it = _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin(); it != _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().end(); it++) {
+                                const size_t index = it - _data->model_loaders[_data->inspector.model_id].GetAttachedTextures().begin();
+                                if(tbl[index]) {
+                                    names.push_back(*it);
+                                }
+                            }
+
+                            mesh->UseTextures(names);
+                        }
+                    }
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+
+    void ImGuiCallback::_CreateRecursiveNodeTree(uint32_t _model_id, DENG::NodeLoader &_node, EditorGuiData *_data) {
+        if(ImGui::TreeNode(_node.GetName().c_str())) {
+            if(ImGui::IsItemToggledOpen()) {
+                _data->inspector.entity_type = EditorInspectorData::ENTITY_TYPE_NODE;
+                _data->inspector.entity = &_node;
+                _data->inspector.model_id = _model_id;
+            }
+
+            DENG::MeshLoader *mesh = _node.GetMeshLoader();
+
+            // check if mesh is present
+            if(mesh && ImGui::Selectable(mesh->GetName().c_str())) {
+                _data->inspector.entity_type = EditorInspectorData::ENTITY_TYPE_MESH;
+                _data->inspector.entity = mesh;
+                _data->inspector.model_id = _model_id;
+            }
+
+            // for each child node
+            for(auto child_it = _node.GetChildNodes().begin(); child_it != _node.GetChildNodes().end(); child_it++) {
+                _CreateRecursiveNodeTree(_model_id, *child_it, _data);
+            }
+
+            ImGui::TreePop();
+        }
+    }
+
+
+    void ImGuiCallback::_CreateHierarchy(EditorGuiData *_data) {
+        // for each model loader show hierarchy of components
+        for(auto model_it = _data->model_loaders.begin(); model_it != _data->model_loaders.end(); model_it++) {
+            const uint32_t index = static_cast<uint32_t>(model_it - _data->model_loaders.begin());
+            if(ImGui::TreeNode(model_it->GetName().c_str())) {
+
+                // animations tree
+                if(model_it->GetAnimations().size() && ImGui::TreeNode("Animations")) {
+                    for(auto ani_it = model_it->GetAnimations().begin(); ani_it != model_it->GetAnimations().end(); ani_it++) {
+                        if(ImGui::Selectable(ani_it->name.c_str())) {
+                            _data->inspector.entity_type = EditorInspectorData::ENTITY_TYPE_ANIMATION;
+                            _data->inspector.entity = &(*ani_it);
+                            _data->inspector.model_id = index;
+                        }
+                    }
+
+                    ImGui::TreePop();
+                }
+
+                // scene tree
+                // NOTE: size check is not necessary since scenes must be present in every das model
+                if(ImGui::TreeNode("Scenes")) {
+                    for(auto sc_it = model_it->GetScenes().begin(); sc_it != model_it->GetScenes().end(); sc_it++) {
+                        if(ImGui::TreeNode(sc_it->GetName().c_str())) {
+                            if(ImGui::IsItemToggledOpen()) {
+                                _data->inspector.entity_type = EditorInspectorData::ENTITY_TYPE_SCENE;
+                                _data->inspector.entity = &(*sc_it);
+                                _data->inspector.model_id = index;
+                            }
+
+                            for(auto root_it = sc_it->GetRootNodes().begin(); root_it != sc_it->GetRootNodes().end(); root_it++)
+                                _CreateRecursiveNodeTree(index, *root_it, _data);
+                            ImGui::TreePop();
+                        }
+                    }
+
+                    ImGui::TreePop();
+                }
+
+                ImGui::TreePop();
+            }
+        }
+    }
+
+
     void ImGuiCallback::_ShowCoreUI(void *_gui) {
         EditorGuiData *gui_data = reinterpret_cast<EditorGuiData*>(_gui);
 
@@ -40,14 +236,15 @@ namespace Executable {
             ImGui::Begin("Editor context", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
                 if(ImGui::BeginMenuBar()) {
                     if(ImGui::BeginMenu("File")) {
-                        ImGui::MenuItem("New");     // TASK: create new project
-                        if(ImGui::MenuItem("Open")) // TASK: open existing project
+                        ImGui::MenuItem("New");         // TASK: create new project
+                        ImGui::MenuItem("Open");        // TASK: open existing project
+                        if(ImGui::MenuItem("Import"))   // TASK: import resources (das, gltf, obj, stl)
                             _OpenFile(gui_data);
-                        ImGui::MenuItem("Import");  // TASK: import resources (das, gltf, obj, stl)
-                        ImGui::MenuItem("Export");  // TASK: export resources (das)
-                        ImGui::MenuItem("Save");    // TASK: save project
-                        ImGui::MenuItem("Save as"); // TASK: save project as
-                        ImGui::MenuItem("Quit");    // TASK: quit editor
+                        ImGui::MenuItem("Export");      // TASK: export resources (das)
+                        ImGui::MenuItem("Save");        // TASK: save project
+                        ImGui::MenuItem("Save as");     // TASK: save project as
+                        if(ImGui::MenuItem("Quit"))     // TASK: quit editor
+                            gui_data->quit = true;
                         ImGui::EndMenu();
                     }
                     ImGui::EndMenuBar();
@@ -75,7 +272,7 @@ namespace Executable {
         }
 
         ImGui::Begin("inspector");
-            ImGui::Text("Inspector");
+            _CreateInspector(gui_data);
         ImGui::End();
 
         // viewport window
@@ -85,6 +282,7 @@ namespace Executable {
         ImGui::End();
 
         ImGui::Begin("hierarchy");
+            _CreateHierarchy(gui_data);
         ImGui::End();
 
         ImGui::Begin("assets");
@@ -119,7 +317,7 @@ namespace Executable {
 
 
     void ModelLoaderApp::Run() {
-        while(m_window.IsRunning()) {
+        while(!m_imgui_data.quit && m_window.IsRunning()) {
             m_renderer.ClearFrame();
 
             m_cur_time = std::chrono::system_clock::now();

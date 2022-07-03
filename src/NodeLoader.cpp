@@ -91,7 +91,7 @@ namespace DENG {
     void NodeLoader::_CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset) {
         if(m_node.skeleton != UINT32_MAX) {
             const Libdas::DasSkeleton &skeleton = m_parser.AccessSkeleton(m_node.skeleton);
-            mp_skeleton = new SkeletonDataManager(m_transform, m_parser, skeleton, _animations);
+            mp_skeleton = new SkeletonLoader(m_transform, m_parser, skeleton, _animations);
 
             if(m_node.mesh == UINT32_MAX) {
                 WARNME("Unbound skeleton: " + skeleton.name);

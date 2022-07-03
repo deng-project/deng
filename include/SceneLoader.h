@@ -40,7 +40,7 @@
     #include <ModelUniforms.h>
     #include <MeshLoader.h>
     #include <AnimationSampler.h>
-    #include <SkeletonDataManager.h>
+    #include <SkeletonLoader.h>
     #include <NodeLoader.h>
 #endif
 

@@ -19,9 +19,9 @@ namespace DENG {
     void AnimationSampler::_LinearInterpolation(float _t1, float _tc, float _t2) {
         const size_t curr = static_cast<size_t>(m_active_timestamp_index);
         const size_t next = static_cast<size_t>((m_active_timestamp_index + 1) % m_channel.keyframe_count);
-        float t = (_tc - _t1) / (_t2 - _t1);
-        if(_t2 - _t2 < ZERO_MARGIN)
-            t = 0;
+        float t = 0.0f;
+        if(_t2 - _t1 > ZERO_MARGIN)
+            t = (_tc - _t1) / (_t2 - _t1);
 
         switch(m_channel.target) {
             // weights
@@ -54,12 +54,13 @@ namespace DENG {
                     const size_t size = sizeof(Libdas::Quaternion);
                     Libdas::Quaternion *q1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
                     Libdas::Quaternion *q2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
+
                     float dot = Libdas::Quaternion::Dot(*q1, *q2);
 
                     const float a = acosf(dot);
                     const float s = dot / std::abs(dot);
 
-                    if(dot < 1.0f - ZERO_MARGIN) {
+                    if(dot < (1.0f - ZERO_MARGIN)) {
                         const float sin_a = sinf(a);
                         const float k1 = sinf(a * (1 - t)) / sin_a;
                         const float k2 = s * sinf(a * t) / sin_a;
@@ -67,7 +68,6 @@ namespace DENG {
                     } else {
                         m_rotation = *q1 * (1 - t) + *q2 * t;
                     }
-
                 }
                 break;
 
@@ -202,7 +202,8 @@ namespace DENG {
         std::memset(m_morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
 
         // calculate delta time
-        if(m_animate) m_active_time = std::chrono::high_resolution_clock::now();
+        if(m_animate) 
+            m_active_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float, std::milli> delta_time = m_active_time - m_beg_time;
         const float kf = delta_time.count() / 1000 + m_cached_delta_time;
         const uint32_t next = (m_active_timestamp_index + 1) % m_channel.keyframe_count;

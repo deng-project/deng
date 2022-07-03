@@ -3,9 +3,8 @@
 # file: deng.cmake - deng CMake configuration file
 # author: Karl-Mihkel Ott
 
-set(DENG_SHARED_TARGET deng-shared)
-set(DENG_STATIC_TARGET deng-static)
-set(DENG_HEADERS
+set(DENG_COMPLETE_TARGET deng-complete)
+set(DENG_COMPLETE_HEADERS
     deps/imgui/imgui.h
     deps/imgui/imconfig.h
     deps/imgui/imgui_internal.h
@@ -40,7 +39,7 @@ set(DENG_HEADERS
     include/RenderState.h
     include/SceneLoader.h
     include/ShaderDefinitions.h
-    include/SkeletonDataManager.h
+    include/SkeletonLoader.h
     include/ThirdPersonCamera.h
     include/VulkanDescriptorAllocator.h
     include/VulkanDescriptorSetLayoutCreator.h
@@ -53,7 +52,7 @@ set(DENG_HEADERS
     include/Window.h
 )
 
-set(DENG_SOURCES
+set(DENG_COMPLETE_SOURCES
     deps/imgui/imgui.cpp
     deps/imgui/imgui_demo.cpp
     deps/imgui/imgui_draw.cpp
@@ -81,7 +80,7 @@ set(DENG_SOURCES
     src/RenderState.cpp
     src/SceneLoader.cpp
     src/ShaderDefinitions.cpp
-    src/SkeletonDataManager.cpp
+    src/SkeletonLoader.cpp
     src/ThirdPersonCamera.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
@@ -96,34 +95,17 @@ set(DENG_SOURCES
 
 
 # Library configurations
-add_library(${DENG_STATIC_TARGET} STATIC
-    ${DENG_HEADERS}
-    ${DENG_SOURCES}
-)
-
-add_library(${DENG_SHARED_TARGET} SHARED
-    ${DENG_HEADERS}
-    ${DENG_SOURCES}
+add_library(${DENG_COMPLETE_TARGET} SHARED
+    ${DENG_COMPLETE_HEADERS}
+    ${DENG_COMPLETE_SOURCES}
 )
 
 # Compile definitions
-target_compile_definitions(${DENG_STATIC_TARGET} 
-    PUBLIC DENG_EXPORT_LIBRARY
-    PUBLIC DENG_STATIC
-)
-target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE DENG_EXPORT_LIBRARY)
+target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE DENG_COMPLETE_EXPORT_LIBRARY)
 
 
 # Include directories
-target_include_directories(${DENG_SHARED_TARGET} 
-    PUBLIC include
-    PUBLIC deps
-    PUBLIC deps/nekowin/include/third_party
-    PUBLIC deps/libdas/include
-    PUBLIC deps/imgui
-)
-
-target_include_directories(${DENG_STATIC_TARGET}
+target_include_directories(${DENG_COMPLETE_TARGET} 
     PUBLIC include
     PUBLIC deps
     PUBLIC deps/nekowin/include/third_party
@@ -132,88 +114,54 @@ target_include_directories(${DENG_STATIC_TARGET}
 )
 
 # Linking
-target_link_libraries(${DENG_STATIC_TARGET}
-    PRIVATE nwin-static
-    PRIVATE das-static
-)
-
-target_link_libraries(${DENG_SHARED_TARGET}
+target_link_libraries(${DENG_COMPLETE_TARGET}
     PRIVATE nwin-static
     PRIVATE das-static
 )
 
 # Universal compile definitions for imgui
-target_compile_definitions(${DENG_STATIC_TARGET}
-    PUBLIC ImDrawIdx=unsigned\ int)
-
-target_compile_definitions(${DENG_SHARED_TARGET}
-    PUBLIC ImDrawIdx=unsigned\ int)
+target_compile_definitions(${DENG_COMPLETE_TARGET}
+    PUBLIC ImDrawIdx=unsigned\ int
+    PUBLIC DENG_EDITOR
+)
 
 
 # Link trunked libraries
 if(WIN32)
-    target_compile_definitions(${DENG_SHARED_TARGET}
+    target_compile_definitions(${DENG_COMPLETE_TARGET}
         PRIVATE IMGUI_API=_declspec\(dllexport\)
         INTERFACE IMGUI_API=_declspec\(dllimport\)
     )
 
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		target_link_directories(${DENG_STATIC_TARGET} 
-            PUBLIC deps/trunk/Lib/Debug
-            PUBLIC deps/trunk/Lib/Debug/Python)
-		target_link_directories(${DENG_SHARED_TARGET} 
+		target_link_directories(${DENG_COMPLETE_TARGET} 
             PUBLIC deps/trunk/Lib/Debug
             PUBLIC deps/trunk/Lib/Debug/Python)
 		
-		target_link_libraries(${DENG_STATIC_TARGET} 
-			PUBLIC python39_d
-			PRIVATE shaderc_combined
-		)
-		
-		target_link_libraries(${DENG_SHARED_TARGET} 
+		target_link_libraries(${DENG_COMPLETE_TARGET} 
 			PUBLIC python39_d
 			PRIVATE shaderc_combined
 		)
 
 	elseif(CMAKE_BUILD_TYPE MATCHES Release)
-		target_link_directories(${DENG_STATIC_TARGET} 
-            PUBLIC deps/trunk/Lib/Release
-            PUBLIC deps/trunk/Lib/Release/Python)
-		target_link_directories(${DENG_SHARED_TARGET} 
+		target_link_directories(${DENG_COMPLETE_TARGET} 
             PUBLIC deps/trunk/Lib/Release
             PUBLIC deps/trunk/Lib/Release/Python)
 		
-		target_link_libraries(${DENG_STATIC_TARGET} 
-            PRIVATE python39
-			PRIVATE shaderc_combined
-		)
-		
-		target_link_libraries(${DENG_SHARED_TARGET} 
+		target_link_libraries(${DENG_COMPLETE_TARGET} 
             PRIVATE python39
 		    PRIVATE shaderc_combined
 		)
 	endif()
 	
-	target_link_libraries(${DENG_STATIC_TARGET} 
-		PUBLIC vulkan-1)
-	
-	target_link_libraries(${DENG_SHARED_TARGET} 
+	target_link_libraries(${DENG_COMPLETE_TARGET} 
 		PUBLIC vulkan-1)
 elseif(UNIX AND NOT MACOS)
-    target_link_directories(${DENG_STATIC_TARGET}
+    target_link_directories(${DENG_COMPLETE_TARGET}
         PUBLIC deps/trunk/Lib
         PUBLIC deps/trunk/Python)
 
-    target_link_directories(${DENG_SHARED_TARGET}
-        PUBLIC deps/trunk/Lib
-        PUBLIC deps/trunk/Python)
-
-    target_link_libraries(${DENG_STATIC_TARGET}
-        PRIVATE python3.9
-        PRIVATE util
-        PRIVATE shaderc_combined)
-
-    target_link_libraries(${DENG_SHARED_TARGET}
+    target_link_libraries(${DENG_COMPLETE_TARGET}
         PRIVATE python3.9
         PRIVATE util
         PRIVATE shaderc_combined)
@@ -222,20 +170,11 @@ endif()
 
 # Check if debug mode is used
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_definitions(${DENG_SHARED_TARGET} PRIVATE _DEBUG)
-    target_compile_definitions(${DENG_STATIC_TARGET} PRIVATE _DEBUG)
+    target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE _DEBUG)
 endif()
 
 
-add_dependencies(${DENG_STATIC_TARGET}
-    COPY_TARGET
-    das-static
-    dastool
-    nwin-static
-    ${IMGUI_TARGET}
-)
-
-add_dependencies(${DENG_SHARED_TARGET}
+add_dependencies(${DENG_COMPLETE_TARGET}
     COPY_TARGET
     das-static
     dastool

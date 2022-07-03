@@ -11,6 +11,10 @@
     #include <vector>
     #include <string>
     #include <fstream>
+#ifdef DENG_EDITOR
+    #include <algorithm>
+#endif
+
 #ifdef _DEBUG
     #include <iostream>
 #endif
@@ -54,7 +58,7 @@ namespace DENG {
             const Libdas::DasMesh &m_mesh;
             Renderer &m_renderer;
             static uint32_t m_mesh_index;
-            std::string m_name = "Unnamed mesh";
+            std::string m_name = "Unnamed mesh" + std::to_string(m_mesh_index++);
             bool m_is_animation_target = false;
             uint32_t m_shader_id = UINT32_MAX;
 
@@ -66,7 +70,6 @@ namespace DENG {
             const std::vector<uint32_t> &m_mesh_buffer_offsets;
             const uint32_t m_skeleton_joint_count;
             const Libdas::DasMeshPrimitive *mp_prim = nullptr;
-            bool m_use_color = true;
             bool m_disable_joint_transforms = false;
             uint32_t m_supported_texture_count = 0;
 
@@ -77,7 +80,19 @@ namespace DENG {
             Libdas::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
 
             // framebuffer id
-            const std::string &m_framebuffer_id;
+            const std::string m_framebuffer_id;
+
+            bool m_is_colored = true;
+#ifdef DENG_EDITOR
+            uint32_t m_used_textures = 0;
+            std::string m_inspector_name;
+            std::string m_color_checkbox_id;
+            std::string m_color_picker_id;
+            std::string m_texture_button_id;
+            std::string m_texture_picker_id;
+            std::vector<bool> m_texture_table;
+            std::string m_texture_save_id;
+#endif
 
         private:
             void _CheckMeshPrimitives();
@@ -128,12 +143,12 @@ namespace DENG {
                 return m_name;
             }
 
-            inline bool GetUseColor() const {
-                return m_use_color;
+            inline bool &GetUseColor() {
+                return m_is_colored;
             }
 
             inline void SetUseColor(bool _use_color) {
-                m_use_color = _use_color;
+                m_is_colored = _use_color;
             }
 
             inline bool GetDisableJointTransforms() const {
@@ -151,6 +166,41 @@ namespace DENG {
             inline void SetColor(const Libdas::Vector4<float> &_color) {
                 m_color = _color;
             }
+
+            // editor getters
+#ifdef DENG_EDITOR
+            inline uint32_t &GetUsedTextureCount() {
+                return m_used_textures;
+            }
+
+            inline std::string &GetInspectorName() {
+                return m_inspector_name;
+            }
+
+            inline std::string &GetColorCheckboxId() {
+                return m_color_checkbox_id;
+            }
+
+            inline std::string &GetColorPickerId() {
+                return m_color_picker_id;
+            }
+
+            inline std::string &GetTextureButtonId() {
+                return m_texture_button_id;
+            }
+
+            inline std::string &GetTexturePickerId() {
+                return m_texture_picker_id;
+            }
+
+            inline std::vector<bool> &GetTextureTable() {
+                return m_texture_table;
+            }
+
+            inline std::string &GetTextureSaveId() {
+                return m_texture_save_id;
+            }
+#endif
     };
 }
 

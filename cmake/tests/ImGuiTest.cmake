@@ -8,30 +8,16 @@ set(OGL_IMGUI_TEST_TARGET OpenGLImGui)
 set(OGL_IMGUI_TEST_SOURCES tests/OpenGLImGui.cpp)
 
 add_executable(${OGL_IMGUI_TEST_TARGET} ${OGL_IMGUI_TEST_SOURCES})
-
-target_include_directories(${OGL_IMGUI_TEST_TARGET}
-    PRIVATE include
-    PRIVATE deps
-    PRIVATE deps/nekowin/include/third_party
-    PRIVATE deps/imgui
-)
-
-target_link_libraries(${OGL_IMGUI_TEST_TARGET} deng-shared)
+add_dependencies(${OGL_IMGUI_TEST_TARGET} ${DENG_TARGET})
+target_link_libraries(${OGL_IMGUI_TEST_TARGET} ${DENG_TARGET})
 
 # Vulkan ImGui application
 set(VK_IMGUI_TEST_TARGET VulkanImGui)
 set(VK_IMGUI_TEST_SOURCES tests/VulkanImGui.cpp)
 
 add_executable(${VK_IMGUI_TEST_TARGET} ${VK_IMGUI_TEST_SOURCES})
-
-target_include_directories(${VK_IMGUI_TEST_TARGET}
-    PRIVATE include
-    PRIVATE deps
-    PRIVATE deps/nekowin/include/third_party
-    PRIVATE deps/imgui
-)
-
-target_link_libraries(${VK_IMGUI_TEST_TARGET} deng-shared)
+add_dependencies(${VK_IMGUI_TEST_TARGET} ${DENG_TARGET})
+target_link_libraries(${VK_IMGUI_TEST_TARGET} ${DENG_TARGET})
 
 # Custom commands to copy rumtime data
 add_custom_command(TARGET ${OGL_IMGUI_TEST_TARGET}

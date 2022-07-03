@@ -10,6 +10,7 @@
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 #endif
 
+#define DENG_EDITOR
 #include <string>
 #include <sstream>
 #include <vector>
@@ -21,6 +22,7 @@
 #include <chrono>
 #include <variant>
 #include <any>
+#include <cmath>
 
 #ifdef _DEBUG
     #include <iostream>
@@ -52,7 +54,7 @@
 #include <ModelShaderManager.h>
 #include <AnimationSampler.h>
 #include <MeshLoader.h>
-#include <SkeletonDataManager.h>
+#include <SkeletonLoader.h>
 #include <NodeLoader.h>
 #include <SceneLoader.h>
 #include <ModelLoader.h>
@@ -83,7 +85,27 @@
 
 namespace Executable {
 
+    struct EditorInspectorData {
+        enum {
+            ENTITY_TYPE_ANIMATION,
+            ENTITY_TYPE_SCENE,
+            ENTITY_TYPE_NODE,
+            ENTITY_TYPE_MESH,
+            ENTITY_TYPE_NONE
+        } entity_type = ENTITY_TYPE_NONE;
+
+        // ENTITY_TYPE_ANIMATION: DENG::Animation* 
+        // ENTITY_TYPE_SCENE: DENG::SceneLoader*
+        // ENTITY_TYPE_NODE: DENG::NodeLoader*
+        // ENTITY_TYPE_MESH: DENG::MeshLoader*
+        // ENTITY_TYPE_NONE: nullptr \-_-/
+        void *entity = nullptr;
+        uint32_t model_id = 0;
+    };
+
     struct EditorGuiData {
+        EditorInspectorData inspector;
+
         std::vector<DENG::ModelLoader> model_loaders;
         DENG::Window *win = nullptr;
         DENG::Renderer *rend = nullptr;
@@ -93,12 +115,19 @@ namespace Executable {
         DENG::FilePicker fp;
         uint32_t camera_offset = 0;
         bool once = true;
+        bool quit = false;
     };
 
+
     struct ImGuiCallback {
+        // menubar callbacks
         static void _NewProject(EditorGuiData *_data);
         static void _OpenFile(EditorGuiData *_data);
-        static void _ShowModelPanel(void *_data);
+
+        // dock window callbacks
+        static void _CreateInspector(EditorGuiData *_data);
+        static void _CreateRecursiveNodeTree(uint32_t _model_id, DENG::NodeLoader &_node, EditorGuiData *_data);
+        static void _CreateHierarchy(EditorGuiData *_data);
         static void _ShowCoreUI(void *_data);
     };
 

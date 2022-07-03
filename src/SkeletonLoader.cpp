@@ -1,11 +1,16 @@
-#define SKELETON_DATA_MANAGER_CPP
-#include <SkeletonDataManager.h>
+// DENG: dynamic engine - small but powerful 3D game engine
+// licence: Apache, see LICENCE file
+// file: SkeletonLoader.h - DAS skeleton transformation data loader class implementation
+// author: Karl-Mihkel Ott
+
+#define SKELETON_LOADER_CPP
+#include <SkeletonLoader.h>
 
 namespace DENG {
 
-    uint32_t SkeletonDataManager::m_skeleton_index = 0;
+    uint32_t SkeletonLoader::m_skeleton_index = 0;
 
-    SkeletonDataManager::SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations) : 
+    SkeletonLoader::SkeletonLoader(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations) : 
         m_parser(_parser),
         m_skeleton(_skeleton),
         m_node_transform(_node),
@@ -46,7 +51,7 @@ namespace DENG {
     }
 
 
-    SkeletonDataManager::SkeletonDataManager(const SkeletonDataManager &_sdm) noexcept :
+    SkeletonLoader::SkeletonLoader(const SkeletonLoader &_sdm) noexcept :
         m_parser(_sdm.m_parser),
         m_skeleton(_sdm.m_skeleton),
         m_node_transform(_sdm.m_node_transform),
@@ -62,7 +67,7 @@ namespace DENG {
         m_is_bound(_sdm.m_is_bound) {}
 
 
-    SkeletonDataManager::SkeletonDataManager(SkeletonDataManager &&_sdm) noexcept :
+    SkeletonLoader::SkeletonLoader(SkeletonLoader &&_sdm) noexcept :
         m_parser(_sdm.m_parser),
         m_skeleton(_sdm.m_skeleton),
         m_node_transform(_sdm.m_node_transform),
@@ -78,7 +83,7 @@ namespace DENG {
         m_is_bound(_sdm.m_is_bound) {}
 
 
-    void SkeletonDataManager::_FillJointTransformTableTRS() {
+    void SkeletonLoader::_FillJointTransformTableTRS() {
         m_joint_trs_transforms.resize(m_max_joint);
 
         // fill the TRS table
@@ -92,7 +97,7 @@ namespace DENG {
     }
 
 
-    void SkeletonDataManager::_CalculateJointWorldTransforms() {
+    void SkeletonLoader::_CalculateJointWorldTransforms() {
         // first - index of the joint to be calculated
         // second - index of parent joint (UINT32_MAX for none)
         std::queue<std::pair<uint32_t, uint32_t>> children;
@@ -133,7 +138,7 @@ namespace DENG {
     }
 
 
-    void SkeletonDataManager::_ApplyJointTransforms(uint32_t _joint_id) {
+    void SkeletonLoader::_ApplyJointTransforms(uint32_t _joint_id) {
         std::queue<uint32_t> children;
         children.push(_joint_id);
 
@@ -152,7 +157,7 @@ namespace DENG {
     }
 
 
-    void SkeletonDataManager::Update() {
+    void SkeletonLoader::Update() {
         m_is_bound = false;
         std::fill(m_joint_trs_transforms.begin(), m_joint_trs_transforms.end(), JointTransformation());
         std::fill(m_joint_world_transforms.begin(), m_joint_world_transforms.end(), Libdas::Matrix4<float>());

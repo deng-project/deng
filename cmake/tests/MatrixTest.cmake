@@ -9,4 +9,4 @@ target_include_directories(MatrixTest
     PRIVATE include
 )
 
-target_link_libraries(MatrixTest PRIVATE ${DENG_SHARED_TARGET})
+target_link_libraries(MatrixTest PRIVATE ${DENG_TARGET})

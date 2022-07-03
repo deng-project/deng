@@ -1,11 +1,12 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: SkeletonDataManager.h - DAS skeleton transformation data manager
+// file: SkeletonLoader.h - DAS skeleton transformation data loader class header
 // author: Karl-Mihkel Ott
-#ifndef SKELETON_DATA_MANAGER_H
-#define SKELETON_DATA_MANAGER_H
+//
+#ifndef SKELETON_LOADER_H
+#define SKELETON_LOADER_H
 
-#ifdef SKELETON_DATA_MANAGER_CPP
+#ifdef SKELETON_LOADER_CPP
     #include <vector>
     #include <cstring>
     #include <string>
@@ -40,7 +41,7 @@
 
 namespace DENG {
 
-    class SkeletonDataManager {
+    class SkeletonLoader {
         private:
             struct JointTransformation {
                 Libdas::Vector3<float> t = { 0.0f, 0.0f, 0.0f };
@@ -69,9 +70,9 @@ namespace DENG {
             void _ApplyJointTransforms(uint32_t _joint_id);
 
         public:
-            SkeletonDataManager(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations);
-            SkeletonDataManager(const SkeletonDataManager& _sdm) noexcept;
-            SkeletonDataManager(SkeletonDataManager&& _sdm) noexcept;
+            SkeletonLoader(const Libdas::Matrix4<float> &_node, Libdas::DasParser &_parser, const Libdas::DasSkeleton &_skeleton, std::vector<Animation> &_animations);
+            SkeletonLoader(const SkeletonLoader& _sdm) noexcept;
+            SkeletonLoader(SkeletonLoader&& _sdm) noexcept;
             void Update();
             void SetNewParentTransform(const Libdas::Matrix4<float> &_parent);
 

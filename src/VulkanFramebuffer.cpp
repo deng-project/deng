@@ -381,7 +381,7 @@ namespace DENG {
                         // check if per shader descriptor set layout is present
                         if(layouts[0] != VK_NULL_HANDLE) {
                             const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
-                            m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], &it->first.ubo_data_layouts, fb_img_count, missing, pool_cap);
+                            m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], it->first.ubo_data_layouts, fb_img_count, missing, pool_cap);
                             m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
                         } else {
                             m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
@@ -399,7 +399,7 @@ namespace DENG {
                         const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
 
                         const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[it->first.shader_module_id].GetPerMeshDescriptorSetLayout();
-                        m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, &it->first.ubo_blocks, fb_img_count, missing, pool_cap);
+                        m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, it->first.ubo_blocks, fb_img_count, missing, pool_cap);
                         m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
                     } else {
                         m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);

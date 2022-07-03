@@ -251,11 +251,14 @@ namespace DENG {
 
     void OpenGLRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
         m_buffer_loader.RequestMemory(_offset + _size, GL_UNIFORM_BUFFER);
-        void *data = glMapNamedBufferRange(m_buffer_loader.GetBufferData().ubo_buffer, (GLintptr) _offset, (GLsizeiptr) _size, GL_MAP_WRITE_BIT);
-        glErrorCheck("glMapBufferRange");
-        std::memcpy(data, _raw_data, static_cast<size_t>(_size));
-        glUnmapNamedBuffer(m_buffer_loader.GetBufferData().ubo_buffer);
-        glErrorCheck("glUnmapNamedBuffer");
+
+        if(_raw_data) {
+            void *data = glMapNamedBufferRange(m_buffer_loader.GetBufferData().ubo_buffer, (GLintptr) _offset, (GLsizeiptr) _size, GL_MAP_WRITE_BIT);
+            glErrorCheck("glMapBufferRange");
+            std::memcpy(data, _raw_data, static_cast<size_t>(_size));
+            glUnmapNamedBuffer(m_buffer_loader.GetBufferData().ubo_buffer);
+            glErrorCheck("glUnmapNamedBuffer");
+        }
     }
 
 

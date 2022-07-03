@@ -238,19 +238,17 @@ namespace DENG {
     void VulkanRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_size + _offset) >= m_uniform_size) {
-            const VkDeviceSize old_size = m_uniform_size;
             m_uniform_size = (_size + _offset) * 3 / 2;
-            void *data = Vulkan::_CopyToDeviceMemory(m_instance_creator.GetDevice(), static_cast<VkDeviceSize>(old_size), m_uniform_memory, 0);
-
             _ReallocateUniformBuffer();
-            Vulkan::_CopyToBufferMemory(m_instance_creator.GetDevice(), static_cast<VkDeviceSize>(_size), data, m_uniform_memory, 0);
-            std::free(data);
 
-            for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++)
+            for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
                 it->second.RecreateDescriptorSets();
+            }
         }
 
-        Vulkan::_CopyToBufferMemory(m_instance_creator.GetDevice(), static_cast<VkDeviceSize>(_size), _raw_data, m_uniform_memory, static_cast<VkDeviceSize>(_offset));
+        if(_raw_data) {
+            Vulkan::_CopyToBufferMemory(m_instance_creator.GetDevice(), static_cast<VkDeviceSize>(_size), _raw_data, m_uniform_memory, static_cast<VkDeviceSize>(_offset));
+        }
     }
 
 
@@ -333,6 +331,7 @@ namespace DENG {
         // create and allocate uniform buffer resourses
         VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
         Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_uniform_size = mem_req.size;
         vkBindBufferMemory(m_instance_creator.GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
     }
 
@@ -368,6 +367,7 @@ namespace DENG {
         // step 2: allocate new uniform buffer
         VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
         Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_uniform_size = mem_req.size;
         vkBindBufferMemory(m_instance_creator.GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
     }
 

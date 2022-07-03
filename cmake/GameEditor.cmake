@@ -8,9 +8,12 @@ set(GAME_EDITOR_HEADERS include/Executables/GameEditor.h)
 set(GAME_EDITOR_SOURCES src/Executables/GameEditor.cpp)
 
 add_executable(${GAME_EDITOR_TARGET} ${GAME_EDITOR_HEADERS} ${GAME_EDITOR_SOURCES})
-add_dependencies(${GAME_EDITOR_TARGET} ${DENG_SHARED_TARGET})
-target_link_libraries(${GAME_EDITOR_TARGET} PRIVATE ${DENG_SHARED_TARGET})
+add_dependencies(${GAME_EDITOR_TARGET} ${DENG_COMPLETE_TARGET})
+target_link_libraries(${GAME_EDITOR_TARGET} PRIVATE ${DENG_COMPLETE_TARGET})
 
-if(UNIX AND NOT MACOS)
-    target_link_libraries(${GAME_EDITOR_TARGET} PRIVATE pthread)
-endif()
+# Copy BackendChooser.py to build directory
+add_custom_command(TARGET ${GAME_EDITOR_TARGET}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy ${CMAKE_SOURCE_DIR}/scripts/BackendChooser.py ${CMAKE_CURRENT_BINARY_DIR}
+)
