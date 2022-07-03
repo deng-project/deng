@@ -17,6 +17,9 @@
     #include <variant>
     #include <stack>
     #include <any>
+#ifdef DENG_EDITOR
+    #include <algorithm>
+#endif
 #ifdef _DEBUG
     #include <iostream>
 #endif

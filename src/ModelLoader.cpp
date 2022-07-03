@@ -47,6 +47,16 @@ namespace DENG {
                 const Libdas::DasAnimationChannel &channel = m_parser.AccessAnimationChannel(ani.channels[j]);
                 m_animations.back().samplers.emplace_back(channel, m_parser);
             }
+
+#ifdef DENG_EDITOR
+            std::string id = m_animations.back().name;
+            std::transform(id.begin(), id.end(), id.begin(), [](unsigned char c){ return std::tolower(c); });
+            m_animations.back().inspector_title = "Animation: " + m_animations.back().name;
+            m_animations.back().unbind_checkbox_id = "Force unbind##" + id;
+            m_animations.back().repeat_checkbox_id = "Repeat animation##" + id;
+            m_animations.back().animate_button_id = "Animate##" + id;
+            m_animations.back().stop_animation_button_id = "Stop animation##" + id;
+#endif
         }
 
         // load each scene in the model

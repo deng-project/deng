@@ -136,7 +136,17 @@ namespace DENG {
     struct Animation {
         std::string name;
         std::vector<AnimationSampler> samplers;
-        bool is_bound = false;
+        bool is_unbound = false;
+        bool is_animated = false;
+        bool is_repeated = false;
+
+#ifdef DENG_EDITOR
+        std::string inspector_title;
+        std::string unbind_checkbox_id;
+        std::string repeat_checkbox_id;
+        std::string animate_button_id;
+        std::string stop_animation_button_id;
+#endif
     };
 
 }

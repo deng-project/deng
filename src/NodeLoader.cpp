@@ -118,7 +118,7 @@ namespace DENG {
             for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++) {
                 const uint32_t index = static_cast<uint32_t>(&m_node - &mp_parser->AccessNode(0));
                 if(smp_it->GetAnimationChannel().node_id == index)
-                    m_animation_samplers.push_back(std::make_pair(&ani_it->is_bound, &(*smp_it)));
+                    m_animation_samplers.push_back(std::make_pair(&ani_it->is_unbound, &(*smp_it)));
             }
         }
     }
@@ -164,7 +164,7 @@ namespace DENG {
         m_transform = m_parent;
         if(m_animation_samplers.size()) {
             for(auto it = m_animation_samplers.begin(); it != m_animation_samplers.end(); it++) {
-                if(*it->first) {
+                if(!*it->first) {
                     it->second->Update();
                     Libdas::Vector3<float> translation = { 0.0f, 0.0f, 0.0f };
                     Libdas::Quaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };

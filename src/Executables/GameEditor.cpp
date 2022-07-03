@@ -32,23 +32,24 @@ namespace Executable {
             case EditorInspectorData::ENTITY_TYPE_ANIMATION: 
             {
                 DENG::Animation *ani = reinterpret_cast<DENG::Animation*>(_data->inspector.entity);
-                
-                const std::string txt = "Animation: " + ani->name;
-                ImGui::Text(txt.c_str());
-                static bool repeat;
-                ImGui::Checkbox("Repeat animation", &repeat);
+                ImGui::Text(ani->inspector_title.c_str());
 
-                if(!ani->is_bound && ImGui::Button("Animate")) {
-                    ani->is_bound = !ani->is_bound;
+                ImGui::Checkbox(ani->unbind_checkbox_id.c_str(), &ani->is_unbound);
+                if(ani->is_unbound) ImGui::BeginDisabled();
+                ImGui::Checkbox(ani->repeat_checkbox_id.c_str(), &ani->is_repeated);
+
+                if(!ani->is_animated && ImGui::Button(ani->animate_button_id.c_str())) {
+                    ani->is_animated = !ani->is_animated;
                     // animate
                     for(auto it = ani->samplers.begin(); it != ani->samplers.end(); it++)
-                        it->Animate(repeat);
-                } else if(ani->is_bound && ImGui::Button("Stop animation")) {
-                    ani->is_bound = !ani->is_bound;
+                        it->Animate(ani->is_repeated);
+                } else if(ani->is_animated && ImGui::Button(ani->stop_animation_button_id.c_str())) {
+                    ani->is_animated = !ani->is_animated;
                     // stop animation
                     for(auto it = ani->samplers.begin(); it != ani->samplers.end(); it++)
                         it->Stop();
                 }
+                if(ani->is_unbound) ImGui::EndDisabled();
 
                 break;
             }

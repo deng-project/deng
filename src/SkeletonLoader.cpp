@@ -45,7 +45,7 @@ namespace DENG {
             for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++) {
                 for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
                     if(m_skeleton.joints[i] == smp_it->GetAnimationChannel().joint_id)
-                        m_joint_samplers.push_back(std::make_pair(&ani_it->is_bound, &(*smp_it)));
+                        m_joint_samplers.push_back(std::make_pair(&ani_it->is_unbound, &(*smp_it)));
                 }
             }
         }

@@ -73,8 +73,8 @@ namespace DENG {
             m_texture_bound_desc_sets(std::move(_da.m_texture_bound_desc_sets)),
             m_sampler_count(_da.m_sampler_count)
         {
-            m_primary_pool = VK_NULL_HANDLE;
-            m_secondary_pool = VK_NULL_HANDLE;
+            _da.m_primary_pool = VK_NULL_HANDLE;
+            _da.m_secondary_pool = VK_NULL_HANDLE;
         }
 
 
