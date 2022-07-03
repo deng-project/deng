@@ -118,15 +118,15 @@ namespace DENG {
             }
 
             // custom transformations
-            inline Libdas::Vector3<float> GetCustomTranslation() const {
+            inline Libdas::Vector3<float> &GetCustomTranslation() {
                 return m_custom_translation;
             }
 
-            inline Libdas::Quaternion GetCustomRotation() const {
+            inline Libdas::Quaternion &GetCustomRotation() {
                 return m_custom_rotation;
             }
 
-            inline float GetCustomScale() const {
+            inline float &GetCustomScale() {
                 return m_custom_scale;
             }
 

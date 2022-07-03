@@ -39,8 +39,8 @@ namespace DENG {
             m_morph_weights[i] = mp_prim->morph_weights[i];
 
 #ifdef DENG_EDITOR
-        std::string id;
-        std::transform(m_name.begin(), m_name.end(), id.begin(), [](char c) { return std::tolower(c); });
+        std::string id = m_name;
+        std::transform(id.begin(), id.end(), id.begin(), [](unsigned char c){ return std::tolower(c); });
         m_inspector_name = "Mesh: " + m_name + "##" + id;
         m_color_checkbox_id = "Use a color##" + id;
         m_color_picker_id = "Pick a color##" + id;

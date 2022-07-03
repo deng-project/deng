@@ -10,8 +10,6 @@ namespace Executable {
     /*************************/
     /***** ImGuiCallback *****/
     /*************************/
-    //void ImGuiCallback::_NewProject(EditorGuiData *_data) {
-    //}
 
     void ImGuiCallback::_OpenFile(EditorGuiData *_data) {
         _data->fp.SelectFile(".das", FILEPICKER_WIDTH, FILEPICKER_HEIGHT, "DENG: Open a 3D model");
@@ -71,14 +69,14 @@ namespace Executable {
 
                 // custom transformations
                 ImGui::Text("Translation: ");
-                static Libdas::Vector3<float> t = node->GetCustomTranslation();
+                Libdas::Vector3<float> &t = node->GetCustomTranslation();
                 ImGui::DragFloat("X##translation", &t.first, 0.2f);
                 ImGui::DragFloat("Y##translation", &t.second, 0.2f);
                 ImGui::DragFloat("Z##translation", &t.third, 0.2f);
                 node->SetCustomTranslation(t);
 
                 ImGui::Text("Rotation (quaternion): ");
-                static Libdas::Quaternion rot = node->GetCustomRotation();
+                Libdas::Quaternion &rot = node->GetCustomRotation();
                 const float sc45 = 0.707106f;
                 ImGui::SliderFloat("X##rot", &rot.x, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
                 ImGui::SliderFloat("Y##rot", &rot.y, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
@@ -86,7 +84,7 @@ namespace Executable {
                 ImGui::SliderFloat("W##rot", &rot.w, -1, 1, "%.002f", ImGuiSliderFlags_Logarithmic);
                 node->SetCustomRotation(rot);
 
-                static float s = node->GetCustomScale();
+                float &s = node->GetCustomScale();
                 ImGui::Text("Scale: ");
                 ImGui::DragFloat("##scale", &s, 0.2f);
                 node->SetCustomScale(s);

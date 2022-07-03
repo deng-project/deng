@@ -77,8 +77,7 @@ namespace DENG {
 
 
     void ModelLoader::_AttachBuffersAndTextures() {
-        m_buffer_offsets.resize(m_parser.GetBufferCount());
-        std::fill(m_buffer_offsets.begin(), m_buffer_offsets.end(), UINT32_MAX);
+        m_buffer_offsets.reserve(m_parser.GetBufferCount());
 
         // iterate through buffers
         for(uint32_t i = 0; i < m_parser.GetBufferCount(); i++) {
@@ -117,7 +116,7 @@ namespace DENG {
                 }
             } else {
                 GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
-                m_buffer_offsets[i] = mem_manager->RequestMainMemoryLocationP(1, static_cast<uint32_t>(buffer.data_ptrs.back().second));
+                m_buffer_offsets.push_back(mem_manager->RequestMainMemoryLocationP(4, static_cast<uint32_t>(buffer.data_ptrs.back().second)));
                 m_renderer.UpdateVertexDataBuffer(std::make_pair(buffer.data_ptrs.back().first, static_cast<uint32_t>(buffer.data_ptrs.back().second)), m_buffer_offsets[i]);
             }
         }
