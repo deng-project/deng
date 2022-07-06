@@ -44,20 +44,27 @@ namespace DENG {
     class SkeletonLoader {
         friend class NodeLoader;
         private:
-            struct JointTransformation {
-                Libdas::Vector3<float> t = { 0.0f, 0.0f, 0.0f };
-                Libdas::Quaternion r = { 0.0f, 0.0f, 0.0f, 1.0f };
-                float s = 1.0f;
+            struct JointAnimatedProperties {
+                bool is_t = false;
+                bool is_r = false;
+                bool is_s = false;
+            };
+
+            struct TRS {
+                Libdas::Vector3<float> t;
+                Libdas::Quaternion r;
+                float s;
             };
 
             Libdas::DasParser *mp_parser;
             const Libdas::DasSkeleton &m_skeleton;
             const Libdas::Matrix4<float> m_node_transform;
             const Libdas::Matrix4<float> m_inv_node_transform;
-            std::vector<Libdas::Matrix4<float>> m_joint_matrices;
+            std::vector<Libdas::Matrix4<float>> m_joint_transforms;
             std::vector<Libdas::Matrix4<float>> m_joint_world_transforms;
-            std::vector<JointTransformation> m_joint_trs_transforms;
-            std::vector<Libdas::Matrix4<float>> m_inverse_bind_matrices;
+            std::vector<Libdas::Matrix4<float>> m_joint_matrices;
+            std::vector<JointAnimatedProperties> m_joint_animated_properties;
+            std::vector<TRS> m_animated_trs_values;
             std::vector<uint32_t> m_joint_lookup;
             std::vector<std::pair<const bool*, AnimationSampler*>> m_joint_samplers;
             static uint32_t m_skeleton_index;
@@ -66,6 +73,7 @@ namespace DENG {
             bool m_is_bound = false;
 
         private:
+            void _FindJointAnimatedProperties();
             void _FillJointTransformTableTRS();
             void _CalculateJointWorldTransforms();
             void _ApplyJointTransforms(uint32_t _joint_id);

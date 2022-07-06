@@ -21,8 +21,11 @@ namespace DENG {
         m_node_transform(_node),
         m_inv_node_transform(_node.Inverse())
     {
-        m_joint_matrices.resize(m_skeleton.joint_count);
+        m_joint_transforms.resize(m_skeleton.joint_count);
         m_joint_world_transforms.resize(m_skeleton.joint_count);
+        m_joint_matrices.resize(m_skeleton.joint_count);
+        m_joint_animated_properties.resize(m_skeleton.joint_count);
+        m_animated_trs_values.resize(m_skeleton.joint_count);
 
         // find the maximum joint id
         for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
@@ -37,7 +40,6 @@ namespace DENG {
         for(uint32_t i = 0; i < m_skeleton.joint_count; i++)
             m_joint_lookup[m_skeleton.joints[i]] = i;
 
-        _FillJointTransformTableTRS();
         _CalculateJointWorldTransforms();
 
         // check which animation sampler joint ids are used in current skeleton
@@ -50,6 +52,8 @@ namespace DENG {
             }
         }
 
+        _FindJointAnimatedProperties();
+
         if(m_skeleton.name != "")
             m_skeleton_name = m_skeleton.name;
         else m_skeleton_name += std::to_string(m_skeleton_index++);
@@ -61,10 +65,9 @@ namespace DENG {
         m_skeleton(_sm.m_skeleton),
         m_node_transform(_sm.m_node_transform),
         m_inv_node_transform(_sm.m_inv_node_transform),
-        m_joint_matrices(std::move(_sm.m_joint_matrices)),
+        m_joint_transforms(std::move(_sm.m_joint_transforms)),
         m_joint_world_transforms(std::move(_sm.m_joint_world_transforms)),
-        m_joint_trs_transforms(std::move(_sm.m_joint_trs_transforms)),
-        m_inverse_bind_matrices(std::move(_sm.m_inverse_bind_matrices)),
+        m_joint_matrices(std::move(_sm.m_joint_matrices)),
         m_joint_lookup(std::move(_sm.m_joint_lookup)),
         m_joint_samplers(std::move(_sm.m_joint_samplers)),
         m_skeleton_name(std::move(_sm.m_skeleton_name)),
@@ -72,16 +75,27 @@ namespace DENG {
         m_is_bound(_sm.m_is_bound) {}
 
 
-    void SkeletonLoader::_FillJointTransformTableTRS() {
-        m_joint_trs_transforms.resize(m_max_joint);
+    void SkeletonLoader::_FindJointAnimatedProperties() {
+        for(auto it = m_joint_samplers.begin(); it != m_joint_samplers.end(); it++) {
+            const uint32_t joint_id_l = m_joint_lookup[it->second->GetAnimationChannel().joint_id];
 
-        // fill the TRS table
-        for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
-            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(m_skeleton.joints[i]);
-            JointTransformation &trs = m_joint_trs_transforms[m_joint_lookup[m_skeleton.joints[i]]];
-            trs.t = { joint.translation.x, joint.translation.y, joint.translation.z };
-            trs.r = joint.rotation;
-            trs.s = joint.scale;
+            switch(it->second->GetAnimationTarget()) {
+                case LIBDAS_ANIMATION_TARGET_TRANSLATION:
+                    m_joint_animated_properties[joint_id_l].is_t = true;
+                    break;
+
+                case LIBDAS_ANIMATION_TARGET_ROTATION:
+                    m_joint_animated_properties[joint_id_l].is_r = true;
+                    break;
+
+                case LIBDAS_ANIMATION_TARGET_SCALE:
+                    m_joint_animated_properties[joint_id_l].is_s = true;
+                    break;
+
+                default:
+                    DENG_ASSERT(false);
+                    break;
+            }
         }
     }
 
@@ -97,27 +111,12 @@ namespace DENG {
             children.pop();
 
             const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(child.first);
-            const JointTransformation &trs = m_joint_trs_transforms[m_joint_lookup[child.first]];
-
-            const Libdas::Matrix4<float> t = {
-                { 1.0f, 0.0f, 0.0f, trs.t.first },
-                { 0.0f, 1.0f, 0.0f, trs.t.second },
-                { 0.0f, 0.0f, 1.0f, trs.t.third },
-                { 0.0f, 0.0f, 0.0f, 1.0f }
-            };
-
-            const Libdas::Matrix4<float> r = trs.r.ExpandToMatrix4();
-            const Libdas::Matrix4<float> s = {
-                { trs.s, 0.0f, 0.0f, 0.0f },
-                { 0.0f, trs.s, 0.0f, 0.0f },
-                { 0.0f, 0.0f, trs.s, 0.0f },
-                { 0.0f, 0.0f, 0.0f, 1.0f },
-            };
+            const Libdas::Matrix4<float> &trs = m_joint_transforms[m_joint_lookup[child.first]];
 
             if(child.second == UINT32_MAX) {
-                m_joint_world_transforms[m_joint_lookup[child.first]] = m_node_transform * (t * r * s);
+                m_joint_world_transforms[m_joint_lookup[child.first]] = m_node_transform * trs;
             } else {
-                m_joint_world_transforms[m_joint_lookup[child.first]] = m_joint_world_transforms[m_joint_lookup[child.second]] * (t * r * s);
+                m_joint_world_transforms[m_joint_lookup[child.first]] = m_joint_world_transforms[m_joint_lookup[child.second]] * trs;
             }
 
             // for each child joint
@@ -136,9 +135,11 @@ namespace DENG {
             children.pop();
 
             const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(curr_id);
-            if(m_is_bound)
-                m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * /* m_inverse_bind_matrices[m_joint_lookup[curr_id]]; */joint.inverse_bind_pos;
-            else m_joint_matrices[m_joint_lookup[curr_id]] = Libdas::Matrix4<float>();
+            if(m_is_bound) {
+                m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * joint.inverse_bind_pos;
+            } else {
+                m_joint_matrices[m_joint_lookup[curr_id]] = Libdas::Matrix4<float>();
+            }
 
             for(uint32_t i = 0; i < joint.children_count; i++)
                 children.push(joint.children[i]);
@@ -148,33 +149,82 @@ namespace DENG {
 
     void SkeletonLoader::Update() {
         m_is_bound = false;
-        std::fill(m_joint_trs_transforms.begin(), m_joint_trs_transforms.end(), JointTransformation());
+        std::fill(m_joint_transforms.begin(), m_joint_transforms.end(), Libdas::Matrix4<float>());
         std::fill(m_joint_world_transforms.begin(), m_joint_world_transforms.end(), Libdas::Matrix4<float>());
 
         // update animation samplers
         for(auto it = m_joint_samplers.begin(); it != m_joint_samplers.end(); it++) {
-            if(*it->first) {
+            if(!*it->first) {
                 m_is_bound = true;
                 it->second->Update();
                 const uint32_t ani_joint = it->second->GetAnimationChannel().joint_id;
+                Libdas::Matrix4<float> ani_mat;
 
                 switch(it->second->GetAnimationTarget()) {
                     case LIBDAS_ANIMATION_TARGET_TRANSLATION:
-                        m_joint_trs_transforms[m_joint_lookup[ani_joint]].t = it->second->GetTranslation();
+                        m_animated_trs_values[m_joint_lookup[ani_joint]].t = it->second->GetTranslation();
                         break;
 
                     case LIBDAS_ANIMATION_TARGET_ROTATION:
-                        m_joint_trs_transforms[m_joint_lookup[ani_joint]].r = it->second->GetRotation();
+                        m_animated_trs_values[m_joint_lookup[ani_joint]].r = it->second->GetRotation();
                         break;
 
                     case LIBDAS_ANIMATION_TARGET_SCALE:
-                        m_joint_trs_transforms[m_joint_lookup[ani_joint]].s = it->second->GetScale();
+                        m_animated_trs_values[m_joint_lookup[ani_joint]].s = it->second->GetScale();
                         break;
 
                     default:
                         DENG_ASSERT(false);
                         break;
                 }
+            }
+        }
+
+        // update local joint transformations
+        for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
+            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(m_skeleton.joints[i]);
+            if(m_joint_animated_properties[m_joint_lookup[i]].is_t) {
+                const Libdas::Matrix4<float> t = {
+                    { 1.0f, 0.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].t.first },
+                    { 0.0f, 1.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].t.second },
+                    { 0.0f, 0.0f, 1.0f, m_animated_trs_values[m_joint_lookup[i]].t.third },
+                    { 0.0f, 0.0f, 0.0f, 1.0f },
+                };
+                m_joint_transforms[m_joint_lookup[i]] *= t;
+            } else {
+                const Libdas::Matrix4<float> t = {
+                    { 1.0f, 0.0f, 0.0f, joint.translation.x },
+                    { 0.0f, 1.0f, 0.0f, joint.translation.y },
+                    { 0.0f, 0.0f, 1.0f, joint.translation.z },
+                    { 0.0f, 0.0f, 0.0f, 1.0f }
+                };
+                m_joint_transforms[m_joint_lookup[i]] *= t;
+            }
+
+            if(m_joint_animated_properties[m_joint_lookup[i]].is_r) {
+                const Libdas::Matrix4<float> r = m_animated_trs_values[m_joint_lookup[i]].r.ExpandToMatrix4();
+                m_joint_transforms[m_joint_lookup[i]] *= r;
+            } else {
+                const Libdas::Matrix4<float> r = joint.rotation.ExpandToMatrix4();
+                m_joint_transforms[m_joint_lookup[i]] *= r;
+            }
+
+            if(m_joint_animated_properties[m_joint_lookup[i]].is_s) {
+                const Libdas::Matrix4<float> s = {
+                    { m_animated_trs_values[m_joint_lookup[i]].s, 0.0f, 0.0f, 0.0f },
+                    { 0.0f, m_animated_trs_values[m_joint_lookup[i]].s, 0.0f, 0.0f },
+                    { 0.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].s, 0.0f },
+                    { 0.0f, 0.0f, 0.0f, 1.0f },
+                };
+                m_joint_transforms[m_joint_lookup[i]] *= s;
+            } else {
+                const Libdas::Matrix4<float> s = {
+                    { joint.scale, 0.0f, 0.0f, 0.0f },
+                    { 0.0f, joint.scale, 0.0f, 0.0f },
+                    { 0.0f, 0.0f, joint.scale, 0.0f },
+                    { 0.0f, 0.0f, 0.0f, 1.0f },
+                };
+                m_joint_transforms[m_joint_lookup[i]] *= s;
             }
         }
 
