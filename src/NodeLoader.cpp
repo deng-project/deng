@@ -162,6 +162,7 @@ namespace DENG {
 
         // update animation samplers if required
         m_transform = m_parent;
+        _UpdateTransformTRS(m_custom_translation, m_custom_rotation, m_custom_scale);
         if(m_animation_samplers.size()) {
             for(auto it = m_animation_samplers.begin(); it != m_animation_samplers.end(); it++) {
                 if(!*it->first) {
@@ -199,8 +200,6 @@ namespace DENG {
         } else {
             m_transform *= m_node.transform;
         }
-
-        _UpdateTransformTRS(m_custom_translation, m_custom_rotation, m_custom_scale);
 
         // update parent transformation for child nodes
         if(parent_update_flag) {
