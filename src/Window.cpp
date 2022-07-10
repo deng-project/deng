@@ -10,13 +10,11 @@
 namespace DENG {
 
     Window::Window(int32_t _x, int32_t _y, neko_Hint _hints, const char *_title) {
-        //neko_InitAPI();
         m_window = neko_NewWindow(_x, _y, _hints, 0, 0, _title);
     }
 
     Window::~Window() {
         neko_DestroyWindow(&m_window);
-        //neko_DeinitAPI();
     }
 
     void Window::Initialise() {
@@ -37,10 +35,12 @@ namespace DENG {
     }
 
 
-    void Window::ToggleVCMode() {
+    void Window::ToggleVCMode(Libdas::Point2D<float> _origin) {
         m_window.vc_data.is_enabled = !m_window.vc_data.is_enabled;
 
         if (m_window.vc_data.is_enabled) {
+            m_window.vc_data.orig_x = _origin.x;
+            m_window.vc_data.orig_y = _origin.y;
             neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
         }
     }
@@ -56,9 +56,11 @@ namespace DENG {
     }
 
 
-    void Window::ChangeVCMode(bool _is_vcp) {
+    void Window::ChangeVCMode(bool _is_vcp, Libdas::Point2D<float> _origin) {
         m_window.vc_data.is_enabled = _is_vcp;
         if (m_window.vc_data.is_enabled) {
+            m_window.vc_data.orig_x = _origin.x;
+            m_window.vc_data.orig_y = _origin.y;
             neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
         }
     }

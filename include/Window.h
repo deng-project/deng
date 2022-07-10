@@ -50,14 +50,14 @@ namespace DENG {
             void glMakeCurrent();
 
             /// Toggle virtual cursor mode
-            void ToggleVCMode();
+            void ToggleVCMode(Libdas::Point2D<float> _origin);
 
             /// Search for all required vulkan extensions
             char **FindVulkanSurfaceExtensions(uint32_t *p_ext_c) const;
             void ChangeSizeHints(neko_Hint _hints);
 
             /// Explicitly change virtual cursor mode
-            void ChangeVCMode(bool is_vcp);
+            void ChangeVCMode(bool is_vcp, Libdas::Point2D<float> _origin);
 
             /// Change DENG cursor mode
             void ChangeCursor(neko_CursorMode cur);

@@ -15,13 +15,13 @@ namespace DENG {
     }
 
     void FirstPersonCamera::EnableCamera() {
-        m_window.ChangeVCMode(true);
+        m_window.ChangeVCMode(true, m_vc_origin);
         m_window.ChangeCursor(NEKO_CURSOR_MODE_HIDDEN);
     }
 
 
     void FirstPersonCamera::DisableCamera() {
-        m_window.ChangeVCMode(false);
+        m_window.ChangeVCMode(false, m_vc_origin);
         m_window.ChangeCursor(NEKO_CURSOR_MODE_STANDARD);
     }
 

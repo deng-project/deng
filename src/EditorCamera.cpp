@@ -76,7 +76,7 @@ namespace DENG {
 
             // rotation toggle is activated
             if(m_window.IsHidEventActive(conf.rotate_toggle)) {
-                m_window.ChangeVCMode(true);
+                m_window.ChangeVCMode(true, m_vc_origin);
                 Libdas::Point3D<float> rot = {
                     -delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
                     delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
@@ -85,7 +85,7 @@ namespace DENG {
 
                 m_rotation += rot;
             } else {
-                m_window.ChangeVCMode(false);
+                m_window.ChangeVCMode(false, m_vc_origin);
                 if(m_window.IsHidEventActive(conf.zoom_in) && m_translation.z - conf.zoom_step > 0) {
                     delta_step = -conf.zoom_step;
                     m_translation.z += delta_step;

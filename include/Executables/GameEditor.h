@@ -110,10 +110,10 @@ namespace Executable {
         DENG::Window *win = nullptr;
         DENG::Renderer *rend = nullptr;
         DENG::ImGuiLayer *imgui = nullptr;
+        DENG::EditorCamera *camera = nullptr;
         ImVec2 uv = ImVec2();
         ImTextureID viewport = nullptr;
         DENG::FilePicker fp;
-        uint32_t camera_offset = 0;
         bool once = true;
         bool quit = false;
     };

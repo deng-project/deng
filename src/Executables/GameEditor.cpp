@@ -17,7 +17,7 @@ namespace Executable {
         _data->imgui->SetContext(_data->imgui->GetContext());
 
         if(file != "") {
-            _data->model_loaders.emplace_back(file, *_data->rend, _data->camera_offset, VIEWPORT_NAME);
+            _data->model_loaders.emplace_back(file, *_data->rend, _data->camera->GetUboOffset(), VIEWPORT_NAME);
             _data->rend->LoadShaders();
         }
 
@@ -266,32 +266,50 @@ namespace Executable {
                     ImGuiID hierarchy = ImGui::DockBuilderSplitNode(viewport, ImGuiDir_Left, 0.15f, nullptr, &viewport);
                     ImGuiID assets = ImGui::DockBuilderSplitNode(viewport, ImGuiDir_Down, 0.25f, nullptr, &viewport);
 
-                    ImGui::DockBuilderDockWindow("inspector", inspector);
-                    ImGui::DockBuilderDockWindow("viewport", viewport);
-                    ImGui::DockBuilderDockWindow("hierarchy", hierarchy);
-                    ImGui::DockBuilderDockWindow("assets", assets);
+                    ImGui::DockBuilderDockWindow("Inspector", inspector);
+                    ImGui::DockBuilderDockWindow("Viewport", viewport);
+                    ImGui::DockBuilderDockWindow("Hierarchy", hierarchy);
+                    ImGui::DockBuilderDockWindow("Assets", assets);
 
                     gui_data->once = false;
                 }
             ImGui::End();
         }
 
-        ImGui::Begin("inspector");
+        ImGui::Begin("Inspector");
             _CreateInspector(gui_data);
         ImGui::End();
 
         // viewport window
-        ImGui::Begin("viewport");
+        ImGui::Begin("Viewport");
             ImVec2 size = ImGui::GetContentRegionAvail();
             ImGui::Image(gui_data->viewport, size);
+
+            if(ImGui::IsWindowFocused()) {
+                ImVec2 min = ImGui::GetWindowContentRegionMin();
+                ImVec2 max = ImGui::GetWindowContentRegionMax();
+                const ImVec2 pos = ImGui::GetWindowPos();
+                min.x += pos.x;
+                min.y += pos.y;
+                max.x += pos.x;
+                max.y += pos.y;
+                const Libdas::Point2D<float> origin = {
+                    (max.x - min.x) / 2.0f + min.x,
+                    (max.y - min.y) / 2.0f + min.y
+                };
+                gui_data->camera->SetVirtualCursorOrigin(origin);
+                gui_data->camera->EnableCamera();
+            } else {
+                gui_data->camera->DisableCamera();
+            }
         ImGui::End();
 
-        ImGui::Begin("hierarchy");
+        ImGui::Begin("Hierarchy");
             _CreateHierarchy(gui_data);
         ImGui::End();
 
-        ImGui::Begin("assets");
-            ImGui::Text("Assets");
+        ImGui::Begin("Assets");
+            ImGui::Text("Assets window");
         ImGui::End();
     }
 
@@ -307,7 +325,7 @@ namespace Executable {
         m_imgui_data.rend = &m_renderer;
         m_imgui_data.win = &m_window;
         m_imgui_data.imgui = &m_imgui;
-        m_imgui_data.camera_offset = m_editor_camera.GetUboOffset();
+        m_imgui_data.camera = &m_editor_camera;
 
         // add #VIEWPORT_NAME framebuffer to renderer
         DENG::FramebufferDrawData fb;
@@ -337,18 +355,6 @@ namespace Executable {
                     if(m_window.GetHints() & NEKO_HINT_FULL_SCREEN)
                         m_window.ChangeSizeHints(NEKO_HINT_RESIZEABLE);
                     else m_window.ChangeSizeHints(NEKO_HINT_FULL_SCREEN);
-                    m_beg_time = std::chrono::system_clock::now();
-                }
-
-                if(m_window.IsKeyPressed(NEKO_KEY_ESCAPE)) {
-                    m_use_camera = !m_use_camera;
-                    if(!m_use_camera) {
-                        m_editor_camera.DisableCamera();
-                        LOG("Camera is now disabled");
-                    } else {
-                        m_editor_camera.EnableCamera();
-                        LOG("Camera is now enabled");
-                    }
                     m_beg_time = std::chrono::system_clock::now();
                 }
             }

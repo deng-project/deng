@@ -38,7 +38,7 @@ namespace DENG {
                 uint32_t m_pool_capacity;                               // value of how many in flight descriptor sets can it hold
                 std::vector<VkDescriptorSet> m_descriptor_sets; 
                 std::vector<bool> m_descriptor_set_pool_flags;          // true represents primary pool and false secondary
-                std::unordered_map<std::string, VkDescriptorSet*> m_texture_bound_desc_sets;
+                std::unordered_map<std::string, uint32_t> m_texture_bound_desc_sets;
                 size_t m_sampler_count = 0;
 
             private:

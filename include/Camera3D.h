@@ -85,6 +85,10 @@ namespace DENG {
             // perspective projection matrix attributes
             float m_fov = 65.f * PI / 180.f;    // 65 degrees by default
             Libdas::Point2D<float> m_planes = { -0.1f, -25.0f };
+            Libdas::Point2D<float> m_vc_origin = { 
+                static_cast<float>(m_window.GetSize().x / 2.0f),
+                static_cast<float>(m_window.GetSize().y / 2.0f)
+            };
 
             uint32_t m_ubo_offset;
             std::string m_name;
@@ -113,6 +117,10 @@ namespace DENG {
 
             inline ModelCameraUbo &GetCameraUbo() {
                 return m_ubo;
+            }
+
+            inline void SetVirtualCursorOrigin(Libdas::Point2D<float> _origin) {
+                m_vc_origin = _origin;
             }
 
             inline const std::string &GetName() {

@@ -49,7 +49,7 @@ namespace DENG {
                     if(!i) name += names[i];
                     else name += "|" + names[i];
                 }
-                m_texture_bound_desc_sets[name] = m_descriptor_sets.data();
+                m_texture_bound_desc_sets[name] = 0;
             }
 
             _UpdateDescriptorSets(names, textures, 0);
@@ -329,7 +329,7 @@ namespace DENG {
                 }
 
                 // create a vector to use for sorting
-                std::vector<std::pair<std::string, VkDescriptorSet*>> sorted_texture_bounds;
+                std::vector<std::pair<std::string, uint32_t>> sorted_texture_bounds;
                 sorted_texture_bounds.reserve(m_texture_bound_desc_sets.size());
                 for(auto it = m_texture_bound_desc_sets.begin(); it != m_texture_bound_desc_sets.end(); it++) {
                     sorted_texture_bounds.push_back(*it);
@@ -339,10 +339,10 @@ namespace DENG {
 
 
                 // remove all texture bound descriptor sets that were using primary pool
-                // texture bound descriptor sets that are using secondary pool are going to be pointer shifted accordingly
+                // texture bound descriptor sets that are using secondary pool are going to be shifted accordingly
                 size_t shift = 0;
                 for(auto it = sorted_texture_bounds.begin(); it != sorted_texture_bounds.end(); it++) {
-                    const size_t index = it->second - m_descriptor_sets.data();
+                    const uint32_t index = it->second;
                     if(m_descriptor_set_pool_flags[index]) {
                         shift += m_swapchain_image_count;
                     } else {
@@ -418,7 +418,7 @@ namespace DENG {
                     else name += "|" + names[i];
                 }
 
-                m_texture_bound_desc_sets[name] = m_descriptor_sets.data();
+                m_texture_bound_desc_sets[name] = 0;
             }
 
             _UpdateDescriptorSets(names, textures, 0);
@@ -442,14 +442,6 @@ namespace DENG {
             if(m_texture_bound_desc_sets.find(name) == m_texture_bound_desc_sets.end()) {
                 const size_t old_size = m_descriptor_set_pool_flags.size();
 
-                // write previous bound textures into vector
-                std::vector<std::pair<std::string, size_t>> texture_key_index_pairs;
-                texture_key_index_pairs.reserve(m_texture_bound_desc_sets.size());
-                for(auto it = m_texture_bound_desc_sets.begin(); it != m_texture_bound_desc_sets.end(); it++) {
-                    const size_t index = it->second - m_descriptor_sets.data();
-                    texture_key_index_pairs.push_back(std::make_pair(it->first, index));
-                }
-
                 // check if descriptor pool reallocation is required
                 if(m_texture_bound_desc_sets.size() + _reserve_pool_size + 1 > m_pool_capacity) {
                     m_pool_capacity += static_cast<uint32_t>(m_texture_bound_desc_sets.size()) + _reserve_pool_size + 1;
@@ -458,26 +450,22 @@ namespace DENG {
                     m_descriptor_set_pool_flags.resize(old_size + m_swapchain_image_count);
                     std::fill(m_descriptor_set_pool_flags.begin() + old_size, m_descriptor_set_pool_flags.end(), false);
                     _UpdateDescriptorSets(_names, _textures, rel_offset);
-                    m_texture_bound_desc_sets[name] = &m_descriptor_sets[rel_offset];
+                    m_texture_bound_desc_sets[name] = static_cast<uint32_t>(rel_offset);
                     m_is_pool_transfer = true;
                 } else if(m_is_pool_transfer) {         // pool transfer is active
                     const size_t rel_offset = _CreateDescriptorSets(m_secondary_pool);
                     _UpdateDescriptorSets(_names, _textures, rel_offset);
                     std::fill(m_descriptor_set_pool_flags.begin() + old_size, m_descriptor_set_pool_flags.end(), false);
-                    m_texture_bound_desc_sets[name] = &m_descriptor_sets[rel_offset];
+                    m_texture_bound_desc_sets[name] = static_cast<uint32_t>(rel_offset);
                 } else {                                // pool transfer is not active
                     const size_t rel_offset = _CreateDescriptorSets(m_primary_pool);
                     _UpdateDescriptorSets(_names, _textures, rel_offset);
                     std::fill(m_descriptor_set_pool_flags.begin() + old_size, m_descriptor_set_pool_flags.end(), true);
-                    m_texture_bound_desc_sets[name] = &m_descriptor_sets[rel_offset];
+                    m_texture_bound_desc_sets[name] = static_cast<uint32_t>(rel_offset);
                 }
-
-                // correct pointer offsets
-                for(auto it = texture_key_index_pairs.begin(); it != texture_key_index_pairs.end(); it++)
-                    m_texture_bound_desc_sets[it->first] = m_descriptor_sets.data() + it->second;
             }
 
-            return m_texture_bound_desc_sets[name][_current_frame];
+            return m_descriptor_sets[m_texture_bound_desc_sets[name] + _current_frame];
         }
     }
 }
