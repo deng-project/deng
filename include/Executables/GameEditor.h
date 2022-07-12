@@ -10,7 +10,6 @@
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 #endif
 
-#define DENG_EDITOR
 #include <string>
 #include <sstream>
 #include <vector>

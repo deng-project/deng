@@ -93,6 +93,7 @@ namespace DENG {
 
         private:
             uint32_t _CalculateUsedMemory(ImDrawData *_draw_data);
+            ImGuiKey _TranslateKey(neko_HidEvent _key);
             void _CreateDrawCommands(ImDrawData *_draw_data);
             void _UpdateIO();
 

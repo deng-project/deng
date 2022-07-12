@@ -74,7 +74,7 @@ namespace DENG {
                 typedef VkDebugUtilsMessengerCallbackDataEXT CallbackData;
                 static VKAPI_ATTR VkBool32 VKAPI_CALL _DebugCallback(SeverityFlags, MessageTypeFlags, const CallbackData*, void*);
 #endif
-                void _FindPhysicalDeviceSurfaceProperties(VkPhysicalDevice _gpu);
+                void _FindPhysicalDeviceSurfaceProperties(VkPhysicalDevice _gpu, bool _ignore_no_formats);
                 void _PickPhysicalDevice();
 
                 // returns true if necessary queue families were found, false otherwise
@@ -125,7 +125,7 @@ namespace DENG {
                 }
 
                 inline void UpdateSurfaceProperties() {
-                    _FindPhysicalDeviceSurfaceProperties(m_gpu);
+                    _FindPhysicalDeviceSurfaceProperties(m_gpu, false);
                 }
 
                 inline VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() {

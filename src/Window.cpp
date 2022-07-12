@@ -114,4 +114,20 @@ namespace DENG {
     bool Window::IsKeyReleased(neko_HidEvent _hid) const {
         return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_RELEASED);
     }
+
+    const bool *Window::GetActiveInputTable() {
+        return neko_GetActiveInputTable();
+    }
+
+    const bool *Window::GetReleasedInputTable() {
+        return neko_GetReleasedInputTable();
+    }
+
+    const EventQueue *Window::GetActiveEventQueue() {
+        return neko_GetActiveInputQueue();
+    }
+
+    const EventQueue *Window::GetReleasedEventQueue() {
+        return neko_GetReleasedInputQueue();
+    }
 }

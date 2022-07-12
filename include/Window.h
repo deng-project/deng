@@ -121,6 +121,12 @@ namespace DENG {
             bool IsHidEventActive(neko_InputBits _bits) const;
             bool IsKeyPressed(neko_HidEvent _hid) const;
             bool IsKeyReleased(neko_HidEvent _hid) const;
+
+            const bool *GetActiveInputTable();
+            const bool  *GetReleasedInputTable();
+
+            const EventQueue *GetActiveEventQueue();
+            const EventQueue *GetReleasedEventQueue();
     };
 }
 
