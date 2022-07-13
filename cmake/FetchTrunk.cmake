@@ -34,7 +34,7 @@ endfunction(GitClone)
 
 # Git clone embedded dependencies
 GitClone(https://github.com/ocornut/imgui e900ca355e3c7be7672e25800af346f1179e91d8 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
-GitClone(https://git.karlott.net/nekowin ad035e81ef8dc90540ffb38e9350b401fbefdcd9 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.karlott.net/nekowin e21c679b5780cd751a22808dfdef28ac4b0912dd ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
 GitClone(https://git.karlott.net/libdas f5929b8d2b4ecb1e4bf8b1cf168745c49ea22092 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
 
 # Windows dependencies
