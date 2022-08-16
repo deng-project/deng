@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define FIRST_PERSON_CAMERA_CPP
-#include <FirstPersonCamera.h>
+#include "deng/FirstPersonCamera.h"
 
 namespace DENG {
 
@@ -37,10 +37,10 @@ namespace DENG {
         // update code
         if(m_window.IsVirtualCursor()) {
             const float delta_mov = conf.delta_mov * delta_time.count() / conf.action_delay;
-            Libdas::Point2D<int64_t> delta_mouse = m_window.GetMouseDelta();
-            Libdas::Point2D<float> delta_mousef = { static_cast<float>(delta_mouse.x), static_cast<float>(delta_mouse.y) };
+            TRS::Point2D<int64_t> delta_mouse = m_window.GetMouseDelta();
+            TRS::Point2D<float> delta_mousef = { static_cast<float>(delta_mouse.x), static_cast<float>(delta_mouse.y) };
 
-            Libdas::Point3D<float> rot = {
+            TRS::Point3D<float> rot = {
                 delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
                 delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
                 0.0f
@@ -54,7 +54,7 @@ namespace DENG {
             //else if(current_rotation.x + rot.x < -PI / 2)
                 //rot.x = -(PI / 2 - abs(current_rotation.x));
 
-            Libdas::Vector4<float> mov = {};
+            TRS::Vector4<float> mov = {};
 
             // w
             if(m_window.IsHidEventActive(conf.forward))

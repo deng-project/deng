@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_DESCRIPTOR_ALLOCATOR_CPP
-#include <VulkanDescriptorAllocator.h>
+#include "deng/VulkanDescriptorAllocator.h"
 
 
 namespace DENG {

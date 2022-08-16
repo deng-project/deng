@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define MODEL_SHADER_GENERATOR_CPP
-#include <ModelShaderGenerator.h>
+#include "deng/ModelShaderGenerator.h"
 
 namespace DENG {
 

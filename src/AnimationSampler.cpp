@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define ANIMATION_SAMPLER_CPP
-#include <AnimationSampler.h>
+#include "deng/AnimationSampler.h"
 
 namespace DENG {
 
@@ -39,9 +39,9 @@ namespace DENG {
             // translation
             case LIBDAS_ANIMATION_TARGET_TRANSLATION:
                 {
-                    const size_t size = sizeof(Libdas::Vector3<float>);
-                    Libdas::Vector3<float> *tr1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
-                    Libdas::Vector3<float> *tr2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + next * size);
+                    const size_t size = sizeof(TRS::Vector3<float>);
+                    TRS::Vector3<float> *tr1 = reinterpret_cast<TRS::Vector3<float>*>(m_channel.target_values + curr * size);
+                    TRS::Vector3<float> *tr2 = reinterpret_cast<TRS::Vector3<float>*>(m_channel.target_values + next * size);
 
                     m_translation = (*tr1) * (1 - t) + (*tr2) * t;
                 }
@@ -50,11 +50,11 @@ namespace DENG {
             // rotation
             case LIBDAS_ANIMATION_TARGET_ROTATION:
                 {
-                    const size_t size = sizeof(Libdas::Quaternion);
-                    Libdas::Quaternion *q1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
-                    Libdas::Quaternion *q2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
+                    const size_t size = sizeof(TRS::Quaternion);
+                    TRS::Quaternion *q1 = reinterpret_cast<TRS::Quaternion*>(m_channel.target_values + curr * size);
+                    TRS::Quaternion *q2 = reinterpret_cast<TRS::Quaternion*>(m_channel.target_values + next * size);
 
-                    float dot = Libdas::Quaternion::Dot(*q1, *q2);
+                    float dot = TRS::Quaternion::Dot(*q1, *q2);
 
                     const float a = acosf(dot);
                     const float s = dot / std::abs(dot);
@@ -102,16 +102,16 @@ namespace DENG {
             // translation
             case LIBDAS_ANIMATION_TARGET_TRANSLATION:
                 {
-                    const size_t size = sizeof(Libdas::Vector3<float>);
-                    m_translation = *reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
+                    const size_t size = sizeof(TRS::Vector3<float>);
+                    m_translation = *reinterpret_cast<TRS::Vector3<float>*>(m_channel.target_values + curr * size);
                 }
                 break;
 
             // rotation
             case LIBDAS_ANIMATION_TARGET_ROTATION:
                 {
-                    const size_t size = sizeof(Libdas::Quaternion);
-                    m_rotation = *reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
+                    const size_t size = sizeof(TRS::Quaternion);
+                    m_rotation = *reinterpret_cast<TRS::Quaternion*>(m_channel.target_values + curr * size);
                 }
                 break;
 
@@ -152,12 +152,12 @@ namespace DENG {
             // translation
             case LIBDAS_ANIMATION_TARGET_TRANSLATION:
                 {
-                    const size_t size = sizeof(Libdas::Vector3<float>);
-                    Libdas::Vector3<float> *v1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + curr * size);
-                    Libdas::Vector3<float> *v2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.target_values + next * size);
+                    const size_t size = sizeof(TRS::Vector3<float>);
+                    TRS::Vector3<float> *v1 = reinterpret_cast<TRS::Vector3<float>*>(m_channel.target_values + curr * size);
+                    TRS::Vector3<float> *v2 = reinterpret_cast<TRS::Vector3<float>*>(m_channel.target_values + next * size);
 
-                    Libdas::Vector3<float> *a2 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.tangents + next * 2 * size);
-                    Libdas::Vector3<float> *b1 = reinterpret_cast<Libdas::Vector3<float>*>(m_channel.tangents + (curr * 2 + 1) * size);
+                    TRS::Vector3<float> *a2 = reinterpret_cast<TRS::Vector3<float>*>(m_channel.tangents + next * 2 * size);
+                    TRS::Vector3<float> *b1 = reinterpret_cast<TRS::Vector3<float>*>(m_channel.tangents + (curr * 2 + 1) * size);
 
                     m_translation = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
                 }
@@ -166,12 +166,12 @@ namespace DENG {
             // rotation
             case LIBDAS_ANIMATION_TARGET_ROTATION:
                 {
-                    const size_t size = sizeof(Libdas::Quaternion);
-                    Libdas::Quaternion *v1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + curr * size);
-                    Libdas::Quaternion *v2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.target_values + next * size);
+                    const size_t size = sizeof(TRS::Quaternion);
+                    TRS::Quaternion *v1 = reinterpret_cast<TRS::Quaternion*>(m_channel.target_values + curr * size);
+                    TRS::Quaternion *v2 = reinterpret_cast<TRS::Quaternion*>(m_channel.target_values + next * size);
 
-                    Libdas::Quaternion *a2 = reinterpret_cast<Libdas::Quaternion*>(m_channel.tangents + next * 2 * size);
-                    Libdas::Quaternion *b1 = reinterpret_cast<Libdas::Quaternion*>(m_channel.tangents + (curr * 2 + 1) * size);
+                    TRS::Quaternion *a2 = reinterpret_cast<TRS::Quaternion*>(m_channel.tangents + next * 2 * size);
+                    TRS::Quaternion *b1 = reinterpret_cast<TRS::Quaternion*>(m_channel.tangents + (curr * 2 + 1) * size);
 
                     m_rotation = (*v1) * (2 * CUBE(t) - 3 * SQR(t) + 1) + (*b1) * td * (CUBE(t) - 2 * SQR(t) + 1) + (*v2) * (-2 * CUBE(t) + 3 * SQR(t)) + (*a2) * td * (CUBE(t) - SQR(t));
                 }

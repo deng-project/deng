@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define RENDER_STATE_CPP
-#include <RenderState.h>
+#include "deng/RenderState.h"
 
 namespace DENG {
     RenderState *RenderState::m_instance = nullptr;

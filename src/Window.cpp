@@ -5,7 +5,7 @@
 
 
 #define WINDOW_CPP
-#include <Window.h>
+#include "deng/Window.h"
 
 namespace DENG {
 
@@ -35,13 +35,13 @@ namespace DENG {
     }
 
 
-    void Window::ToggleVCMode(Libdas::Point2D<float> _origin) {
-        m_window.vc_data.is_enabled = !m_window.vc_data.is_enabled;
+    void Window::ToggleVCMode(TRS::Point2D<float> _origin) {
+        m_window.input.cursor.is_virtual = !m_window.input.cursor.is_virtual;
 
-        if (m_window.vc_data.is_enabled) {
-            m_window.vc_data.orig_x = _origin.x;
-            m_window.vc_data.orig_y = _origin.y;
-            neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
+        if (m_window.input.cursor.is_virtual) {
+            m_window.input.cursor.orig_x = _origin.x;
+            m_window.input.cursor.orig_y = _origin.y;
+            neko_SetMouseCoords(&m_window, m_window.input.cursor.orig_x, m_window.input.cursor.orig_y);
         }
     }
 
@@ -56,12 +56,12 @@ namespace DENG {
     }
 
 
-    void Window::ChangeVCMode(bool _is_vcp, Libdas::Point2D<float> _origin) {
-        m_window.vc_data.is_enabled = _is_vcp;
-        if (m_window.vc_data.is_enabled) {
-            m_window.vc_data.orig_x = _origin.x;
-            m_window.vc_data.orig_y = _origin.y;
-            neko_SetMouseCoords(&m_window, m_window.vc_data.orig_x, m_window.vc_data.orig_y);
+    void Window::ChangeVCMode(bool _is_vcp, TRS::Point2D<float> _origin) {
+        m_window.input.cursor.is_virtual = _is_vcp;
+        if (m_window.input.cursor.is_virtual) {
+            m_window.input.cursor.orig_x = _origin.x;
+            m_window.input.cursor.orig_y = _origin.y;
+            neko_SetMouseCoords(&m_window, m_window.input.cursor.orig_x, m_window.input.cursor.orig_y);
         }
     }
 
@@ -81,13 +81,6 @@ namespace DENG {
     }
 
 
-    Libdas::Point2D<int64_t> Window::GetMouseDelta() {
-        Libdas::Point2D<int64_t> pos;
-        neko_FindDeltaMovement(&m_window, &pos.x, &pos.y);
-        return pos;
-    }
-    
-    
     bool Window::IsHidEventActive(neko_InputBits _bits) const {
         bool is_active = true;
         neko_HidEvent* ev = neko_UnmaskInput(_bits);
@@ -96,38 +89,12 @@ namespace DENG {
             if (ev[i] == NEKO_HID_UNKNOWN)
                 break;
 
-            if (!neko_FindKeyStatus(ev[i], NEKO_INPUT_EVENT_TYPE_ACTIVE)) {
+            if (!m_window.input.raw.active_table[ev[i]]) {
                 is_active = false;
                 break;
             }
         }
 
         return is_active;
-    }
-
-
-    bool Window::IsKeyPressed(neko_HidEvent _hid) const {
-        return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_ACTIVE);
-    }
-
-
-    bool Window::IsKeyReleased(neko_HidEvent _hid) const {
-        return neko_FindKeyStatus(_hid, NEKO_INPUT_EVENT_TYPE_RELEASED);
-    }
-
-    const bool *Window::GetActiveInputTable() {
-        return neko_GetActiveInputTable();
-    }
-
-    const bool *Window::GetReleasedInputTable() {
-        return neko_GetReleasedInputTable();
-    }
-
-    const EventQueue *Window::GetActiveEventQueue() {
-        return neko_GetActiveInputQueue();
-    }
-
-    const EventQueue *Window::GetReleasedEventQueue() {
-        return neko_GetReleasedInputQueue();
     }
 }

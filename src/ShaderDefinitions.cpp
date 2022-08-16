@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define SHADER_DEFINITIONS_CPP
-#include <ShaderDefinitions.h>
+#include "deng/ShaderDefinitions.h"
 
 namespace DENG {
 

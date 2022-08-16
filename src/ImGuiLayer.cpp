@@ -3,9 +3,8 @@
 // file: ImGuiLayer.h - ImGui gui abstraction class implementation
 // author: Karl-Mihkel Ott
 
-#include "imgui.h"
 #define IMGUI_LAYER_CPP
-#include <ImGuiLayer.h>
+#include "deng/ImGuiLayer.h"
 
 namespace DENG {
 
@@ -466,7 +465,7 @@ namespace DENG {
 
     void ImGuiLayer::Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data) {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
-        m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(_rend, static_cast<uint32_t>(sizeof(Libdas::Point2D<float>)));
+        m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(_rend, static_cast<uint32_t>(sizeof(TRS::Point2D<float>)));
         mp_window = &_win;
         mp_renderer = &_rend;
         m_callback = _callback;
@@ -500,7 +499,7 @@ namespace DENG {
         module.ubo_data_layouts.back().block.binding = 0;
         module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_BUFFER;
-        module.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(Libdas::Point2D<float>));
+        module.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(TRS::Point2D<float>));
         module.ubo_data_layouts.back().block.offset = m_ubo_offset;
 
         module.ubo_data_layouts.emplace_back();
@@ -535,7 +534,7 @@ namespace DENG {
         ImDrawData *draw_data = ImGui::GetDrawData();
         _CreateDrawCommands(draw_data);
 
-        Libdas::Point2D<float> wsize = { static_cast<float>(mp_window->GetSize().x), static_cast<float>(mp_window->GetSize().y) };
-        mp_renderer->UpdateUniform(reinterpret_cast<char*>(&wsize), sizeof(Libdas::Point2D<float>), m_ubo_offset);
+        TRS::Point2D<float> wsize = { static_cast<float>(mp_window->GetSize().x), static_cast<float>(mp_window->GetSize().y) };
+        mp_renderer->UpdateUniform(reinterpret_cast<char*>(&wsize), sizeof(TRS::Point2D<float>), m_ubo_offset);
     }
 }

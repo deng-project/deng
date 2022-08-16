@@ -8,4 +8,4 @@ set(VK_IMGUI_APP_SOURCES tests/VulkanImGui.cpp)
 
 add_executable(${VK_IMGUI_APP_TARGET} ${VK_IMGUI_APP_SOURCES})
 add_dependencies(${VK_IMGUI_APP_TARGET} ${DENG_COMPLETE_TARGET})
-target_link_libraries(${VK_IMGUI_APP_TARGET} ${DENG_COMPLETE_TARGET})
+target_link_libraries(${VK_IMGUI_APP_TARGET} PRIVATE ${DENG_COMPLETE_TARGET})

@@ -11,45 +11,45 @@ set(DENG_COMPLETE_HEADERS
     deps/imgui/imstb_rectpack.h
     deps/imgui/imstb_textedit.h
     deps/imgui/imstb_truetype.h
-    include/AnimationSampler.h
-    include/Api.h
-    include/BaseTypes.h
-    include/BufferAlignment.h
-    include/Camera3D.h
-    include/EditorCamera.h
-    include/ErrorDefinitions.h
-    include/FilePicker.h
-    include/FirstPersonCamera.h
-    include/GPUMemoryManager.h
-    include/GridGenerator.h
-    include/ImGuiLayer.h
-    include/MeshLoader.h
-    include/Missing.h
-    include/ModelLoader.h
-    include/ModelShaderManager.h
-    include/ModelShaderGenerator.h
-    include/ModelUniforms.h
-    include/NodeLoader.h
-    include/OpenGLBufferLoader.h
-    include/OpenGLFramebuffer.h
-    include/OpenGLRenderer.h
-    include/OpenGLShaderLoader.h
-    include/PythonScriptExecutor.h
-    include/Renderer.h
-    include/RenderState.h
-    include/SceneLoader.h
-    include/ShaderDefinitions.h
-    include/SkeletonLoader.h
-    include/ThirdPersonCamera.h
-    include/VulkanDescriptorAllocator.h
-    include/VulkanDescriptorSetLayoutCreator.h
-    include/VulkanFramebuffer.h
-    include/VulkanHelpers.h
-    include/VulkanInstanceCreator.h
-    include/VulkanPipelineCreator.h
-    include/VulkanRenderer.h
-    include/VulkanSwapchainCreator.h
-    include/Window.h
+    include/deng/AnimationSampler.h
+    include/deng/Api.h
+    include/deng/BaseTypes.h
+    include/deng/BufferAlignment.h
+    include/deng/Camera3D.h
+    include/deng/EditorCamera.h
+    include/deng/ErrorDefinitions.h
+    include/deng/FilePicker.h
+    include/deng/FirstPersonCamera.h
+    include/deng/GPUMemoryManager.h
+    include/deng/GridGenerator.h
+    include/deng/ImGuiLayer.h
+    include/deng/MeshLoader.h
+    include/deng/Missing.h
+    include/deng/ModelLoader.h
+    include/deng/ModelShaderManager.h
+    include/deng/ModelShaderGenerator.h
+    include/deng/ModelUniforms.h
+    include/deng/NodeLoader.h
+    include/deng/OpenGLBufferLoader.h
+    include/deng/OpenGLFramebuffer.h
+    include/deng/OpenGLRenderer.h
+    include/deng/OpenGLShaderLoader.h
+    include/deng/PythonScriptExecutor.h
+    include/deng/Renderer.h
+    include/deng/RenderState.h
+    include/deng/SceneLoader.h
+    include/deng/ShaderDefinitions.h
+    include/deng/SkeletonLoader.h
+    include/deng/ThirdPersonCamera.h
+    include/deng/VulkanDescriptorAllocator.h
+    include/deng/VulkanDescriptorSetLayoutCreator.h
+    include/deng/VulkanFramebuffer.h
+    include/deng/VulkanHelpers.h
+    include/deng/VulkanInstanceCreator.h
+    include/deng/VulkanPipelineCreator.h
+    include/deng/VulkanRenderer.h
+    include/deng/VulkanSwapchainCreator.h
+    include/deng/Window.h
 )
 
 set(DENG_COMPLETE_SOURCES
@@ -106,24 +106,42 @@ target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE DENG_COMPLETE_EXPORT_
 
 # Include directories
 target_include_directories(${DENG_COMPLETE_TARGET} 
-    PUBLIC include
-    PUBLIC deps
-    PUBLIC deps/nekowin/include/third_party
-    PUBLIC deps/libdas/include
-    PUBLIC deps/imgui
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui
 )
+
+# Vulkan sdk includes
+if(WIN32)
+    target_include_directories(${DENG_COMPLETE_TARGET}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Include)
+elseif(UNIX)
+    target_include_directories(${DENG_COMPLETE_TARGET}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/include)
+endif()
+
+# CPython includes
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_include_directories(${DENG_COMPLETE_TARGET}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/include/python3.10d)
+else()
+    target_include_directories(${DENG_COMPLETE_TARGET}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/include/python3.10)
+endif()
 
 # Linking
 target_link_libraries(${DENG_COMPLETE_TARGET}
+    PRIVATE mar
     PRIVATE nwin-static
-    PRIVATE das-static
-)
+    PRIVATE das-static)
 
 # Universal compile definitions for imgui
 target_compile_definitions(${DENG_COMPLETE_TARGET}
     PUBLIC ImDrawIdx=unsigned\ int
-    PUBLIC DENG_EDITOR
-)
+    PUBLIC DENG_EDITOR)
 
 
 # Link trunked libraries
@@ -133,38 +151,39 @@ if(WIN32)
         INTERFACE IMGUI_API=_declspec\(dllimport\)
     )
 
+    target_link_directories(${DENG_COMPLETE_TARGET}
+        PUBLIC deps/VulkanSDK-${VULKAN_SDK_VERSION}/Lib
+        PUBLIC deps/cpython-${PYTHON_VERSION})
+
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		target_link_directories(${DENG_COMPLETE_TARGET} 
-            PUBLIC deps/trunk/Lib/Debug
-            PUBLIC deps/trunk/Lib/Debug/Python)
-		
 		target_link_libraries(${DENG_COMPLETE_TARGET} 
-			PUBLIC python39_d
-			PRIVATE shaderc_combined
-		)
+			PUBLIC python310_d)
 
 	elseif(CMAKE_BUILD_TYPE MATCHES Release)
-		target_link_directories(${DENG_COMPLETE_TARGET} 
-            PUBLIC deps/trunk/Lib/Release
-            PUBLIC deps/trunk/Lib/Release/Python)
-		
 		target_link_libraries(${DENG_COMPLETE_TARGET} 
-            PRIVATE python39
-		    PRIVATE shaderc_combined
-		)
+            PRIVATE python310)
 	endif()
-	
-	target_link_libraries(${DENG_COMPLETE_TARGET} 
-		PUBLIC vulkan-1)
-elseif(UNIX AND NOT MACOS)
-    target_link_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC deps/trunk/Lib
-        PUBLIC deps/trunk/Python)
 
     target_link_libraries(${DENG_COMPLETE_TARGET}
-        PRIVATE python3.9
-        PRIVATE util
-        PRIVATE shaderc_combined)
+        PUBLIC shaderc_combined
+        PUBLIC vulkan-1)
+	
+elseif(UNIX AND NOT MACOS)
+    target_link_directories(${DENG_COMPLETE_TARGET}
+        PUBLIC deps/VulkanSDK-${VULKAN_SDK_VERSION}/lib
+        PUBLIC deps/cpython-${PYTHON_VERSION}/lib)
+
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+        target_link_libraries(${DENG_COMPLETE_TARGET}
+            PUBLIC python3.10d)
+    elseif(CMAKE_BUILD_TYPE MATCHES Release)
+        target_link_libraries(${DENG_COMPLETE_TARGET}
+            PUBLIC python3.10)
+    endif()
+
+    target_link_libraries(${DENG_COMPLETE_TARGET}
+        PUBLIC util
+        PUBLIC shaderc_combined)
 endif()
 
 
@@ -175,7 +194,6 @@ endif()
 
 
 add_dependencies(${DENG_COMPLETE_TARGET}
-    COPY_TARGET
     das-static
     dastool
     nwin-static

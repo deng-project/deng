@@ -4,7 +4,7 @@
 # author: Karl-Mihkel Ott
 
 set(GAME_EDITOR_TARGET deng-game-editor)
-set(GAME_EDITOR_HEADERS include/Executables/GameEditor.h)
+set(GAME_EDITOR_HEADERS include/deng/Executables/GameEditor.h)
 set(GAME_EDITOR_SOURCES src/Executables/GameEditor.cpp)
 
 add_executable(${GAME_EDITOR_TARGET} ${GAME_EDITOR_HEADERS} ${GAME_EDITOR_SOURCES})

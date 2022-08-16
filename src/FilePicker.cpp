@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define FILE_PICKER_CPP
-#include <FilePicker.h>
+#include "deng/FilePicker.h"
 
 
 namespace DENG {

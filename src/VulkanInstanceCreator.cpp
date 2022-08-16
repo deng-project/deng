@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_INSTANCE_CREATOR_CPP
-#include <VulkanInstanceCreator.h>
+#include "deng/VulkanInstanceCreator.h"
 
 namespace DENG {
 
@@ -58,10 +58,9 @@ namespace DENG {
             
             // Check for validatation layer support
 #ifdef _DEBUG
-            if(!_CheckValidationLayerSupport())
+            if(!_CheckValidationLayerSupport()) {
                 VK_INSTANCE_ERR("validation layers usage specified, but none are available!");
-
-            else {
+            } else {
                 VkDebugUtilsMessengerCreateInfoEXT debug_createinfo = {};
 
                 // Set up instance info to support validation layers

@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define GPU_MEMORY_MANAGER_CPP
-#include <GPUMemoryManager.h>
+#include "deng/GPUMemoryManager.h"
 
 namespace DENG {
 

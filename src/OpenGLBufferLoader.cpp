@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define OPENGL_BUFFER_LOADER_CPP
-#include <OpenGLBufferLoader.h>
+#include "deng/OpenGLBufferLoader.h"
 
 namespace DENG {
 

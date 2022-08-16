@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define GRID_GENERATOR_CPP
-#include <GridGenerator.h>
+#include "deng/GridGenerator.h"
 
 namespace DENG {
 
@@ -27,7 +27,7 @@ namespace DENG {
     void GridGenerator::_GenerateVertices(Renderer &_rend) {
         // x: x world
         // y: -z world
-        std::vector<Libdas::Vector3<float>> vertices;
+        std::vector<TRS::Vector3<float>> vertices;
         const uint32_t xlinec = static_cast<uint32_t>(std::ceil(m_width / m_margin_x));
         const uint32_t ylinec = static_cast<uint32_t>(std::ceil(m_height / m_margin_y));
         vertices.reserve(2 * (xlinec + ylinec));
@@ -50,8 +50,8 @@ namespace DENG {
 
         GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
         m_vert_count = static_cast<uint32_t>(vertices.size());
-        m_main_offset = mem_man->RequestMainMemoryLocationP(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(vertices.size() * sizeof(Libdas::Vector3<float>)));
-        _rend.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<char*>(vertices.data()), static_cast<uint32_t>(vertices.size() * sizeof(Libdas::Vector3<float>))), m_main_offset);
+        m_main_offset = mem_man->RequestMainMemoryLocationP(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(vertices.size() * sizeof(TRS::Vector3<float>)));
+        _rend.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<char*>(vertices.data()), static_cast<uint32_t>(vertices.size() * sizeof(TRS::Vector3<float>))), m_main_offset);
     }
 
 
@@ -86,14 +86,14 @@ namespace DENG {
             "}\n";
 
         GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
-        m_ubo_offset = mem_man->RequestUniformMemoryLocationP(_rend, static_cast<uint32_t>(sizeof(Libdas::Vector4<float>)));
+        m_ubo_offset = mem_man->RequestUniformMemoryLocationP(_rend, static_cast<uint32_t>(sizeof(TRS::Vector4<float>)));
         module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-        module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+        module.attribute_strides.push_back(sizeof(TRS::Vector3<float>));
 
         // color uniform
         module.ubo_data_layouts.emplace_back();
         module.ubo_data_layouts.back().block.binding = 0;
-        module.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(Libdas::Vector4<float>));
+        module.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(TRS::Vector4<float>));
         module.ubo_data_layouts.back().block.offset = m_ubo_offset;
         module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
         module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
@@ -130,8 +130,8 @@ namespace DENG {
     }
 
 
-    void GridGenerator::Update(Renderer &_rend, const Libdas::Vector4<float> _color) {
+    void GridGenerator::Update(Renderer &_rend, const TRS::Vector4<float> _color) {
         m_color = _color;
-        _rend.UpdateUniform(reinterpret_cast<const char*>(&m_color), static_cast<uint32_t>(sizeof(Libdas::Vector4<float>)), m_ubo_offset);
+        _rend.UpdateUniform(reinterpret_cast<const char*>(&m_color), static_cast<uint32_t>(sizeof(TRS::Vector4<float>)), m_ubo_offset);
     }
 }

@@ -4,13 +4,12 @@
 // author: Karl-Mihkel Ott
 
 #define OPENGL_FRAMEBUFFER_CPP
-#include <OpenGLFramebuffer.h>
+#include "deng/OpenGLFramebuffer.h"
 
 namespace DENG {
     namespace OpenGL {
 
         uint32_t Framebuffer::m_color_attachment_counter = 0;
-
 
         Framebuffer::Framebuffer(
             const std::string &_fb_name,
@@ -331,7 +330,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::ClearFrame(const Libdas::Vector4<float> _clear_color) {
+        void Framebuffer::ClearFrame(const TRS::Vector4<float> _clear_color) {
             glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
             glErrorCheck("glBindFramebuffer");
             glClearColor(_clear_color.first, _clear_color.second, _clear_color.third, _clear_color.fourth);

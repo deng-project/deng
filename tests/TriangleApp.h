@@ -28,27 +28,27 @@
 #include <variant>
 #include <unordered_map>
 
-#include <libdas/include/Points.h>
-#include <libdas/include/Vector.h>
-#include <libdas/include/Matrix.h>
-#include <libdas/include/Quaternion.h>
+#include "trs/Points.h"
+#include "trs/Vector.h"
+#include "trs/Matrix.h"
+#include "trs/Quaternion.h"
 
-#include <Api.h>
-#include <ErrorDefinitions.h>
-#include <BaseTypes.h>
-#include <Window.h>
-#include <ShaderDefinitions.h>
-#include <Missing.h>
-#include <Renderer.h>
-#include <GPUMemoryManager.h>
+#include "deng/Api.h"
+#include "deng/ErrorDefinitions.h"
+#include "deng/BaseTypes.h"
+#include "deng/Window.h"
+#include "deng/ShaderDefinitions.h"
+#include "deng/Missing.h"
+#include "deng/Renderer.h"
+#include "deng/GPUMemoryManager.h"
 
 // backend specific includes
 #ifdef USE_OPENGL
-    #include <OpenGLRenderer.h>
+    #include "deng/OpenGLRenderer.h"
 #endif
 
 #ifdef USE_VULKAN
-    #include <VulkanRenderer.h>
+    #include "deng/VulkanRenderer.h"
 #endif
 
 #define WIDTH   1280

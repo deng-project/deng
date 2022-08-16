@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_PIPELINE_CREATOR_CPP
-#include <VulkanPipelineCreator.h>
+#include "deng/VulkanPipelineCreator.h"
 
 
 namespace DENG {

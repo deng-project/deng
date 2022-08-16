@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define MISSING_CPP
-#include <Missing.h>
+#include "deng/Missing.h"
 
 namespace DENG {
 

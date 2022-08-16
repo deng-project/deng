@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define PYTHON_SCRIPT_EXECUTOR_CPP
-#include <PythonScriptExecutor.h>
+#include "deng/PythonScriptExecutor.h"
 
 namespace DENG {
 

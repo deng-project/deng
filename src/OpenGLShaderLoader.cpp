@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define OPENGL_SHADER_LOADER_CPP
-#include <OpenGLShaderLoader.h>
+#include "deng/OpenGLShaderLoader.h"
 
 
 namespace DENG {

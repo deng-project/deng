@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define NODE_LOADER_CPP
-#include <NodeLoader.h>
+#include "deng/NodeLoader.h"
 
 namespace DENG {
 
@@ -18,7 +18,7 @@ namespace DENG {
         uint32_t _camera_offset, 
         std::vector<Animation> &_animations, 
         const std::string &_framebuffer_id,
-        const Libdas::Matrix4<float> &_parent
+        const TRS::Matrix4<float> &_parent
     ) :
         m_renderer(_rend),
         m_node(_node),
@@ -124,16 +124,16 @@ namespace DENG {
     }
 
 
-    void NodeLoader::_UpdateTransformTRS(Libdas::Vector3<float> _translation, Libdas::Quaternion _rotation, float _scale) {
-        const Libdas::Matrix4<float> t = {
+    void NodeLoader::_UpdateTransformTRS(TRS::Vector3<float> _translation, TRS::Quaternion _rotation, float _scale) {
+        const TRS::Matrix4<float> t = {
             { 1.0f, 0.0f, 0.0f, _translation.first },
             { 0.0f, 1.0f, 0.0f, _translation.second },
             { 0.0f, 0.0f, 1.0f, _translation.third },
             { 0.0f, 0.0f, 0.0f, 1.0f }
         };
 
-        const Libdas::Matrix4<float> r = _rotation.ExpandToMatrix4();
-        const Libdas::Matrix4<float> s = {
+        const TRS::Matrix4<float> r = _rotation.ExpandToMatrix4();
+        const TRS::Matrix4<float> s = {
             { _scale, 0.0f, 0.0f, 0.0f },
             { 0.0f, _scale, 0.0f, 0.0f },
             { 0.0f, 0.0f, _scale, 0.0f },
@@ -167,8 +167,8 @@ namespace DENG {
             for(auto it = m_animation_samplers.begin(); it != m_animation_samplers.end(); it++) {
                 if(!*it->first) {
                     it->second->Update();
-                    Libdas::Vector3<float> translation = { 0.0f, 0.0f, 0.0f };
-                    Libdas::Quaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+                    TRS::Vector3<float> translation = { 0.0f, 0.0f, 0.0f };
+                    TRS::Quaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
                     float scale = 1.0f;
 
                     switch(it->second->GetAnimationTarget()) {

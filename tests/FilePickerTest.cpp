@@ -18,18 +18,18 @@
     #include <iostream>
 #endif
 
-#include <libdas/include/Points.h>
-#include <libdas/include/Vector.h>
-#include <libdas/include/Matrix.h>
+#include "trs/Points.h"
+#include "trs/Vector.h"
+#include "trs/Matrix.h"
 
-#include <Api.h>
-#include <Window.h>
-#include <ErrorDefinitions.h>
-#include <ShaderDefinitions.h>
-#include <RenderState.h>
-#include <Renderer.h>
-#include <ImGuiLayer.h>
-#include <FilePicker.h>
+#include "deng/Api.h"
+#include "deng/Window.h"
+#include "deng/ErrorDefinitions.h"
+#include "deng/ShaderDefinitions.h"
+#include "deng/RenderState.h"
+#include "deng/Renderer.h"
+#include "deng/ImGuiLayer.h"
+#include "deng/FilePicker.h"
 
 int main() {
     DENG::Window::Initialise();

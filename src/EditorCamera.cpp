@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define EDITOR_CAMERA_CPP
-#include <EditorCamera.h>
+#include "deng/EditorCamera.h"
 
 namespace DENG {
 
@@ -37,12 +37,12 @@ namespace DENG {
         _ForceLimits();
 
         // construct quaternions representing the rotation of the camera
-        Libdas::Quaternion x = { sinf(m_rotation.x / 2), 0.0f, 0.0f, cosf(m_rotation.x / 2) };
-        Libdas::Quaternion y = { 0.0f, sinf(m_rotation.y / 2), 0.0f, cosf(m_rotation.y / 2) };
-        Libdas::Quaternion z = { 0.0f, 0.0f, sinf(m_rotation.z / 2), cosf(m_rotation.z / 2) };
+        TRS::Quaternion x = { sinf(m_rotation.x / 2), 0.0f, 0.0f, cosf(m_rotation.x / 2) };
+        TRS::Quaternion y = { 0.0f, sinf(m_rotation.y / 2), 0.0f, cosf(m_rotation.y / 2) };
+        TRS::Quaternion z = { 0.0f, 0.0f, sinf(m_rotation.z / 2), cosf(m_rotation.z / 2) };
 
         // construct translation matrix
-        Libdas::Matrix4<float> translation = {
+        TRS::Matrix4<float> translation = {
             { 1.0f, 0.0f, 0.0f, m_translation.x - m_origin.x },
             { 0.0f, 1.0f, 0.0f, m_translation.y - m_origin.y },
             { 0.0f, 0.0f, 1.0f, m_translation.z - m_origin.z },
@@ -71,13 +71,13 @@ namespace DENG {
 
         if(m_is_enabled) {
             float delta_step = 0; // conf.zoom_step * delta_time.count() / conf.action_delay;
-            Libdas::Point2D<int64_t> mouse_delta = m_window.GetMouseDelta();
-            Libdas::Point2D<float> delta_mousef = { static_cast<float>(mouse_delta.x), static_cast<float>(mouse_delta.y) };
+            TRS::Point2D<int64_t> mouse_delta = m_window.GetMouseDelta();
+            TRS::Point2D<float> delta_mousef = { static_cast<float>(mouse_delta.x), static_cast<float>(mouse_delta.y) };
 
             // rotation toggle is activated
             if(m_window.IsHidEventActive(conf.rotate_toggle)) {
                 m_window.ChangeVCMode(true, m_vc_origin);
-                Libdas::Point3D<float> rot = {
+                TRS::Point3D<float> rot = {
                     -delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
                     delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
                     0.0f

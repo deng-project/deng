@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define SCENE_LOADER_CPP
-#include <SceneLoader.h>
+#include "deng/SceneLoader.h"
 
 namespace DENG {
 
@@ -22,7 +22,7 @@ namespace DENG {
         m_root_node_loaders.reserve(_scene.node_count);
         for (uint32_t i = 0; i < _scene.node_count; i++) {
             const Libdas::DasNode& node = _parser.AccessNode(_scene.nodes[i]);
-            m_root_node_loaders.emplace_back(_rend, node, &_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, Libdas::Matrix4<float>());
+            m_root_node_loaders.emplace_back(_rend, node, &_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, TRS::Matrix4<float>());
         }
 
         // give scene a name if possible

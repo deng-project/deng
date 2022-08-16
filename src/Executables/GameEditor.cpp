@@ -3,7 +3,7 @@
 // file: ViewModelsApp.cpp - View models application implementation
 // author: Karl-Mihkel Ott
 
-#include <Executables/GameEditor.h>
+#include "deng/Executables/GameEditor.h"
 
 namespace Executable {
 
@@ -70,14 +70,14 @@ namespace Executable {
 
                 // custom transformations
                 ImGui::Text("Translation: ");
-                Libdas::Vector3<float> &t = node->GetCustomTranslation();
+                TRS::Vector3<float> &t = node->GetCustomTranslation();
                 ImGui::DragFloat("X##translation", &t.first, 0.2f);
                 ImGui::DragFloat("Y##translation", &t.second, 0.2f);
                 ImGui::DragFloat("Z##translation", &t.third, 0.2f);
                 node->SetCustomTranslation(t);
 
                 ImGui::Text("Rotation (quaternion): ");
-                Libdas::Quaternion &rot = node->GetCustomRotation();
+                TRS::Quaternion &rot = node->GetCustomRotation();
                 const float sc45 = 0.707106f;
                 ImGui::SliderFloat("X##rot", &rot.x, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
                 ImGui::SliderFloat("Y##rot", &rot.y, -sc45, sc45, "%.002f", ImGuiSliderFlags_Logarithmic);
@@ -100,7 +100,7 @@ namespace Executable {
                 // color picker
                 ImGui::Checkbox(mesh->GetColorCheckboxId().c_str(), &mesh->GetUseColor());
                 if(mesh->GetUseColor()) {
-                    Libdas::Vector4<float> color = mesh->GetColor();
+                    TRS::Vector4<float> color = mesh->GetColor();
                     ImGui::ColorEdit4(mesh->GetColorPickerId().c_str(), &color.first);
                     mesh->SetColor(color);
                 } else if(ImGui::Button(mesh->GetTextureButtonId().c_str())) {
@@ -293,7 +293,7 @@ namespace Executable {
                 min.y += pos.y;
                 max.x += pos.x;
                 max.y += pos.y;
-                const Libdas::Point2D<float> origin = {
+                const TRS::Point2D<float> origin = {
                     (max.x - min.x) / 2.0f + min.x,
                     (max.y - min.y) / 2.0f + min.y
                 };

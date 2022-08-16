@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_RENDERER_CPP
-#include <VulkanRenderer.h>
+#include "deng/VulkanRenderer.h"
 
 
 namespace DENG {

@@ -10,13 +10,14 @@
 #include <vector>
 #include <iostream>
 
-#include <libdas/include/Api.h>
-#include <libdas/include/Vector.h>
-#include <libdas/include/Matrix.h>
-#include <libdas/include/Points.h>
-#include <libdas/include/Quaternion.h>
-#include <libdas/include/DasStructures.h>
-#include <libdas/include/TextureReader.h>
+#include "trs/Vector.h"
+#include "trs/Matrix.h"
+#include "trs/Points.h"
+#include "trs/Quaternion.h"
+
+#include "das/Api.h"
+#include "das/DasStructures.h"
+#include "das/TextureReader.h"
 
 int main(int argc, char *argv[]) {
     if(argc < 2) {

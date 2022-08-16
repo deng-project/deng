@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define OPENGL_RENDERER_CPP
-#include <OpenGLRenderer.h>
+#include "deng/OpenGLRenderer.h"
 
 
 namespace DENG {

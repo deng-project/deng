@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_HELPERS_CPP
-#include <VulkanHelpers.h>
+#include "deng/VulkanHelpers.h"
 
 namespace DENG {
 

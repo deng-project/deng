@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define MODEL_SHADER_MANAGER_CPP
-#include <ModelShaderManager.h>
+#include "deng/ModelShaderManager.h"
 
 namespace DENG {
     ModelShaderManager::map_t ModelShaderManager::m_shader_map = {};
@@ -39,29 +39,29 @@ namespace DENG {
         module.attributes.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
         module.attribute_strides.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
         module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-        module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+        module.attribute_strides.push_back(sizeof(TRS::Vector3<float>));
 
         if(_mesh_attr_desc.normal) {
             module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-            module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+            module.attribute_strides.push_back(sizeof(TRS::Vector3<float>));
         }
         if(_mesh_attr_desc.tangent) {
             module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-            module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+            module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
         }
 
         for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
             module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-            module.attribute_strides.push_back(sizeof(Libdas::Vector2<float>));
+            module.attribute_strides.push_back(sizeof(TRS::Vector2<float>));
         }
 
         for(uint32_t i = 0; i < _mesh_attr_desc.color_mul_count; i++) {
             module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-            module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+            module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
         }
 
         if(_mesh_attr_desc.joint_set_count) {
-            const uint32_t size = _mesh_attr_desc.skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
+            const uint32_t size = _mesh_attr_desc.skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>));
             module.ubo_data_layouts.push_back({
                 { binding_id++, size, 0 },
                 UNIFORM_DATA_TYPE_BUFFER,
@@ -71,33 +71,33 @@ namespace DENG {
 
             for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_USHORT);
-                module.attribute_strides.push_back(sizeof(Libdas::Vector4<uint16_t>));
+                module.attribute_strides.push_back(sizeof(TRS::Vector4<uint16_t>));
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+                module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
             }
         }
 
         for(auto it = _mesh_attr_desc.morph_targets.begin(); it != _mesh_attr_desc.morph_targets.end(); it++) {
             module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-            module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+            module.attribute_strides.push_back(sizeof(TRS::Vector3<float>));
             if(it->normal) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-                module.attribute_strides.push_back(sizeof(Libdas::Vector3<float>));
+                module.attribute_strides.push_back(sizeof(TRS::Vector3<float>));
             }
 
             if(it->tangent) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+                module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
             }
 
             for(uint32_t i = 0; i < it->texture_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-                module.attribute_strides.push_back(sizeof(Libdas::Vector2<float>));
+                module.attribute_strides.push_back(sizeof(TRS::Vector2<float>));
             }
 
             for(uint32_t i = 0; i < it->color_mul_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-                module.attribute_strides.push_back(sizeof(Libdas::Vector4<float>));
+                module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
             }
         }
 

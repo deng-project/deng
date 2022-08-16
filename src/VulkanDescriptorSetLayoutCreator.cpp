@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_DESCRIPTOR_SET_LAYOUT_CREATOR_CPP
-#include <VulkanDescriptorSetLayoutCreator.h>
+#include "deng/VulkanDescriptorSetLayoutCreator.h"
 
 
 namespace DENG {

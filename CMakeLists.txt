@@ -40,11 +40,17 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-D_DEBUG)
 endif()
 
+# Dependency versioning
+set(PYTHON_VERSION 3.10.6)
+set(VULKAN_SDK_VERSION 1.3.216)
+set(ODE_VERSION 0.16.2)
+set(WXWIDGETS_VERSION 3.2.0)
 
 # Libnwin configuration
 set(NEKOWIN_BUILD_STATIC_LIB ON CACHE BOOL "Build static nekowin library")
 set(NEKOWIN_BUILD_SHARED_LIB OFF CACHE BOOL "Build shared nekowin library")
 set(NEKOWIN_BUILD_GLAPP OFF CACHE BOOL "Build glapp application")
+set(NEKOWIN_BUILD_GAMEPAD_INFO OFF CACHE BOOL "Build a sample console application for testing controller inputs")
 
 # Libdas and dastool configuration
 set(LIBDAS_BUILD_TESTS OFF CACHE BOOL "Build libdas tests")
@@ -53,8 +59,8 @@ set(LIBDAS_BUILD_SHARED_LIB OFF CACHE BOOL "Build shared libdas library")
 set(LIBDAS_BUILD_DASTOOL ON CACHE BOOL "Build dastool application")
 set(LIBDAS_BUILD_TESTS OFF CACHE BOOL "Build libdas testing applications")
 
-include(cmake/copy.cmake)
-include(cmake/FetchTrunk.cmake)
+#include(cmake/copy.cmake)
+include(cmake/FetchDependencies.cmake)
 include(cmake/libdeng.cmake)
 include(cmake/GameEditor.cmake)
 include(cmake/TextureDump.cmake)

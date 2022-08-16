@@ -10,25 +10,25 @@
     #include <iostream>
 #endif
 
-#include <libdas/include/Points.h>
-#include <libdas/include/Vector.h>
-#include <libdas/include/Matrix.h>
+#include "trs/Points.h"
+#include "trs/Vector.h"
+#include "trs/Matrix.h"
 
-#include <Api.h>
-#include <BaseTypes.h>
-#include <Window.h>
-#include <ErrorDefinitions.h>
-#include <ShaderDefinitions.h>
-#include <Renderer.h>
-#include <ModelUniforms.h>
-#include <Camera3D.h>
-#include <EditorCamera.h>
-#include <GridGenerator.h>
+#include "deng/Api.h"
+#include "deng/BaseTypes.h"
+#include "deng/Window.h"
+#include "deng/ErrorDefinitions.h"
+#include "deng/ShaderDefinitions.h"
+#include "deng/Renderer.h"
+#include "deng/ModelUniforms.h"
+#include "deng/Camera3D.h"
+#include "deng/EditorCamera.h"
+#include "deng/GridGenerator.h"
 
 #if defined(USE_VULKAN)
-    #include <VulkanRenderer.h>
+    #include "deng/VulkanRenderer.h"
 #elif defined(USE_OPENGL)
-    #include <OpenGLRenderer.h>
+    #include "deng/OpenGLRenderer.h"
 #endif
 
 #define WIDTH      1770
@@ -41,9 +41,38 @@ namespace Executable {
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
 
-            neko_HidEvent m_zoom_in[8] = { NEKO_MOUSE_SCROLL_UP, 0, 0, 0, 0, 0, 0, 0 };
-            neko_HidEvent m_zoom_out[8] = { NEKO_MOUSE_SCROLL_DOWN, 0, 0, 0, 0, 0, 0, 0 };
-            neko_HidEvent m_rotate_toggle[8] = { NEKO_MOUSE_BTN_2, 0, 0, 0, 0, 0, 0, 0 };
+            neko_HidEvent m_zoom_in[8] = { 
+                NEKO_MOUSE_SCROLL_UP,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN
+            };
+
+            neko_HidEvent m_zoom_out[8] = { 
+                NEKO_MOUSE_SCROLL_DOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN
+            };
+
+            neko_HidEvent m_rotate_toggle[8] = { 
+                NEKO_MOUSE_BTN_2,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN,
+                NEKO_HID_UNKNOWN
+            };
 
             const DENG::EditorCameraConfiguration m_camera_conf = {
                 DENG::Window::CreateInputMask(m_zoom_in),

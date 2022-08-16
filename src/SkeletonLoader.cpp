@@ -4,14 +4,14 @@
 // author: Karl-Mihkel Ott
 
 #define SKELETON_LOADER_CPP
-#include <SkeletonLoader.h>
+#include "deng/SkeletonLoader.h"
 
 namespace DENG {
 
     uint32_t SkeletonLoader::m_skeleton_index = 0;
 
     SkeletonLoader::SkeletonLoader(
-        const Libdas::Matrix4<float> &_node, 
+        const TRS::Matrix4<float> &_node, 
         Libdas::DasParser *_p_parser, 
         const Libdas::DasSkeleton &_skeleton, 
         std::vector<Animation> &_animations
@@ -111,7 +111,7 @@ namespace DENG {
             children.pop();
 
             const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(child.first);
-            const Libdas::Matrix4<float> &trs = m_joint_transforms[m_joint_lookup[child.first]];
+            const TRS::Matrix4<float> &trs = m_joint_transforms[m_joint_lookup[child.first]];
 
             if(child.second == UINT32_MAX) {
                 m_joint_world_transforms[m_joint_lookup[child.first]] = m_node_transform * trs;
@@ -138,7 +138,7 @@ namespace DENG {
             if(m_is_bound) {
                 m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * joint.inverse_bind_pos;
             } else {
-                m_joint_matrices[m_joint_lookup[curr_id]] = Libdas::Matrix4<float>();
+                m_joint_matrices[m_joint_lookup[curr_id]] = TRS::Matrix4<float>();
             }
 
             for(uint32_t i = 0; i < joint.children_count; i++)
@@ -149,8 +149,8 @@ namespace DENG {
 
     void SkeletonLoader::Update() {
         m_is_bound = false;
-        std::fill(m_joint_transforms.begin(), m_joint_transforms.end(), Libdas::Matrix4<float>());
-        std::fill(m_joint_world_transforms.begin(), m_joint_world_transforms.end(), Libdas::Matrix4<float>());
+        std::fill(m_joint_transforms.begin(), m_joint_transforms.end(), TRS::Matrix4<float>());
+        std::fill(m_joint_world_transforms.begin(), m_joint_world_transforms.end(), TRS::Matrix4<float>());
 
         // update animation samplers
         for(auto it = m_joint_samplers.begin(); it != m_joint_samplers.end(); it++) {
@@ -158,7 +158,7 @@ namespace DENG {
                 m_is_bound = true;
                 it->second->Update();
                 const uint32_t ani_joint = it->second->GetAnimationChannel().joint_id;
-                Libdas::Matrix4<float> ani_mat;
+                TRS::Matrix4<float> ani_mat;
 
                 switch(it->second->GetAnimationTarget()) {
                     case LIBDAS_ANIMATION_TARGET_TRANSLATION:
@@ -184,7 +184,7 @@ namespace DENG {
         for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
             const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(m_skeleton.joints[i]);
             if(m_joint_animated_properties[m_joint_lookup[i]].is_t) {
-                const Libdas::Matrix4<float> t = {
+                const TRS::Matrix4<float> t = {
                     { 1.0f, 0.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].t.first },
                     { 0.0f, 1.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].t.second },
                     { 0.0f, 0.0f, 1.0f, m_animated_trs_values[m_joint_lookup[i]].t.third },
@@ -192,7 +192,7 @@ namespace DENG {
                 };
                 m_joint_transforms[m_joint_lookup[i]] *= t;
             } else {
-                const Libdas::Matrix4<float> t = {
+                const TRS::Matrix4<float> t = {
                     { 1.0f, 0.0f, 0.0f, joint.translation.x },
                     { 0.0f, 1.0f, 0.0f, joint.translation.y },
                     { 0.0f, 0.0f, 1.0f, joint.translation.z },
@@ -202,15 +202,15 @@ namespace DENG {
             }
 
             if(m_joint_animated_properties[m_joint_lookup[i]].is_r) {
-                const Libdas::Matrix4<float> r = m_animated_trs_values[m_joint_lookup[i]].r.ExpandToMatrix4();
+                const TRS::Matrix4<float> r = m_animated_trs_values[m_joint_lookup[i]].r.ExpandToMatrix4();
                 m_joint_transforms[m_joint_lookup[i]] *= r;
             } else {
-                const Libdas::Matrix4<float> r = joint.rotation.ExpandToMatrix4();
+                const TRS::Matrix4<float> r = joint.rotation.ExpandToMatrix4();
                 m_joint_transforms[m_joint_lookup[i]] *= r;
             }
 
             if(m_joint_animated_properties[m_joint_lookup[i]].is_s) {
-                const Libdas::Matrix4<float> s = {
+                const TRS::Matrix4<float> s = {
                     { m_animated_trs_values[m_joint_lookup[i]].s, 0.0f, 0.0f, 0.0f },
                     { 0.0f, m_animated_trs_values[m_joint_lookup[i]].s, 0.0f, 0.0f },
                     { 0.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].s, 0.0f },
@@ -218,7 +218,7 @@ namespace DENG {
                 };
                 m_joint_transforms[m_joint_lookup[i]] *= s;
             } else {
-                const Libdas::Matrix4<float> s = {
+                const TRS::Matrix4<float> s = {
                     { joint.scale, 0.0f, 0.0f, 0.0f },
                     { 0.0f, joint.scale, 0.0f, 0.0f },
                     { 0.0f, 0.0f, joint.scale, 0.0f },

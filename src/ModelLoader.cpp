@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define MODEL_LOADER_CPP
-#include <ModelLoader.h>
+#include "deng/ModelLoader.h"
 
 namespace DENG {
 

@@ -7,20 +7,20 @@
 #include <cstring>
 #include <cmath>
 
-#include <libdas/include/Points.h>
-#include <libdas/include/Vector.h>
+#include "trs/Points.h"
+#include "trs/Vector.h"
 
-#include <Api.h>
-#include <ErrorDefinitions.h>
-#include <ShaderDefinitions.h>
-#include <Window.h>
-#include <Renderer.h>
+#include "deng/Api.h"
+#include "deng/ErrorDefinitions.h"
+#include "deng/ShaderDefinitions.h"
+#include "deng/Window.h"
+#include "deng/Renderer.h"
 #if defined(USE_OPENGL)
-    #include <OpenGLRenderer.h>
+    #include "deng/OpenGLRenderer.h"
 #elif defined(USE_VULKAN)
-    #include <VulkanRenderer.h>
+    #include "deng/VulkanRenderer.h"
 #endif
-#include <GPUMemoryManager.h>
+#include "deng/GPUMemoryManager.h"
 
 #define TEXTURE_FILE_NAME           "TriangleAppData/felix_texture.png"
 #define WIDTH                       1280

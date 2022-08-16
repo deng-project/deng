@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_FRAMEBUFFER_CPP
-#include <VulkanFramebuffer.h>
+#include "deng/VulkanFramebuffer.h"
 
 
 namespace DENG {
@@ -220,7 +220,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::_RecordCommandBuffers(const Libdas::Vector4<float> _clear_color, uint32_t _imgi) {
+        void Framebuffer::_RecordCommandBuffers(const TRS::Vector4<float> _clear_color, uint32_t _imgi) {
             const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
             // Record each command buffer
             VkCommandBufferBeginInfo cmd_buf_info = {};
@@ -459,7 +459,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Render(const Libdas::Vector4<float> _clear_color, uint32_t _imgi) {
+        void Framebuffer::Render(const TRS::Vector4<float> _clear_color, uint32_t _imgi) {
             const VkDevice device = m_instance_creator.GetDevice();
             const VkQueue graphics_queue = m_instance_creator.GetGraphicsQueue();
 

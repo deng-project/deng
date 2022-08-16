@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define MESH_LOADER_CPP
-#include <MeshLoader.h>
+#include "deng/MeshLoader.h"
 
 namespace DENG {
 
@@ -168,10 +168,10 @@ namespace DENG {
         if(mp_parser->AccessMeshPrimitive(m_mesh.primitives[0]).joint_set_count) {
             mesh.ubo_blocks.emplace_back();
             mesh.ubo_blocks.back().binding = binding_id++;
-            mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>));
-            mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)));
+            mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>));
+            mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)));
             m_mesh_joints_ubo_offset = mesh.ubo_blocks.back().offset;
-            m_renderer.UpdateUniform(nullptr, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(Libdas::Matrix4<float>)), mesh.ubo_blocks.back().offset);
+            m_renderer.UpdateUniform(nullptr, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)), mesh.ubo_blocks.back().offset);
         }
 
         // create mesh draw commands
@@ -245,13 +245,13 @@ namespace DENG {
     }
 
 
-    void MeshLoader::UpdateJointMatrices(const std::vector<Libdas::Matrix4<float>> &_matrices) {
+    void MeshLoader::UpdateJointMatrices(const std::vector<TRS::Matrix4<float>> &_matrices) {
         if(!m_disable_joint_transforms) {
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), static_cast<uint32_t>(_matrices.size() * sizeof(Libdas::Matrix4<float>)), m_mesh_joints_ubo_offset);
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), static_cast<uint32_t>(_matrices.size() * sizeof(TRS::Matrix4<float>)), m_mesh_joints_ubo_offset);
         }
         else {
-            std::vector<Libdas::Matrix4<float>> rmat(_matrices.size());
-            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), static_cast<uint32_t>(rmat.size() * sizeof(Libdas::Matrix4<float>)), m_mesh_joints_ubo_offset);
+            std::vector<TRS::Matrix4<float>> rmat(_matrices.size());
+            m_renderer.UpdateUniform(reinterpret_cast<const char*>(rmat.data()), static_cast<uint32_t>(rmat.size() * sizeof(TRS::Matrix4<float>)), m_mesh_joints_ubo_offset);
         }
     }
 }
