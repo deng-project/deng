@@ -39,7 +39,7 @@ namespace DENG {
 
         class Framebuffer {
             private:
-                const InstanceCreator &m_instance_creator;
+                InstanceCreator &m_instance_creator;
                 VkBuffer &m_uniform;
                 VkBuffer &m_main_buffer;
                 VkFormat m_format;
@@ -93,7 +93,7 @@ namespace DENG {
 
             public:
                 Framebuffer(
-                    const InstanceCreator &_ic, 
+                    InstanceCreator &_ic, 
                     VkBuffer &_uniform, 
                     VkBuffer &_main, 
                     VkFormat _format, 

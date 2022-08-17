@@ -93,58 +93,20 @@ namespace DENG {
                 InstanceCreator(Window &_win);
                 ~InstanceCreator();
 
-                // inlined methods
-                VkDevice GetDevice() const {
-                    return m_device;
-                }
-
-                VkPhysicalDevice GetPhysicalDevice() const {
-                    return m_gpu;
-                }
-
-                VkSurfaceKHR GetSurface() const {
-                    return m_surface;
-                }
-
-                uint32_t GetGraphicsFamilyIndex() const {
-                    return m_graphics_family_index;
-                }
-
-                uint32_t GetPresentationFamilyIndex() const {
-                    return m_presentation_family_index;
-                }
-
-                VkQueue GetGraphicsQueue() const {
-                    return m_graphics_queue;
-                }
-
-                VkQueue GetPresentationQueue() const {
-                    return m_presentation_queue;
-                }
-
-                const std::vector<VkSurfaceFormatKHR> &GetSurfaceFormats() const {
-                    return m_surface_formats;
-                }
-
-                const std::vector<VkPresentModeKHR> &GetPresentationModes() const {
-                    return m_present_modes;
-                }
-
-                void UpdateSurfaceProperties() {
-                    _FindPhysicalDeviceSurfaceProperties(m_gpu, false);
-                }
-
-                const VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() const {
-                    return m_surface_capabilities;
-                }
-
-                uint32_t GetMinimalUniformBufferAlignment() const {
-                    return m_minimal_uniform_buffer_alignment;
-                }
-
-                float GetMaxSamplerAnisotropy() const {
-                    return m_max_sampler_anisotropy;
-                }
+                // ~~inlined~~ non-inlined methods (temporary workaround)
+                VkDevice GetDevice() const;
+                VkPhysicalDevice GetPhysicalDevice() const;
+                VkSurfaceKHR GetSurface() const;
+                uint32_t GetGraphicsFamilyIndex() const;
+                uint32_t GetPresentationFamilyIndex() const;
+                VkQueue GetGraphicsQueue() const;
+                VkQueue GetPresentationQueue() const;
+                const std::vector<VkSurfaceFormatKHR> &GetSurfaceFormats() const;
+                const std::vector<VkPresentModeKHR> &GetPresentationModes() const;
+                void UpdateSurfaceProperties();
+                const VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() const;
+                uint32_t GetMinimalUniformBufferAlignment() const;
+                float GetMaxSamplerAnisotropy() const;
         };
 
     }

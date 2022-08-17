@@ -27,6 +27,63 @@ namespace DENG {
         InstanceCreator::~InstanceCreator() {}
 
 
+        // temporary (probably)
+        VkDevice InstanceCreator::GetDevice() const {
+            return m_device;
+        }
+
+
+        VkPhysicalDevice InstanceCreator::GetPhysicalDevice() const {
+            return m_gpu;
+        }
+
+
+        VkSurfaceKHR InstanceCreator::GetSurface() const {
+            return m_surface;
+        }
+
+
+        uint32_t InstanceCreator::GetGraphicsFamilyIndex() const {
+            return m_graphics_family_index;
+        }
+
+        uint32_t InstanceCreator::GetPresentationFamilyIndex() const {
+            return m_presentation_family_index;
+        }
+
+        VkQueue InstanceCreator::GetGraphicsQueue() const {
+            return m_graphics_queue;
+        }
+
+        VkQueue InstanceCreator::GetPresentationQueue() const {
+            return m_presentation_queue;
+        }
+
+        const std::vector<VkSurfaceFormatKHR> &InstanceCreator::GetSurfaceFormats() const {
+            return m_surface_formats;
+        }
+
+        const std::vector<VkPresentModeKHR> &InstanceCreator::GetPresentationModes() const {
+            return m_present_modes;
+        }
+
+        void InstanceCreator::UpdateSurfaceProperties() {
+            _FindPhysicalDeviceSurfaceProperties(m_gpu, false);
+        }
+
+        const VkSurfaceCapabilitiesKHR &InstanceCreator::GetSurfaceCapabilities() const {
+            return m_surface_capabilities;
+        }
+
+        uint32_t InstanceCreator::GetMinimalUniformBufferAlignment() const {
+            return m_minimal_uniform_buffer_alignment;
+        }
+
+        float InstanceCreator::GetMaxSamplerAnisotropy() const {
+            return m_max_sampler_anisotropy;
+        }
+
+
         void InstanceCreator::_CreateInstance() {
             // Set up Vulkan application info
             std::string title = m_window.GetTitle().c_str();
@@ -200,7 +257,7 @@ namespace DENG {
                 m_gpu_info.api_version = std::to_string(variant) + "." + std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
 
                 m_minimal_uniform_buffer_alignment = props.limits.minUniformBufferOffsetAlignment;
-                m_max_sampler_anisotropy = static_cast<uint32_t>(props.limits.maxSamplerAnisotropy);
+                m_max_sampler_anisotropy = props.limits.maxSamplerAnisotropy;
 
                 switch(props.deviceType) {
                     case VK_PHYSICAL_DEVICE_TYPE_OTHER:
@@ -302,12 +359,13 @@ namespace DENG {
             logical_device_createinfo.pEnabledFeatures = &device_features;
 
             // construct a temporary vector object holding required extension names as pointers
-            std::vector<const char*> p_required_ext;
+            std::vector<const char*> required_exts;
+            required_exts.reserve(m_required_extensions.size());
             for(const std::string &ext : m_required_extensions)
-                p_required_ext.push_back(ext.c_str());
+                required_exts.push_back(ext.c_str());
 
-            logical_device_createinfo.enabledExtensionCount = static_cast<uint32_t>(p_required_ext.size());
-            logical_device_createinfo.ppEnabledExtensionNames = p_required_ext.data();
+            logical_device_createinfo.enabledExtensionCount = static_cast<uint32_t>(required_exts.size());
+            logical_device_createinfo.ppEnabledExtensionNames = required_exts.data();
 
 #ifdef _DEBUG
             logical_device_createinfo.enabledLayerCount = 1;

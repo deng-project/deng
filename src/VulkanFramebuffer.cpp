@@ -11,7 +11,7 @@ namespace DENG {
     namespace Vulkan {
 
         Framebuffer::Framebuffer(
-            const InstanceCreator &_ic, 
+            InstanceCreator &_ic, 
             VkBuffer &_uniform, 
             VkBuffer &_main, 
             VkFormat _format, 
