@@ -372,28 +372,15 @@ namespace Executable {
     }
 }
 
-int main(int argv, char *argc[]) {
-    // lol
-    if(argv < 1)
-        std::exit(1);
+int main(void) {
 
     DENG::Window::Initialise();
 
-    // Prompt the user, what backend to use
-    DENG::PythonScriptExecutor py(argc[0]);
-    int32_t backend = py.ExecuteFunction<int32_t>("BackendChooser", "Prompt");
-
-    DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
-    if(backend == USE_VULKAN) {
+    {
+        DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
         DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "DENG: Untitled project (Vulkan)");
         DENG::Vulkan::Initialise();
         DENG::VulkanRenderer rend(win, conf);
-        Executable::ModelLoaderApp app(win, rend);
-        app.Run();
-    } else if(backend == USE_OPENGL) {
-        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "DENG: Untitled project (OpenGL)");
-        DENG::OpenGL::Initialise(win);
-        DENG::OpenGLRenderer rend(win, conf);
         Executable::ModelLoaderApp app(win, rend);
         app.Run();
     }

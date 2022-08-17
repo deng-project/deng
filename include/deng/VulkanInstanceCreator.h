@@ -54,7 +54,7 @@ namespace DENG {
 
                 // device limits
                 uint32_t m_minimal_uniform_buffer_alignment = 0;
-                uint32_t m_max_sampler_anisotropy = 0;
+                float m_max_sampler_anisotropy = 0.0f;
 
                 // vulkan queue handles
                 VkQueue m_graphics_queue;
