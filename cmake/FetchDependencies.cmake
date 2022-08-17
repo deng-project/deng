@@ -37,7 +37,7 @@ endfunction(GitClone)
 GitClone(https://github.com/ocornut/imgui 8cbd391f096b9314a08670052cc0025cbcadb249 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
 GitClone(https://git.dengproject.org/deng/trs-headers 898e58a49f8f8f76dc3b07407b879cb6836ddc93 ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs trs)
 GitClone(https://git.dengproject.org/deng/minimal-ascii-reader efe815ad9b9383f26ec8137a9ae0089ba7abbe2c ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar mar)
-GitClone(https://git.dengproject.org/deng/nekowin 1b479e4679928ae938ecd51dbe4725c9aa957c4a ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.dengproject.org/deng/nekowin 637d25598dbdbc4204decf545809a50cc08583e7 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
 
 
 if(WIN32)

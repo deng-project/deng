@@ -25,6 +25,7 @@
     #include "deng/BaseTypes.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Window.h"
+    #include "deng/HardwareInfo.h"
 #endif
 
 namespace DENG {
@@ -35,24 +36,25 @@ namespace DENG {
                 Window &m_window;
 
                 // vulkan stuff
-                VkDevice m_device = {};
-                VkPhysicalDevice m_gpu = {};
-                VkInstance m_instance = {};
-                VkSurfaceKHR m_surface = {};
+                VkDevice m_device = VK_NULL_HANDLE;
+                VkPhysicalDevice m_gpu = VK_NULL_HANDLE;
+                VkInstance m_instance = VK_NULL_HANDLE;
+                VkSurfaceKHR m_surface = VK_NULL_HANDLE;
                 VkSurfaceCapabilitiesKHR m_surface_capabilities = {};
-                VkPhysicalDeviceProperties m_gpu_properties = {};
                 std::vector<std::string> m_required_extensions = {
                     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
                     "VK_KHR_maintenance1"
                 };
 
-                // details needed for swapchain creation
-                std::vector<VkSurfaceFormatKHR> m_surface_formats;
-                std::vector<VkPresentModeKHR> m_present_modes;
+                HardwareInfo m_gpu_info = {};
 
                 // queue family indices
                 uint32_t m_graphics_family_index = UINT32_MAX;
                 uint32_t m_presentation_family_index = UINT32_MAX;
+
+                // device limits
+                uint32_t m_minimal_uniform_buffer_alignment = 0;
+                uint32_t m_max_sampler_anisotropy = 0;
 
                 // vulkan queue handles
                 VkQueue m_graphics_queue;
@@ -61,6 +63,10 @@ namespace DENG {
                 const char *m_validation_layer = "VK_LAYER_KHRONOS_validation";
                 VkDebugUtilsMessengerEXT m_debug_messenger = {};
 #endif
+
+                // details needed for swapchain creation
+                std::vector<VkSurfaceFormatKHR> m_surface_formats;
+                std::vector<VkPresentModeKHR> m_present_modes;
 
             private:
                 void _CreateInstance();
@@ -88,56 +94,56 @@ namespace DENG {
                 ~InstanceCreator();
 
                 // inlined methods
-                inline VkDevice GetDevice() const {
+                VkDevice GetDevice() const {
                     return m_device;
                 }
 
-                inline VkPhysicalDevice GetPhysicalDevice() const {
+                VkPhysicalDevice GetPhysicalDevice() const {
                     return m_gpu;
                 }
 
-                inline VkSurfaceKHR GetSurface() const {
+                VkSurfaceKHR GetSurface() const {
                     return m_surface;
                 }
 
-                inline uint32_t GetGraphicsFamilyIndex() const {
+                uint32_t GetGraphicsFamilyIndex() const {
                     return m_graphics_family_index;
                 }
 
-                inline uint32_t GetPresentationFamilyIndex() const {
+                uint32_t GetPresentationFamilyIndex() const {
                     return m_presentation_family_index;
                 }
 
-                inline VkQueue GetGraphicsQueue() const {
+                VkQueue GetGraphicsQueue() const {
                     return m_graphics_queue;
                 }
 
-                inline VkQueue GetPresentationQueue() const {
+                VkQueue GetPresentationQueue() const {
                     return m_presentation_queue;
                 }
 
-                inline std::vector<VkSurfaceFormatKHR> &GetSurfaceFormats() {
+                const std::vector<VkSurfaceFormatKHR> &GetSurfaceFormats() const {
                     return m_surface_formats;
                 }
 
-                inline std::vector<VkPresentModeKHR> &GetPresentationModes() {
+                const std::vector<VkPresentModeKHR> &GetPresentationModes() const {
                     return m_present_modes;
                 }
 
-                inline void UpdateSurfaceProperties() {
+                void UpdateSurfaceProperties() {
                     _FindPhysicalDeviceSurfaceProperties(m_gpu, false);
                 }
 
-                inline VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() {
+                const VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() const {
                     return m_surface_capabilities;
                 }
 
-                inline uint32_t GetMinimalUniformBufferAlignment() const {
-                    return static_cast<uint32_t>(m_gpu_properties.limits.minUniformBufferOffsetAlignment);
+                uint32_t GetMinimalUniformBufferAlignment() const {
+                    return m_minimal_uniform_buffer_alignment;
                 }
 
-                inline float GetMaxSamplerAnisotropy() const {
-                    return m_gpu_properties.limits.maxSamplerAnisotropy;
+                float GetMaxSamplerAnisotropy() const {
+                    return m_max_sampler_anisotropy;
                 }
         };
 

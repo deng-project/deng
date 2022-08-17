@@ -26,6 +26,7 @@
     #include "deng/ErrorDefinitions.h"
     #include "deng/BaseTypes.h"
     #include "deng/Window.h"
+    #include "deng/HardwareInfo.h"
     #include "deng/VulkanInstanceCreator.h"
     #include "deng/VulkanHelpers.h"
     #include "deng/ShaderDefinitions.h"

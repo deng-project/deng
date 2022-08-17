@@ -243,14 +243,16 @@ namespace DENG {
             swapchain_createinfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
             // Check if present queue and graphics queue are the same and necessary synchronise the image sharing mode
-            std::array<uint32_t, 2> queue_families = { m_instance_creator.GetGraphicsFamilyIndex(), m_instance_creator.GetPresentationFamilyIndex() };
+            std::array<uint32_t, 2> queue_families;
+            queue_families[0] = m_instance_creator.GetGraphicsFamilyIndex();
+            queue_families[1] = m_instance_creator.GetPresentationFamilyIndex();
             if(queue_families[0] != queue_families[1]) {
                 swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 swapchain_createinfo.queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size());
                 swapchain_createinfo.pQueueFamilyIndices = queue_families.data();
+            } else {
+                swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             }
-
-            else swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             
 
             swapchain_createinfo.preTransform = m_instance_creator.GetSurfaceCapabilities().currentTransform;

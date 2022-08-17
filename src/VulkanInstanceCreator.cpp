@@ -190,7 +190,46 @@ namespace DENG {
             if(!device_candidates.empty() && device_candidates.rbegin()->first > 0) {
                 m_gpu = device_candidates.rbegin()->second;
                 _FindPhysicalDeviceSurfaceProperties(m_gpu, false);
-                vkGetPhysicalDeviceProperties(m_gpu, &m_gpu_properties);
+                VkPhysicalDeviceProperties props;
+                vkGetPhysicalDeviceProperties(m_gpu, &props);
+                m_gpu_info.gpu_name = props.deviceName;
+                const uint32_t variant = VK_API_VERSION_VARIANT(props.apiVersion);
+                const uint32_t major = VK_API_VERSION_MAJOR(props.apiVersion);
+                const uint32_t minor = VK_API_VERSION_MINOR(props.apiVersion);
+                const uint32_t patch = VK_API_VERSION_PATCH(props.apiVersion);
+                m_gpu_info.api_version = std::to_string(variant) + "." + std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
+
+                m_minimal_uniform_buffer_alignment = props.limits.minUniformBufferOffsetAlignment;
+                m_max_sampler_anisotropy = static_cast<uint32_t>(props.limits.maxSamplerAnisotropy);
+
+                switch(props.deviceType) {
+                    case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+                        m_gpu_info.type = HardwareInfo::Type::OTHER;
+                        break;
+
+                    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                        m_gpu_info.type = HardwareInfo::Type::INTEGRATED_GPU;
+                        break;
+
+                    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                        m_gpu_info.type = HardwareInfo::Type::DISCRETE_GPU;
+                        break;
+
+                    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                        m_gpu_info.type = HardwareInfo::Type::VIRTUAL_GPU;
+                        break;
+
+                    case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                        m_gpu_info.type = HardwareInfo::Type::CPU;
+                        break;
+
+                    default:
+                        DENG_ASSERT(false);
+                        break;
+                };
+
+                LOG("Found gpu '" + m_gpu_info.gpu_name + "'");
+
                 m_present_modes = present_modes[m_gpu];
             }
 
@@ -246,9 +285,11 @@ namespace DENG {
             queue_create_infos[1].queueCount = 1;
             queue_create_infos[1].pQueuePriorities = &queue_priority;
 
-            if(m_graphics_family_index != m_presentation_family_index)
+            if(m_graphics_family_index != m_presentation_family_index) {
                 unique_queue_c = 2;
-            else unique_queue_c = 1;
+            } else {
+                unique_queue_c = 1;
+            }
 
             VkPhysicalDeviceFeatures device_features = {};
             device_features.samplerAnisotropy = VK_TRUE;

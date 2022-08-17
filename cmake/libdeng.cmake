@@ -22,6 +22,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/FirstPersonCamera.h
     include/deng/GPUMemoryManager.h
     include/deng/GridGenerator.h
+    include/deng/HardwareInfo.h
     include/deng/ImGuiLayer.h
     include/deng/MeshLoader.h
     include/deng/Missing.h
