@@ -88,8 +88,8 @@ namespace DENG {
 
             inline TRS::Point2D<int64_t> GetMouseDelta() {
                 return TRS::Point2D<int64_t> {
-                    m_window.input.cursor.orig_x - m_window.input.cursor.x, // invalid
-                    m_window.input.cursor.orig_y - m_window.input.cursor.y 
+                    m_window.input.cursor.delta_x,
+                    m_window.input.cursor.delta_y
                 };
             }
             
