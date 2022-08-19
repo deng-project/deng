@@ -118,7 +118,8 @@ target_include_directories(${DENG_COMPLETE_TARGET}
 # Vulkan sdk includes
 if(WIN32)
     target_include_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Include)
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Include
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}/include)
 elseif(UNIX)
     target_include_directories(${DENG_COMPLETE_TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/include)
@@ -153,16 +154,16 @@ if(WIN32)
     )
 
     target_link_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC deps/VulkanSDK-${VULKAN_SDK_VERSION}/Lib
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Lib
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}/lib
         PUBLIC deps/cpython-${PYTHON_VERSION})
 
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
 		target_link_libraries(${DENG_COMPLETE_TARGET} 
 			PUBLIC python310_d)
-
 	elseif(CMAKE_BUILD_TYPE MATCHES Release)
 		target_link_libraries(${DENG_COMPLETE_TARGET} 
-            PRIVATE python310)
+            PUBLIC python310)
 	endif()
 
     target_link_libraries(${DENG_COMPLETE_TARGET}
@@ -186,13 +187,6 @@ elseif(UNIX AND NOT MACOS)
         PUBLIC util
         PUBLIC shaderc_combined)
 endif()
-
-
-# Check if debug mode is used
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE _DEBUG)
-endif()
-
 
 add_dependencies(${DENG_COMPLETE_TARGET}
     das-static

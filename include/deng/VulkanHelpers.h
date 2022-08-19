@@ -10,7 +10,7 @@
 #ifdef VULKAN_HELPERS_CPP
     #include <cstdint>
     #include <cstring>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <vulkan/vulkan.h>

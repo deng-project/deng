@@ -59,9 +59,9 @@ namespace DENG {
                 // vulkan queue handles
                 VkQueue m_graphics_queue;
                 VkQueue m_presentation_queue;
-#ifdef _DEBUG
+#ifdef __DEBUG
                 const char *m_validation_layer = "VK_LAYER_KHRONOS_validation";
-                VkDebugUtilsMessengerEXT m_debug_messenger = {};
+                VkDebugUtilsMessengerEXT m__DEBUG_messenger = {};
 #endif
 
                 // details needed for swapchain creation
@@ -70,7 +70,7 @@ namespace DENG {
 
             private:
                 void _CreateInstance();
-#ifdef _DEBUG
+#ifdef __DEBUG
                 bool _CheckValidationLayerSupport();
                 void _CreateDebugMessenger();
 

@@ -10,7 +10,7 @@
     #include <string>
     #include <cstring>
     #include <vector>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

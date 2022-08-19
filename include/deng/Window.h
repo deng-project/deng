@@ -66,72 +66,27 @@ namespace DENG {
             void Update();
 
             /// Check if the current window is still active and running
-            inline bool IsRunning() const {
-                return m_window.is_running;
-            }
+            bool IsRunning() const;
 
             /// Check if virtual cursor mode is enabled
-            inline bool IsVirtualCursor() const {
-                return m_window.input.cursor.is_virtual;
-            }
-
-            inline bool IsResized() const {
-                return m_window.resize_notify;
-            }
+            bool IsVirtualCursor() const;
+            bool IsResized() const;
 
             /// Create new vulkan surface instance
             VkResult InitVkSurface(VkInstance _instance, VkSurfaceKHR &_surface);
 
-            inline TRS::Point2D<uint64_t> GetMousePosition() const {
-                return TRS::Point2D<uint64_t>(static_cast<uint64_t>(m_window.input.cursor.x), static_cast<uint64_t>(m_window.input.cursor.y));
-            }
-
-            inline TRS::Point2D<int64_t> GetMouseDelta() {
-                return TRS::Point2D<int64_t> {
-                    m_window.input.cursor.delta_x,
-                    m_window.input.cursor.delta_y
-                };
-            }
-            
-            inline neko_Hint GetHints() const {
-                return m_window.hints;
-            }
-
-            inline std::string GetTitle() const {
-                return std::string(m_window.window_title);
-            }
-
-            inline TRS::Point2D<int32_t> GetSize() const {
-                TRS::Point2D<int32_t> size = { m_window.cwidth, m_window.cheight };
-                return size;
-            }
-
-            inline TRS::Point2D<float> GetPixelSize() const {
-                TRS::Point2D<float> pix = { 
-                    2.0f / static_cast<float>(m_window.cwidth),
-                    2.0f / static_cast<float>(m_window.cheight)
-                };
-
-                return pix;
-            }
+            TRS::Point2D<int64_t> GetMousePosition() const;
+            TRS::Point2D<int64_t> GetMouseDelta() const;
+            neko_Hint GetHints() const;
+            const char* GetTitle() const;
+            TRS::Point2D<int32_t> GetSize() const;
+            inline TRS::Point2D<float> GetPixelSize() const;
 
             bool IsHidEventActive(neko_InputBits _bits) const;
-
-            inline bool IsKeyPressed(neko_HidEvent _hid) const {
-                return m_window.input.raw.active_table[_hid];
-            }
-
-            inline bool IsKeyReleased(neko_HidEvent _hid) const {
-                return m_window.input.raw.released_table[_hid];
-            }
-
-            inline const EventQueue *GetActiveEventQueue() const {
-                return &m_window.input.raw.active_queue;
-            }
-
-            inline const EventQueue *GetReleasedEventQueue() const {
-                return &m_window.input.raw.released_queue;
-            }
+            bool IsKeyPressed(neko_HidEvent _hid) const;
+            bool IsKeyReleased(neko_HidEvent _hid) const;
+            const EventQueue* GetActiveEventQueue() const;
+            const EventQueue* GetReleasedEventQueue() const;
     };
 }
 

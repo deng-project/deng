@@ -12,9 +12,10 @@
     #include <array>
     #include <cstring>
     #include <fstream>
+    #include <memory>
     #include <cmath>
     #include <unordered_map>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <string>
@@ -49,7 +50,7 @@
 
 namespace DENG {
 
-#ifdef _DEBUG
+#ifdef __DEBUG
         /// Global OpenGL error checking function
         void lglErrorCheck(const std::string &_func, const std::string &_file, const uint32_t _line);
 #endif
@@ -57,7 +58,7 @@ namespace DENG {
 #ifndef DEBUG_ONLY
 
     namespace OpenGL {
-        void Initialise(Window &_win);
+        void DENG_API Initialise(Window &_win);
     }
 
     class DENG_API OpenGLRenderer : public Renderer {
@@ -69,7 +70,9 @@ namespace DENG {
             std::unordered_map<std::string, GLuint> m_opengl_textures;
 
             // framebuffers
-            std::unordered_map<std::string, OpenGL::Framebuffer> m_framebuffers;
+            // using shared_ptr is a bad solution and it is prefarable to just keep the OpenGL::Framebuffer instance 
+            // inside the unordered_map
+            std::unordered_map<std::string, std::shared_ptr<OpenGL::Framebuffer>> m_framebuffers;
 
         public:
             OpenGLRenderer(Window &_win, const RendererConfig &_conf);

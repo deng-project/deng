@@ -15,7 +15,7 @@ option(BUILD_TESTS "Build DENG testing applications" ON)
 
 # Set appropriate compiler flags
 if(MSVC)
-    add_compile_options(/W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c17> /wd4251)
+    add_compile_options(/MT /W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c17> /wd4251)
 	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH _CRT_SECURE_NO_WARNINGS)
 
     # Set correct optimisation flags
@@ -35,7 +35,7 @@ endif()
 
 # Check if debugging definition should be considered
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-D_DEBUG)
+    add_definitions(-D__DEBUG)
 endif()
 
 # Dependency versioning
@@ -43,6 +43,7 @@ set(PYTHON_VERSION 3.10.6)
 set(VULKAN_SDK_VERSION 1.3.216)
 set(ODE_VERSION 0.16.2)
 set(WXWIDGETS_VERSION 3.2.0)
+set(SHADERC_VERSION 2022.2)
 
 # Libnwin configuration
 set(NEKOWIN_BUILD_STATIC_LIB ON CACHE BOOL "Build static nekowin library")

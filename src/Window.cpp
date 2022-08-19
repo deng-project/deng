@@ -76,8 +76,62 @@ namespace DENG {
     }
 
 
+    bool Window::IsRunning() const {
+        return m_window.is_running;
+    }
+
+
+    bool Window::IsVirtualCursor() const {
+        return m_window.input.cursor.is_virtual;
+    }
+
+
+    bool Window::IsResized() const {
+        return m_window.resize_notify;
+    }
+
+
     VkResult Window::InitVkSurface(VkInstance _instance, VkSurfaceKHR& _surface) {
         return neko_InitVkSurface(&m_window, _instance, &_surface);
+    }
+
+
+    TRS::Point2D<int64_t> Window::GetMousePosition() const {
+        return TRS::Point2D<int64_t>(
+            m_window.input.cursor.x,
+            m_window.input.cursor.y
+        );
+    }
+
+
+    TRS::Point2D<int64_t> Window::GetMouseDelta() const {
+        return TRS::Point2D<int64_t> {
+            m_window.input.cursor.delta_x,
+            m_window.input.cursor.delta_y
+        };
+    }
+
+
+    neko_Hint Window::GetHints() const {
+        return m_window.hints;
+    }
+
+
+    const char* Window::GetTitle() const {
+        return m_window.window_title;
+    }
+
+    
+    TRS::Point2D<int32_t> Window::GetSize() const {
+        return TRS::Point2D<int32_t>(m_window.cwidth, m_window.cheight);
+    }
+
+
+    TRS::Point2D<float> Window::GetPixelSize() const {
+        return TRS::Point2D<float>{
+            2.0f / static_cast<float>(m_window.cwidth),
+            2.0f / static_cast<float>(m_window.cheight)
+        };
     }
 
 
@@ -96,5 +150,25 @@ namespace DENG {
         }
 
         return is_active;
+    }
+
+
+    bool Window::IsKeyPressed(neko_HidEvent _hid) const {
+        return m_window.input.raw.active_table[_hid];
+    }
+
+
+    bool Window::IsKeyReleased(neko_HidEvent _hid) const {
+        return m_window.input.raw.released_table[_hid];
+    }
+
+
+    const EventQueue* Window::GetActiveEventQueue() const {
+        return &m_window.input.raw.active_queue;
+    }
+
+
+    const EventQueue* Window::GetReleasedEventQueue() const {
+        return &m_window.input.raw.released_queue;
     }
 }

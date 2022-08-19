@@ -6,7 +6,7 @@
 #ifndef GAME_EDITOR_H
 #define GAME_EDITOR_H
 
-#if defined(_WIN32) && !defined(_DEBUG)
+#if defined(_WIN32) && !defined(__DEBUG)
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 #endif
 
@@ -23,7 +23,7 @@
 #include <any>
 #include <cmath>
 
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

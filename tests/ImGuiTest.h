@@ -6,7 +6,7 @@
 #ifndef IMGUI_TEST_H
 #define IMGUI_TEST_H
 
-#if defined(_WIN32) && !defined(_DEBUG)
+#if defined(_WIN32) && !defined(__DEBUG)
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 #endif
 

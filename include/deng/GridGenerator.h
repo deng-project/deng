@@ -12,7 +12,7 @@
     #include <cmath>
     #include <vector>
     #include <unordered_map>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include "trs/Points.h"

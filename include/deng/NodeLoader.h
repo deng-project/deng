@@ -11,7 +11,7 @@
     #include <cstring>
     #include <cmath>
     #include <chrono>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <string>

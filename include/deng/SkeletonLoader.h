@@ -17,7 +17,7 @@
     #include <cmath>
     #include <queue>
     #include <algorithm>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

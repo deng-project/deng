@@ -20,7 +20,7 @@
 #ifdef DENG_EDITOR
     #include <algorithm>
 #endif
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

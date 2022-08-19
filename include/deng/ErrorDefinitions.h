@@ -12,7 +12,7 @@
 
 // Debugging function type definition
 typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const uint32_t);
-#ifdef _DEBUG
+#ifdef __DEBUG
     #define LOG(x) std::cout << "LOG: " << x << std::endl
     #define MAT_LOG(mat, msg) mat.log(msg);
     #define WARNME(x) std::cout << "WARNING: " << x << std::endl

@@ -16,7 +16,7 @@ namespace DENG {
             if(m_window.InitVkSurface(m_instance, m_surface) != VK_SUCCESS)
                 VK_INSTANCE_ERR("failed to create a window surface!");
 
-#ifdef _DEBUG
+#ifdef __DEBUG
             _CreateDebugMessenger();
 #endif
             _PickPhysicalDevice();
@@ -86,7 +86,7 @@ namespace DENG {
 
         void InstanceCreator::_CreateInstance() {
             // Set up Vulkan application info
-            std::string title = m_window.GetTitle().c_str();
+            std::string title = m_window.GetTitle();
             VkApplicationInfo appinfo{};
             appinfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
             appinfo.pApplicationName = title.c_str();
@@ -105,8 +105,9 @@ namespace DENG {
             const char **extensions = (const char**) m_window.FindVulkanSurfaceExtensions(&ext_c);
 
             // Log all extensions to console
-            for(size_t i = 0; i < ext_c; i++)
+            for (size_t i = 0; i < ext_c; i++) {
                 LOG("Required extension: " + std::string(extensions[i]));
+            }
 
             instance_createinfo.enabledExtensionCount = ext_c;
             instance_createinfo.ppEnabledExtensionNames = extensions;
@@ -114,7 +115,7 @@ namespace DENG {
 
             
             // Check for validatation layer support
-#ifdef _DEBUG
+#ifdef __DEBUG
             if(!_CheckValidationLayerSupport()) {
                 VK_INSTANCE_ERR("validation layers usage specified, but none are available!");
             } else {
@@ -144,7 +145,7 @@ namespace DENG {
         }
 
 
-#ifdef _DEBUG
+#ifdef __DEBUG
         bool InstanceCreator::_CheckValidationLayerSupport() {
             const std::string validation_lname = "VK_LAYER_KHRONOS_validation";
             uint32_t layer_count;
@@ -175,7 +176,7 @@ namespace DENG {
             if(!debugUtilsMessengerCreator_fun)
                 VK_GEN_ERR("could not create debug messenger!");
 
-            debugUtilsMessengerCreator_fun(m_instance, &messenger_createinfo, NULL, &m_debug_messenger);
+            debugUtilsMessengerCreator_fun(m_instance, &messenger_createinfo, NULL, &m__DEBUG_messenger);
         }
 
 
@@ -367,7 +368,7 @@ namespace DENG {
             logical_device_createinfo.enabledExtensionCount = static_cast<uint32_t>(required_exts.size());
             logical_device_createinfo.ppEnabledExtensionNames = required_exts.data();
 
-#ifdef _DEBUG
+#ifdef __DEBUG
             logical_device_createinfo.enabledLayerCount = 1;
             logical_device_createinfo.ppEnabledLayerNames = &m_validation_layer;
 #else

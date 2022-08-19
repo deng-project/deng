@@ -6,7 +6,7 @@
 #include <array>
 #include <cstring>
 #include <cmath>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

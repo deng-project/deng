@@ -9,7 +9,7 @@
 
 namespace DENG {
 
-#ifdef _DEBUG
+#ifdef __DEBUG
     void lglErrorCheck(const std::string &_func, const std::string &_file, const uint32_t _line) {
         GLenum error;
         while((error = glGetError()) != GL_NO_ERROR) {
@@ -99,14 +99,14 @@ namespace DENG {
         m_framebuffers.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(MAIN_FRAMEBUFFER_NAME),
-            std::forward_as_tuple(
+            std::forward_as_tuple(std::make_shared<OpenGL::Framebuffer>(
                 MAIN_FRAMEBUFFER_NAME,
                 m_framebuffer_draws,
                 m_opengl_textures,
                 m_buffer_loader.GetBufferData(),
                 0,
                 true
-            )
+            ))
         );
     }
 
@@ -146,14 +146,14 @@ namespace DENG {
         m_framebuffers.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(_fb.image_name),
-            std::forward_as_tuple(
+            std::forward_as_tuple(std::make_shared<OpenGL::Framebuffer>(
                 _fb.image_name,
                 m_framebuffer_draws,
                 m_opengl_textures,
                 m_buffer_loader.GetBufferData(),
                 texture,
                 false
-            )
+            ))
         );
     }
 
@@ -244,7 +244,7 @@ namespace DENG {
 
     void OpenGLRenderer::LoadShaders() {
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-            it->second.LoadData();
+            it->second->LoadData();
         }
     }
 
@@ -276,9 +276,9 @@ namespace DENG {
         glViewport(0, 0, static_cast<GLsizei>(m_window.GetSize().x), static_cast<GLsizei>(m_window.GetSize().y));
         glErrorCheck("glViewport");
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.ClearFrame(m_conf.clear_color);
+        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->ClearFrame(m_conf.clear_color);
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-            it->second.ClearFrame(m_conf.clear_color);
+            it->second->ClearFrame(m_conf.clear_color);
         }
     }
 
@@ -288,7 +288,7 @@ namespace DENG {
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
             if(it->first == MAIN_FRAMEBUFFER_NAME)
                 continue;
-            it->second.Render();
+            it->second->Render();
         }
 
         m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = {
@@ -296,6 +296,6 @@ namespace DENG {
             static_cast<uint32_t>(m_window.GetSize().y)
         };
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.Render();
+        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->Render();
     }
 }

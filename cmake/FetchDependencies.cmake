@@ -36,9 +36,12 @@ endfunction(GitClone)
 # Git clone embedded dependencies
 GitClone(https://github.com/ocornut/imgui 8cbd391f096b9314a08670052cc0025cbcadb249 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
 GitClone(https://git.dengproject.org/deng/trs-headers 898e58a49f8f8f76dc3b07407b879cb6836ddc93 ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs trs)
-GitClone(https://git.dengproject.org/deng/minimal-ascii-reader efe815ad9b9383f26ec8137a9ae0089ba7abbe2c ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar mar)
-GitClone(https://git.dengproject.org/deng/nekowin 48e1d81852c58e531a539e6972d35272bd904322 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
-
+GitClone(https://git.dengproject.org/deng/minimal-ascii-reader f5d9b5d0d04da1063e2fab2fd124f6558c37de2c ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar mar)
+GitClone(https://git.dengproject.org/deng/nekowin 36d99bf5ece549f95a3051bd658223f65973df5d ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.dengproject.org/deng/libdas a6b675fb5ccb7a22ea6f73de155d7df379306748 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
+target_include_directories(das-static
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include)
 
 if(WIN32)
     target_include_directories(nwin-static
@@ -48,33 +51,37 @@ if(WIN32)
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Lib)
 endif()
 
-GitClone(https://git.dengproject.org/deng/libdas d0f1d251463bc33ac1f44ec548539c0fa4d9d74f ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
-target_include_directories(das-static
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include)
+
 
 # Windows dependencies
 if(WIN32)
     if(CMAKE_BUILD_TYPE MATCHES Debug)
         DownloadAndExtract(
             https://sdks.dengproject.org/win32/cpython-${PYTHON_VERSION}-db_win32-x86_64.zip
-            50964A61C7A172452D8FF08103727AD8D5FBD121C1F1135FE2DB37766EB3E519
+            47907D05E38E57F3DD1DE3C9815AF15B1FA91C79F63B737BD396ABE6D3CD4C0E
             cpython-${PYTHON_VERSION}-db_win32-x86_64.zip
             ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}
         )
     else()
         DownloadAndExtract(
             https://sdks.dengproject.org/win32/cpython-${PYTHON_VERSION}_win32-x86_64.zip
-            9BF24556396EE873EB484B58A978F5D11FDD7F240DA3DE07BE8BDE141FA5683C
+            782DDF7147507FA67C4B2A441ACA9E610A43E204981C58B46E1BEAF35F37A844
             cpython-${PYTHON_VERSION}_win32-x86_64.zip
             ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}
         )
     endif()
 
+    # google/shaderc
+    DownloadAndExtract(
+        https://sdks.dengproject.org/win32/shaderc-${SHADERC_VERSION}_win32-x86_64.zip
+        F0D8F40B15A781CD48DD88561AE2C8682FD90D5A80443E7A3BC8E1180D1EF87B
+        shaderc-${SHADERC_VERSION}_win32-x86_64.zip
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}
+    )
 
     DownloadAndExtract(
         https://sdks.dengproject.org/win32/VulkanSDK-${VULKAN_SDK_VERSION}_win32-x86_64.zip
-        D9FC1B8805BE492DF55015CD12E14FC1A3D87297F4E991B9AC55AC15837295BA
+        0B2515FCC8407262D75C882254DD218E79C255C7DEE4E715F2B7BD8D3AA1C235
         VulkanSDK-${VULKAN_SDK_VERSION}_win32-x86_64.zip
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}
     )

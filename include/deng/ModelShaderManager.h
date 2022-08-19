@@ -15,7 +15,7 @@
     #include <fstream>
     #include <unordered_map>
     #include <cmath>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <any>

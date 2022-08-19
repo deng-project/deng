@@ -42,7 +42,7 @@ namespace DENG {
         m_framebuffers.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(MAIN_FRAMEBUFFER_NAME),
-            std::forward_as_tuple(
+            std::forward_as_tuple(std::make_shared<Vulkan::Framebuffer>(
                 m_instance_creator,
                 m_uniform_buffer,
                 m_main_buffer,
@@ -52,7 +52,7 @@ namespace DENG {
                 m_framebuffer_draws,
                 m_swapchain_creator.GetSwapchainImages(),
                 m_vulkan_texture_handles
-            )
+            ))
         );
         _AllocateBufferResources();
 
@@ -119,7 +119,18 @@ namespace DENG {
         m_framebuffers.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(_fb.image_name), 
-            std::forward_as_tuple(m_instance_creator, m_uniform_buffer, m_main_buffer, VK_FORMAT_R8G8B8A8_UNORM, m_sample_count, _fb.image_name, m_framebuffer_draws, images, m_vulkan_texture_handles, true)
+            std::forward_as_tuple(std::make_shared<Vulkan::Framebuffer>(
+                m_instance_creator, 
+                m_uniform_buffer, 
+                m_main_buffer, 
+                VK_FORMAT_R8G8B8A8_UNORM, 
+                m_sample_count, 
+                _fb.image_name, 
+                m_framebuffer_draws, 
+                images, 
+                m_vulkan_texture_handles, 
+                true
+            ))
         );
 
         m_vulkan_texture_handles[_fb.image_name] = texture;
@@ -145,7 +156,7 @@ namespace DENG {
         }
         
         const VkDeviceSize size = static_cast<VkDeviceSize>(_width * _height * _bit_depth);
-        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.GetCommandPool();
+        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
 
         VkBuffer staging_buffer = VK_NULL_HANDLE;
         VkDeviceMemory staging_memory = VK_NULL_HANDLE;
@@ -229,7 +240,7 @@ namespace DENG {
 
         // load framebuffers
         for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++)
-            it->second.LoadData();
+            it->second->LoadData();
 
         m_is_init = true;
     }
@@ -242,7 +253,7 @@ namespace DENG {
             _ReallocateUniformBuffer();
 
             for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-                it->second.RecreateDescriptorSets();
+                it->second->RecreateDescriptorSets();
             }
         }
 
@@ -253,7 +264,7 @@ namespace DENG {
 
 
     void VulkanRenderer::UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.GetCommandPool();
+        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_buffer_size) {
             VkDeviceSize old_size = m_buffer_size;
@@ -271,16 +282,16 @@ namespace DENG {
             if(it->first == MAIN_FRAMEBUFFER_NAME)
                 continue;
 
-            it->second.ClearFrame();
+            it->second->ClearFrame();
         }
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.ClearFrame();
+        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->ClearFrame();
     }
 
 
     void VulkanRenderer::RenderFrame() {
         // acquire next images to draw
-        VkSemaphore swapchain_image_semaphore = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.GetSwapchainImageAcquisitionSemaphore();
+        VkSemaphore swapchain_image_semaphore = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetSwapchainImageAcquisitionSemaphore();
         uint32_t imgi;
         VkResult res = vkAcquireNextImageKHR(m_instance_creator.GetDevice(), m_swapchain_creator.GetSwapchain(), UINT64_MAX, swapchain_image_semaphore, VK_NULL_HANDLE, &imgi);
 
@@ -296,10 +307,10 @@ namespace DENG {
             if(it->first == MAIN_FRAMEBUFFER_NAME)
                 continue;
 
-            it->second.Render(m_conf.clear_color);
+            it->second->Render(m_conf.clear_color);
         }
 
-        Vulkan::Framebuffer &fb = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
+        Vulkan::Framebuffer &fb = *m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
 
         fb.Render(m_conf.clear_color, imgi);
         res = fb.Present(m_swapchain_creator.GetSwapchain(), imgi);
@@ -337,7 +348,7 @@ namespace DENG {
 
 
     void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_size) {
-        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.GetCommandPool();
+        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
         // step 1: create staging buffer
         VkBuffer staging_buffer = VK_NULL_HANDLE;
         VkDeviceMemory staging_memory = VK_NULL_HANDLE;
@@ -373,7 +384,7 @@ namespace DENG {
 
 
     void VulkanRenderer::_CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels) {
-        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second.GetCommandPool();
+        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
         // OPTIONAL:
         // check if image format supports linear blitting
         VkFormatProperties format_props;
@@ -476,7 +487,7 @@ namespace DENG {
 
         vkDeviceWaitIdle(m_instance_creator.GetDevice());
 
-        Vulkan::Framebuffer &fb = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
+        Vulkan::Framebuffer &fb = *m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
         fb.DestroyFramebuffer();
         m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = { 
             static_cast<uint32_t>(m_window.GetSize().x),

@@ -15,7 +15,7 @@
     #include <algorithm>
 #endif
 
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <cstdint>

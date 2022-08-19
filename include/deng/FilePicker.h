@@ -25,7 +25,7 @@
 #elif defined(_WIN32)
     // windows includes
 #endif
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

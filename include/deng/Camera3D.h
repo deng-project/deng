@@ -15,7 +15,7 @@
     #include <variant>
     #include <string>
     #include <unordered_map>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

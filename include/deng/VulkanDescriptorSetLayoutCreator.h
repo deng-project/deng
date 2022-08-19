@@ -13,7 +13,7 @@
     #include <string>
     #include <cstring>
     #include <unordered_map>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <vulkan/vulkan.h>

@@ -16,7 +16,7 @@
     #include <chrono>
     #include <variant>
     #include <unordered_map>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 

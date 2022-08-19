@@ -18,11 +18,12 @@
     #include <cmath>
     #include <unordered_map>
     #include <utility>
+    #include <memory>
     
     #define NOMINMAX
     #include <algorithm>
 
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
     #include <vulkan/vulkan.h>
@@ -61,7 +62,7 @@
 namespace DENG {
 
     namespace Vulkan {
-        void Initialise();
+        void DENG_API Initialise();
     }
 
     class DENG_API VulkanRenderer : public Renderer {
@@ -74,7 +75,7 @@ namespace DENG {
             std::unordered_map<std::string, Vulkan::TextureData> m_vulkan_texture_handles;
 
             // framebuffers
-            std::unordered_map<std::string, Vulkan::Framebuffer> m_framebuffers;
+            std::unordered_map<std::string, std::shared_ptr<Vulkan::Framebuffer>> m_framebuffers;
             
             // locally managed vulkan resources
             VkDeviceSize m_uniform_size = DEFAULT_UNIFORM_SIZE;

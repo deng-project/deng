@@ -16,7 +16,7 @@
     #include <cmath>
     #include <cstring>
     #include <algorithm>
-#ifdef _DEBUG
+#ifdef __DEBUG
     #include <iostream>
 #endif
 
