@@ -93,12 +93,12 @@ if(WIN32)
         #${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/ode-${ODE_VERSION}
     #)
 
-    DownloadAndExtract(
-        https://sdks.dengproject.org/win32/wxWidgets-3.2.0_win32-x86_64.zip
-        DC0E69A6E58001CD5B7A094AFDABEFBE918BF4D732368B99481195D1880A624B
-        wxWidgets-${WXWIDGETS_VERSION}_win32-x86_64.zip
-        ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
-    )
+    #DownloadAndExtract(
+    #    https://sdks.dengproject.org/win32/wxWidgets-3.2.0_win32-x86_64.zip
+    #    DC0E69A6E58001CD5B7A094AFDABEFBE918BF4D732368B99481195D1880A624B
+    #    wxWidgets-${WXWIDGETS_VERSION}_win32-x86_64.zip
+    #    ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
+    #)
 elseif(UNIX AND NOT APPLE)
     # CPython
     if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -126,10 +126,10 @@ elseif(UNIX AND NOT APPLE)
     #)
 
     # wxWidgets
-    DownloadAndExtract(
-        https://sdks.dengproject.org/linux/wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
-        061eb7d447421ec30a6910887d65a479d70e0de7d9a69b324728d37c6de01e10
-        wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
-        ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
-    )
+    #DownloadAndExtract(
+    #    https://sdks.dengproject.org/linux/wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
+    #    061eb7d447421ec30a6910887d65a479d70e0de7d9a69b324728d37c6de01e10
+    #    wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
+    #    ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
+    #)
 endif()
