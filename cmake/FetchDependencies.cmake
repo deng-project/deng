@@ -43,6 +43,11 @@ target_include_directories(das-static
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include)
 
+GitClone(https://git.dengproject.org/deng/dengxml 8b8be9e12e8f9574d8482220e9b05661a84cb4a4 ${CMAKE_CURRENT_SOURCE_DIR}/deps/dxml dxml)
+target_include_directories(dxml
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include)
+
 if(WIN32)
     target_include_directories(nwin-static
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Include)
@@ -95,7 +100,7 @@ if(WIN32)
 
     DownloadAndExtract(
         https://sdks.dengproject.org/win32/wxWidgets-3.2.0_win32-x86_64.zip
-        DC0E69A6E58001CD5B7A094AFDABEFBE918BF4D732368B99481195D1880A624B
+        709499E19C0A4F7B8F92630D4F474506C71FDC568942CC86DB1B93DE1AAA239D
         wxWidgets-${WXWIDGETS_VERSION}_win32-x86_64.zip
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
     )

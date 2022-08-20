@@ -340,7 +340,7 @@ namespace DENG {
 
                 // remove all texture bound descriptor sets that were using primary pool
                 // texture bound descriptor sets that are using secondary pool are going to be shifted accordingly
-                size_t shift = 0;
+                uint32_t shift = 0;
                 for(auto it = sorted_texture_bounds.begin(); it != sorted_texture_bounds.end(); it++) {
                     const uint32_t index = it->second;
                     if(m_descriptor_set_pool_flags[index]) {

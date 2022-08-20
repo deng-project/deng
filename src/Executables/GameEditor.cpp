@@ -3,6 +3,7 @@
 // file: ViewModelsApp.cpp - View models application implementation
 // author: Karl-Mihkel Ott
 
+#define EXECUTABLE_GAME_EDITOR_CPP
 #include "deng/Executables/GameEditor.h"
 
 namespace Executable {
@@ -293,9 +294,9 @@ namespace Executable {
                 min.y += pos.y;
                 max.x += pos.x;
                 max.y += pos.y;
-                const TRS::Point2D<float> origin = {
-                    (max.x - min.x) / 2.0f + min.x,
-                    (max.y - min.y) / 2.0f + min.y
+                const TRS::Point2D<int64_t> origin = {
+                    static_cast<int64_t>((max.x - min.x) / 2.0f + min.x),
+                    static_cast<int64_t>((max.y - min.y) / 2.0f + min.y)
                 };
                 gui_data->camera->SetVirtualCursorOrigin(origin);
                 gui_data->camera->EnableCamera();
@@ -314,7 +315,7 @@ namespace Executable {
     }
 
 
-    ModelLoaderApp::ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend) : 
+    GameEditor::GameEditor(DENG::Window &_win, DENG::Renderer &_rend) : 
         m_window(_win), 
         m_renderer(_rend),
         m_editor_camera(m_renderer, m_window, m_editor_camera_conf, "Editor camera"),
@@ -339,7 +340,7 @@ namespace Executable {
     }
 
 
-    void ModelLoaderApp::Run() {
+    void GameEditor::Run() {
         while(!m_imgui_data.quit && m_window.IsRunning()) {
             m_renderer.ClearFrame();
 
@@ -372,19 +373,19 @@ namespace Executable {
     }
 }
 
-int main(void) {
-
-    DENG::Window::Initialise();
-
-    {
-        DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
-        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "DENG: Untitled project (Vulkan)");
-        DENG::Vulkan::Initialise();
-        DENG::VulkanRenderer rend(win, conf);
-        Executable::ModelLoaderApp app(win, rend);
-        app.Run();
-    }
-    
-    DENG::Window::Deinitialise();
-    return EXIT_SUCCESS;
-}
+// int main(void) {
+// 
+//     DENG::Window::Initialise();
+// 
+//     {
+//         DENG::RendererConfig conf = { false, { 0.0f, 0.0f, 0.0f, 0.0f } };
+//         DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_VULKAN, "DENG: Untitled project (Vulkan)");
+//         DENG::Vulkan::Initialise();
+//         DENG::VulkanRenderer rend(win, conf);
+//         Executable::GameEditor app(win, rend);
+//         app.Run();
+//     }
+//     
+//     DENG::Window::Deinitialise();
+//     return EXIT_SUCCESS;
+// }

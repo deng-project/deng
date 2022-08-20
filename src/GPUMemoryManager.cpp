@@ -119,12 +119,12 @@ namespace DENG {
             } else if(m_ubo_buffer_blocks[index].first > _offset) { // look left
                 DENG_ASSERT(r != 0);
                 r = index;
-                uint32_t sub = (r - l) >> 1;
+                const size_t sub = (r - l) >> 1;
                 index -= sub ? sub : 1;
             } else if(m_ubo_buffer_blocks[index].first < _offset) { // look right
                 DENG_ASSERT(l != m_ubo_buffer_blocks.size() - 1);
                 l = index;
-                uint32_t add = (r - l) >> 1;
+                const size_t add = (r - l) >> 1;
                 index += add ? add : 1;
             }
         }
@@ -143,12 +143,12 @@ namespace DENG {
             } else if(m_main_buffer_blocks[index].first > _offset) { // look left
                 DENG_ASSERT(r != 0);
                 r = index;
-                const uint32_t sub = (r - l) >> 1;
+                const size_t sub = (r - l) >> 1;
                 index -= sub ? sub : 1;
             } else if(m_main_buffer_blocks[index].first < _offset) { // look right
                 DENG_ASSERT(l != m_main_buffer_blocks.size() - 1);
                 l = index;
-                const uint32_t add = (r - l) >> 1;
+                const size_t add = (r - l) >> 1;
                 index += add ? add : 1;
             }
         }

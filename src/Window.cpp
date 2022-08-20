@@ -35,7 +35,7 @@ namespace DENG {
     }
 
 
-    void Window::ToggleVCMode(TRS::Point2D<float> _origin) {
+    void Window::ToggleVCMode(TRS::Point2D<int64_t> _origin) {
         m_window.input.cursor.is_virtual = !m_window.input.cursor.is_virtual;
 
         if (m_window.input.cursor.is_virtual) {
@@ -56,7 +56,7 @@ namespace DENG {
     }
 
 
-    void Window::ChangeVCMode(bool _is_vcp, TRS::Point2D<float> _origin) {
+    void Window::ChangeVCMode(bool _is_vcp, TRS::Point2D<int64_t> _origin) {
         m_window.input.cursor.is_virtual = _is_vcp;
         if (m_window.input.cursor.is_virtual) {
             m_window.input.cursor.orig_x = _origin.x;

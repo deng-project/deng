@@ -257,7 +257,7 @@ namespace DENG {
                 const uint32_t patch = VK_API_VERSION_PATCH(props.apiVersion);
                 m_gpu_info.api_version = std::to_string(variant) + "." + std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
 
-                m_minimal_uniform_buffer_alignment = props.limits.minUniformBufferOffsetAlignment;
+                m_minimal_uniform_buffer_alignment = static_cast<uint32_t>(props.limits.minUniformBufferOffsetAlignment);
                 m_max_sampler_anisotropy = props.limits.maxSamplerAnisotropy;
 
                 switch(props.deviceType) {

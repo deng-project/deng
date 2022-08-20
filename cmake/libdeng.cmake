@@ -112,14 +112,51 @@ target_include_directories(${DENG_COMPLETE_TARGET}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/dxml/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui
 )
 
 # Vulkan sdk includes
 if(WIN32)
-    target_include_directories(${DENG_COMPLETE_TARGET}
+	target_include_directories(${DENG_COMPLETE_TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Include
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}/include)
+		
+	if(CMAKE_BUILD_TYPE MATCHES Debug)
+		add_custom_command(TARGET ${DENG_COMPLETE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E remove_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/python3.10
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/python3.10
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/Lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/python3.10
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/python310_d.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libcrypto-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libssl-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libffi-7.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
+		)
+	elseif(CMAKE_BUILD_TYPE MATCHES Release)
+		add_custom_target(TARGET ${DENG_COMPLETE_TARGET} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS-E remove_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/python3.10
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/python3.10
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/Lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/python3.10
+			COMMAND ${CMAKE_COMMAND} 
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/python310.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libcrypto-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libssl-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libffi-7.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}	
+		)
+	endif()
 elseif(UNIX)
     target_include_directories(${DENG_COMPLETE_TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/include)
@@ -138,7 +175,8 @@ endif()
 target_link_libraries(${DENG_COMPLETE_TARGET}
     PRIVATE mar
     PRIVATE nwin-static
-    PRIVATE das-static)
+    PRIVATE das-static
+	PRIVATE dxml)
 
 # Universal compile definitions for imgui
 target_compile_definitions(${DENG_COMPLETE_TARGET}
@@ -151,12 +189,12 @@ if(WIN32)
     target_compile_definitions(${DENG_COMPLETE_TARGET}
         PRIVATE IMGUI_API=_declspec\(dllexport\)
         INTERFACE IMGUI_API=_declspec\(dllimport\)
-    )
+	)
 
     target_link_directories(${DENG_COMPLETE_TARGET}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Lib
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}/lib
-        PUBLIC deps/cpython-${PYTHON_VERSION})
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION})
 
 	if(CMAKE_BUILD_TYPE MATCHES Debug)
 		target_link_libraries(${DENG_COMPLETE_TARGET} 
@@ -192,5 +230,5 @@ add_dependencies(${DENG_COMPLETE_TARGET}
     das-static
     dastool
     nwin-static
-    ${IMGUI_TARGET}
+	dxml
 )

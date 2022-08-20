@@ -15,7 +15,7 @@ option(BUILD_TESTS "Build DENG testing applications" ON)
 
 # Set appropriate compiler flags
 if(MSVC)
-    add_compile_options(/MT /W4 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c17> /wd4251)
+    add_compile_options(/MT /W3 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c17> /wd4251)
 	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH _CRT_SECURE_NO_WARNINGS)
 
     # Set correct optimisation flags
@@ -24,6 +24,9 @@ if(MSVC)
     else()
         add_compile_options(/O2)
     endif()
+	
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/Release)
 else()
     add_compile_options(-Wall -msse4.1 -Wextra $<$<COMPILE_LANGUAGE:CXX>:-std=c++17> $<$<COMPILE_LANGUAGE:C>:-std=c99>)
 
@@ -57,8 +60,13 @@ set(LIBDAS_BUILD_STATIC_LIB ON CACHE BOOL "Build static libdas library")
 set(LIBDAS_BUILD_SHARED_LIB OFF CACHE BOOL "Build shared libdas library")
 set(LIBDAS_BUILD_DASTOOL ON CACHE BOOL "Build dastool application")
 set(LIBDAS_BUILD_TESTS OFF CACHE BOOL "Build libdas testing applications")
+set(LIBDAS_BUILD_DEPENDENCIES OFF CACHE BOOL "Build libdas dependencies")
 
-#include(cmake/copy.cmake)
+# dengxml configuration
+set(DENGXML_BUILD_TESTS OFF CACHE BOOL "Build dengxml tests")
+set(DENGXML_BUILD_DEPENDENCIES OFF CACHE BOOL "Build all dengxml dependencies")
+
+# include(cmake/copy.cmake)
 include(cmake/FetchDependencies.cmake)
 include(cmake/libdeng.cmake)
 include(cmake/GameEditor.cmake)

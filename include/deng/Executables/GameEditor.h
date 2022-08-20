@@ -10,67 +10,69 @@
     #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 #endif
 
-#include <string>
-#include <sstream>
-#include <vector>
-#include <array>
-#include <fstream>
-#include <cstring>
-#include <cmath>
-#include <unordered_map>
-#include <chrono>
-#include <variant>
-#include <any>
-#include <cmath>
+#ifdef EXECUTABLE_GAME_EDITOR_CPP
+    #include <string>
+    #include <sstream>
+    #include <vector>
+    #include <array>
+    #include <fstream>
+    #include <cstring>
+    #include <cmath>
+    #include <unordered_map>
+    #include <chrono>
+    #include <variant>
+    #include <any>
+    #include <cmath>
+    
+    #ifdef __DEBUG
+        #include <iostream>
+    #endif
+    
+    // libdas includes
+    #include "trs/Points.h"
+    #include "trs/Vector.h"
+    #include "trs/Matrix.h"
+    #include "trs/Quaternion.h"
+    
+    #include "mar/AsciiStreamReader.h"
+    #include "mar/AsciiLineReader.h"
 
-#ifdef __DEBUG
-    #include <iostream>
+    #include "das/Api.h"
+    #include "das/ErrorHandlers.h"
+    #include "das/DasStructures.h"
+    #include "das/DasReaderCore.h"
+    #include "das/DasParser.h"
+    #include "das/Hash.h"
+
+    #include "deng/Api.h"
+    #include "deng/BaseTypes.h"
+    #include "deng/ErrorDefinitions.h"
+    #include "deng/ShaderDefinitions.h"
+    #include "deng/Window.h"
+    #include "deng/Renderer.h"
+    #include "deng/ModelUniforms.h"
+    #include "deng/ModelShaderGenerator.h"
+    #include "deng/ModelShaderManager.h"
+    #include "deng/AnimationSampler.h"
+    #include "deng/MeshLoader.h"
+    #include "deng/SkeletonLoader.h"
+    #include "deng/NodeLoader.h"
+    #include "deng/SceneLoader.h"
+    #include "deng/ModelLoader.h"
+    #include "deng/Camera3D.h"
+    #include "deng/EditorCamera.h"
+    #include "deng/FirstPersonCamera.h"
+    #include "deng/ImGuiLayer.h"
+    #include "deng/PythonScriptExecutor.h"
+    #include "deng/GPUMemoryManager.h"
+    #include "deng/GridGenerator.h"
+    #include "deng/FilePicker.h"
+    #include "deng/RenderState.h"
+
+    // backend specific includes
+    #include "deng/OpenGLRenderer.h"
+    #include "deng/VulkanRenderer.h"
 #endif
-
-// libdas includes
-#include "trs/Points.h"
-#include "trs/Vector.h"
-#include "trs/Matrix.h"
-#include "trs/Quaternion.h"
-
-#include "mar/AsciiStreamReader.h"
-#include "mar/AsciiLineReader.h"
-
-#include "das/Api.h"
-#include "das/ErrorHandlers.h"
-#include "das/DasStructures.h"
-#include "das/DasReaderCore.h"
-#include "das/DasParser.h"
-#include "das/Hash.h"
-
-#include "deng/Api.h"
-#include "deng/BaseTypes.h"
-#include "deng/ErrorDefinitions.h"
-#include "deng/ShaderDefinitions.h"
-#include "deng/Window.h"
-#include "deng/Renderer.h"
-#include "deng/ModelUniforms.h"
-#include "deng/ModelShaderGenerator.h"
-#include "deng/ModelShaderManager.h"
-#include "deng/AnimationSampler.h"
-#include "deng/MeshLoader.h"
-#include "deng/SkeletonLoader.h"
-#include "deng/NodeLoader.h"
-#include "deng/SceneLoader.h"
-#include "deng/ModelLoader.h"
-#include "deng/Camera3D.h"
-#include "deng/EditorCamera.h"
-#include "deng/FirstPersonCamera.h"
-#include "deng/ImGuiLayer.h"
-#include "deng/PythonScriptExecutor.h"
-#include "deng/GPUMemoryManager.h"
-#include "deng/GridGenerator.h"
-#include "deng/FilePicker.h"
-#include "deng/RenderState.h"
-
-// backend specific includes
-#include "deng/OpenGLRenderer.h"
-#include "deng/VulkanRenderer.h"
 
 #define USE_VULKAN  1
 #define USE_OPENGL  2
@@ -130,7 +132,7 @@ namespace Executable {
         static void _ShowCoreUI(void *_data);
     };
 
-    class ModelLoaderApp {
+    class GameEditor {
         private:
             const std::string m_viewport_framebuffer_name = VIEWPORT_NAME;
             EditorGuiData m_imgui_data;
@@ -186,7 +188,7 @@ namespace Executable {
             bool m_use_camera = false;
 
         public:
-            ModelLoaderApp(DENG::Window &_win, DENG::Renderer &_rend);
+            GameEditor(DENG::Window &_win, DENG::Renderer &_rend);
             void Run();
     };
 }
