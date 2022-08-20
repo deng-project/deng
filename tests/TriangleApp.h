@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstring>
 #include <variant>
+#include <memory>
 #include <unordered_map>
 
 #include "trs/Points.h"

@@ -18,6 +18,7 @@
 #include <cstring>
 #include <cmath>
 #include <unordered_map>
+#include <memory>
 #include <chrono>
 #include <variant>
 #include <any>

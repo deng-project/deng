@@ -3,6 +3,7 @@
 #include <variant>
 #include <chrono>
 #include <unordered_map>
+#include <memory>
 #include <array>
 #include <cstring>
 #include <cmath>
