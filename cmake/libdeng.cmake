@@ -42,6 +42,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/ShaderDefinitions.h
     include/deng/SkeletonLoader.h
     include/deng/ThirdPersonCamera.h
+    include/deng/Version.h
     include/deng/VulkanDescriptorAllocator.h
     include/deng/VulkanDescriptorSetLayoutCreator.h
     include/deng/VulkanFramebuffer.h

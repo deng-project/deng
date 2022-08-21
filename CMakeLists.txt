@@ -69,7 +69,7 @@ set(DENGXML_BUILD_DEPENDENCIES OFF CACHE BOOL "Build all dengxml dependencies")
 # include(cmake/copy.cmake)
 include(cmake/FetchDependencies.cmake)
 include(cmake/libdeng.cmake)
-include(cmake/GameEditor.cmake)
+include(cmake/deng-game-editor.cmake)
 include(cmake/TextureDump.cmake)
 
 

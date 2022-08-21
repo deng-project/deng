@@ -3,6 +3,7 @@
 // file: ViewModelsApp.cpp - View models application implementation
 // author: Karl-Mihkel Ott
 
+#if 0
 #define EXECUTABLE_GAME_EDITOR_CPP
 #include "deng/Executables/GameEditor.h"
 
@@ -389,3 +390,4 @@ namespace Executable {
 //     DENG::Window::Deinitialise();
 //     return EXIT_SUCCESS;
 // }
+#endif
