@@ -6,17 +6,18 @@
 #ifndef PROJECT_MANAGER_H
 #define PROJECT_MANAGER_H
 
-// wxWidgets "Hello World" Program
-
-// For compilers that support precompilation, includes "wx/wx.h".
 #include <wx/wx.h>
-#define DEFAULT_SIZE wxSize(600, 800)
+#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+
+#define DEFAULT_SIZE wxSize(960, 640)
 
 class ProjectManagerFrame : public wxFrame {
     private:
-        void _OnHello(wxCommandEvent& event);
-        void _OnExit(wxCommandEvent& event);
-        void _OnAbout(wxCommandEvent& event);
+        void _OnNewProject(wxCommandEvent &_ev);
+        void _OnOpenProject(wxCommandEvent &_ev);
+        void _OnCancel(wxCommandEvent& _ev);
+
+        wxDECLARE_EVENT_TABLE();
 
     public:
         ProjectManagerFrame();
@@ -24,14 +25,30 @@ class ProjectManagerFrame : public wxFrame {
 };
 
 
+class LogoPanel : public wxPanel {
+    private:
+        wxBitmap m_image;
+
+    public:
+        LogoPanel(wxFrame* _parent);
+        void PaintEvent(wxPaintEvent& _ev);
+
+        DECLARE_EVENT_TABLE();
+};
+
+
 class ProjectManagerApp : public wxApp {
+    private:
+        ProjectManagerFrame* m_frame = nullptr;
+
     public:
         virtual bool OnInit();
 };
 
 enum
 {
-    ID_Hello = 1
+    ID_NEW_PROJECT,
+    ID_OPEN_PROJECT
 };
 
 #endif
