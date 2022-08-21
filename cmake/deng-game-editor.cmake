@@ -23,8 +23,8 @@ add_dependencies(${DENG_GAME_EDITOR_TARGET} ${DENG_COMPLETE_TARGET})
 
 target_include_directories(${DENG_GAME_EDITOR_TARGET}
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-# target_link_libraries(${DENG_GAME_EDITOR_TARGET} 
-#    PRIVATE ${DENG_COMPLETE_TARGET})
+target_link_libraries(${DENG_GAME_EDITOR_TARGET} 
+   PRIVATE ${DENG_COMPLETE_TARGET})
 
 if(WIN32)
 	target_include_directories(${DENG_GAME_EDITOR_TARGET}
