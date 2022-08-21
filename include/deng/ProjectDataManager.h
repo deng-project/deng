@@ -10,6 +10,7 @@
 	#include <string>
 	#include <vector>
 	#include <unordered_map>
+    #include <cmath>
 
 	#include "trs/Vector.h"
 	#include "trs/Points.h"

@@ -128,6 +128,7 @@ namespace DENG {
                 return std::string(path) + "\\Documents\\deng-projects";
             }
 #else
+            return "(null)";
 #endif
         }
 
