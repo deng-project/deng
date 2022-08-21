@@ -211,8 +211,8 @@ if(WIN32)
 	
 elseif(UNIX AND NOT MACOS)
     target_link_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC deps/VulkanSDK-${VULKAN_SDK_VERSION}/lib
-        PUBLIC deps/cpython-${PYTHON_VERSION}/lib)
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/lib
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/lib)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
         target_link_libraries(${DENG_COMPLETE_TARGET}

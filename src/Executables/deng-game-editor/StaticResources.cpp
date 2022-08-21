@@ -18,7 +18,7 @@ namespace DENG {
 		}
 		
 		
-		size_t GetSmallLogoSize() {
+        std::size_t GetSmallLogoSize() {
 			return sizeof(g_logo_small_png);
 		}
 		
@@ -28,7 +28,7 @@ namespace DENG {
 		}
 		
 		
-		size_t GetLogoIcon32x32Size() {
+        std::size_t GetLogoIcon32x32Size() {
 			return sizeof(g_32x32_png);
 		}
 	}

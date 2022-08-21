@@ -92,8 +92,7 @@ if(WIN32)
 
     DownloadAndExtract(
         https://sdks.dengproject.org/win32/VulkanSDK-${VULKAN_SDK_VERSION}_win32-x86_64.zip
-        0B2515FCC8407262D75C882254DD218E79C255C7DEE4E715F2B7BD8D3AA1C235
-        VulkanSDK-${VULKAN_SDK_VERSION}_win32-x86_64.zip
+        0B2515FCC8407262D75C882254DD218E79C255C7DEE4E715F2B7BD8D3AA1C235 VulkanSDK-${VULKAN_SDK_VERSION}_win32-x86_64.zip
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}
     )
 
@@ -128,6 +127,14 @@ elseif(UNIX AND NOT APPLE)
         )
     endif()
 
+    # Vulkan SDK
+    DownloadAndExtract(
+        https://sdks.dengproject.org/linux/VulkanSDK-${VULKAN_SDK_VERSION}_gnu-linux-x86_64.tar.gz
+        d07dc4df7d304cc1491dd659cd1af0de4f12f306eeeb20cac2a0068aeacd867c
+        VulkanSDK-${VULKAN_SDK_VERSION}_gnu-linux-x86_64.tar.gz
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}
+    )
+
     # ODE
     #DownloadAndExtract(
         #https://sdks.dengproject.org/linux/ode-${ODE_VERSION}_gnu-linux-x86_64.tar.gz
@@ -137,10 +144,10 @@ elseif(UNIX AND NOT APPLE)
     #)
 
     # wxWidgets
-    #DownloadAndExtract(
-    #    https://sdks.dengproject.org/linux/wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
-    #    061eb7d447421ec30a6910887d65a479d70e0de7d9a69b324728d37c6de01e10
-    #    wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
-    #    ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
-    #)
+    DownloadAndExtract(
+        https://sdks.dengproject.org/linux/wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
+        061eb7d447421ec30a6910887d65a479d70e0de7d9a69b324728d37c6de01e10
+        wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
+    )
 endif()
