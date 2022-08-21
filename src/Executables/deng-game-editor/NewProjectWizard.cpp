@@ -29,7 +29,7 @@ namespace DENG {
             property_sizer->Add(new wxStaticText(this, wxID_ANY, "Project root directory"),
                                 0, wxALIGN_LEFT | wxLEFT | wxTOP, 10);
             wxBoxSizer* path_sizer = new wxBoxSizer(wxHORIZONTAL);
-            path_sizer->Add(new wxTextCtrl(this, ID_PATH, "C:\\Users\\user\\Documents\\deng-projects", wxDefaultPosition, wxSize(300, 20)),
+            path_sizer->Add(new wxTextCtrl(this, ID_PATH, _GetDefaultProjectPath(), wxDefaultPosition, wxSize(300, 20)),
                             0, wxALIGN_LEFT | wxLEFT, 10);
             path_sizer->Add(new wxButton(this, ID_CHOOSE_DIRECTORY, "Choose path"),
                             0, wxRIGHT, 10);
@@ -47,6 +47,14 @@ namespace DENG {
             property_sizer->Add(new wxTextCtrl(this, ID_DIRECTORY_NAME, "new-project", wxDefaultPosition, wxSize(300, 20)),
                                 0, wxALIGN_LEFT | wxLEFT, 10);
 
+            // api selector
+            property_sizer->Add(new wxStaticText(this, wxID_ANY, "Default rendering backend"), 0,
+                                wxALIGN_LEFT | wxLEFT | wxTOP, 10);
+            wxComboBox* backends = new wxComboBox(this, ID_BACKEND, "Select a default backend", wxDefaultPosition, wxSize(300, 20));
+            backends->Insert(wxT("Vulkan"), (unsigned int)DXML::Configuration::Backend::VULKAN);
+            backends->Insert(wxT("OpenGL"), (unsigned int) DXML::Configuration::Backend::OPENGL);
+            property_sizer->Add(backends, 0, wxALIGN_LEFT | wxLEFT, 10);
+
             // separator
             property_sizer->Add(new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(450, 2)), 0, wxALL, 10);
             
@@ -60,6 +68,69 @@ namespace DENG {
         }
 
 
+        bool NewProjectWizard::_CreateNewProject() {
+            // check for possible errors
+            DENG::ProjectDataManager data;
+            const std::string root_path = ((wxTextCtrl*) wxWindow::FindWindowById(ID_PATH))->GetLineText(0).ToStdString();
+            const std::string dir_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_DIRECTORY_NAME))->GetLineText(0).ToStdString();
+            const std::string project_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_PROJECT_NAME))->GetLineText(0).ToStdString();
+            const int api = ((wxComboBox*) wxWindow::FindWindowById(ID_BACKEND))->GetSelection();
+
+            // check if root_path or dir_name are empty strings
+            if (root_path == "") {
+                wxMessageBox("Root directory path cannot be empty", "Error", wxICON_ERROR | wxOK);
+                return false;
+            }
+
+            if (dir_name == "") {
+                wxMessageBox("Directory name cannot be empty", "Error", wxICON_ERROR | wxOK);
+                return false;
+            }
+
+            if (project_name == "") {
+                wxMessageBox("Project name cannot be empty", "Error", wxICON_ERROR | wxOK);
+                return false;
+            }
+
+            if (api != (int) DXML::Configuration::Backend::VULKAN && api != (int) DXML::Configuration::Backend::OPENGL) {
+                wxMessageBox("Please select appropriate rendering backend", "Error", wxICON_ERROR | wxOK);
+                return false;
+            }
+
+#ifdef _WIN32
+            if (root_path.back() == '\\') {
+                data.SetProjectPath(root_path + dir_name);
+            } else {
+                data.SetProjectPath(root_path + '\\' + dir_name);
+            }
+#else
+            if (root_path.back() == '/') {
+                data.SetProjectPath(root_path + dir_name);
+            } else {
+                data.SetProjectPath(root_path + '/' + dir_name);
+            }
+#endif
+
+            data.SetProjectName(wxWindow::FindWindowById(ID_PROJECT_NAME)->GetLabel().ToStdString());
+            // data.CreateEmptyProject();
+            return true;
+        }
+
+
+        const std::string NewProjectWizard::_GetDefaultProjectPath() {
+#ifdef _WIN32
+            WCHAR wpath[MAX_PATH] = { 0 };
+            if (!SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, wpath))) {
+                return "C:\\Users\\user\\Documents\\deng-projects";
+            } else {
+                CHAR path[MAX_PATH * sizeof(WCHAR)] = {0};
+                WideCharToMultiByte(CP_UTF8, 0, wpath, MAX_PATH, path, MAX_PATH * sizeof(WCHAR), NULL, NULL);
+                return std::string(path) + "\\Documents\\deng-projects";
+            }
+#else
+#endif
+        }
+
         // Callbacks
         void NewProjectWizard::_OnChooseDirectoryClick(wxCommandEvent &_ev) {
             wxDirDialog dir_dialog = wxDirDialog(this, "Choose project directory");
@@ -71,8 +142,10 @@ namespace DENG {
         }
 
         void NewProjectWizard::_OnCreateNewProjectClick(wxCommandEvent &_ev) {
-            Close(true);
-            GetParent()->Close(true);
+            if (_CreateNewProject()) {
+                Close(true);
+                GetParent()->Close(true);
+            }
         }
 
         void NewProjectWizard::_OnCancelClick(wxCommandEvent& _ev) {

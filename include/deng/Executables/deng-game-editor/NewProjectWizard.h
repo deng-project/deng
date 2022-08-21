@@ -9,15 +9,28 @@
 #ifdef NEW_PROJECT_WIZARD_CPP
     #include <wx/wx.h>
     #include <wx/statline.h>
+#ifdef _WIN32
+    #include <ShlObj.h>
+#endif
+    
+    #include "trs/Vector.h"
+    #include "trs/Points.h"
+    #include "trs/Quaternion.h"
+
+    #include "deng/Api.h"
+    #include "dxml/GameStructs.h"
+    #include "deng/ProjectDataManager.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
 #endif
 
 namespace DENG {
 	namespace Editor {
-
+        
         class NewProjectWizard : public wxFrame {
             private:
-                void _CreateNewProject();
+                bool _CreateNewProject();
+                const std::string _GetDefaultProjectPath();
+
                 void _OnChooseDirectoryClick(wxCommandEvent &_ev);
                 void _OnCreateNewProjectClick(wxCommandEvent& _ev);
                 void _OnCancelClick(wxCommandEvent& _ev);
@@ -33,8 +46,9 @@ namespace DENG {
             ID_CHOOSE_DIRECTORY = 7,
             ID_PROJECT_NAME = 8,
             ID_DIRECTORY_NAME = 9,
-            ID_CREATE_NEW_PROJECT = 10,
-            ID_CANCEL = 11
+            ID_BACKEND = 10,
+            ID_CREATE_NEW_PROJECT = 11,
+            ID_CANCEL = 12
         };
 
 	}
