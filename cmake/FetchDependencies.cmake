@@ -37,7 +37,7 @@ endfunction(GitClone)
 GitClone(https://github.com/ocornut/imgui 8cbd391f096b9314a08670052cc0025cbcadb249 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
 GitClone(https://git.dengproject.org/deng/trs-headers 898e58a49f8f8f76dc3b07407b879cb6836ddc93 ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs trs)
 GitClone(https://git.dengproject.org/deng/minimal-ascii-reader f5d9b5d0d04da1063e2fab2fd124f6558c37de2c ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar mar)
-GitClone(https://git.dengproject.org/deng/nekowin 70d4ed2bc1dc8085efec9adfebe6b9939b28dcd5 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.dengproject.org/deng/nekowin df1e0fa4654f630b30440732922e6151980bfa33 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
 GitClone(https://git.dengproject.org/deng/libdas a6b675fb5ccb7a22ea6f73de155d7df379306748 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
 target_include_directories(das-static
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
@@ -131,10 +131,10 @@ elseif(UNIX AND NOT APPLE)
     #)
 
     # wxWidgets
-    DownloadAndExtract(
-        https://sdks.dengproject.org/linux/wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
-        061eb7d447421ec30a6910887d65a479d70e0de7d9a69b324728d37c6de01e10
-        wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
-        ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
-    )
+    #DownloadAndExtract(
+    #    https://sdks.dengproject.org/linux/wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
+    #    061eb7d447421ec30a6910887d65a479d70e0de7d9a69b324728d37c6de01e10
+    #    wxWidgets-${WXWIDGETS_VERSION}_gnu-linux-x86_64.tar.gz
+    #    ${CMAKE_CURRENT_SOURCE_DIR}/deps/wxWidgets-${WXWIDGETS_VERSION}
+    #)
 endif()

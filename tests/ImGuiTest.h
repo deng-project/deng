@@ -16,6 +16,7 @@
 #include <array>
 #include <cstring>
 #include <variant>
+#include <memory>
 #include <unordered_map>
 
 #ifdef _DEBUG
