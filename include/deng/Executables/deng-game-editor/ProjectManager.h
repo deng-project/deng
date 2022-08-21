@@ -49,13 +49,13 @@ namespace DENG {
 
         enum {
             // Project management ids
-            ID_NEW_PROJECT,
-            ID_OPEN_PROJECT,
+            ID_NEW_PROJECT = 1,
+            ID_OPEN_PROJECT = 2,
 
             // About stuff ids
-            ID_DENG_WEBSITE,
-            ID_DENG_FORUM,
-            ID_GIT
+            ID_DENG_WEBSITE = 3,
+            ID_DENG_FORUM = 4,
+            ID_GIT = 5
         };
 	}
 }
