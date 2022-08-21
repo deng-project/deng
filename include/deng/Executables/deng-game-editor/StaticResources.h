@@ -7,16 +7,16 @@
 #define STATIC_RESOURCES_H
 
 #ifdef STATIC_RESOURCES_CPP
-    #include <cstdint>
+    #include <cstddef>
 #endif
 
 namespace DENG {
 	namespace Editor {
 		
 		const unsigned char *GetSmallLogo();
-        std::size_t GetSmallLogoSize();
+        size_t GetSmallLogoSize();
 		const unsigned char *GetLogoIcon32x32();
-        std::size_t GetLogoIcon32x32Size();
+        size_t GetLogoIcon32x32Size();
 	
 	}
 }
