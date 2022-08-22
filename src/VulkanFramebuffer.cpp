@@ -463,6 +463,7 @@ namespace DENG {
             const VkDevice device = m_instance_creator.GetDevice();
             const VkQueue graphics_queue = m_instance_creator.GetGraphicsQueue();
 
+            vkWaitForFences(device, 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
             vkResetFences(device, 1, &m_flight_fences[m_current_frame]);
             vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
 
