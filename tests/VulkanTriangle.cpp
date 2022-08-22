@@ -11,8 +11,17 @@ int main() {
     {
         DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_VULKAN | NEKO_HINT_RESIZEABLE, "VulkanTriangle");
         DENG::RendererConfig conf = {};
-        DENG::VulkanRenderer renderer = DENG::VulkanRenderer(win, conf);
-        TriangleApp app = TriangleApp(win, renderer);
+        conf.canvas_size = { WIDTH, HEIGHT };
+        conf.title = win.GetTitle();
+#ifdef _WIN32
+        conf.win32_hwnd = win.GetWin32HWND();
+        conf.win32_instance = win.GetWin32Instance();
+#else
+        conf.xlib_dpy = win.GetXlibDisplay();
+        conf.xlib_win = win.GetXlibWindow();
+#endif
+        DENG::VulkanRenderer renderer = DENG::VulkanRenderer(conf);
+        TriangleApp app = TriangleApp(win, renderer, conf);
         app.Run();
     }
     DENG::Window::Deinitialise();

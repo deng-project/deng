@@ -75,7 +75,7 @@ namespace DENG {
             std::unordered_map<std::string, std::shared_ptr<OpenGL::Framebuffer>> m_framebuffers;
 
         public:
-            OpenGLRenderer(Window &_win, const RendererConfig &_conf);
+            OpenGLRenderer(const RendererConfig &_conf);
             ~OpenGLRenderer();
             
             virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;

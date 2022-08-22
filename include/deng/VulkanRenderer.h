@@ -67,6 +67,7 @@ namespace DENG {
 
     class DENG_API VulkanRenderer : public Renderer {
         private:
+            TRS::Point2D<uint32_t> m_previous_canvas;
             const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_1_BIT;
             Vulkan::InstanceCreator m_instance_creator;
             Vulkan::SwapchainCreator m_swapchain_creator;
@@ -103,7 +104,7 @@ namespace DENG {
 
 
         public:
-            VulkanRenderer(Window &_win, const RendererConfig &_conf);
+            VulkanRenderer(const RendererConfig &_conf);
             ~VulkanRenderer();
 
             virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;

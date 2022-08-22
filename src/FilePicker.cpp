@@ -231,8 +231,13 @@ namespace DENG {
 
     void FilePicker::_Run(Window &_win, Renderer &_rend, ImGuiLayer &_imgui, void *_gui) {
         _FilePickerGuiData *gui_data = reinterpret_cast<_FilePickerGuiData*>(_gui);
-        while(_win.IsRunning()) {
+        while (_win.IsRunning()) {
             _win.Update();
+            gui_data->conf.canvas_size = {
+                static_cast<uint32_t>(_win.GetSize().x),
+                static_cast<uint32_t>(_win.GetSize().y)
+            };
+
             _imgui.Update();
             _rend.RenderFrame();
 
@@ -256,8 +261,16 @@ namespace DENG {
                 {
                     Window win(_width, _height, NEKO_HINT_FIXED_SIZE | NEKO_HINT_API_OPENGL, _title.c_str());
                     win.glMakeCurrent();
-                    OpenGLRenderer rend(win, { false, { 0.0f, 0.0f, 0.0f, 0.0f } } );
                     gui_data.win = &win;
+
+                    gui_data.conf.canvas_size = { 
+                        static_cast<uint32_t>(_width), 
+                        static_cast<uint32_t>(_height) 
+                    };
+
+                    gui_data.conf.title = win.GetTitle();
+
+                    OpenGLRenderer rend(gui_data.conf);
                     ImGuiLayer imgui;
                     imgui.Attach(win, rend, FilePicker::_FilePickerCoreUI, reinterpret_cast<void*>(&gui_data));
                     rend.LoadShaders();
@@ -270,7 +283,21 @@ namespace DENG {
                     Window win(_width, _height, NEKO_HINT_FIXED_SIZE | NEKO_HINT_API_VULKAN, _title.c_str());
                     Vulkan::Initialise();
                     gui_data.win = &win;
-                    VulkanRenderer rend(win, { false, { 0.0f, 0.0f, 0.0f, 0.0f } } );
+                    gui_data.conf.canvas_size = { 
+                        static_cast<uint32_t>(_width),
+                        static_cast<uint32_t>(_height)
+                    };
+
+                    gui_data.conf.title = win.GetTitle();
+#ifdef _WIN32
+                    gui_data.conf.win32_hwnd = win.GetWin32HWND();
+                    gui_data.conf.win32_instance = win.GetWin32Instance();
+#else
+                    gui_data.conf.xlib_win = win.GetXlibWindow();
+                    gui_data.conf.xlib_dpy = win.GetXlibDisplay();
+#endif
+
+                    VulkanRenderer rend(gui_data.conf);
                     ImGuiLayer imgui;
                     imgui.Attach(win, rend, FilePicker::_FilePickerCoreUI, reinterpret_cast<void*>(&gui_data));
                     rend.LoadShaders();

@@ -9,11 +9,13 @@
 int main() {
     DENG::Window::Initialise();
     {
-        DENG::Window win = DENG::Window(1280, 720, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "OpenGLImGui");
+        DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "OpenGLImGui");
         DENG::OpenGL::Initialise(win);
-        DENG::RendererConfig conf = {}; // keep default
-        DENG::OpenGLRenderer renderer = DENG::OpenGLRenderer(win, conf);
-        ImGuiApp app(win, renderer);
+        DENG::RendererConfig conf = {};
+        conf.canvas_size = { WIDTH, HEIGHT };
+        conf.title = win.GetTitle();
+        DENG::OpenGLRenderer renderer = DENG::OpenGLRenderer(conf);
+        ImGuiApp app(win, renderer, conf);
         app.Run();
     }
     DENG::Window::Deinitialise();

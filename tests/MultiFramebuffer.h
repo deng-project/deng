@@ -112,6 +112,7 @@ namespace Executable {
         private:
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
+            DENG::RendererConfig &m_config;
             uint32_t m_vert_offset = 0;
             uint32_t m_fb_vert_offset = 0;
             uint32_t m_idx_offset = 0;
@@ -202,9 +203,10 @@ namespace Executable {
             }
 
         public:
-            MultiFramebuffer(DENG::Window &_win, DENG::Renderer &_rend) :
+            MultiFramebuffer(DENG::Window &_win, DENG::Renderer &_rend, DENG::RendererConfig &_conf) :
                 m_window(_win),
-                m_renderer(_rend)
+                m_renderer(_rend),
+                m_config(_conf)
             {
                 DENG::GPUMemoryManager *mem_manager = DENG::GPUMemoryManager::GetInstance();
                 m_vert_offset = mem_manager->RequestMainMemoryLocationF(static_cast<uint32_t>(sizeof(float)), static_cast<uint32_t>(sizeof(g_verts)));
@@ -239,6 +241,10 @@ namespace Executable {
 
                     m_renderer.RenderFrame();
                     m_window.Update();
+                    m_config.canvas_size = {
+                        static_cast<uint32_t>(m_window.GetSize().x),
+                        static_cast<uint32_t>(m_window.GetSize().y)
+                    };
                 }
             }
     };

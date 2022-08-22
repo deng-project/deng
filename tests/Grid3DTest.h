@@ -41,6 +41,7 @@ namespace Executable {
         private:
             DENG::Window &m_window;
             DENG::Renderer &m_renderer;
+            DENG::RendererConfig& m_config;
 
             neko_HidEvent m_zoom_in[8] = { 
                 NEKO_MOUSE_SCROLL_UP,
@@ -90,9 +91,10 @@ namespace Executable {
             std::chrono::time_point<std::chrono::system_clock> m_beg_time = std::chrono::system_clock::now();
 
         public:
-            Grid3DTest(DENG::Window &_win, DENG::Renderer &_rend) :
+            Grid3DTest(DENG::Window &_win, DENG::Renderer &_rend, DENG::RendererConfig &_conf) :
                 m_window(_win),
                 m_renderer(_rend),
+                m_config(_conf),
                 m_editor_camera(m_renderer, m_window, m_camera_conf, "Editor camera"),
                 m_grid(50.0f, 50.0f, 0.5f, 0.5f, m_editor_camera.GetUboOffset())
             {
@@ -135,6 +137,10 @@ namespace Executable {
                     m_grid.Update(m_renderer, { 0.0f, 0.5f, 0.0f, 1.0f });
                     m_renderer.RenderFrame();
                     m_window.Update();
+                    m_config.canvas_size = {
+                        static_cast<uint32_t>(m_window.GetSize().x),
+                        static_cast<uint32_t>(m_window.GetSize().y)
+                    };
                 }
             }
     };

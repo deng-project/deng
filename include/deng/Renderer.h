@@ -10,6 +10,7 @@
     #include <string>
     #include <cstring>
     #include <vector>
+
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -64,6 +65,15 @@ namespace DENG {
 
 
     struct RendererConfig {
+#ifdef _WIN32
+        HINSTANCE win32_instance;
+        HWND win32_hwnd;
+#else
+        Display* xlib_dpy;
+        Window xlib_win;
+#endif
+        std::string title;
+        TRS::Point2D<uint32_t> canvas_size;
         bool enable_vsync = false;
         TRS::Vector4<float> clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
@@ -72,12 +82,11 @@ namespace DENG {
     class DENG_API Renderer {
         protected:
             uint32_t m_id = UINT32_MAX;
-            Window &m_window;
             std::unordered_map<std::string, FramebufferDrawData> m_framebuffer_draws;
             const RendererConfig &m_conf;
 
         public:
-            Renderer(Window &_win, const RendererConfig &_conf) : m_window(_win), m_conf(_conf) {}
+            Renderer(const RendererConfig &_conf) : m_conf(_conf) {}
             ~Renderer() {}
 
             virtual void PushFramebuffer(const FramebufferDrawData &_fb) = 0;

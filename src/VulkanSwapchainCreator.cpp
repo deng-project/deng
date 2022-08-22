@@ -10,7 +10,7 @@ namespace DENG {
     
     namespace Vulkan {
 
-        SwapchainCreator::SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<int32_t> _win_size, VkSampleCountFlagBits _sample_c, const RendererConfig &_conf) : 
+        SwapchainCreator::SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<uint32_t> _win_size, VkSampleCountFlagBits _sample_c, const RendererConfig &_conf) : 
             m_instance_creator(_ic), 
             m_window_size(_win_size), 
             m_sample_c(_sample_c),
@@ -131,7 +131,7 @@ namespace DENG {
         }
 
 
-        void SwapchainCreator::RecreateSwapchain(TRS::Point2D<int32_t> _new_win_size) {
+        void SwapchainCreator::RecreateSwapchain(TRS::Point2D<uint32_t> _new_win_size) {
             const VkDevice device = m_instance_creator.GetDevice();
             m_window_size = _new_win_size;
 

@@ -16,6 +16,12 @@
     #include <map>
     #include <unordered_map>
     #include <vulkan/vulkan.h>
+#ifdef _WIN32    
+    #include <wtypes.h>
+    #include <vulkan/vulkan_win32.h>
+#else
+    #include <vulkan/vulkan_xlib.h>
+#endif
 
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
@@ -24,7 +30,8 @@
     #include "deng/Api.h"
     #include "deng/BaseTypes.h"
     #include "deng/ErrorDefinitions.h"
-    #include "deng/Window.h"
+    #include "deng/ShaderDefinitions.h"
+    #include "deng/Renderer.h"
     #include "deng/HardwareInfo.h"
 #endif
 
@@ -33,7 +40,7 @@ namespace DENG {
 
         class InstanceCreator {
             private:
-                Window &m_window;
+                const DENG::RendererConfig &m_config;
 
                 // vulkan stuff
                 VkDevice m_device = VK_NULL_HANDLE;
@@ -61,7 +68,7 @@ namespace DENG {
                 VkQueue m_presentation_queue;
 #ifdef __DEBUG
                 const char *m_validation_layer = "VK_LAYER_KHRONOS_validation";
-                VkDebugUtilsMessengerEXT m__DEBUG_messenger = {};
+                VkDebugUtilsMessengerEXT m_debug_messenger = {};
 #endif
 
                 // details needed for swapchain creation
@@ -70,6 +77,7 @@ namespace DENG {
 
             private:
                 void _CreateInstance();
+                VkResult _CreateNativeSurface();
 #ifdef __DEBUG
                 bool _CheckValidationLayerSupport();
                 void _CreateDebugMessenger();
@@ -90,7 +98,7 @@ namespace DENG {
                 uint32_t _ScoreDevice(VkPhysicalDevice _gpu);
 
             public:
-                InstanceCreator(Window &_win);
+                InstanceCreator(const RendererConfig &_conf);
                 ~InstanceCreator();
 
                 // ~~inlined~~ non-inlined methods (temporary workaround)

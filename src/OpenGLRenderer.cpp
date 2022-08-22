@@ -64,8 +64,8 @@ namespace DENG {
     }
 
 
-    OpenGLRenderer::OpenGLRenderer(Window &_win, const RendererConfig &_conf) : 
-        Renderer(_win, _conf),
+    OpenGLRenderer::OpenGLRenderer(const RendererConfig &_conf) : 
+        Renderer(_conf),
         m_buffer_loader()
     {
         RenderState *rs = RenderState::GetInstance();
@@ -90,8 +90,8 @@ namespace DENG {
                 MAIN_FRAMEBUFFER_NAME,
                 {}, {},
                 {
-                    static_cast<uint32_t>(m_window.GetSize().x),
-                    static_cast<uint32_t>(m_window.GetSize().y)
+                    m_conf.canvas_size.x,
+                    m_conf.canvas_size.y
                 }
             }
         });
@@ -273,7 +273,7 @@ namespace DENG {
 
 
     void OpenGLRenderer::ClearFrame() {
-        glViewport(0, 0, static_cast<GLsizei>(m_window.GetSize().x), static_cast<GLsizei>(m_window.GetSize().y));
+        glViewport(0, 0, static_cast<GLsizei>(m_conf.canvas_size.x), static_cast<GLsizei>(m_conf.canvas_size.y));
         glErrorCheck("glViewport");
 
         m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->ClearFrame(m_conf.clear_color);
@@ -292,8 +292,8 @@ namespace DENG {
         }
 
         m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = {
-            static_cast<uint32_t>(m_window.GetSize().x),
-            static_cast<uint32_t>(m_window.GetSize().y)
+            m_conf.canvas_size.x,
+            m_conf.canvas_size.y
         };
 
         m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->Render();

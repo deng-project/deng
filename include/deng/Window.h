@@ -87,6 +87,14 @@ namespace DENG {
             bool IsKeyReleased(neko_HidEvent _hid) const;
             const EventQueue* GetActiveEventQueue() const;
             const EventQueue* GetReleasedEventQueue() const;
+
+#ifdef _WIN32
+            HWND GetWin32HWND();
+            HINSTANCE GetWin32Instance();
+#else
+            Window GetXlibWindow();
+            Display* GetXlibDisplay();
+#endif
     };
 }
 

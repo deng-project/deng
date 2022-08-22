@@ -171,4 +171,23 @@ namespace DENG {
     const EventQueue* Window::GetReleasedEventQueue() const {
         return &m_window.input.raw.released_queue;
     }
+
+
+#ifdef _WIN32
+    HWND Window::GetWin32HWND() {
+        return m_window.win32.handle;
+    }
+
+    HINSTANCE Window::GetWin32Instance() {
+        return m_window.win32.instance;
+    }
+#else
+    Display* Window::GetXlibDisplay() {
+        return m_window.x11.display;
+    }
+
+    Window Window::GetXlibDisplay() {
+        return m_window.x11.window;
+    }
+#endif
 }

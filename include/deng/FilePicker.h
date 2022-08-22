@@ -48,6 +48,7 @@ namespace DENG {
 
 #ifdef FILE_PICKER_CPP
     struct _FilePickerGuiData {
+        DENG::RendererConfig conf;
         bool once = true;
         bool select = false;
         bool is_open = true;

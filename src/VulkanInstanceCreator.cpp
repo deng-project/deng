@@ -10,11 +10,11 @@ namespace DENG {
 
     namespace Vulkan {
 
-        InstanceCreator::InstanceCreator(Window &_win) : m_window(_win) {
+        InstanceCreator::InstanceCreator(const RendererConfig &_conf) : m_config(_conf) {
             // needed for swapchain creation later
             _CreateInstance();
-            if(m_window.InitVkSurface(m_instance, m_surface) != VK_SUCCESS)
-                VK_INSTANCE_ERR("failed to create a window surface!");
+            if (_CreateNativeSurface() != VK_SUCCESS)
+                VK_INSTANCE_ERR("failed to create a native window surface");
 
 #ifdef __DEBUG
             _CreateDebugMessenger();
@@ -86,10 +86,9 @@ namespace DENG {
 
         void InstanceCreator::_CreateInstance() {
             // Set up Vulkan application info
-            std::string title = m_window.GetTitle();
-            VkApplicationInfo appinfo{};
+            VkApplicationInfo appinfo = {};
             appinfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-            appinfo.pApplicationName = title.c_str();
+            appinfo.pApplicationName = m_config.title.c_str();
             appinfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
             appinfo.pEngineName = "DENG";
             appinfo.engineVersion = VK_MAKE_VERSION(0, 1, 0);
@@ -100,19 +99,35 @@ namespace DENG {
             instance_createinfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
             instance_createinfo.pApplicationInfo = &appinfo;
 
-            // Get all required extensions
-            uint32_t ext_c;
-            const char **extensions = (const char**) m_window.FindVulkanSurfaceExtensions(&ext_c);
+            // Check required surface extensions
+#ifdef __DEBUG
+            std::array<const char*, 3> extensions = {
+                "VK_EXT_debug_utils",
+                "VK_KHR_surface",
+#ifdef _WIN32
+                "VK_KHR_win32_surface"
+#else
+                "VK_KHR_xlib_surface"
+#endif
+            };
+#else
+            std::array<const char*, 2> extensions = {
+                "VK_KHR_surface",
+#ifdef _WIN32
+                "VK_KHR_win32_surface",
+#else
+                "VK_KHR_xlib_surface"
+#endif
+            };
+#endif
 
             // Log all extensions to console
-            for (size_t i = 0; i < ext_c; i++) {
-                LOG("Required extension: " + std::string(extensions[i]));
+            for (const char *ext : extensions) {
+                LOG("Required extension: " + std::string(ext));
             }
 
-            instance_createinfo.enabledExtensionCount = ext_c;
-            instance_createinfo.ppEnabledExtensionNames = extensions;
-            LOG("Required extensions count is: " + std::to_string(instance_createinfo.enabledExtensionCount));
-
+            instance_createinfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+            instance_createinfo.ppEnabledExtensionNames = extensions.data();
             
             // Check for validatation layer support
 #ifdef __DEBUG
@@ -145,6 +160,29 @@ namespace DENG {
         }
 
 
+        VkResult InstanceCreator::_CreateNativeSurface() {
+#ifdef _WIN32
+            VkWin32SurfaceCreateInfoKHR surface_info = {};
+            surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+            surface_info.hinstance = m_config.win32_instance;
+            surface_info.hwnd = m_config.win32_hwnd;
+
+            PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = NULL;
+            vkCreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(m_instance, "vkCreateWin32SurfaceKHR");
+            return vkCreateWin32SurfaceKHR(m_instance, &surface_info, NULL, &m_surface);
+#else
+            VkXlibSurfaceCreateInfoKHR surface_info = {};
+            surface_info.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+            surface_info.window = m_config.xlib_window;
+            surface_info.dpy = m_config.xlib_dpy;
+
+            PFN_vkCreateXlibSurfaceKHR vkCreateXlibSurfaceKHR = NULL;
+            vkCreateXlibSurfaceKHR = (PFN_vkCreateXlibSurfaceKHR)vkGetInstanceProcAddr(m_instance, "vkCreateXlibSurfaceKHR");
+            return vkCreateXlibSurfaceKHR(m_instance, &surface_info, NULL, &m_surface);
+#endif
+        }
+
+
 #ifdef __DEBUG
         bool InstanceCreator::_CheckValidationLayerSupport() {
             const std::string validation_lname = "VK_LAYER_KHRONOS_validation";
@@ -171,12 +209,12 @@ namespace DENG {
             messenger_createinfo.pfnUserCallback = InstanceCreator::_DebugCallback;
             messenger_createinfo.pUserData = NULL;
             
-            auto debugUtilsMessengerCreator_fun = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
+            PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
 
-            if(!debugUtilsMessengerCreator_fun)
-                VK_GEN_ERR("could not create debug messenger!");
+            if(!vkCreateDebugUtilsMessengerEXT)
+                VK_GEN_ERR("Could not load vkCreateDebugUtilsMessengerEXT");
 
-            debugUtilsMessengerCreator_fun(m_instance, &messenger_createinfo, NULL, &m__DEBUG_messenger);
+            vkCreateDebugUtilsMessengerEXT(m_instance, &messenger_createinfo, NULL, &m_debug_messenger);
         }
 
 

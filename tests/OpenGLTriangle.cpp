@@ -12,8 +12,11 @@ int main() {
         DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "OpenGLTriangle");
         DENG::OpenGL::Initialise(win);
         DENG::RendererConfig conf = {};
-        DENG::OpenGLRenderer renderer = DENG::OpenGLRenderer(win, conf);
-        TriangleApp app = TriangleApp(win, renderer);
+        conf.canvas_size = { WIDTH, HEIGHT };
+        conf.title = win.GetTitle();
+
+        DENG::OpenGLRenderer renderer = DENG::OpenGLRenderer(conf);
+        TriangleApp app = TriangleApp(win, renderer, conf);
         app.Run();
     }
     DENG::Window::Deinitialise();

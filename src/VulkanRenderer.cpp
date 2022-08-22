@@ -18,23 +18,25 @@ namespace DENG {
     }
 
 
-    VulkanRenderer::VulkanRenderer(Window &_win, const RendererConfig &_conf) : 
-        Renderer(_win, _conf),
-        m_instance_creator(m_window),
-        m_swapchain_creator(m_instance_creator, m_window.GetSize(), m_sample_count, m_conf)
+    VulkanRenderer::VulkanRenderer(const RendererConfig &_conf) : 
+        Renderer(_conf),
+        m_instance_creator(m_conf),
+        m_swapchain_creator(m_instance_creator, m_conf.canvas_size, m_sample_count, m_conf)
     {
+        m_previous_canvas = m_conf.canvas_size;
         RenderState *rs = RenderState::GetInstance();
         m_id = rs->RegisterRenderer(RENDERER_TYPE_VULKAN, time(NULL));
 
         // create main swapchain framebuffer
+        VkExtent2D ext = m_instance_creator.GetSurfaceCapabilities().currentExtent;
         m_framebuffer_draws.insert({
             MAIN_FRAMEBUFFER_NAME,
             {
                 MAIN_FRAMEBUFFER_NAME,
                 {}, {},
                 {
-                    static_cast<uint32_t>(m_window.GetSize().x),
-                    static_cast<uint32_t>(m_window.GetSize().y)
+                    ext.width,
+                    ext.height
                 }
             }
         });
@@ -315,7 +317,7 @@ namespace DENG {
         fb.Render(m_conf.clear_color, imgi);
         res = fb.Present(m_swapchain_creator.GetSwapchain(), imgi);
 
-        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || m_window.IsResized())
+        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
             _Resize();
         else if(res != VK_SUCCESS)
             VK_FRAME_ERR("Failed to present swapchain image");
@@ -482,19 +484,21 @@ namespace DENG {
 
 
     void VulkanRenderer::_Resize() {
-        while(m_window.IsResized())
-            m_window.Update();
+        while (m_previous_canvas != m_conf.canvas_size) {
+            m_previous_canvas = m_conf.canvas_size;
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
 
         vkDeviceWaitIdle(m_instance_creator.GetDevice());
 
         Vulkan::Framebuffer &fb = *m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second;
         fb.DestroyFramebuffer();
         m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = { 
-            static_cast<uint32_t>(m_window.GetSize().x),
-            static_cast<uint32_t>(m_window.GetSize().y)
+            m_conf.canvas_size.x,
+            m_conf.canvas_size.y
         };
 
-        m_swapchain_creator.RecreateSwapchain(m_window.GetSize());
+        m_swapchain_creator.RecreateSwapchain(m_conf.canvas_size);
         fb.NewFramebufferImages(m_swapchain_creator.GetSwapchainImages());
         fb.RecreateFramebuffer();
 

@@ -82,15 +82,21 @@ const static uint32_t g_indices[] = { 0, 1, 2 };
 
 class TriangleApp {
     private:
+        DENG::Window& m_window;
+        DENG::Renderer& m_renderer;
+        DENG::RendererConfig& m_config;
+
         DENG::ShaderModule m_module;
-        DENG::Window &m_window;
-        DENG::Renderer &m_renderer;
 
         // mesh and texture references to use
         DENG::MeshReference m_mesh;
 
     public:
-        TriangleApp(DENG::Window &_win, DENG::Renderer &_rend) : m_window(_win), m_renderer(_rend) {
+        TriangleApp(DENG::Window &_win, DENG::Renderer &_rend, DENG::RendererConfig &_conf) : 
+            m_window(_win), 
+            m_renderer(_rend),
+            m_config(_conf)
+        {
             // setup shader module
             m_module.vertex_shader_file = VERTEX_SHADER;
             m_module.fragment_shader_file = FRAGMENT_SHADER;
@@ -145,6 +151,10 @@ class TriangleApp {
 
                 m_renderer.RenderFrame();
                 m_window.Update();
+                m_config.canvas_size = {
+                    static_cast<uint32_t>(m_window.GetSize().x),
+                    static_cast<uint32_t>(m_window.GetSize().y)
+                };
             }
         }
 };
