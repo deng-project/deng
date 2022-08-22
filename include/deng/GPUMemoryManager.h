@@ -63,7 +63,9 @@ namespace DENG {
             }
 
             inline uint32_t GetMaxUniformOffset() {
-                return m_ubo_buffer_blocks.back().first + m_ubo_buffer_blocks.back().second;
+                if (m_ubo_buffer_blocks.size())
+                    return m_ubo_buffer_blocks.back().first + m_ubo_buffer_blocks.back().second;
+                else return 0;
             }
 
             // checking methods

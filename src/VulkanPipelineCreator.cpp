@@ -333,7 +333,7 @@ namespace DENG {
             } else if(m_desc_set_layouts[0] == VK_NULL_HANDLE && m_desc_set_layouts[1] != VK_NULL_HANDLE) {
                 pipeline_layout_create_info.setLayoutCount = 1;
                 pipeline_layout_create_info.pSetLayouts = &m_desc_set_layouts[1];
-            } else {
+            } else if (m_desc_set_layouts[0] != VK_NULL_HANDLE && m_desc_set_layouts[1] != VK_NULL_HANDLE) {
                 pipeline_layout_create_info.setLayoutCount = 2;
                 pipeline_layout_create_info.pSetLayouts = m_desc_set_layouts.data();
             }

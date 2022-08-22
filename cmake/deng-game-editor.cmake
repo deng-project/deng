@@ -10,6 +10,7 @@ set(DENG_GAME_EDITOR_HEADERS
     include/deng/Executables/deng-game-editor/GuiIds.h
 	include/deng/Executables/deng-game-editor/NewProjectWizard.h
     include/deng/Executables/deng-game-editor/ProjectManager.h
+	include/deng/Executables/deng-game-editor/RendererViewport.h
 	include/deng/Executables/deng-game-editor/StaticResources.h)
 	
 set(DENG_GAME_EDITOR_SOURCES 
@@ -17,6 +18,7 @@ set(DENG_GAME_EDITOR_SOURCES
 	src/Executables/deng-game-editor/GameEditorApp.cpp
 	src/Executables/deng-game-editor/NewProjectWizard.cpp
     src/Executables/deng-game-editor/ProjectManager.cpp
+	src/Executables/deng-game-editor/RendererViewport.cpp
 	src/Executables/deng-game-editor/StaticResources.cpp)
 
 add_executable(${DENG_GAME_EDITOR_TARGET} ${DENG_GAME_EDITOR_HEADERS} ${DENG_GAME_EDITOR_SOURCES})

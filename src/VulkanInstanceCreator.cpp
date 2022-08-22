@@ -218,9 +218,10 @@ namespace DENG {
         }
 
 
-        VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, const CallbackData *_callback_data, void *_user) {
-            DENG_ASSERT(!_user);
+        VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, const CallbackData* _callback_data, void* _user) {
             VK_VAL_LAYER(_callback_data->pMessage);
+            //if ((_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) || (_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))
+            //    throw std::runtime_error(_callback_data->pMessage);
             return VK_FALSE;
         }
 #endif

@@ -327,7 +327,7 @@ namespace DENG {
                             rect.offset = VkOffset2D { cmd_it->scissor.offset.x, cmd_it->scissor.offset.y };
                             rect.extent = VkExtent2D { cmd_it->scissor.ext.x, cmd_it->scissor.ext.y };
                             vkCmdSetScissor(m_command_buffers[m_current_frame], 0, 1, &rect);
-                        } 
+                        }
 
                         // check if indexed draw is required
                         if(fb_draw.shaders[shader_id].first.enable_indexing) {
@@ -464,7 +464,6 @@ namespace DENG {
             const VkQueue graphics_queue = m_instance_creator.GetGraphicsQueue();
 
             vkResetFences(device, 1, &m_flight_fences[m_current_frame]);
-
             vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
 
             if(!m_no_swapchain) _RecordCommandBuffers(_clear_color, _imgi);

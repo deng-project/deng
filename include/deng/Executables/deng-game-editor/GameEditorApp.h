@@ -16,7 +16,7 @@
     #include "deng/Version.h"
     
     #ifdef _WIN32
-        #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+        #pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup")
     #endif
 #endif
 
@@ -28,7 +28,9 @@ namespace DENG {
                 ProjectManager* m_frame = nullptr;
 
             public:
-                virtual bool OnInit();
+                virtual bool OnInit() override;
+                virtual void OnUnhandledException() override;
+                virtual bool OnExceptionInMainLoop() override;
         };
 
     }

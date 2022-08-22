@@ -22,6 +22,26 @@ namespace DENG {
 
             return true;
         }
+
+        void GameEditorApp::OnUnhandledException() {
+            try {
+                throw;
+            }
+            catch (std::exception& e) {
+                MessageBoxA(NULL, e.what(), "Unhandled C++ Exception Caught", MB_OK);
+            }
+        }
+
+        bool GameEditorApp::OnExceptionInMainLoop() {
+            try { 
+                throw;  
+            }
+            catch (std::exception& e) {
+                MessageBoxA(NULL, e.what(), "C++ Exception Caught", MB_OK);
+            }
+
+            return true;
+        }
     }
 
 }
