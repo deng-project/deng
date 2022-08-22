@@ -9,7 +9,8 @@
 #ifdef PROJECT_MANAGER_CPP
     #include <wx/wx.h>
     #include "deng/Executables/deng-game-editor/StaticResources.h"
-    #include "deng/Executables/deng-game-editor/NewProjectWizard.h"    
+    #include "deng/Executables/deng-game-editor/NewProjectWizard.h"
+    #include "deng/Executables/deng-game-editor/GuiIds.h"
     #include "deng/Version.h"
 #endif
 
@@ -44,18 +45,6 @@ namespace DENG {
 
             public:
                 ProjectManager();
-        };
-
-
-        enum {
-            // Project management ids
-            ID_NEW_PROJECT = 1,
-            ID_OPEN_PROJECT = 2,
-
-            // About stuff ids
-            ID_DENG_WEBSITE = 3,
-            ID_DENG_FORUM = 4,
-            ID_GIT = 5
         };
 	}
 }

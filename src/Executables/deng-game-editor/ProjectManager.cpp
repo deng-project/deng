@@ -16,7 +16,6 @@ namespace DENG {
             LogoPanel::LogoPanel(wxFrame* _parent) :
             wxPanel(_parent, wxID_ANY, wxDefaultPosition, wxSize(280, 280))
         {
-            SetBackgroundColour(wxColor(*wxWHITE));
             m_image = wxBitmap::NewFromPNGData(GetSmallLogo(), GetSmallLogoSize());
         }
 
@@ -45,7 +44,6 @@ namespace DENG {
             wxBitmap bmp = wxBitmap::NewFromPNGData(GetLogoIcon32x32(), GetLogoIcon32x32Size());
             icon.CopyFromBitmap(bmp);
             SetIcon(icon);
-            SetBackgroundColour(wxColor(*wxWHITE));
             
             // Project buttons
             wxBoxSizer* prj_btn_sizer = new wxBoxSizer(wxHORIZONTAL);

@@ -22,7 +22,6 @@ namespace DENG {
             wxBitmap bmp = wxBitmap::NewFromPNGData(GetLogoIcon32x32(), GetLogoIcon32x32Size());
             icon.CopyFromBitmap(bmp);
             SetIcon(icon);
-            SetBackgroundColour(wxColor(*wxWHITE));
 
             wxBoxSizer* property_sizer = new wxBoxSizer(wxVERTICAL);
             // project root directory
@@ -144,6 +143,9 @@ namespace DENG {
 
         void NewProjectWizard::_OnCreateNewProjectClick(wxCommandEvent &_ev) {
             if (_CreateNewProject()) {
+                GameEditor* editor = new GameEditor();
+                editor->Show(true);
+
                 Close(true);
                 GetParent()->Close(true);
             }

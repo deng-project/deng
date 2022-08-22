@@ -9,6 +9,7 @@
 #ifdef NEW_PROJECT_WIZARD_CPP
     #include <wx/wx.h>
     #include <wx/statline.h>
+    #include <wx/aui/aui.h>
 #ifdef _WIN32
     #include <ShlObj.h>
 #endif
@@ -21,6 +22,8 @@
     #include "dxml/GameStructs.h"
     #include "deng/ProjectDataManager.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
+    #include "deng/Executables/deng-game-editor/GameEditor.h"
+    #include "deng/Executables/deng-game-editor/GuiIds.h"
 #endif
 
 namespace DENG {
@@ -40,17 +43,6 @@ namespace DENG {
             public:
                 NewProjectWizard(wxFrame* _parent);
         };
-
-        enum {
-            ID_PATH = 6,
-            ID_CHOOSE_DIRECTORY = 7,
-            ID_PROJECT_NAME = 8,
-            ID_DIRECTORY_NAME = 9,
-            ID_BACKEND = 10,
-            ID_CREATE_NEW_PROJECT = 11,
-            ID_CANCEL = 12
-        };
-
 	}
 }
 

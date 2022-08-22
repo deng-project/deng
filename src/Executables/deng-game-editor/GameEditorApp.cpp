@@ -15,8 +15,11 @@ namespace DENG {
         bool GameEditorApp::OnInit()
         {
             wxInitAllImageHandlers();
-            ProjectManager* frame = new ProjectManager();
-            frame->Show(true);
+            //ProjectManager* frame = new ProjectManager();
+            //frame->Show(true);
+            GameEditor* editor = new GameEditor();
+            editor->Show(true);
+
             return true;
         }
     }

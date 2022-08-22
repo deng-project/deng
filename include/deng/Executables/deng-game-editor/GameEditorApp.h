@@ -8,8 +8,11 @@
 
 #ifdef GAME_EDITOR_APP_CPP
     #include <wx/wx.h>
+    #include <wx/aui/aui.h>
+    
     #include "deng/Executables/deng-game-editor/ProjectManager.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
+    #include "deng/Executables/deng-game-editor/GameEditor.h"
     #include "deng/Version.h"
     
     #ifdef _WIN32
