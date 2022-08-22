@@ -7,6 +7,7 @@ set(DENG_GAME_EDITOR_TARGET deng-game-editor)
 set(DENG_GAME_EDITOR_HEADERS 
     include/deng/Executables/deng-game-editor/GameEditor.h
 	include/deng/Executables/deng-game-editor/GameEditorApp.h
+    include/deng/Executables/deng-game-editor/GuiIds.h
 	include/deng/Executables/deng-game-editor/NewProjectWizard.h
     include/deng/Executables/deng-game-editor/ProjectManager.h
 	include/deng/Executables/deng-game-editor/StaticResources.h)
