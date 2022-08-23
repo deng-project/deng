@@ -181,7 +181,6 @@ target_link_libraries(${DENG_COMPLETE_TARGET}
     PRIVATE das-static
 	PRIVATE dxml)
 
-# Universal compile definitions for imgui
 target_compile_definitions(${DENG_COMPLETE_TARGET}
     PUBLIC ImDrawIdx=unsigned\ int
     PUBLIC DENG_EDITOR)

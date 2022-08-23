@@ -24,6 +24,10 @@ namespace DENG {
 
 		RendererViewport::~RendererViewport() {
 			delete mp_renderer;
+			if (mp_opengl_loader) {
+				mp_opengl_loader->DeleteContext();
+				delete mp_opengl_loader;
+			}
 		}
 
 
@@ -46,7 +50,12 @@ namespace DENG {
 					break;
 				
 				case DXML::Configuration::Backend::OPENGL:
-					// mp_renderer = new OpenGLRenderer(m_config);
+					mp_opengl_loader = new OpenGLLoaderWin32;
+					mp_opengl_loader->CreateContext(GetHWND());
+					mp_opengl_loader->MakeCurrent();
+					Window::LoadOpenGLFunctions();
+
+					mp_renderer = new OpenGLRenderer(m_config);
 					break;
 
 				default:
@@ -64,7 +73,7 @@ namespace DENG {
 			if (mp_renderer) {
 				m_active_time = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<float, std::milli> duration = m_active_time - m_beg_time;
-				std::cout << "FPS: " << 1000.f / duration.count() << std::endl;
+				_SwapBuffers();
 				mp_renderer->RenderFrame();
 			}
 			_ev.Skip();
@@ -86,11 +95,18 @@ namespace DENG {
 			if (mp_renderer) {
 				m_active_time = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<float, std::milli> duration = m_active_time - m_beg_time;
-				std::cout << "FPS: " << 1000.f / duration.count() << std::endl;
+				_SwapBuffers();
 				mp_renderer->RenderFrame();
 				_ev.RequestMore();
 			}
 			m_beg_time = std::chrono::high_resolution_clock::now();
+		}
+
+
+		void RendererViewport::_SwapBuffers() {
+#ifdef _WIN32
+			SwapBuffers(GetDC(GetHWND()));
+#endif
 		}
 	}
 }

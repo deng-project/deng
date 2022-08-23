@@ -25,6 +25,7 @@
 #ifdef _DEBUG
     #include <iostream>
 #endif
+#include <vulkan/vulkan.h>
 
 #include "trs/Points.h"
 #include "trs/Vector.h"
@@ -74,6 +75,7 @@ class ImGuiApp {
                 m_renderer.ClearFrame();
                 m_imgui.Update();
                 m_renderer.RenderFrame();
+                m_window.SwapBuffers();
                 m_window.Update();
                 m_config.canvas_size = {
                     static_cast<uint32_t>(m_window.GetSize().x),

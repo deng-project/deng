@@ -259,8 +259,7 @@ namespace DENG {
         switch(rs->GetPrimary()) {
             case RENDERER_TYPE_OPENGL:
                 {
-                    Window win(_width, _height, NEKO_HINT_FIXED_SIZE | NEKO_HINT_API_OPENGL, _title.c_str());
-                    win.glMakeCurrent();
+                    Window win(_width, _height, NEKO_HINT_FIXED_SIZE, _title.c_str());
                     gui_data.win = &win;
 
                     gui_data.conf.canvas_size = { 
@@ -270,6 +269,7 @@ namespace DENG {
 
                     gui_data.conf.title = win.GetTitle();
 
+                    OpenGL::Initialise(win);
                     OpenGLRenderer rend(gui_data.conf);
                     ImGuiLayer imgui;
                     imgui.Attach(win, rend, FilePicker::_FilePickerCoreUI, reinterpret_cast<void*>(&gui_data));
@@ -280,7 +280,7 @@ namespace DENG {
 
             case RENDERER_TYPE_VULKAN:
                 {
-                    Window win(_width, _height, NEKO_HINT_FIXED_SIZE | NEKO_HINT_API_VULKAN, _title.c_str());
+                    Window win(_width, _height, NEKO_HINT_FIXED_SIZE, _title.c_str());
                     Vulkan::Initialise();
                     gui_data.win = &win;
                     gui_data.conf.canvas_size = { 

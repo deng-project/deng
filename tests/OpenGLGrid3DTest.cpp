@@ -4,7 +4,7 @@
 int main() {
     DENG::Window::Initialise();
     {
-        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE | NEKO_HINT_API_OPENGL, "OpenGL grid test");
+        DENG::Window win(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE, "OpenGL grid test");
         DENG::RendererConfig conf;
         conf.canvas_size = { WIDTH, HEIGHT };
         conf.title = win.GetTitle();

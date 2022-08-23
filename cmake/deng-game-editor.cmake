@@ -10,8 +10,10 @@ set(DENG_GAME_EDITOR_HEADERS
     include/deng/Executables/deng-game-editor/GuiIds.h
 	include/deng/Executables/deng-game-editor/NewProjectWizard.h
     include/deng/Executables/deng-game-editor/ProjectManager.h
+	include/deng/Executables/deng-game-editor/OpenGLLoader.h
 	include/deng/Executables/deng-game-editor/RendererViewport.h
-	include/deng/Executables/deng-game-editor/StaticResources.h)
+	include/deng/Executables/deng-game-editor/StaticResources.h
+)
 	
 set(DENG_GAME_EDITOR_SOURCES 
 	src/Executables/deng-game-editor/GameEditor.cpp
@@ -19,7 +21,15 @@ set(DENG_GAME_EDITOR_SOURCES
 	src/Executables/deng-game-editor/NewProjectWizard.cpp
     src/Executables/deng-game-editor/ProjectManager.cpp
 	src/Executables/deng-game-editor/RendererViewport.cpp
-	src/Executables/deng-game-editor/StaticResources.cpp)
+	src/Executables/deng-game-editor/StaticResources.cpp
+)
+
+if(WIN32)
+	list(APPEND DENG_GAME_EDITOR_HEADERS
+		include/deng/Executables/deng-game-editor/OpenGLLoaderWin32.h)
+	list(APPEND DENG_GAME_EDITOR_SOURCES
+		src/Executables/deng-game-editor/OpenGLLoaderWin32.cpp)
+endif()
 
 add_executable(${DENG_GAME_EDITOR_TARGET} ${DENG_GAME_EDITOR_HEADERS} ${DENG_GAME_EDITOR_SOURCES})
 add_dependencies(${DENG_GAME_EDITOR_TARGET} ${DENG_COMPLETE_TARGET})

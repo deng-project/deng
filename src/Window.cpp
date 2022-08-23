@@ -9,12 +9,17 @@
 
 namespace DENG {
 
-    Window::Window(int32_t _x, int32_t _y, neko_Hint _hints, const char *_title) {
+    Window::Window(int32_t _x, int32_t _y, neko_SizeHint _hints, const char *_title) {
         m_window = neko_NewWindow(_x, _y, _hints, 0, 0, _title);
     }
 
     Window::~Window() {
         neko_DestroyWindow(&m_window);
+    }
+
+    // static methods:
+    neko_InputBits Window::CreateInputMask(neko_HidEvent evs[8]) {
+        return neko_CreateInputMask(evs);
     }
 
     void Window::Initialise() {
@@ -25,13 +30,28 @@ namespace DENG {
         neko_DeinitAPI();
     }
 
-    void Window::glMakeCurrent() {
-        neko_glMakeCurrent(&m_window);
+    void Window::LoadOpenGLPlatform() {
+        neko_LoadOpenGLPlatform();
     }
 
-    // static method:
-    neko_InputBits Window::CreateInputMask(neko_HidEvent evs[8]) {
-        return neko_CreateInputMask(evs);
+    void Window::LoadOpenGLFunctions() {
+        neko_LoadOpenGLFunctions();
+    }
+    // end of static methods
+
+
+    void Window::CreateOpenGLContext() {
+        neko_CreateOpenGLContext(&m_window);
+    }
+
+
+    void Window::MakeOpenGLContextCurrent() {
+        neko_MakeOpenGLContextCurrent(&m_window);
+    }
+
+
+    void Window::SwapBuffers() {
+        neko_SwapBuffers(&m_window);
     }
 
 
@@ -51,7 +71,7 @@ namespace DENG {
     }
 
 
-    void Window::ChangeSizeHints(neko_Hint _hints) {
+    void Window::ChangeSizeHints(neko_SizeHint _hints) {
         neko_UpdateSizeMode(&m_window, _hints);
     }
 
@@ -86,16 +106,6 @@ namespace DENG {
     }
 
 
-    bool Window::IsResized() const {
-        return m_window.resize_notify;
-    }
-
-
-    VkResult Window::InitVkSurface(VkInstance _instance, VkSurfaceKHR& _surface) {
-        return neko_InitVkSurface(&m_window, _instance, &_surface);
-    }
-
-
     TRS::Point2D<int64_t> Window::GetMousePosition() const {
         return TRS::Point2D<int64_t>(
             m_window.input.cursor.x,
@@ -112,13 +122,13 @@ namespace DENG {
     }
 
 
-    neko_Hint Window::GetHints() const {
+    neko_SizeHint Window::GetSizeHints() const {
         return m_window.hints;
     }
 
 
     const char* Window::GetTitle() const {
-        return m_window.window_title;
+        return m_window.title;
     }
 
     

@@ -9,7 +9,7 @@
 int main() {
     DENG::Window::Initialise();
     {
-        DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_VULKAN | NEKO_HINT_RESIZEABLE, "VulkanImGui");
+        DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE, "VulkanImGui");
         DENG::RendererConfig conf = {};
         conf.canvas_size = { WIDTH, HEIGHT };
         conf.title = win.GetTitle();

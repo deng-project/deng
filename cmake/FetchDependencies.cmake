@@ -37,7 +37,7 @@ endfunction(GitClone)
 GitClone(https://github.com/ocornut/imgui 8cbd391f096b9314a08670052cc0025cbcadb249 ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui imgui)
 GitClone(https://git.dengproject.org/deng/trs-headers 898e58a49f8f8f76dc3b07407b879cb6836ddc93 ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs trs)
 GitClone(https://git.dengproject.org/deng/minimal-ascii-reader f5d9b5d0d04da1063e2fab2fd124f6558c37de2c ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar mar)
-GitClone(https://git.dengproject.org/deng/nekowin 9c9f6124fd5e13fa7d5d15c8b5bcee2a5191b56a ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
+GitClone(https://git.dengproject.org/deng/nekowin 303469edea7157bbbe9c2e667a71e61c5cac9384 ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
 DownloadAndExtract(
 	https://git.dengproject.org/deng/libdas/archive/v1.0.0.tar.gz
 	4ad0be627a9c626300e8be51812178dccf826fd8ea9dcfe12f0744f880980828

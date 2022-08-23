@@ -28,6 +28,7 @@
 #include <variant>
 #include <memory>
 #include <unordered_map>
+#include <vulkan/vulkan.h>
 
 #include "trs/Points.h"
 #include "trs/Vector.h"
@@ -150,6 +151,7 @@ class TriangleApp {
                     break;
 
                 m_renderer.RenderFrame();
+                m_window.SwapBuffers();
                 m_window.Update();
                 m_config.canvas_size = {
                     static_cast<uint32_t>(m_window.GetSize().x),

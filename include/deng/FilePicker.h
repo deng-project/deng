@@ -18,6 +18,7 @@
     #include <chrono>
     #include <algorithm>
     #include <filesystem>
+    #include <vulkan/vulkan.h>
 #if defined(__linux__)
     #include <unistd.h>
     #include <sys/types.h>

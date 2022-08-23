@@ -39,7 +39,7 @@ namespace DENG {
 			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING | wxAUI_MGR_RECTANGLE_HINT)
 		{
 			wxTextCtrl *hierarchy = new wxTextCtrl(this, wxID_ANY, "Hierarchy panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
-			RendererViewport* viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
+			RendererViewport* viewport = new RendererViewport(this, DXML::Configuration::Backend::OPENGL);
 			wxTextCtrl *assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			wxTextCtrl* inspector = new wxTextCtrl(this, wxID_ANY, "Inspector panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 

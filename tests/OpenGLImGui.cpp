@@ -9,7 +9,7 @@
 int main() {
     DENG::Window::Initialise();
     {
-        DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_API_OPENGL | NEKO_HINT_RESIZEABLE, "OpenGLImGui");
+        DENG::Window win = DENG::Window(WIDTH, HEIGHT, NEKO_HINT_RESIZEABLE, "OpenGLImGui");
         DENG::OpenGL::Initialise(win);
         DENG::RendererConfig conf = {};
         conf.canvas_size = { WIDTH, HEIGHT };

@@ -57,9 +57,11 @@ namespace DENG {
 
 #ifndef DEBUG_ONLY
 
+#ifndef NO_NEKOWIN
     namespace OpenGL {
         void DENG_API Initialise(Window &_win);
     }
+#endif
 
     class DENG_API OpenGLRenderer : public Renderer {
         private:

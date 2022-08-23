@@ -52,21 +52,16 @@ namespace DENG {
             if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
                 rs->SetPrimary(RENDERER_TYPE_OPENGL);
 
-            _win.glMakeCurrent();
-
-            // load OpenGL functions
-            int status = deng_LoadGL();
-            if(!status) {
-                std::cerr << "Unexpected error occured when loading OpenGL functions" << std::endl;
-                std::exit(-1);
-            }
+            Window::LoadOpenGLPlatform();
+            _win.CreateOpenGLContext();
+            _win.MakeOpenGLContextCurrent();
+            Window::LoadOpenGLFunctions();
         }
     }
 
 
     OpenGLRenderer::OpenGLRenderer(const RendererConfig &_conf) : 
-        Renderer(_conf),
-        m_buffer_loader()
+        Renderer(_conf)
     {
         RenderState *rs = RenderState::GetInstance();
         m_id = rs->RegisterRenderer(RENDERER_TYPE_OPENGL, time(NULL));

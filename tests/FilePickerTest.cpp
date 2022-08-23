@@ -17,6 +17,7 @@
 #ifdef __DEBUG
     #include <iostream>
 #endif
+#include <vulkan/vulkan.h>
 
 #include "trs/Points.h"
 #include "trs/Vector.h"

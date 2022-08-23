@@ -10,6 +10,7 @@
 #ifdef __DEBUG
     #include <iostream>
 #endif
+#include <vulkan/vulkan.h>
 
 #include "trs/Points.h"
 #include "trs/Vector.h"
@@ -114,7 +115,7 @@ namespace Executable {
                             break;
 
                         if(m_window.IsKeyPressed(NEKO_KEY_F)) {
-                            if(m_window.GetHints() & NEKO_HINT_FULL_SCREEN)
+                            if(m_window.GetSizeHints() == NEKO_HINT_FULL_SCREEN)
                                 m_window.ChangeSizeHints(NEKO_HINT_RESIZEABLE);
                             else m_window.ChangeSizeHints(NEKO_HINT_FULL_SCREEN);
                             m_beg_time = std::chrono::system_clock::now();
@@ -136,6 +137,7 @@ namespace Executable {
                     m_editor_camera.Update();
                     m_grid.Update(m_renderer, { 0.0f, 0.5f, 0.0f, 1.0f });
                     m_renderer.RenderFrame();
+                    m_window.SwapBuffers();
                     m_window.Update();
                     m_config.canvas_size = {
                         static_cast<uint32_t>(m_window.GetSize().x),

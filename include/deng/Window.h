@@ -16,14 +16,6 @@
 #include <csignal>
 #include "nwin/nwin.h"
 
-#define NOMINMAX
-#define deng_LoadGL             neko_LoadGL
-#define deng_InitWindowAPI      neko_InitAPI
-#define deng_DeinitWindowAPI    neko_DeinitAPI
-#define deng_IsRunning          neko_IsRunning
-#define deng_CreateInputMask    neko_CreateInputMask
-typedef neko_Window deng_Window;
-
 #ifdef WINDOW_CPP
     #include "trs/Points.h"
 
@@ -40,21 +32,25 @@ namespace DENG {
             neko_Window m_window;
 
         public:
-            Window(int32_t width, int32_t height, neko_Hint hints, const char *title);
+            Window(int32_t width, int32_t height, neko_SizeHint _size, const char *title);
             ~Window();
 
             static neko_InputBits CreateInputMask(neko_HidEvent evs[8]);
             static void Initialise();
             static void Deinitialise();
+            static void LoadOpenGLPlatform();
+            static void LoadOpenGLFunctions();
 
-            void glMakeCurrent();
+            void CreateOpenGLContext();
+            void MakeOpenGLContextCurrent();
+            void SwapBuffers();
 
             /// Toggle virtual cursor mode
             void ToggleVCMode(TRS::Point2D<int64_t> _origin);
 
             /// Search for all required vulkan extensions
             char **FindVulkanSurfaceExtensions(uint32_t *p_ext_c) const;
-            void ChangeSizeHints(neko_Hint _hints);
+            void ChangeSizeHints(neko_SizeHint _hints);
 
             /// Explicitly change virtual cursor mode
             void ChangeVCMode(bool is_vcp, TRS::Point2D<int64_t> _origin);
@@ -70,14 +66,10 @@ namespace DENG {
 
             /// Check if virtual cursor mode is enabled
             bool IsVirtualCursor() const;
-            bool IsResized() const;
-
-            /// Create new vulkan surface instance
-            VkResult InitVkSurface(VkInstance _instance, VkSurfaceKHR &_surface);
 
             TRS::Point2D<int64_t> GetMousePosition() const;
             TRS::Point2D<int64_t> GetMouseDelta() const;
-            neko_Hint GetHints() const;
+            neko_SizeHint GetSizeHints() const;
             const char* GetTitle() const;
             TRS::Point2D<int32_t> GetSize() const;
             inline TRS::Point2D<float> GetPixelSize() const;

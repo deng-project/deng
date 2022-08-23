@@ -7,6 +7,7 @@
 #define GAME_EDITOR_H
 
 #ifdef GAME_EDITOR_CPP
+    #include <any>
     #include <string>
     #include <vector>
     #include <array>
@@ -31,6 +32,7 @@
 
     #include "deng/Executables/deng-game-editor/GuiIds.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
+    #include "deng/Executables/deng-game-editor/OpenGLLoader.h"
     #include "deng/Executables/deng-game-editor/RendererViewport.h"
 #endif
 
