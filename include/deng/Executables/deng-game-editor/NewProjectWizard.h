@@ -14,13 +14,8 @@
     #include <ShlObj.h>
 #endif
     
-    #include "trs/Vector.h"
-    #include "trs/Points.h"
-    #include "trs/Quaternion.h"
+    #include "deng/deng.h"
 
-    #include "deng/Api.h"
-    #include "dxml/GameStructs.h"
-    #include "deng/ProjectDataManager.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
     #include "deng/Executables/deng-game-editor/GameEditor.h"
     #include "deng/Executables/deng-game-editor/GuiIds.h"

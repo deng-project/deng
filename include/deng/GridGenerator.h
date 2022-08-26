@@ -20,17 +20,22 @@
     #include "trs/Matrix.h"
 
     #include "deng/Api.h"
+    #include "deng/BaseTypes.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Window.h"
     #include "deng/Renderer.h"
     #include "deng/ModelUniforms.h"
     #include "deng/GPUMemoryManager.h"
+    #include "deng/Entity.h"
+    #include "deng/ScriptableEntity.h"
+    #include "deng/Registry.h"
+    #include "deng/Camera3D.h"
 #endif
 
 namespace DENG {
 
-    class DENG_API GridGenerator {
+    class DENG_API GridGenerator : ScriptableEntity {
         private:
             float m_width;
             float m_height;
@@ -39,21 +44,38 @@ namespace DENG {
             uint32_t m_shader_id = UINT32_MAX;
             uint32_t m_mesh_id = UINT32_MAX;
             uint32_t m_vert_count = 0;
+            const uint32_t m_camera_id;
             uint32_t m_camera_ubo_offset = 0;
             uint32_t m_ubo_offset = 0;
             uint32_t m_main_offset = 0;
+            Renderer& m_renderer;
             TRS::Vector4<float> m_color = { 1.0f, 1.0f, 1.0f, 1.0f };
             const std::string m_framebuffer_id;
 
         private:
+            friend class Registry;
             void _GenerateVertices(Renderer &_rend);
 
+            void _Attach();
+            void _Update();
+
         public:
-            GridGenerator(float _width, float _height, float _margin_x, float _margin_y, uint32_t _camera_offset, const std::string &_framebuffer_id = MAIN_FRAMEBUFFER_NAME);
+            GridGenerator(
+                Entity *_ent,
+                const std::string &_name,
+                Renderer &_rend,
+                float _width,
+                float _height,
+                float _margin_x,
+                float _margin_y,
+                uint32_t _camera_id,
+                const std::string &_framebuffer_id = MAIN_FRAMEBUFFER_NAME
+            );
             ~GridGenerator();
 
-            void Attach(Renderer &_rend);
-            void Update(Renderer &_rend, const TRS::Vector4<float> _color);
+            inline void SetColor(const TRS::Vector4<float> &_color) {
+                m_color = _color;
+            }
 
             inline TRS::Vector4<float> GetColor() {
                 return m_color;

@@ -32,31 +32,56 @@
     #include "deng/ModelUniforms.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
+    #include "deng/Entity.h"
+    #include "deng/ScriptableEntity.h"
     #include "deng/Camera3D.h"
+    #include "deng/GPUMemoryManager.h"
 #endif
 
 
 namespace DENG {
 
+    struct FirstPersonCameraConfiguration {
+        float speed = 0.2f;                                                             // movement speed (world units per second)
+        TRS::Point2D<float> max_threshold_rotation = { PI / 36.f, PI / 36.f } ;         // how much to rotate, when max threshold is achieved
+        TRS::Point2D<float> max_thresholds = { 255.f, 255.f };                          // the smaller the value, the more sensitive the rotation
+    };
+
     class DENG_API FirstPersonCamera : public Camera3D {
         private:
+            FirstPersonCameraConfiguration& m_config;
             std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
             std::chrono::time_point<std::chrono::high_resolution_clock> m_cur_time = std::chrono::high_resolution_clock::now();
 
             // TR properties
-            TRS::Point3D<float> m_camera_pos;
-            TRS::Point3D<float> m_rotation;
+            TRS::Vector4<float> m_translation = { 0.0f, 0.0f, 0.0f, 0.0f };
+            TRS::Point2D<float> m_rotation = { 0.0f, 0.0f };                // always radians
+
+            // cached rotation values after every rotation
+            TRS::Quaternion m_x_rot = { 0.0f, 0.0f, 0.0f, 1.0f };
+            TRS::Quaternion m_y_rot = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 
         private:
-            void _ForceLimits();
+            friend class Registry;
+            void _EnforceLimits();
             void _ConstructViewMatrix();
 
-        public:
-            FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);
+            inline float _GetTimeDeltaMS() {
+                m_cur_time = std::chrono::high_resolution_clock::now();
+                const float ts = (m_cur_time - m_beg_time).count() / 1000.f;
+                return ts;
+            }
 
-            virtual void EnableCamera() override;
-            virtual void DisableCamera() override;
-            virtual void Update() override;
+            void _Attach();
+            void _Update();
+
+        public:
+            FirstPersonCamera(Entity *_parent, const std::string &_name, Renderer &_rend, FirstPersonCameraConfiguration &_conf);
+            ~FirstPersonCamera();
+
+            void Move(TRS::Vector3<bool> _mov);
+            void Rotate(TRS::Point2D<float> _threshold);
     };
 }
 

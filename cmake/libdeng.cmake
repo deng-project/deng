@@ -11,12 +11,14 @@ set(DENG_COMPLETE_HEADERS
     deps/imgui/imstb_rectpack.h
     deps/imgui/imstb_textedit.h
     deps/imgui/imstb_truetype.h
+	include/deng/deng.h
     include/deng/AnimationSampler.h
     include/deng/Api.h
     include/deng/BaseTypes.h
     include/deng/BufferAlignment.h
     include/deng/Camera3D.h
     include/deng/EditorCamera.h
+	include/deng/Entity.h
     include/deng/ErrorDefinitions.h
     include/deng/FilePicker.h
     include/deng/FirstPersonCamera.h
@@ -27,8 +29,8 @@ set(DENG_COMPLETE_HEADERS
     include/deng/MeshLoader.h
     include/deng/Missing.h
     include/deng/ModelLoader.h
-    include/deng/ModelShaderManager.h
     include/deng/ModelShaderGenerator.h
+    include/deng/ModelShaderManager.h
     include/deng/ModelUniforms.h
     include/deng/NodeLoader.h
     include/deng/OpenGLBufferLoader.h
@@ -37,9 +39,11 @@ set(DENG_COMPLETE_HEADERS
     include/deng/OpenGLShaderLoader.h
     include/deng/ProjectDataManager.h
     include/deng/PythonScriptExecutor.h
+	include/deng/Registry.h
     include/deng/Renderer.h
     include/deng/RenderState.h
     include/deng/SceneLoader.h
+	include/deng/ScriptableEntity.h
     include/deng/ShaderDefinitions.h
     include/deng/SkeletonLoader.h
     include/deng/ThirdPersonCamera.h
@@ -64,6 +68,7 @@ set(DENG_COMPLETE_SOURCES
     src/AnimationSampler.cpp
     src/Camera3D.cpp
     src/EditorCamera.cpp
+	src/Entity.cpp
     src/FilePicker.cpp
     src/FirstPersonCamera.cpp
     src/GPUMemoryManager.cpp
@@ -72,8 +77,8 @@ set(DENG_COMPLETE_SOURCES
     src/MeshLoader.cpp
     src/Missing.cpp
     src/ModelLoader.cpp
-    src/ModelShaderManager.cpp
     src/ModelShaderGenerator.cpp
+    src/ModelShaderManager.cpp
     src/NodeLoader.cpp
     src/OpenGLBufferLoader.cpp
     src/OpenGLFramebuffer.cpp
@@ -81,6 +86,7 @@ set(DENG_COMPLETE_SOURCES
     src/OpenGLShaderLoader.cpp
     src/ProjectDataManager.cpp
     src/PythonScriptExecutor.cpp
+	src/Registry.cpp
     src/RenderState.cpp
     src/SceneLoader.cpp
     src/ShaderDefinitions.cpp

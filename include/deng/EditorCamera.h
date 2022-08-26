@@ -32,30 +32,57 @@
     #include "deng/Window.h"
     #include "deng/Renderer.h"
     #include "deng/ModelUniforms.h"
+    #include "deng/Entity.h"
+    #include "deng/ScriptableEntity.h"
     #include "deng/Camera3D.h"
+    #include "deng/GPUMemoryManager.h"
 #endif
 
 namespace DENG {
 
+    struct EditorCameraConfiguration {
+        float zoom_step = 1.f;                  // coordinate unit
+        float action_delay = 10;                // ms
+        float delta_rotate = PI / 36;           // radians
+        float mouse_rotation_delta = 50.0f;     // virtual pixels
+        TRS::Point4D<float> origin = { 0.0f, 0.0f, 0.0f, 0.0f };
+    };
+
     class DENG_API EditorCamera : public Camera3D {
         private:
-            bool m_is_enabled = false;
+            EditorCameraConfiguration m_config;
             TRS::Point3D<float> m_origin = { 0.0f, 0.0f, 0.0f };
 
             // camera TR properties
-            TRS::Point3D<float> m_translation = { 0.0f, 0.0f, 0.0f };
-            TRS::Point3D<float> m_rotation = { 0.0f, 0.0f, 0.0f };
+            TRS::Point3D<float> m_translation;
+            TRS::Point2D<float> m_rotation = { 0.0f, 0.0f };
+
+            // cached quaternion rotations
+            TRS::Quaternion m_x_rot = { 0.0f, 0.0f, 0.0f, 1.0f };
+            TRS::Quaternion m_y_rot = { 0.0f, 0.0f, 0.0f, 1.0f };
 
         private:
-            void _ForceLimits();
+            friend class Registry;
+            void _EnforceLimits();
             void _ConstructViewMatrix();
 
-        public:
-            EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);
+            void _Attach();
+            void _Update();
 
-            virtual void EnableCamera() override;
-            virtual void DisableCamera() override;
-            virtual void Update() override;
+        public:
+            EditorCamera(Entity *_parent, const std::string &_name, Renderer &_rend, EditorCameraConfiguration &_conf);
+            ~EditorCamera();
+
+            void Rotate(TRS::Vector2<int64_t> _mouse_delta);
+            inline void ZoomIn() {
+                if (m_is_enabled)
+                    m_translation.z -= m_config.zoom_step;
+            }
+
+            inline void ZoomOut() {
+                if (m_is_enabled)
+                    m_translation.z += m_config.zoom_step;
+            }
     };
 }
 

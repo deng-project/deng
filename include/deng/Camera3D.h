@@ -15,6 +15,7 @@
     #include <variant>
     #include <string>
     #include <unordered_map>
+
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -27,75 +28,36 @@
     #include "deng/Api.h"
     #include "deng/BaseTypes.h"
     #include "deng/ErrorDefinitions.h"
+    #include "deng/Entity.h"
+    #include "deng/ScriptableEntity.h"
     #include "deng/Window.h"
     #include "deng/ModelUniforms.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
     #include "deng/GPUMemoryManager.h"
+    
 #endif
 
 
 namespace DENG {
 
-    struct FirstPersonCameraConfiguration {
-        neko_InputBits forward;
-        neko_InputBits back;
-        neko_InputBits up;
-        neko_InputBits down;
-        neko_InputBits right;
-        neko_InputBits left;
-
-        float delta_mov = 0.02f;
-        float action_delay = 10; // ms
-
-        float delta_rotate = PI / 36;
-        float mouse_rotation_delta = 50.0f;     // virtual pixels
-    };
-
-    struct ThirdPersonCameraConfiguration {
-        neko_InputBits forward;
-        neko_InputBits back;
-        neko_InputBits up;
-        neko_InputBits down;
-        neko_InputBits right;
-        neko_InputBits left;
-    };
-
-
-    struct EditorCameraConfiguration {
-        neko_InputBits zoom_in;
-        neko_InputBits zoom_out;
-        neko_InputBits rotate_toggle;
-
-        float zoom_step = 1.f;                 // coordinate unit
-        float action_delay = 10;                // ms
-        float delta_rotate = PI / 36;           // radians
-        float mouse_rotation_delta = 50.0f;     // virtual pixels
-        TRS::Point4D<float> origin = { 0.0f, 0.0f, 0.0f, 0.0f }; 
-    };
-
-    class DENG_API Camera3D {
+    class DENG_API Camera3D : public ScriptableEntity {
         protected:
-            typedef std::variant<FirstPersonCameraConfiguration, ThirdPersonCameraConfiguration, EditorCameraConfiguration> Camera3DConfiguration;
             Renderer &m_renderer;
-            Window &m_window;
-            Camera3DConfiguration m_config;
             ModelCameraUbo m_ubo;
 
             // perspective projection matrix attributes
             float m_fov = 65.f * PI / 180.f;    // 65 degrees by default
             TRS::Point2D<float> m_planes = { -0.1f, -25.0f };
-            TRS::Point2D<int64_t> m_vc_origin = { 
-                static_cast<int64_t>(m_window.GetSize().x) >> 1,
-                static_cast<int64_t>(m_window.GetSize().y) >> 1
-            };
-
-            uint32_t m_ubo_offset;
-            std::string m_name;
+            uint32_t m_ubo_offset = UINT32_MAX;
+            bool m_is_enabled = false;
 
         protected:
             inline float _CalculateAspectRatio() {
-                return static_cast<float>(m_window.GetSize().x) / static_cast<float>(m_window.GetSize().y);
+                //return static_cast<float>(m_window.GetSize().x) / static_cast<float>(m_window.GetSize().y);
+                
+                // temporary
+                return { 1280.f / 720.f };
             }
 
             inline TRS::Matrix4<float> _CalculateProjection() {
@@ -108,23 +70,20 @@ namespace DENG {
             }
 
         public:
-            Camera3D(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name);
+            Camera3D(Entity *_parent, const std::string &_name, EntityType _type, Renderer &_rend);
             ~Camera3D();
 
-            virtual void EnableCamera() = 0;
-            virtual void DisableCamera() = 0;
-            virtual void Update() = 0;
+            inline void EnableCamera() {
+                m_is_enabled = true;
+            }
+
+            inline void DisableCamera() {
+                m_is_enabled = false;
+            }
+
 
             inline ModelCameraUbo &GetCameraUbo() {
                 return m_ubo;
-            }
-
-            inline void SetVirtualCursorOrigin(TRS::Point2D<int64_t> _origin) {
-                m_vc_origin = _origin;
-            }
-
-            inline const std::string &GetName() {
-                return m_name;
             }
 
             inline void ChangeFov(float _fov) {
@@ -133,11 +92,6 @@ namespace DENG {
 
             inline uint32_t GetUboOffset() {
                 return m_ubo_offset;
-            }
-
-            inline void UpdateConfig(const Camera3DConfiguration &_conf) {
-                DENG_ASSERT(m_config.index() == _conf.index());
-                m_config = _conf;
             }
     };
 }

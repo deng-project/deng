@@ -8,35 +8,9 @@
 
 #ifdef RENDERER_VIEWPORT_CPP
 	#include <any>
-	#include <string>
-	#include <vector>
-	#include <array>
-	#include <variant>
-	#include <chrono>
-	#include <unordered_map>
-
 	#include <wx/wx.h>
-	#include <vulkan/vulkan.h>
-	#include "nwin/glad/glad.h"	
 
-	// #include "nwin/glad/glad.h"
-	#include "trs/Vector.h"
-	#include "trs/Points.h"
-	#include "trs/Quaternion.h"	
-	#include "dxml/GameStructs.h"
-
-	#include "deng/Api.h"
-	#include "deng/ProjectDataManager.h"
-	#include "deng/ErrorDefinitions.h"
-	#include "deng/ShaderDefinitions.h"
-	#include "deng/Renderer.h"
-	#include "deng/Window.h"
-	#include "deng/VulkanRenderer.h"
-	
-
-	#define NO_NEKOWIN
-	#include "deng/OpenGLRenderer.h"
-
+	#include "deng/deng.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoader.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoaderWin32.h"
 #endif

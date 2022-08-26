@@ -8,76 +8,92 @@
 
 namespace DENG {
 
-    FirstPersonCamera::FirstPersonCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name) :
-        Camera3D(_rend, _win, _conf, _name) 
-    { 
-        DENG_ASSERT(m_config.index() == 0); 
-    }
-
-    void FirstPersonCamera::EnableCamera() {
-        m_window.ChangeVCMode(true, m_vc_origin);
-        m_window.ChangeCursor(NEKO_CURSOR_MODE_HIDDEN);
-    }
+    FirstPersonCamera::FirstPersonCamera(Entity *_parent, const std::string &_name, Renderer &_rend, FirstPersonCameraConfiguration &_conf) :
+        Camera3D(_parent, _name, ENTITY_TYPE_FIRST_PERSON_CAMERA, m_renderer),
+        m_config(_conf) {}
 
 
-    void FirstPersonCamera::DisableCamera() {
-        m_window.ChangeVCMode(false, m_vc_origin);
-        m_window.ChangeCursor(NEKO_CURSOR_MODE_STANDARD);
+    FirstPersonCamera::~FirstPersonCamera() {
+        if (_OnDestroyFunction)
+            _OnDestroyFunction(m_script);
     }
 
 
-    void FirstPersonCamera::Update() {
+    void FirstPersonCamera::_EnforceLimits() {
+        if (m_rotation.x < -PI / 2.f)
+            m_rotation.x = -PI / 2.f;
+        else if (m_rotation.x > PI / 2.f)
+            m_rotation.x = PI / 2.f;
+
+        if (m_rotation.y < -PI)
+            m_rotation.y = 2.f * PI - m_rotation.y;
+        else if (m_rotation.y > PI)
+            m_rotation.y = -2.f * PI + m_rotation.y;
+    }
+
+
+    void FirstPersonCamera::_ConstructViewMatrix() {
+        TRS::Matrix4<float> translation = {
+            { 1.0f, 0.0f, 0.0f, m_translation.first },
+            { 0.0f, 1.0f, 0.0f, m_translation.second },
+            { 0.0f, 0.0f, 1.0f, m_translation.third },
+            { 0.0f, 0.0f, 0.0f, 1.0f }
+        };
+
+        m_ubo.view_matrix = (m_x_rot * m_y_rot).ExpandToMatrix4() * translation;
+        m_ubo.view_matrix = m_ubo.view_matrix.Transpose();
+    }
+
+
+    void FirstPersonCamera::_Attach() {
+        GPUMemoryManager* mem_manager = GPUMemoryManager::GetInstance();
+        m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, sizeof(ModelCameraUbo));
+
+        if (_OnAttachFunction)
+            _OnAttachFunction(m_script);
+    }
+
+
+    void FirstPersonCamera::_Update() {
         m_ubo.projection_matrix = _CalculateProjection();
 
-        m_cur_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float, std::milli> delta_time = m_cur_time - m_beg_time;
+        if (_OnUpdateFunction)
+            _OnUpdateFunction(m_script);
 
-        FirstPersonCameraConfiguration &conf = std::get<FirstPersonCameraConfiguration>(m_config);
-
-        // update code
-        if(m_window.IsVirtualCursor()) {
-            const float delta_mov = conf.delta_mov * delta_time.count() / conf.action_delay;
-            TRS::Point2D<int64_t> delta_mouse = m_window.GetMouseDelta();
-            TRS::Point2D<float> delta_mousef = { static_cast<float>(delta_mouse.x), static_cast<float>(delta_mouse.y) };
-
-            TRS::Point3D<float> rot = {
-                delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
-                delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
-                0.0f
-            };
-
-            //auto current_rotation = m_cam_transform.GetRotations();
-
-            // force limits to rotations on u axis
-            //if(current_rotation.x + rot.x > PI / 2)
-                //rot.x = PI / 2 - abs(current_rotation.x);
-            //else if(current_rotation.x + rot.x < -PI / 2)
-                //rot.x = -(PI / 2 - abs(current_rotation.x));
-
-            TRS::Vector4<float> mov = {};
-
-            // w
-            if(m_window.IsHidEventActive(conf.forward))
-                mov.third = delta_mov;
-            else if(m_window.IsHidEventActive(conf.back))
-                mov.third = -delta_mov;
-
-            // v
-            if(m_window.IsHidEventActive(conf.up))
-                mov.second = delta_mov;
-            else if(m_window.IsHidEventActive(conf.down))
-                mov.second = -delta_mov;
-
-            // u
-            if(m_window.IsHidEventActive(conf.right))
-                mov.first = delta_mov;
-            else if(m_window.IsHidEventActive(conf.left))
-                mov.first = -delta_mov;
-
-            m_beg_time = std::chrono::high_resolution_clock::now();
-        }
-
-        //m_ubo.view_matrix = m_cam_transform.ConstructViewMatrix();
+        m_beg_time = std::chrono::high_resolution_clock::now();
+        _ConstructViewMatrix();
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), sizeof(ModelCameraUbo), m_ubo_offset);
+    }
+
+
+    void FirstPersonCamera::Move(TRS::Vector3<bool> _mov) {
+        TRS::Vector4<float> delta_mov;
+
+        const float ts = _GetTimeDeltaMS() / 1000.f;
+        TRS::Vector4<float> ymov = { 0.0f, (_mov.second ? m_config.speed * ts : 0.0f), 0.0f, 0.0f};
+        
+        if (_mov.first)
+            delta_mov.first = m_config.speed * ts;
+        if (_mov.third)
+            delta_mov.third = m_config.speed * ts;
+
+        if (m_is_enabled) {
+            const float ts = _GetTimeDeltaMS();
+            m_translation += (m_y_rot * delta_mov);
+            m_translation += ymov;
+        }
+    }
+
+
+    void FirstPersonCamera::Rotate(TRS::Point2D<float> _threshold) {
+        if (m_is_enabled) {
+            const float ts = _GetTimeDeltaMS();
+            m_rotation.x += ts * m_config.max_threshold_rotation.y * _threshold.y / m_config.max_thresholds.y;
+            m_rotation.y += ts * m_config.max_threshold_rotation.x * _threshold.x / m_config.max_thresholds.x;
+
+            _EnforceLimits();
+            m_x_rot = TRS::Quaternion(sinf(m_rotation.x / 2.f), 0.0f, 0.0f, cosf(m_rotation.y / 2.f));
+            m_y_rot = TRS::Quaternion(0.0f, sinf(m_rotation.y / 2.f), 0.0f, cosf(m_rotation.y / 2.f));
+        }
     }
 }

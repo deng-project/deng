@@ -17,8 +17,8 @@ namespace DENG {
 			m_backend(_backend)
 		{
 			Bind(wxEVT_PAINT, &RendererViewport::_OnPaint, this, wxID_ANY);
-			Bind(wxEVT_SIZE, &RendererViewport::_OnResize, this, wxID_ANY);
 			Bind(wxEVT_IDLE, &RendererViewport::_OnIdle, this, wxID_ANY);
+			Bind(wxEVT_SIZE, &RendererViewport::_OnResize, this, wxID_ANY);
 		}
 
 
@@ -62,22 +62,17 @@ namespace DENG {
 					DENG_ASSERT(false);
 					break;
 			}
-
-			Refresh();
-			Update();
 		}
 
 
 		void RendererViewport::_OnPaint(wxPaintEvent &_ev) {
-			std::cout << "_OnPaint() called" << std::endl;
 			if (mp_renderer) {
-				m_active_time = std::chrono::high_resolution_clock::now();
-				std::chrono::duration<float, std::milli> duration = m_active_time - m_beg_time;
+				Registry* reg = Registry::GetInstance();
+				reg->Update();
 				_SwapBuffers();
 				mp_renderer->RenderFrame();
 			}
 			_ev.Skip();
-			m_beg_time = std::chrono::high_resolution_clock::now();
 		}
 
 
@@ -93,13 +88,12 @@ namespace DENG {
 
 		void RendererViewport::_OnIdle(wxIdleEvent& _ev) {
 			if (mp_renderer) {
-				m_active_time = std::chrono::high_resolution_clock::now();
-				std::chrono::duration<float, std::milli> duration = m_active_time - m_beg_time;
+				Registry* reg = Registry::GetInstance();
+				reg->Update();
 				_SwapBuffers();
 				mp_renderer->RenderFrame();
 				_ev.RequestMore();
 			}
-			m_beg_time = std::chrono::high_resolution_clock::now();
 		}
 
 

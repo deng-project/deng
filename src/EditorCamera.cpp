@@ -8,17 +8,18 @@
 
 namespace DENG {
 
-    EditorCamera::EditorCamera(Renderer &_rend, Window &_win, const Camera3DConfiguration &_conf, const std::string &_name) :
-        Camera3D(_rend, _win, _conf, _name) 
-    { 
-        DENG_ASSERT(m_config.index() == 2); 
+    EditorCamera::EditorCamera(Entity* _parent, const std::string& _name, Renderer& _rend, EditorCameraConfiguration& _conf) :
+        Camera3D(_parent, _name, ENTITY_TYPE_EDITOR_CAMERA, _rend),
+        m_translation(0.0f, 0.0f, m_config.zoom_step) {}
 
-        EditorCameraConfiguration &conf = std::get<EditorCameraConfiguration>(m_config);
-        m_translation = { 0.0f, 0.0f, conf.zoom_step };
+
+    EditorCamera::~EditorCamera() {
+        if (_OnDestroyFunction)
+            _OnDestroyFunction(m_script);
     }
 
 
-    void EditorCamera::_ForceLimits() {
+    void EditorCamera::_EnforceLimits() {
         // no x axis rotation overflow for angles greater / less than PI / 2 | -PI / 2 is allowed
         if(m_rotation.x > PI / 2)
             m_rotation.x = PI / 2;
@@ -34,13 +35,6 @@ namespace DENG {
 
 
     void EditorCamera::_ConstructViewMatrix() {
-        _ForceLimits();
-
-        // construct quaternions representing the rotation of the camera
-        TRS::Quaternion x = { sinf(m_rotation.x / 2), 0.0f, 0.0f, cosf(m_rotation.x / 2) };
-        TRS::Quaternion y = { 0.0f, sinf(m_rotation.y / 2), 0.0f, cosf(m_rotation.y / 2) };
-        TRS::Quaternion z = { 0.0f, 0.0f, sinf(m_rotation.z / 2), cosf(m_rotation.z / 2) };
-
         // construct translation matrix
         TRS::Matrix4<float> translation = {
             { 1.0f, 0.0f, 0.0f, m_translation.x - m_origin.x },
@@ -49,55 +43,46 @@ namespace DENG {
             { 0.0f, 0.0f, 0.0f, 1.0f },
         };
 
-        m_ubo.view_matrix = translation * (x * y * z).ExpandToMatrix4();
+        m_ubo.view_matrix = translation * (m_x_rot * m_y_rot).ExpandToMatrix4();
         m_ubo.view_matrix = m_ubo.view_matrix.Transpose();
     }
 
-
-    void EditorCamera::EnableCamera() {
-        m_is_enabled = true;
+    void EditorCamera::_Attach() {
+        GPUMemoryManager* mem_manager = GPUMemoryManager::GetInstance();
+        m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, sizeof(ModelCameraUbo));
+        if (_OnAttachFunction)
+            _OnAttachFunction(m_script);
     }
 
 
-    void EditorCamera::DisableCamera() {
-        m_is_enabled = false;
-    }
-
-
-    void EditorCamera::Update() {
+    void EditorCamera::_Update() {
         // no transposition needed
         m_ubo.projection_matrix = _CalculateProjection();
-        EditorCameraConfiguration &conf = std::get<EditorCameraConfiguration>(m_config);
 
-        if(m_is_enabled) {
-            float delta_step = 0; // conf.zoom_step * delta_time.count() / conf.action_delay;
-            TRS::Point2D<int64_t> mouse_delta = m_window.GetMouseDelta();
-            TRS::Point2D<float> delta_mousef = { static_cast<float>(mouse_delta.x), static_cast<float>(mouse_delta.y) };
-
-            // rotation toggle is activated
-            if(m_window.IsHidEventActive(conf.rotate_toggle)) {
-                m_window.ChangeVCMode(true, m_vc_origin);
-                TRS::Point3D<float> rot = {
-                    -delta_mousef.y * conf.delta_rotate / conf.mouse_rotation_delta,
-                    delta_mousef.x * conf.delta_rotate / conf.mouse_rotation_delta,
-                    0.0f
-                };
-
-                m_rotation += rot;
-            } else {
-                m_window.ChangeVCMode(false, m_vc_origin);
-                if(m_window.IsHidEventActive(conf.zoom_in) && m_translation.z - conf.zoom_step > 0) {
-                    delta_step = -conf.zoom_step;
-                    m_translation.z += delta_step;
-                }
-                else if(m_window.IsHidEventActive(conf.zoom_out)) {
-                    delta_step = conf.zoom_step;
-                    m_translation.z += delta_step;
-                }
-            }
-        }
+        if (_OnUpdateFunction)
+            _OnUpdateFunction(m_script);
 
         _ConstructViewMatrix();
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), sizeof(ModelCameraUbo), m_ubo_offset);
+    }
+
+
+    void EditorCamera::Rotate(TRS::Vector2<int64_t> _mouse_delta) {
+        if (m_is_enabled) {
+            TRS::Point2D<float> delta_mousef = {
+                static_cast<float>(_mouse_delta.first),
+                static_cast<float>(_mouse_delta.second)
+            };
+
+            TRS::Point2D<float> rot = {
+                -delta_mousef.y * m_config.delta_rotate / m_config.mouse_rotation_delta,
+                delta_mousef.x * m_config.delta_rotate / m_config.mouse_rotation_delta
+            };
+
+            m_rotation += rot;
+            _EnforceLimits();
+            m_x_rot = TRS::Quaternion(sinf(m_rotation.x / 2.f), 0.0f, 0.0f, cosf(m_rotation.x / 2.f));
+            m_y_rot = TRS::Quaternion(0.0f, sinf(m_rotation.y / 2.f), 0.0f, cosf(m_rotation.y / 2.f));
+        }
     }
 }
