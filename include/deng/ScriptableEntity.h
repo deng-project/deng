@@ -56,15 +56,12 @@ namespace DENG {
 				delete m_script;
 			}
 
-			template<typename T>
-			void BindScript() {
-				m_script = new T(this);
-				if constexpr (TypeTest<T>::HAS_ON_ATTACH) 
-					_OnAttachFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnAttach(); };
-				if constexpr (TypeTest<T>::HAS_ON_UPDATE)
-					_OnUpdateFunction = [](ScriptComponent *_instace) { ((T*)_instance)->OnUpdate(); };
-				if constexpr (TypeTest<T>::HAS_ON_DESTROY)
-					_OnDestroyFunction = [](ScriptComponent* _instance) { ((T*)_instance)->OnDestroy(); };
+			template<typename T, typename... Types>
+			void BindScript(Types... args) {
+				m_script = new T(this, args...);
+				_OnAttachFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnAttach(); };
+				_OnUpdateFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnUpdate(); };
+				_OnDestroyFunction = [](ScriptComponent* _instance) { ((T*)_instance)->OnDestroy(); };
 			}
 	};
 }

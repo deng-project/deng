@@ -19,6 +19,17 @@ namespace DENG {
 			Bind(wxEVT_PAINT, &RendererViewport::_OnPaint, this, wxID_ANY);
 			Bind(wxEVT_IDLE, &RendererViewport::_OnIdle, this, wxID_ANY);
 			Bind(wxEVT_SIZE, &RendererViewport::_OnResize, this, wxID_ANY);
+			Bind(wxEVT_KEY_DOWN, &RendererViewport::_OnKeyDown, this, wxID_ANY);
+			Bind(wxEVT_KEY_UP, &RendererViewport::_OnKeyUp, this, wxID_ANY);
+
+			Bind(wxEVT_LEFT_DOWN, &RendererViewport::_OnMouseLeftBtn, this, wxID_ANY);
+			Bind(wxEVT_LEFT_UP, &RendererViewport::_OnMouseLeftBtn, this, wxID_ANY);
+			Bind(wxEVT_MIDDLE_DOWN, &RendererViewport::_OnMouseMiddleBtn, this, wxID_ANY);
+			Bind(wxEVT_MIDDLE_UP, &RendererViewport::_OnMouseMiddleBtn, this, wxID_ANY);
+			Bind(wxEVT_RIGHT_DOWN, &RendererViewport::_OnMouseRightBtn, this, wxID_ANY);
+			Bind(wxEVT_RIGHT_UP, &RendererViewport::_OnMouseRightBtn, this, wxID_ANY);
+			Bind(wxEVT_MOTION, &RendererViewport::_OnMouseMotion, this, wxID_ANY);
+			Bind(wxEVT_MOUSEWHEEL, &RendererViewport::_OnMouseWheel, this, wxID_ANY);
 		}
 
 
@@ -69,6 +80,7 @@ namespace DENG {
 			if (mp_renderer) {
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
+				m_input.FlushReleased();
 				_SwapBuffers();
 				mp_renderer->RenderFrame();
 			}
@@ -90,12 +102,79 @@ namespace DENG {
 			if (mp_renderer) {
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
+				m_input.FlushReleased();
 				_SwapBuffers();
 				mp_renderer->RenderFrame();
 				_ev.RequestMore();
 			}
 		}
 
+
+		// keyboard events
+		void RendererViewport::_OnKeyDown(wxKeyEvent& _ev) {
+			neko_HidEvent key = Window::TranslateNativeKeyCode(_ev.GetRawKeyCode());
+			m_input.RegisterActiveKeyEvent(key);
+		}
+
+
+		void RendererViewport::_OnKeyUp(wxKeyEvent& _ev) {
+			neko_HidEvent key = Window::TranslateNativeKeyCode(_ev.GetRawKeyCode());
+			m_input.RegisterReleasedKeyEvent(key);
+		}
+
+
+		// mouse events
+		void RendererViewport::_OnMouseLeftBtn(wxMouseEvent& _ev) {
+			if (_ev.LeftDown())
+				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_BTN_1);
+			else if (_ev.LeftUp())
+				m_input.RegisterReleasedKeyEvent(NEKO_MOUSE_BTN_1);
+		}
+
+
+		void RendererViewport::_OnMouseMiddleBtn(wxMouseEvent& _ev) {
+			if (_ev.MiddleDown())
+				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_BTN_2);
+			else if (_ev.MiddleUp())
+				m_input.RegisterReleasedKeyEvent(NEKO_MOUSE_BTN_2);
+		}
+
+
+		void RendererViewport::_OnMouseRightBtn(wxMouseEvent& _ev) {
+			if (_ev.RightDown())
+				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_BTN_3);
+			else if (_ev.RightUp())
+				m_input.RegisterReleasedKeyEvent(NEKO_MOUSE_BTN_3);
+		}
+
+
+		void RendererViewport::_OnMouseMotion(wxMouseEvent& _ev) {
+			TRS::Vector2<int64_t> pos = {
+				static_cast<int64_t>(_ev.GetPosition().x),
+				static_cast<int64_t>(_ev.GetPosition().y)
+			};
+
+			if (m_virtual.enabled) {
+				m_virtual.center = {
+					static_cast<int64_t>(GetSize().x >> 1),
+					static_cast<int64_t>(GetSize().y >> 1)
+				};
+				m_virtual.delta = pos - m_virtual.center;
+			} else {
+				m_cursor_pos = pos;
+			}
+		}
+
+
+		void RendererViewport::_OnMouseWheel(wxMouseEvent &_ev) {
+			if (_ev.GetWheelRotation() > 0) {
+				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_SCROLL_UP);
+				std::cout << "Scrolling up" << std::endl;
+			} else if (_ev.GetWheelRotation() < 0) {
+				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_SCROLL_DOWN);
+				std::cout << "Scrolling down" << std::endl;
+			}
+		}
 
 		void RendererViewport::_SwapBuffers() {
 #ifdef _WIN32

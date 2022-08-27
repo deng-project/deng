@@ -7,38 +7,30 @@
 #define EDITOR_CAMERA_CONTROLLER_H
 
 #ifdef EDITOR_CAMERA_CONTROLLER_CPP
-	#include <string>
-	#include <vector>
 	#include <iostream>
-	#include <unordered_map>
-#ifdef _WIN32
-	#include <wtypes.h>
-#endif
+	#include <any>
 
-	#include "trs/Points.h"
-	#include "trs/Vector.h"
-	#include "trs/Quaternion.h"
-	#include "trs/Matrix.h"
-
-	#include "deng/Api.h"
-	#include "deng/BaseTypes.h"
-	#include "deng/ErrorDefinitions.h"
-	#include "deng/ModelUniforms.h"
-	#include "deng/ShaderDefinitions.h"
-	#include "deng/Renderer.h"
-	#include "deng/Entity.h"
-	#include "deng/ScriptableEntity.h"
-	#include "deng/Camera3D.h"
-	#include "deng/EditorCamera.h"
+	#include <wx/wx.h>
+	#include "deng/deng.h"
+	#include "deng/Executables/deng-game-editor/OpenGLLoader.h"
+#ifdef _WIN32	
+	#include "deng/Executables/deng-game-editor/OpenGLLoaderWin32.h"
+#endif	
+	#include "deng/Executables/deng-game-editor/RendererViewport.h"
 #endif
 
 namespace DENG {
 	namespace Editor {
 
 		class EditorCameraController : public ScriptComponent {
+			private:
+				RendererViewport *m_viewport;
+
 			public:
-				EditorCameraController(Entity *_cam);
+				EditorCameraController(Entity *_cam, RendererViewport *_vp);
+				void OnAttach();
 				void OnUpdate();
+				void OnDestroy();
 
 		};
 	}

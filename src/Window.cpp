@@ -37,6 +37,16 @@ namespace DENG {
     void Window::LoadOpenGLFunctions() {
         neko_LoadOpenGLFunctions();
     }
+
+
+    neko_HidEvent Window::TranslateNativeKeyCode(uint32_t _code) {
+        return neko_TranslateNativeKeyCode(_code);
+    }
+
+
+    neko_HidEvent Window::TranslateNativeMouseCode(uint16_t _code) {
+        return neko_TranslateNativeMouseCode(_code);
+    }
     // end of static methods
 
 

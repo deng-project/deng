@@ -14,7 +14,7 @@ namespace DENG {
 			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING | wxAUI_MGR_RECTANGLE_HINT)
 		{
 			wxTextCtrl *hierarchy = new wxTextCtrl(this, wxID_ANY, "Hierarchy panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
-			RendererViewport* viewport = new RendererViewport(this, DXML::Configuration::Backend::OPENGL);
+			RendererViewport* viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			wxTextCtrl *assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			wxTextCtrl* inspector = new wxTextCtrl(this, wxID_ANY, "Inspector panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 
@@ -29,7 +29,7 @@ namespace DENG {
 			
 			m_camera = new EditorCamera(NULL, "__GameEditor__", *rend, EditorCameraConfiguration());
 			m_grid = new GridGenerator(NULL, "__Grid__", *rend, 50.f, 50.f, 0.4f, 0.4f, m_camera->GetId());
-			m_camera->BindScript<EditorCameraController>();
+			m_camera->BindScript<EditorCameraController>(viewport);
 
 			Registry* reg = Registry::GetInstance();
 			reg->AttachEntities();

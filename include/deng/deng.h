@@ -64,7 +64,8 @@
 // python scripting
 #include "deng/PythonScriptExecutor.h"
 
-// registry
+// registries
+#include "deng/InputRegistry.h"
 #include "deng/Registry.h"
 
 #endif

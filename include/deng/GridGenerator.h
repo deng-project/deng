@@ -49,7 +49,7 @@ namespace DENG {
             uint32_t m_ubo_offset = 0;
             uint32_t m_main_offset = 0;
             Renderer& m_renderer;
-            TRS::Vector4<float> m_color = { 1.0f, 1.0f, 1.0f, 1.0f };
+            TRS::Vector4<float> m_color = { 0.0f, 1.0f, 0.0f, 1.0f };
             const std::string m_framebuffer_id;
 
         private:

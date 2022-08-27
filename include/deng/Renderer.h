@@ -135,6 +135,10 @@ namespace DENG {
                 return m_framebuffer_draws.find(_framebuffer)->second.shaders[_id].first;
             }
 
+            inline const RendererConfig& GetConfig() {
+                return m_conf;
+            }
+
             // slow due to the heap allocation
             virtual std::vector<std::string> GetTextureNames() = 0;
 

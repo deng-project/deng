@@ -26,6 +26,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/GridGenerator.h
     include/deng/HardwareInfo.h
     include/deng/ImGuiLayer.h
+	include/deng/InputRegistry.h
     include/deng/MeshLoader.h
     include/deng/Missing.h
     include/deng/ModelLoader.h

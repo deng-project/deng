@@ -40,6 +40,8 @@ namespace DENG {
             static void Deinitialise();
             static void LoadOpenGLPlatform();
             static void LoadOpenGLFunctions();
+            static neko_HidEvent TranslateNativeKeyCode(uint32_t _code);
+            static neko_HidEvent TranslateNativeMouseCode(uint16_t _code);
 
             void CreateOpenGLContext();
             void MakeOpenGLContextCurrent();

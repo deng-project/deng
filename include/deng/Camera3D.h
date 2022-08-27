@@ -54,10 +54,7 @@ namespace DENG {
 
         protected:
             inline float _CalculateAspectRatio() {
-                //return static_cast<float>(m_window.GetSize().x) / static_cast<float>(m_window.GetSize().y);
-                
-                // temporary
-                return { 1280.f / 720.f };
+                return static_cast<float>(m_renderer.GetConfig().canvas_size.x) / static_cast<float>(m_renderer.GetConfig().canvas_size.y);
             }
 
             inline TRS::Matrix4<float> _CalculateProjection() {
