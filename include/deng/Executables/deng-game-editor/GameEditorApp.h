@@ -7,30 +7,15 @@
 #define GAME_EDITOR_APP_H
 
 #ifdef GAME_EDITOR_APP_CPP
+    #include <any>
     #include <wx/wx.h>
     #include <wx/aui/aui.h>
-    #include <string>    
-    #include <unordered_map>
-
-    #include "trs/Points.h"
-    #include "trs/Vector.h"
-    #include "trs/Quaternion.h"
-    #include "trs/Matrix.h"
-
-    #include "deng/Api.h"
-    #include "deng/BaseTypes.h"
-    #include "deng/Entity.h"
-    #include "deng/ScriptableEntity.h"
-    #include "deng/ErrorDefinitions.h"
-    #include "deng/ShaderDefinitions.h"
-    #include "deng/ModelUniforms.h"
-    #include "deng/Renderer.h"
-    #include "deng/GridGenerator.h"
-    #include "deng/Camera3D.h"
-    #include "deng/EditorCamera.h"
+    #include "deng/deng.h"
 
     #include "deng/Executables/deng-game-editor/ProjectManager.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
+    #include "deng/Executables/deng-game-editor/OpenGLLoader.h"
+    #include "deng/Executables/deng-game-editor/RendererViewport.h"
     #include "deng/Executables/deng-game-editor/GameEditor.h"
     #include "deng/Version.h"
     

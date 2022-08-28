@@ -111,7 +111,8 @@ namespace DENG {
 #endif
 
             data.SetProjectName(wxWindow::FindWindowById(ID_PROJECT_NAME)->GetLabel().ToStdString());
-            // data.CreateEmptyProject();
+            data.SetDefaultBackend(DXML::Configuration::VULKAN);
+            data.CreateEmptyProject();
             return true;
         }
 
@@ -143,11 +144,7 @@ namespace DENG {
 
         void NewProjectWizard::_OnCreateNewProjectClick(wxCommandEvent &_ev) {
             if (_CreateNewProject()) {
-                GameEditor* editor = new GameEditor();
-                editor->Show(true);
-
                 Close(true);
-                GetParent()->Close(true);
             }
         }
 

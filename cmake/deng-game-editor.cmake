@@ -1,6 +1,6 @@
 # DENG: dynamic engine - powerful 3D game engine
 # licence: Apache, see LICENCE file
-# file: ViewModels.cmake - ModelLoader application build config
+# file: deng-game-editor.cmake - DENG game editor program cmake configuration
 # author: Karl-Mihkel Ott
 
 set(DENG_GAME_EDITOR_TARGET deng-game-editor)

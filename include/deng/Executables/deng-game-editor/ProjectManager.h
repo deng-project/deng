@@ -8,10 +8,11 @@
 
 #ifdef PROJECT_MANAGER_CPP
     #include <wx/wx.h>
+    #include "deng/deng.h"
+    
     #include "deng/Executables/deng-game-editor/StaticResources.h"
     #include "deng/Executables/deng-game-editor/NewProjectWizard.h"
     #include "deng/Executables/deng-game-editor/GuiIds.h"
-    #include "deng/Version.h"
 #endif
 
 #define PROJECT_BTN_SIZE wxSize(120, 60)

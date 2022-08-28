@@ -31,15 +31,33 @@ namespace DENG {
 
 
 		enum GameEditorIDs {
-			ID_NEW,
-			ID_OPEN,
-			ID_SAVE,
-			ID_IMPORT,
-				ID_DAS,
-				ID_GLTF,
-				ID_OBJ,
-				ID_STL,
-			ID_EXPORT
+			/** Menubar elements **/
+			// file
+			ID_NEW = 13,
+			ID_OPEN	= 14,
+			ID_SAVE	= 15,
+			ID_IMPORT = 16,
+				ID_DAS = 17,
+				ID_GLTF	= 18,
+				ID_OBJ = 19,
+				ID_STL = 20,
+			ID_EXPORT = 21,
+
+			// add
+			ID_NODE	= 22,
+			ID_MESH	= 23,
+				ID_SPHERE = 24,
+				ID_CUBE	= 25,
+				ID_CONE = 26,
+			ID_LIGHT = 27,
+				ID_DIRECTIONAL_LIGHT = 28,
+				ID_POINT_LIGHT = 29,
+				ID_AMBIENT_LIGHT = 30,
+			ID_CAMERA = 31,
+				ID_FIRST_PERSON_CAMERA = 32,
+				ID_THIRD_PERSON_CAMERA = 33,
+				ID_EDITOR_CAMERA = 34,
+			/** End of menubar elements **/
 		};
 	}
 }

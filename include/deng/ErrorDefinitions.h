@@ -22,7 +22,7 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const ui
     #define DENG_ASSERT(_val) assert(_val)
 #else
     #define LOG(x)
-    #define MAT_LOG(mat, msg);
+    #define MAT_LOG(mat, msg)
     #define WARNME(x)
     #define glErrorCheck(func_name)
     #define DENG_ASSERT(_val)

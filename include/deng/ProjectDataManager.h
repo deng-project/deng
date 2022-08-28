@@ -9,15 +9,32 @@
 #ifdef PROJECT_DATA_MANAGER_CPP
 	#include <string>
 	#include <vector>
+	#include <fstream>
+	#include <stack>
+	#include <array>
+	#include <filesystem>
 	#include <unordered_map>
     #include <cmath>
 
 	#include "trs/Vector.h"
 	#include "trs/Points.h"
 	#include "trs/Quaternion.h"
+
+	#include "mar/AsciiStreamReader.h"
+	#include "mar/AsciiLineReader.h"
+	
 	#include "dxml/GameStructs.h"
+	#include "dxml/XMLTag.h"
+	#include "dxml/XMLWriter.h"
+	#include "dxml/XMLParser.h"
+	#include "dxml/GameConfigurationReader.h"
+	#include "dxml/GameConfigurationWriter.h"
+
+	#include "das/Api.h"
+	#include "das/Algorithm.h"
 
 	#include "deng/Api.h"
+	#include "deng/ErrorDefinitions.h"
 #endif
 
 namespace DENG {
@@ -29,11 +46,11 @@ namespace DENG {
 
 		public:
 			ProjectDataManager() = default;
-			ProjectDataManager(const std::string &_path, const std::string &_name);
+			ProjectDataManager(const std::string &_path, const std::string &_name, DXML::Configuration::Backend _backend);
 			ProjectDataManager(const ProjectDataManager &_pd) = default;
 			ProjectDataManager(ProjectDataManager &&_pd) = default;
 
-			void CreateEmptyProject(const std::string &_path = "", const std::string &_name = "");
+			void CreateEmptyProject();
 			void LoadProject(const std::string &_game_xml_path);
 			void Move(const std::string& _new_path);
 
@@ -43,6 +60,10 @@ namespace DENG {
 
 			inline void SetProjectName(const std::string& _name) {
 				m_xml_game.meta.name = _name;
+			}
+
+			inline void SetDefaultBackend(DXML::Configuration::Backend _backend) {
+				m_xml_game.cfg.default_backend = _backend;
 			}
 
 			inline const std::string& GetProjectPath() const {

@@ -17,7 +17,6 @@
     #include "deng/deng.h"
 
     #include "deng/Executables/deng-game-editor/StaticResources.h"
-    #include "deng/Executables/deng-game-editor/GameEditor.h"
     #include "deng/Executables/deng-game-editor/GuiIds.h"
 #endif
 
@@ -25,6 +24,8 @@ namespace DENG {
 	namespace Editor {
         
         class NewProjectWizard : public wxFrame {
+            private:
+                ProjectDataManager m_data_mgr;
             private:
                 bool _CreateNewProject();
                 const std::string _GetDefaultProjectPath();
@@ -37,6 +38,10 @@ namespace DENG {
 
             public:
                 NewProjectWizard(wxFrame* _parent);
+                
+                inline ProjectDataManager& GetProjectManager() {
+                    return m_data_mgr;
+                }
         };
 	}
 }

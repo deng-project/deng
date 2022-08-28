@@ -39,8 +39,13 @@
 #include "dxml/GameConfigurationReader.h"
 #include "dxml/GameConfigurationWriter.h"
 
+// third party (libdas)
+#include "das/Api.h"
+#include "das/Algorithm.h"
+
 // basics
 #include "deng/Api.h"
+#include "deng/Version.h"
 #include "deng/Window.h"
 #include "deng/BaseTypes.h"
 #include "deng/ErrorDefinitions.h"

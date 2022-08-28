@@ -185,8 +185,8 @@ endif()
 target_link_libraries(${DENG_COMPLETE_TARGET}
     PRIVATE mar
     PRIVATE nwin-static
-    PRIVATE das-static
-	PRIVATE dxml)
+    PUBLIC das-static
+	PUBLIC dxml)
 
 target_compile_definitions(${DENG_COMPLETE_TARGET}
     PUBLIC ImDrawIdx=unsigned\ int
