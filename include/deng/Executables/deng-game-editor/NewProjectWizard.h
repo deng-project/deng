@@ -25,7 +25,9 @@ namespace DENG {
         
         class NewProjectWizard : public wxFrame {
             private:
-                ProjectDataManager m_data_mgr;
+                ProjectDataManager *m_data_mgr;
+                bool m_success_bit = false;
+
             private:
                 bool _CreateNewProject();
                 const std::string _GetDefaultProjectPath();
@@ -37,10 +39,10 @@ namespace DENG {
                 wxDECLARE_EVENT_TABLE();
 
             public:
-                NewProjectWizard(wxFrame* _parent);
+                NewProjectWizard(wxFrame* _parent, ProjectDataManager *_p_mgr);
                 
-                inline ProjectDataManager& GetProjectManager() {
-                    return m_data_mgr;
+                inline bool Success() {
+                    return m_success_bit;
                 }
         };
 	}

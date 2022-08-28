@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_APP_CPP
     #include <any>
     #include <wx/wx.h>
+    #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
     #include "deng/deng.h"
 

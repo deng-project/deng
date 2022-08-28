@@ -15,8 +15,9 @@ namespace DENG {
             EVT_BUTTON(ID_CANCEL, NewProjectWizard::_OnCancelClick)
         wxEND_EVENT_TABLE()
 
-        NewProjectWizard::NewProjectWizard(wxFrame* _parent) :
-            wxFrame(_parent, wxID_ANY, "Create a new project")
+        NewProjectWizard::NewProjectWizard(wxFrame* _parent, ProjectDataManager *_p_mgr) :
+            wxFrame(_parent, ID_NEW_PROJECT_WIZARD, "Create a new project"),
+            m_data_mgr(_p_mgr)
         {
             wxIcon icon;
             wxBitmap bmp = wxBitmap::NewFromPNGData(GetLogoIcon32x32(), GetLogoIcon32x32Size());
@@ -69,7 +70,6 @@ namespace DENG {
 
         bool NewProjectWizard::_CreateNewProject() {
             // check for possible errors
-            DENG::ProjectDataManager data;
             const std::string root_path = ((wxTextCtrl*) wxWindow::FindWindowById(ID_PATH))->GetLineText(0).ToStdString();
             const std::string dir_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_DIRECTORY_NAME))->GetLineText(0).ToStdString();
             const std::string project_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_PROJECT_NAME))->GetLineText(0).ToStdString();
@@ -98,9 +98,9 @@ namespace DENG {
 
 #ifdef _WIN32
             if (root_path.back() == '\\') {
-                data.SetProjectPath(root_path + dir_name);
+                m_data_mgr->SetProjectPath(root_path + dir_name);
             } else {
-                data.SetProjectPath(root_path + '\\' + dir_name);
+                m_data_mgr->SetProjectPath(root_path + '\\' + dir_name);
             }
 #else
             if (root_path.back() == '/') {
@@ -110,9 +110,13 @@ namespace DENG {
             }
 #endif
 
-            data.SetProjectName(wxWindow::FindWindowById(ID_PROJECT_NAME)->GetLabel().ToStdString());
-            data.SetDefaultBackend(DXML::Configuration::VULKAN);
-            data.CreateEmptyProject();
+            m_data_mgr->SetProjectName(project_name);
+            m_data_mgr->SetDefaultBackend(DXML::Configuration::VULKAN);
+            if (!m_data_mgr->CreateEmptyProject()) {
+                wxMessageBox("Could not create an empty project in " + m_data_mgr->GetProjectPath(), "Error", wxICON_ERROR | wxOK);
+                return false;
+            }
+            
             return true;
         }
 
@@ -134,7 +138,7 @@ namespace DENG {
 
         // Callbacks
         void NewProjectWizard::_OnChooseDirectoryClick(wxCommandEvent &_ev) {
-            wxDirDialog dir_dialog = wxDirDialog(this, "Choose project directory");
+            wxDirDialog dir_dialog = wxDirDialog(this, "Choose a project directory");
             if (dir_dialog.ShowModal() == wxID_OK) {
                 auto path = dir_dialog.GetPath();
                 wxWindow::FindWindowById(ID_PATH, this)->SetLabel(path);
@@ -144,6 +148,7 @@ namespace DENG {
 
         void NewProjectWizard::_OnCreateNewProjectClick(wxCommandEvent &_ev) {
             if (_CreateNewProject()) {
+                m_success_bit = true;
                 Close(true);
             }
         }

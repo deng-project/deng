@@ -9,11 +9,13 @@
 #ifdef GAME_EDITOR_CPP
     #include <any>
     #include <wx/wx.h>
+    #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
 
     #include "deng/deng.h"
 
     #include "deng/Executables/deng-game-editor/GuiIds.h"
+    #include "deng/Executables/deng-game-editor/StaticResources.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
     #include "deng/Executables/deng-game-editor/OpenGLLoader.h"
     #include "deng/Executables/deng-game-editor/RendererViewport.h"
@@ -28,8 +30,9 @@ namespace DENG {
         class GameEditor : public wxFrame {
             private:
                 wxAuiManager m_mgr;
-                // temporarily we use wxTextCtrl
-                wxTextCtrl* m_hierarchy = nullptr;
+
+                wxToolBar* m_toolbar = nullptr;
+                wxTreeCtrl* m_hierarchy = nullptr;
                 RendererViewport* m_viewport = nullptr;
                 wxTextCtrl* m_assets = nullptr;
                 wxTextCtrl* m_inspector = nullptr;
@@ -38,10 +41,16 @@ namespace DENG {
                 EditorCamera* m_camera = nullptr;
                 GridGenerator* m_grid = nullptr;
 
+                ProjectDataManager m_project;
+
             private:
                 void _CreateMenubar();
+                void _CreateRuntimeToolbar();
                 void _CreateEditorLayout();
                 void _SetupViewport();
+                void _LoadProject();
+
+                void _OnNewProjectWizardClose(wxCloseEvent& _ev);
 
                 // file
                 void _OnNewClick(wxCommandEvent& _ev);

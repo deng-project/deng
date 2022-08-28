@@ -17,7 +17,8 @@ namespace DENG {
         size_t GetSmallLogoSize();
 		const unsigned char *GetLogoIcon32x32();
         size_t GetLogoIcon32x32Size();
-	
+		const unsigned char *GetRunIcon16x16();
+		size_t GetRunIcon16x16Size();
 	}
 }
 

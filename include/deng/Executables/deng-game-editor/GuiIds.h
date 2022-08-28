@@ -9,55 +9,58 @@
 namespace DENG {
 	namespace Editor {
 
-		enum ProjectManagerIDs {
+		enum GuiIDs {
+			/** Project management **/
 			// Project management ids
-			ID_NEW_PROJECT = 1,
-			ID_OPEN_PROJECT = 2,
+			ID_NEW_PROJECT,
+			ID_OPEN_PROJECT,
 
 			// Website stuff ids
-			ID_DENG_WEBSITE = 3,
-			ID_DENG_FORUM = 4,
-			ID_GIT = 5,
+			ID_DENG_WEBSITE,
+			ID_DENG_FORUM,
+			ID_GIT,
 
 			// New project wizard
-			ID_PATH = 6,
-			ID_CHOOSE_DIRECTORY = 7,
-			ID_PROJECT_NAME = 8,
-			ID_DIRECTORY_NAME = 9,
-			ID_BACKEND = 10,
-			ID_CREATE_NEW_PROJECT = 11,
-			ID_CANCEL = 12
-		};
+			ID_NEW_PROJECT_WIZARD,
+			ID_PATH,
+			ID_CHOOSE_DIRECTORY,
+			ID_PROJECT_NAME,
+			ID_DIRECTORY_NAME,
+			ID_BACKEND,
+			ID_CREATE_NEW_PROJECT,
+			ID_CANCEL,
+			/** End of project management **/
 
-
-		enum GameEditorIDs {
 			/** Menubar elements **/
 			// file
-			ID_NEW = 13,
-			ID_OPEN	= 14,
-			ID_SAVE	= 15,
-			ID_IMPORT = 16,
-				ID_DAS = 17,
-				ID_GLTF	= 18,
-				ID_OBJ = 19,
-				ID_STL = 20,
-			ID_EXPORT = 21,
+			ID_NEW,
+			ID_OPEN,
+			ID_SAVE,
+			ID_IMPORT,
+			ID_DAS,
+			ID_GLTF,
+			ID_OBJ,
+			ID_STL,
+			ID_EXPORT,
 
 			// add
-			ID_NODE	= 22,
-			ID_MESH	= 23,
-				ID_SPHERE = 24,
-				ID_CUBE	= 25,
-				ID_CONE = 26,
-			ID_LIGHT = 27,
-				ID_DIRECTIONAL_LIGHT = 28,
-				ID_POINT_LIGHT = 29,
-				ID_AMBIENT_LIGHT = 30,
-			ID_CAMERA = 31,
-				ID_FIRST_PERSON_CAMERA = 32,
-				ID_THIRD_PERSON_CAMERA = 33,
-				ID_EDITOR_CAMERA = 34,
+			ID_NODE,
+			ID_MESH,
+			ID_SPHERE,
+			ID_CUBE,
+			ID_CONE,
+			ID_LIGHT,
+			ID_DIRECTIONAL_LIGHT,
+			ID_POINT_LIGHT,
+			ID_AMBIENT_LIGHT,
+			ID_CAMERA,
+			ID_FIRST_PERSON_CAMERA,
+			ID_THIRD_PERSON_CAMERA,
+			ID_EDITOR_CAMERA,
 			/** End of menubar elements **/
+
+			/** Toolbar elements **/
+			ID_TOOLBAR_RUN,
 		};
 	}
 }

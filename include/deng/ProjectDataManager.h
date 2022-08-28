@@ -50,9 +50,11 @@ namespace DENG {
 			ProjectDataManager(const ProjectDataManager &_pd) = default;
 			ProjectDataManager(ProjectDataManager &&_pd) = default;
 
-			void CreateEmptyProject();
-			void LoadProject(const std::string &_game_xml_path);
-			void Move(const std::string& _new_path);
+			ProjectDataManager& operator=(const ProjectDataManager& _pm) = default;
+
+			bool CreateEmptyProject();
+			bool LoadProject(const std::string &_game_xml_path);
+			bool Move(const std::string& _new_path);
 
 			inline void SetProjectPath(const std::string &_path) {
 				m_project_path = _path;

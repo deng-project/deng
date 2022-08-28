@@ -16,7 +16,7 @@ namespace DENG {
 	}
 
 
-	void ProjectDataManager::CreateEmptyProject() {
+	bool ProjectDataManager::CreateEmptyProject() {
 		DENG_ASSERT(m_project_path.size());
 
 		// check if the project path exists and if it doesn't create it
@@ -45,9 +45,22 @@ namespace DENG {
 #else
 			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\python310.dll", m_project_path + "\\python310.dll");
 #endif
+#else
+#error "Project creation is not implemented in GNU/Linux"
 #endif
 			DXML::GameConfigurationWriter cfg_writer(m_project_path + "/game.xml");
 			cfg_writer.Write(m_xml_game);
-		} 
+			return true;
+		}
+
+		return false;
+	}
+
+
+	bool ProjectDataManager::LoadProject(const std::string &_game_xml_path) {
+		DXML::GameConfigurationReader reader(_game_xml_path);
+		reader.Parse();
+		m_xml_game = reader.GetXMLGame();
+		return true;
 	}
 }

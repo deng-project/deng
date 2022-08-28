@@ -42,11 +42,12 @@ namespace DENG {
 		wxEND_EVENT_TABLE()
 
 		GameEditor::GameEditor() :
-			wxFrame(NULL, wxID_ANY, "Untitled project", wxDefaultPosition, wxSize(1880, 1020)),
-			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING | wxAUI_MGR_RECTANGLE_HINT)
+			wxFrame(NULL, wxID_ANY, "DENG game editor", wxDefaultPosition, wxSize(1880, 1020)),
+			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING)
 		{
 			_CreateMenubar();
 			_CreateEditorLayout();
+			_CreateRuntimeToolbar();
 			_SetupViewport();
 		}
 
@@ -101,12 +102,24 @@ namespace DENG {
 		}
 
 
+		void GameEditor::_CreateRuntimeToolbar() {
+			wxBitmap bmp = wxBitmap::NewFromPNGData(GetRunIcon16x16(), GetRunIcon16x16Size());
+			wxBitmapButton* run = new wxBitmapButton(m_toolbar, wxID_ANY, bmp, wxDefaultPosition, wxDefaultSize, wxBU_RIGHT, wxDefaultValidator, wxT("Run"));
+			m_toolbar->AddControl(run);
+		}
+
+
 		void GameEditor::_CreateEditorLayout() {
-			m_hierarchy = new wxTextCtrl(this, wxID_ANY, "Hierarchy panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
+			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
+			m_hierarchy = new wxTreeCtrl(this, wxID_ANY);
 			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			m_inspector = new wxTextCtrl(this, wxID_ANY, "Inspector panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 
+			auto id = m_hierarchy->AddRoot("Level 0");
+			m_hierarchy->AppendItem(id, "Some model desu");
+
+			m_mgr.AddPane(m_toolbar, wxTOP, "Toolbar");
 			m_mgr.AddPane(m_hierarchy, wxLEFT, "Scene hierarchy");
 			m_mgr.AddPane(m_viewport, wxCENTER, "Viewport");
 			m_mgr.AddPane(m_assets, wxBOTTOM, "Assets");
@@ -132,14 +145,42 @@ namespace DENG {
 		}
 
 
+		void GameEditor::_LoadProject() {
+			// set the title accordingly
+			SetTitle(m_project.GetXMLGame().meta.name + " | DENG game editor");
+
+			// setup levels
+
+		}
+
+
+		void GameEditor::_OnNewProjectWizardClose(wxCloseEvent& _ev) {
+			NewProjectWizard* wiz = (NewProjectWizard*)wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD);
+			if (wiz->Success()) {
+				_LoadProject();
+				wiz->Destroy();
+			} else {
+				wxMessageBox(std::string("Could not create a new project in " + m_project.GetProjectPath() + "."), "Error", wxICON_ERROR | wxOK);
+			}
+		}
+
+
 		void GameEditor::_OnNewClick(wxCommandEvent& _ev) {
-			NewProjectWizard* wiz = new NewProjectWizard(this);
+			NewProjectWizard* wiz = new NewProjectWizard(this, &m_project);
+			wiz->Bind(wxEVT_CLOSE_WINDOW, &GameEditor::_OnNewProjectWizardClose, this);
 			wiz->Show();
 			_ev.Skip();
 		}
 
 
 		void GameEditor::_OnOpenClick(wxCommandEvent& _ev) {
+			wxFileDialog dir_dialog = wxFileDialog(this, "Choose a project file", wxEmptyString, wxEmptyString, "game.xml");
+			if (dir_dialog.ShowModal() == wxID_OK) {
+				auto path = dir_dialog.GetPath().ToStdString();
+				if (m_project.LoadProject(path)) {
+					_LoadProject();
+				}
+			}
 		}
 
 
