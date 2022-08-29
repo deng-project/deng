@@ -14,6 +14,7 @@
     #include <string>
     #include <fstream>
     #include <vector>
+    #include <array>
     #include <unordered_map>
     #include <variant>
     #include <iostream>
@@ -44,6 +45,7 @@
     #include "deng/ModelUniforms.h"
     #include "deng/ModelShaderGenerator.h"
     #include "deng/ModelShaderManager.h"
+    #include "deng/Entity.h"
     
     #define ZERO_MARGIN 0.000001f
 #endif
@@ -55,9 +57,9 @@
 
 namespace DENG {
 
-    class DENG_API AnimationSampler {
+    class DENG_API AnimationSampler : public Entity {
         private:
-            float m_morph_weights[MAX_MORPH_TARGETS] = {};
+            std::array<float, MAX_MORPH_TARGETS> m_morph_weights = {};
             const Libdas::DasAnimationChannel &m_channel;
             Libdas::DasParser &m_parser;
             const std::vector<uint32_t> m_ubo_offsets;
@@ -88,7 +90,14 @@ namespace DENG {
             void _CubicSplineInterpolation(float _t1, float _tc, float _t2);
 
         public:
-            AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser);
+            AnimationSampler(
+                Entity *_parent,
+                const std::string &_name,
+                const Libdas::DasAnimationChannel &_channel, 
+                Libdas::DasParser &_parser
+            );
+            AnimationSampler(const AnimationSampler& _as) = delete;
+            AnimationSampler(AnimationSampler&& _as) noexcept;
 
             void Update();
 
@@ -130,7 +139,7 @@ namespace DENG {
                 return m_scale;
             }
 
-            inline float *GetMorphWeights() {
+            inline std::array<float, MAX_MORPH_TARGETS> &GetMorphWeights() {
                 return m_morph_weights;
             }
     };
@@ -141,14 +150,6 @@ namespace DENG {
         bool is_unbound = false;
         bool is_animated = false;
         bool is_repeated = false;
-
-#ifdef DENG_EDITOR
-        std::string inspector_title;
-        std::string unbind_checkbox_id;
-        std::string repeat_checkbox_id;
-        std::string animate_button_id;
-        std::string stop_animation_button_id;
-#endif
     };
 
 }

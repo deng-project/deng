@@ -11,16 +11,24 @@ namespace DENG {
     uint32_t SkeletonLoader::m_skeleton_index = 0;
 
     SkeletonLoader::SkeletonLoader(
+        Entity *_ent,
         const TRS::Matrix4<float> &_node, 
         Libdas::DasParser *_p_parser, 
         const Libdas::DasSkeleton &_skeleton, 
         std::vector<Animation> &_animations
     ) : 
+        Entity(_ent, "", ENTITY_TYPE_SKELETON),
         mp_parser(_p_parser),
         m_skeleton(_skeleton),
         m_node_transform(_node),
         m_inv_node_transform(_node.Inverse())
     {
+        std::string name = "Unnamed skeleton";
+        if (m_skeleton.name != "")
+            name = m_skeleton.name;
+        else name += std::to_string(m_skeleton_index++);
+        SetName(name);
+
         m_joint_transforms.resize(m_skeleton.joint_count);
         m_joint_world_transforms.resize(m_skeleton.joint_count);
         m_joint_matrices.resize(m_skeleton.joint_count);
@@ -53,14 +61,11 @@ namespace DENG {
         }
 
         _FindJointAnimatedProperties();
-
-        if(m_skeleton.name != "")
-            m_skeleton_name = m_skeleton.name;
-        else m_skeleton_name += std::to_string(m_skeleton_index++);
     }
 
 
     SkeletonLoader::SkeletonLoader(SkeletonLoader &&_sm) noexcept :
+        Entity(std::move(_sm)),
         mp_parser(_sm.mp_parser),
         m_skeleton(_sm.m_skeleton),
         m_node_transform(_sm.m_node_transform),
@@ -70,7 +75,6 @@ namespace DENG {
         m_joint_matrices(std::move(_sm.m_joint_matrices)),
         m_joint_lookup(std::move(_sm.m_joint_lookup)),
         m_joint_samplers(std::move(_sm.m_joint_samplers)),
-        m_skeleton_name(std::move(_sm.m_skeleton_name)),
         m_max_joint(_sm.m_max_joint),
         m_is_bound(_sm.m_is_bound) {}
 

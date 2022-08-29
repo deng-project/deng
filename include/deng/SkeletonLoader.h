@@ -8,6 +8,7 @@
 
 #ifdef SKELETON_LOADER_CPP
     #include <vector>
+    #include <array>
     #include <cstring>
     #include <string>
     #include <chrono>
@@ -38,12 +39,13 @@
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/ModelUniforms.h"
+    #include "deng/Entity.h"
     #include "deng/AnimationSampler.h"
 #endif
 
 namespace DENG {
 
-    class SkeletonLoader {
+    class SkeletonLoader : public Entity {
         friend class NodeLoader;
         private:
             struct JointAnimatedProperties {
@@ -70,7 +72,6 @@ namespace DENG {
             std::vector<uint32_t> m_joint_lookup;
             std::vector<std::pair<const bool*, AnimationSampler*>> m_joint_samplers;
             static uint32_t m_skeleton_index;
-            std::string m_skeleton_name = "Unnamed skeleton";
             uint32_t m_max_joint = 0;
             bool m_is_bound = false;
 
@@ -82,6 +83,7 @@ namespace DENG {
 
         public:
             SkeletonLoader(
+                Entity *_ent,
                 const TRS::Matrix4<float> &_node, 
                 Libdas::DasParser *_p_parser, 
                 const Libdas::DasSkeleton &_skeleton, 

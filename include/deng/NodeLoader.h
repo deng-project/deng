@@ -16,6 +16,7 @@
 #endif
     #include <string>
     #include <vector>
+    #include <array>
     #include <fstream>
     #include <unordered_map>
     #include <any>
@@ -40,6 +41,7 @@
     #include "deng/ErrorDefinitions.h"
     #include "deng/Window.h"
     #include "deng/Renderer.h"
+    #include "deng/Entity.h"
     #include "deng/ModelUniforms.h"
     #include "deng/AnimationSampler.h"
     #include "deng/MeshLoader.h"
@@ -49,7 +51,7 @@
 namespace DENG {
 
     // recursive class
-    class DENG_API NodeLoader {
+    class DENG_API NodeLoader : public Entity {
         friend class SceneLoader;
         private:
             Renderer &m_renderer;
@@ -62,7 +64,6 @@ namespace DENG {
             std::vector<uint32_t> m_node_lookup;
             std::vector<std::pair<const bool*, AnimationSampler*>> m_animation_samplers;
             static uint32_t m_node_index;
-            std::string m_node_name = "Unnamed node";
 
             // custom transformation properties
             TRS::Vector3<float> m_custom_translation = { 0.0f, 0.0f, 0.0f };
@@ -70,7 +71,7 @@ namespace DENG {
             float m_custom_scale = 1.0f;
 
             // transformation matrices
-            TRS::Matrix4<float> m_parent;
+            TRS::Matrix4<float> m_parent_matrix;
             TRS::Matrix4<float> m_custom;
             TRS::Matrix4<float> m_transform;
 
@@ -86,6 +87,7 @@ namespace DENG {
  
         public:
             NodeLoader(
+                Entity *_parent,
                 Renderer &_rend, 
                 const Libdas::DasNode &_node, 
                 Libdas::DasParser *_p_parser, 
@@ -93,7 +95,7 @@ namespace DENG {
                 uint32_t _camera_offset, 
                 std::vector<Animation> &_animations, 
                 const std::string &_framebuffer_id,
-                const TRS::Matrix4<float> &_parent
+                const TRS::Matrix4<float> &_parent_matrix
             );
             NodeLoader(const NodeLoader &) = delete;
             NodeLoader(NodeLoader&& _node) noexcept;
@@ -101,12 +103,8 @@ namespace DENG {
 
             void Update();
 
-            inline void NewParent(const TRS::Matrix4<float> &_parent) {
-                m_parent = _parent;
-            }
-
-            inline const std::string &GetName() const {
-                return m_node_name;
+            inline void NewParentMatrix(const TRS::Matrix4<float> &_parent_mat) {
+                m_parent_matrix = _parent_mat;
             }
 
             inline MeshLoader *GetMeshLoader() const {

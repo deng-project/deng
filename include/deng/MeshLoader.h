@@ -11,16 +11,13 @@
     #include <vector>
     #include <string>
     #include <fstream>
-#ifdef DENG_EDITOR
-    #include <algorithm>
-#endif
-
 #ifdef __DEBUG
     #include <iostream>
 #endif
     #include <cstdint>
     #include <cstring>
     #include <cmath>
+    #include <array>
     #include <unordered_map>
     #include <vulkan/vulkan.h>
 
@@ -44,6 +41,7 @@
     #include "deng/Window.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
+    #include "deng/Entity.h"
     #include "deng/GPUMemoryManager.h"
     #include "deng/ModelUniforms.h"
     #include "deng/ModelShaderGenerator.h"
@@ -53,7 +51,7 @@
 
 namespace DENG {
 
-    class DENG_API MeshLoader {
+    class DENG_API MeshLoader : public Entity {
         friend class NodeLoader;
         private:
             uint32_t m_mesh_ref_id = UINT32_MAX;
@@ -61,7 +59,6 @@ namespace DENG {
             const Libdas::DasMesh &m_mesh;
             Renderer &m_renderer;
             static uint32_t m_mesh_index;
-            std::string m_name = "Unnamed mesh" + std::to_string(m_mesh_index++);
             bool m_is_animation_target = false;
             uint32_t m_shader_id = UINT32_MAX;
 
@@ -76,32 +73,21 @@ namespace DENG {
             bool m_disable_joint_transforms = false;
             uint32_t m_supported_texture_count = 0;
 
-            float m_morph_weights[MAX_MORPH_TARGETS] = {};
-            //bool m_is_attached = false;
+            std::array<float, MAX_MORPH_TARGETS> m_morph_weights = {};
 
             // Uniform node data
             TRS::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
 
             // framebuffer id
             const std::string m_framebuffer_id;
-
             bool m_is_colored = true;
-#ifdef DENG_EDITOR
-            uint32_t m_used_textures = 0;
-            std::string m_inspector_name;
-            std::string m_color_checkbox_id;
-            std::string m_color_picker_id;
-            std::string m_texture_button_id;
-            std::string m_texture_picker_id;
-            std::vector<bool> m_texture_table;
-            std::string m_texture_save_id;
-#endif
 
         private:
             void _CheckMeshPrimitives();
 
         public:
             MeshLoader(
+                Entity *_parent,
                 const Libdas::DasMesh &_mesh, 
                 Libdas::DasParser *_p_parser, 
                 Renderer &_renderer, 
@@ -118,7 +104,7 @@ namespace DENG {
             void UseTextures(const std::vector<std::string> &_names);
             void UpdateJointMatrices(const std::vector<TRS::Matrix4<float>> &_matrices);
 
-            inline float *GetMorphWeights() {
+            inline std::array<float, MAX_MORPH_TARGETS> &GetMorphWeights() {
                 return m_morph_weights;
             }
 
@@ -142,15 +128,11 @@ namespace DENG {
                 return m_shader_id;
             }
 
-            inline const std::string &GetName() const {
-                return m_name;
-            }
-
-            inline bool &GetUseColor() {
+            inline bool &GetUseColorBit() {
                 return m_is_colored;
             }
 
-            inline void SetUseColor(bool _use_color) {
+            inline void SetUseColorBit(bool _use_color) {
                 m_is_colored = _use_color;
             }
 
@@ -169,41 +151,6 @@ namespace DENG {
             inline void SetColor(const TRS::Vector4<float> &_color) {
                 m_color = _color;
             }
-
-            // editor getters
-#ifdef DENG_EDITOR
-            inline uint32_t &GetUsedTextureCount() {
-                return m_used_textures;
-            }
-
-            inline std::string &GetInspectorName() {
-                return m_inspector_name;
-            }
-
-            inline std::string &GetColorCheckboxId() {
-                return m_color_checkbox_id;
-            }
-
-            inline std::string &GetColorPickerId() {
-                return m_color_picker_id;
-            }
-
-            inline std::string &GetTextureButtonId() {
-                return m_texture_button_id;
-            }
-
-            inline std::string &GetTexturePickerId() {
-                return m_texture_picker_id;
-            }
-
-            inline std::vector<bool> &GetTextureTable() {
-                return m_texture_table;
-            }
-
-            inline std::string &GetTextureSaveId() {
-                return m_texture_save_id;
-            }
-#endif
     };
 }
 

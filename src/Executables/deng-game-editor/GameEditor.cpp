@@ -148,8 +148,8 @@ namespace DENG {
 		void GameEditor::_LoadProject() {
 			// set the title accordingly
 			SetTitle(m_project.GetXMLGame().meta.name + " | DENG game editor");
-
-			// setup levels
+			
+			// for(auto it = game.rt.levels.)
 
 		}
 
@@ -158,10 +158,10 @@ namespace DENG {
 			NewProjectWizard* wiz = (NewProjectWizard*)wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD);
 			if (wiz->Success()) {
 				_LoadProject();
-				wiz->Destroy();
 			} else {
-				wxMessageBox(std::string("Could not create a new project in " + m_project.GetProjectPath() + "."), "Error", wxICON_ERROR | wxOK);
+				wxMessageBox(std::string("Could not create a new project"), "Error", wxICON_ERROR | wxOK);
 			}
+			wiz->Destroy();
 		}
 
 
@@ -195,17 +195,20 @@ namespace DENG {
 
 
 		void GameEditor::_OnGLTFImportClick(wxCommandEvent& _ev) {
-
+			wxMessageBox("GLTF is not yet supported", "Error", wxICON_ERROR | wxOK, this);
+			_ev.Skip();
 		}
 
 
 		void GameEditor::_OnWavefrontOBJImportClick(wxCommandEvent &_ev) {
-
+			wxMessageBox("GLTF is not yet supported", "Error", wxICON_ERROR | wxOK, this);
+			_ev.Skip();
 		}
 
 
 		void GameEditor::_OnSTLImportClick(wxCommandEvent& _ev) {
-
+			wxMessageBox("GLTF is not yet supported", "Error", wxICON_ERROR | wxOK, this);
+			_ev.Skip();
 		}
 
 

@@ -48,6 +48,7 @@ namespace DENG {
         TRS::Point4D<float> origin = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
+
     class DENG_API EditorCamera : public Camera3D {
         private:
             EditorCameraConfiguration m_config;
@@ -66,12 +67,12 @@ namespace DENG {
             void _EnforceLimits();
             void _ConstructViewMatrix();
 
-            void _Attach();
-            void _Update();
-
         public:
             EditorCamera(Entity *_parent, const std::string &_name, Renderer &_rend, EditorCameraConfiguration &_conf);
             ~EditorCamera();
+
+            void Attach();
+            void Update();
 
             void Rotate(TRS::Vector2<int64_t> _mouse_delta);
             inline void ZoomIn() {

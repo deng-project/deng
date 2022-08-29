@@ -47,15 +47,16 @@ namespace DENG {
         m_ubo.view_matrix = m_ubo.view_matrix.Transpose();
     }
 
-    void EditorCamera::_Attach() {
+    void EditorCamera::Attach() {
         GPUMemoryManager* mem_manager = GPUMemoryManager::GetInstance();
         m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, sizeof(ModelCameraUbo));
+        SetAttachedBit(true);
         if (_OnAttachFunction)
             _OnAttachFunction(m_script);
     }
 
 
-    void EditorCamera::_Update() {
+    void EditorCamera::Update() {
         // no transposition needed
         m_ubo.projection_matrix = _CalculateProjection();
 

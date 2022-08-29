@@ -45,16 +45,17 @@ namespace DENG {
     }
 
 
-    void FirstPersonCamera::_Attach() {
+    void FirstPersonCamera::Attach() {
         GPUMemoryManager* mem_manager = GPUMemoryManager::GetInstance();
         m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, sizeof(ModelCameraUbo));
+        SetAttachedBit(true);
 
         if (_OnAttachFunction)
             _OnAttachFunction(m_script);
     }
 
 
-    void FirstPersonCamera::_Update() {
+    void FirstPersonCamera::Update() {
         m_ubo.projection_matrix = _CalculateProjection();
 
         if (_OnUpdateFunction)

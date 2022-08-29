@@ -7,9 +7,13 @@
 #define REGISTRY_H
 
 #ifdef REGISTRY_CPP
+	#include <any>
 	#include <vector>
 	#include <string>
 	#include <chrono>
+	#include <fstream>
+	#include <unordered_map>
+	#include <array>
 
 #ifdef _WIN32
 	#include <wtypes.h>
@@ -19,6 +23,15 @@
 	#include "trs/Vector.h"
 	#include "trs/Matrix.h"
 	#include "trs/Quaternion.h"
+
+	#include "mar/AsciiStreamReader.h"
+	#include "mar/AsciiLineReader.h"
+
+	#include "das/Api.h"
+	#include "das/ErrorHandlers.h"
+	#include "das/DasStructures.h"
+	#include "das/DasReaderCore.h"
+	#include "das/DasParser.h"
 
 	#include "deng/Api.h"
 	#include "deng/BaseTypes.h"
@@ -32,6 +45,13 @@
 	#include "deng/EditorCamera.h"
 	#include "deng/FirstPersonCamera.h"
 	#include "deng/GridGenerator.h"
+	
+	#include "deng/MeshLoader.h"
+	#include "deng/AnimationSampler.h"
+	#include "deng/SkeletonLoader.h"
+	#include "deng/NodeLoader.h"
+	#include "deng/SceneLoader.h"
+	#include "deng/ModelLoader.h"
 #endif
 
 namespace DENG {
@@ -44,18 +64,18 @@ namespace DENG {
 		private:
 			Registry() = default;
 
+			friend class Entity;
+			void Replace(uint32_t _id, Entity* _new);
+
 		public:
 			static Registry* GetInstance();
 			static void DeleteInstance();
 
-			inline uint32_t AddEntity(Entity *_ent) {
-				m_entities.push_back(_ent);
-				return static_cast<uint32_t>(m_entities.size() - 1);
-			}
+			uint32_t AddEntity(Entity* _ent);
 
 			inline void RemoveEntity(uint32_t _id) {
 				DENG_ASSERT(_id < static_cast<uint32_t>(m_entities.size()));
-				m_entities.erase(m_entities.begin() + _id);
+				m_entities[_id] = nullptr;
 			}
 
 

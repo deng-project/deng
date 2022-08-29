@@ -11,6 +11,7 @@ namespace DENG {
     uint32_t NodeLoader::m_node_index = 0;
 
     NodeLoader::NodeLoader(
+        Entity *_parent,
         Renderer &_rend, 
         const Libdas::DasNode &_node, 
         Libdas::DasParser *_p_parser, 
@@ -18,16 +19,24 @@ namespace DENG {
         uint32_t _camera_offset, 
         std::vector<Animation> &_animations, 
         const std::string &_framebuffer_id,
-        const TRS::Matrix4<float> &_parent
+        const TRS::Matrix4<float> &_parent_matrix
     ) :
+        Entity(_parent, "", ENTITY_TYPE_NODE),
         m_renderer(_rend),
         m_node(_node),
         mp_parser(_p_parser),
-        m_parent(_parent),
+        m_parent_matrix(_parent_matrix),
         m_framebuffer_id(_framebuffer_id)
     {
+        // give node a name if possible
+        std::string name = "Unnamed node";;
+        if (!m_node.name.empty())
+            name = m_node.name;
+        else name += std::to_string(m_node_index++);
+        SetName(name);
+
         // apply the parent transformation
-        m_transform = m_parent * m_node.transform;
+        m_transform = m_parent_matrix * m_node.transform;
 
         // find the maximum node index from
         if(m_node.children_count) {
@@ -43,21 +52,17 @@ namespace DENG {
             m_child_nodes.reserve(m_node.children_count);
             for(uint32_t i = 0; i < m_node.children_count; i++) {
                 const Libdas::DasNode &node = mp_parser->AccessNode(m_node.children[i]);
-                m_child_nodes.emplace_back(m_renderer, node, mp_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, m_transform);
+                m_child_nodes.emplace_back(this, m_renderer, node, mp_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, m_transform);
             }
         }
 
         _CreateBoundElementLoaders(_animations, _main_buffer_offsets, _camera_offset);
         _SearchForBoundAnimationSamplers(_animations);
-
-        // give node a name if possible
-        if(m_node.name != "")
-            m_node_name = m_node.name;
-        else m_node_name += std::to_string(m_node_index++);
     }
 
 
     NodeLoader::NodeLoader(NodeLoader &&_node) noexcept :
+        Entity(std::move(_node)),
         m_renderer(_node.m_renderer),
         mp_skeleton(_node.mp_skeleton),
         mp_mesh_loader(_node.mp_mesh_loader),
@@ -66,11 +71,10 @@ namespace DENG {
         m_child_nodes(std::move(_node.m_child_nodes)),
         m_node_lookup(std::move(_node.m_node_lookup)),
         m_animation_samplers(std::move(_node.m_animation_samplers)),
-        m_node_name(std::move(_node.m_node_name)),
         m_custom_translation(_node.m_custom_translation),
         m_custom_rotation(_node.m_custom_rotation),
         m_custom_scale(_node.m_custom_scale),
-        m_parent(_node.m_parent),
+        m_parent_matrix(_node.m_parent_matrix),
         m_custom(_node.m_custom),
         m_transform(_node.m_transform),
         m_morph_weights(_node.m_morph_weights),
@@ -91,7 +95,7 @@ namespace DENG {
     void NodeLoader::_CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset) {
         if(m_node.skeleton != UINT32_MAX) {
             const Libdas::DasSkeleton &skeleton = mp_parser->AccessSkeleton(m_node.skeleton);
-            mp_skeleton = new SkeletonLoader(m_transform, mp_parser, skeleton, _animations);
+            mp_skeleton = new SkeletonLoader(this, m_transform, mp_parser, skeleton, _animations);
 
             if(m_node.mesh == UINT32_MAX) {
                 WARNME("Unbound skeleton: " + skeleton.name);
@@ -102,11 +106,11 @@ namespace DENG {
             const Libdas::DasMesh &mesh = mp_parser->AccessMesh(m_node.mesh);
             if(mp_skeleton) {
                 const uint32_t joint_count = static_cast<uint32_t>(mp_skeleton->GetJointMatrices().size());
-                mp_mesh_loader = new MeshLoader(mesh, mp_parser, m_renderer, _main_buffer_offsets, _camera_offset, joint_count, m_framebuffer_id);
+                mp_mesh_loader = new MeshLoader(this, mesh, mp_parser, m_renderer, _main_buffer_offsets, _camera_offset, joint_count, m_framebuffer_id);
             }
-            else mp_mesh_loader = new MeshLoader(mesh, mp_parser, m_renderer, _main_buffer_offsets, _camera_offset, 0, m_framebuffer_id);
+            else mp_mesh_loader = new MeshLoader(this, mesh, mp_parser, m_renderer, _main_buffer_offsets, _camera_offset, 0, m_framebuffer_id);
             mp_mesh_loader->Attach();
-            m_morph_weights = mp_mesh_loader->GetMorphWeights();
+            m_morph_weights = mp_mesh_loader->GetMorphWeights().data();
         }
     }
 
@@ -161,7 +165,7 @@ namespace DENG {
         bool parent_update_flag = false;
 
         // update animation samplers if required
-        m_transform = m_parent;
+        m_transform = m_parent_matrix;
         _UpdateTransformTRS(m_custom_translation, m_custom_rotation, m_custom_scale);
         if(m_animation_samplers.size()) {
             for(auto it = m_animation_samplers.begin(); it != m_animation_samplers.end(); it++) {
@@ -173,7 +177,7 @@ namespace DENG {
 
                     switch(it->second->GetAnimationTarget()) {
                         case LIBDAS_ANIMATION_TARGET_WEIGHTS:
-                            m_morph_weights = it->second->GetMorphWeights();
+                            m_morph_weights = it->second->GetMorphWeights().data();
                             break;
 
                         case LIBDAS_ANIMATION_TARGET_TRANSLATION:
@@ -204,7 +208,7 @@ namespace DENG {
         // update parent transformation for child nodes
         if(parent_update_flag) {
             for(uint32_t i = 0; i < m_node.children_count; i++)
-                m_child_nodes[i].NewParent(m_transform);
+                m_child_nodes[i].NewParentMatrix(m_transform);
         }
 
         // update children
@@ -216,7 +220,7 @@ namespace DENG {
             uint32_t offset = mp_mesh_loader->GetMeshUboOffset();
             ModelUbo ubo;
             ubo.node_transform = m_transform.Transpose();
-            ubo.use_color = mp_mesh_loader->GetUseColor();
+            ubo.use_color = mp_mesh_loader->GetUseColorBit();
             ubo.color = mp_mesh_loader->GetColor();
 
             // check if morph weights are given

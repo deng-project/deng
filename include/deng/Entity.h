@@ -29,10 +29,12 @@ namespace DENG {
 		ENTITY_TYPE_LIGHT_SOURCE_DIRECTIONAL,
 		ENTITY_TYPE_LIGHT_SOURCE_AMBIENT,
 		ENTITY_TYPE_MODEL,
+		ENTITY_TYPE_SCENE,
 		ENTITY_TYPE_NODE,
 		ENTITY_TYPE_SKELETON,
 		ENTITY_TYPE_SKELETON_JOINT,
 		ENTITY_TYPE_ANIMATION,
+		ENTITY_TYPE_ANIMATION_SAMPLER,
 		ENTITY_TYPE_SCRIPT,
 		ENTITY_TYPE_MESH,
 		ENTITY_TYPE_GRID_MESH
@@ -44,13 +46,34 @@ namespace DENG {
 			std::string m_name;
 			const EntityType m_type;
 			uint32_t m_registry_id = UINT32_MAX;
+			bool m_is_attached = false;
+
+		protected:
+			friend class Registry;
+			inline void SetAttachedBit(bool _is_attached) {
+				m_is_attached = _is_attached;
+			}
+
+			inline void SetParent(Entity* _parent) {
+				m_parent = _parent;
+			}
+
+			inline void SetName(const std::string& _name) {
+				m_name = _name;
+			}
 
 		public:
 			Entity(Entity* _parent, const std::string& _name, const EntityType _type);
+			Entity(const Entity& _ent) = delete;
+			Entity(Entity&& _ent) noexcept;
 			~Entity();
 
 			inline Entity* GetParent() {
 				return m_parent;
+			}
+
+			inline bool GetAttachedBit() {
+				return m_is_attached;
 			}
 
 			inline const std::string& GetName() {

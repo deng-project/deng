@@ -10,9 +10,33 @@ namespace DENG {
 
     uint32_t AnimationSampler::m_animation_sampler_index = 0;
 
-    AnimationSampler::AnimationSampler(const Libdas::DasAnimationChannel &_channel, Libdas::DasParser &_parser) : 
-        m_channel(_channel), 
+    AnimationSampler::AnimationSampler(
+        Entity *_parent, 
+        const std::string &_name, 
+        const Libdas::DasAnimationChannel &_channel, 
+        Libdas::DasParser &_parser
+    ) : 
+        Entity(_parent, _name, ENTITY_TYPE_ANIMATION_SAMPLER),
+        m_channel(_channel),
         m_parser(_parser) {}
+
+
+    AnimationSampler::AnimationSampler(AnimationSampler&& _as) noexcept :
+        Entity(std::move(_as)),
+        m_morph_weights(_as.m_morph_weights),
+        m_channel(_as.m_channel),
+        m_parser(_as.m_parser),
+        m_ubo_offsets(std::move(_as.m_ubo_offsets)),
+        m_beg_time(std::move(_as.m_beg_time)),
+        m_active_time(std::move(_as.m_active_time)),
+        m_weight_target_count(_as.m_weight_target_count),
+        m_active_timestamp_index(_as.m_active_timestamp_index),
+        m_animate(_as.m_animate),
+        m_repeat(_as.m_repeat),
+        m_cached_delta_time(_as.m_cached_delta_time),
+        m_translation(_as.m_translation),
+        m_rotation(_as.m_rotation),
+        m_scale(_as.m_scale) {}
 
 
     void AnimationSampler::_LinearInterpolation(float _t1, float _tc, float _t2) {
@@ -198,7 +222,7 @@ namespace DENG {
 
 
     void AnimationSampler::Update() {
-        std::memset(m_morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
+        std::fill(m_morph_weights.begin(), m_morph_weights.end(), 0.f);
 
         // calculate delta time
         if(m_animate) 

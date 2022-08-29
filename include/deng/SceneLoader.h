@@ -8,6 +8,7 @@
 
 #ifdef SCENE_LOADER_CPP
     #include <vector>
+    #include <array>
     #include <string>
     #include <fstream>
     #include <chrono>
@@ -40,6 +41,7 @@
     #include "deng/Window.h"
     #include "deng/Renderer.h"
     #include "deng/ModelUniforms.h"
+    #include "deng/Entity.h"
     #include "deng/MeshLoader.h"
     #include "deng/AnimationSampler.h"
     #include "deng/SkeletonLoader.h"
@@ -48,23 +50,21 @@
 
 namespace DENG {
 
-    class SceneLoader {
-        friend class ModelLoader;
+    class SceneLoader : public Entity {
         private:
             static uint32_t m_scene_index;
-
-        private:
             std::vector<NodeLoader> m_root_node_loaders;
-            std::string m_scene_name = "Unnamed scene";
 
         private:
             // recursive parser setting method
-            // meant for ModelLoader classes move constructor
+            // meant for ModelLoader class's move constructor
+            friend class ModelLoader;
             void _SetParser(Libdas::DasParser &_parser);
 
         public:
             SceneLoader(
-                Renderer &_rend, 
+                Entity *_parent,
+                Renderer &_rend,
                 Libdas::DasParser &_parser, 
                 const Libdas::DasScene &_scene, 
                 const std::vector<uint32_t> &_main_buffer_offsets, 
@@ -75,10 +75,6 @@ namespace DENG {
             SceneLoader(const SceneLoader &_sl) = delete;
             SceneLoader(SceneLoader&& _sl) noexcept;
             void Update();
-
-            inline const std::string &GetName() const {
-                return m_scene_name;
-            }
 
             inline std::vector<NodeLoader> &GetRootNodes() {
                 return m_root_node_loaders;

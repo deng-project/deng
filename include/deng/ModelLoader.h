@@ -12,6 +12,7 @@
     #include <cstring>
     #include <cmath>
     #include <vector>
+    #include <array>
     #include <unordered_map>
     #include <chrono>
     #include <variant>
@@ -42,14 +43,18 @@
     #include "das/Hash.h"
 
     #include "deng/Api.h"
+    #include "deng/BaseTypes.h"
     #include "deng/Window.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
     #include "deng/GPUMemoryManager.h"
     #include "deng/ModelUniforms.h"
-    #include "deng/MeshLoader.h"
     #include "deng/ModelUniforms.h"
+    #include "deng/Entity.h"
+    #include "deng/ScriptableEntity.h"
+    #include "deng/Camera3D.h"
+    #include "deng/MeshLoader.h"
     #include "deng/AnimationSampler.h"
     #include "deng/ModelShaderGenerator.h"
     #include "deng/ModelShaderManager.h"
@@ -57,11 +62,12 @@
     #include "deng/SkeletonLoader.h"
     #include "deng/NodeLoader.h"
     #include "deng/SceneLoader.h"
+    #include "deng/Registry.h"
 #endif
 
 namespace DENG {
 
-    class DENG_API ModelLoader {
+    class DENG_API ModelLoader : public ScriptableEntity {
         private:
             Libdas::DasParser m_parser;
             Renderer &m_renderer;
@@ -69,9 +75,9 @@ namespace DENG {
             std::vector<SceneLoader> m_scene_loaders;
             static uint32_t m_model_index;
             static uint32_t m_animation_index;
-            std::string m_model_name = "Unnamed model";
             std::vector<std::string> m_texture_names;
             std::vector<uint32_t> m_buffer_offsets;
+            uint32_t m_camera_id;
             const std::string &m_framebuffer_id;
 
         private:
@@ -79,23 +85,21 @@ namespace DENG {
 
         public:
             ModelLoader(
+                Entity *_parent,
                 const std::string &_file_name, 
-                Renderer &_rend, 
-                uint32_t _camera_offset,
+                Renderer &_rend,
+                uint32_t _camera_id,
                 const std::string &_framebuffer
             );
             ModelLoader(const ModelLoader &_ld) = delete;
             ModelLoader(ModelLoader&& _ld) noexcept;
             ~ModelLoader();
 
+            void Attach();
             void Update();
 
             inline std::vector<std::string> &GetAttachedTextures() {
                 return m_texture_names;
-            }
-
-            inline const std::string &GetName() {
-                return m_model_name;
             }
 
             inline std::vector<SceneLoader> &GetScenes() {

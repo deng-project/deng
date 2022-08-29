@@ -11,6 +11,7 @@ namespace DENG {
     uint32_t MeshLoader::m_mesh_index = 0;
 
     MeshLoader::MeshLoader(
+        Entity *_parent,
         const Libdas::DasMesh &_mesh, 
         Libdas::DasParser *_p_parser, 
         Renderer &_renderer, 
@@ -19,6 +20,7 @@ namespace DENG {
         uint32_t _skeleton_joint_count,
         const std::string &_framebuffer_id
     ) : 
+        Entity(_parent, "", ENTITY_TYPE_MESH),
         mp_parser(_p_parser),
         m_mesh(_mesh),
         m_renderer(_renderer),
@@ -26,9 +28,13 @@ namespace DENG {
         m_skeleton_joint_count(_skeleton_joint_count),
         m_framebuffer_id(_framebuffer_id)
     {
+        std::string name = "Unnamed mesh";
         if(m_mesh.name != "") {
-            m_name = m_mesh.name;
-        } 
+            name = m_mesh.name;
+        } else {
+            name += std::to_string(m_mesh_index++);
+        }
+        SetName(name);
 
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
@@ -37,26 +43,15 @@ namespace DENG {
 
         for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
             m_morph_weights[i] = mp_prim->morph_weights[i];
-
-#ifdef DENG_EDITOR
-        std::string id = m_name;
-        std::transform(id.begin(), id.end(), id.begin(), [](unsigned char c){ return std::tolower(c); });
-        m_inspector_name = "Mesh: " + m_name + "##" + id;
-        m_color_checkbox_id = "Use a color##" + id;
-        m_color_picker_id = "Pick a color##" + id;
-        m_texture_button_id = "Select textures##" + id;
-        m_texture_picker_id = "Texture picker##" + id;
-        m_texture_save_id = "Save##" + id;
-#endif
     }
 
 
     MeshLoader::MeshLoader(MeshLoader &&_ml) noexcept :
+        Entity(std::move(_ml)),
         m_mesh_ref_id(_ml.m_mesh_ref_id),
         mp_parser(_ml.mp_parser),
         m_mesh(_ml.m_mesh),
         m_renderer(_ml.m_renderer),
-        m_name(std::move(_ml.m_name)),
         m_is_animation_target(_ml.m_is_animation_target),
         m_shader_id(_ml.m_shader_id),
         m_mesh_ubo_offset(_ml.m_mesh_ubo_offset),
@@ -66,23 +61,10 @@ namespace DENG {
         mp_prim(_ml.mp_prim),
         m_disable_joint_transforms(_ml.m_disable_joint_transforms),
         m_supported_texture_count(_ml.m_supported_texture_count),
+        m_morph_weights(std::move(_ml.m_morph_weights)),
         m_color(_ml.m_color),
-#ifdef DENG_EDITOR
         m_framebuffer_id(_ml.m_framebuffer_id),
-        m_is_colored(_ml.m_is_colored),
-        m_used_textures(_ml.m_used_textures),
-        m_inspector_name(std::move(_ml.m_inspector_name)),
-        m_color_checkbox_id(std::move(_ml.m_color_checkbox_id)),
-        m_color_picker_id(std::move(_ml.m_color_picker_id)),
-        m_texture_picker_id(std::move(_ml.m_texture_picker_id)),
-        m_texture_table(std::move(_ml.m_texture_table)),
-        m_texture_save_id(std::move(_ml.m_texture_save_id))
-#else
-        m_framebuffer_id(_ml.m_framebuffer_id)
-#endif
-    {
-        std::memcpy(m_morph_weights, _ml.m_morph_weights, sizeof(float) * MAX_MORPH_TARGETS);
-    }
+        m_is_colored(_ml.m_is_colored) {}
 
 
     MeshLoader::~MeshLoader() {

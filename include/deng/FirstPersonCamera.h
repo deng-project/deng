@@ -47,6 +47,7 @@ namespace DENG {
         TRS::Point2D<float> max_thresholds = { 255.f, 255.f };                          // the smaller the value, the more sensitive the rotation
     };
 
+
     class DENG_API FirstPersonCamera : public Camera3D {
         private:
             FirstPersonCameraConfiguration& m_config;
@@ -63,7 +64,6 @@ namespace DENG {
 
 
         private:
-            friend class Registry;
             void _EnforceLimits();
             void _ConstructViewMatrix();
 
@@ -73,12 +73,12 @@ namespace DENG {
                 return ts;
             }
 
-            void _Attach();
-            void _Update();
-
         public:
             FirstPersonCamera(Entity *_parent, const std::string &_name, Renderer &_rend, FirstPersonCameraConfiguration &_conf);
             ~FirstPersonCamera();
+
+            void Attach();
+            void Update();
 
             void Move(TRS::Vector3<bool> _mov);
             void Rotate(TRS::Point2D<float> _threshold);

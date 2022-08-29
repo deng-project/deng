@@ -19,7 +19,7 @@ namespace DENG {
         uint32_t _camera_id,
         const std::string &_framebuffer_id
     ) :
-        ScriptableEntity(_parent, _name, ENTITY_TYPE_GRID_MESH),
+        Entity(_parent, _name, ENTITY_TYPE_GRID_MESH),
         m_width(_width),
         m_height(_height),
         m_margin_x(_margin_x),
@@ -29,14 +29,30 @@ namespace DENG {
         m_framebuffer_id(_framebuffer_id) {}
 
 
-    GridGenerator::~GridGenerator() {
-        if (_OnDestroyFunction)
-            _OnDestroyFunction(m_script);
+    GridGenerator::GridGenerator(GridGenerator &&_ge) noexcept :
+        Entity(std::move(_ge)),
+        m_width(_ge.m_width),
+        m_height(_ge.m_height),
+        m_margin_x(_ge.m_margin_x),
+        m_margin_y(_ge.m_margin_y),
+        m_shader_id(_ge.m_shader_id),
+        m_mesh_id(_ge.m_mesh_id),
+        m_vert_count(_ge.m_vert_count),
+        m_camera_id(_ge.m_camera_id),
+        m_camera_ubo_offset(_ge.m_camera_ubo_offset),
+        m_ubo_offset(_ge.m_ubo_offset),
+        m_main_offset(_ge.m_main_offset),
+        m_renderer(_ge.m_renderer),
+        m_color(_ge.m_color),
+        m_framebuffer_id(std::move(_ge.m_framebuffer_id)) {}
 
+
+    GridGenerator::~GridGenerator() {
         GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
         mem_man->DeleteUniformMemoryLocation(m_ubo_offset);
         mem_man->DeleteMainMemoryLocation(m_main_offset);
     }
+
 
     void GridGenerator::_GenerateVertices(Renderer& _rend) {
         // x: x world
@@ -69,13 +85,10 @@ namespace DENG {
     }
 
 
-    void GridGenerator::_Attach() {
+    void GridGenerator::Attach() {
         Registry* reg = Registry::GetInstance();
         Camera3D* cam = (Camera3D*)reg->GetEntityById(m_camera_id);
         m_camera_ubo_offset = cam->GetUboOffset();
-
-        if (_OnAttachFunction)
-            _OnAttachFunction(m_script);
 
         ShaderModule module;
         module.vertex_shader_src =
@@ -148,13 +161,11 @@ namespace DENG {
         ref.commands.emplace_back();
         ref.commands.back().draw_count = m_vert_count;
         ref.commands.back().attribute_offsets.push_back(m_main_offset);
+        SetAttachedBit(true);
     }
 
 
-    void GridGenerator::_Update() {
-        if (_OnUpdateFunction)
-            _OnUpdateFunction(m_script);
-
+    void GridGenerator::Update() {
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(&m_color), static_cast<uint32_t>(sizeof(TRS::Vector4<float>)), m_ubo_offset);
     }
 }

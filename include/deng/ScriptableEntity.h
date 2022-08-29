@@ -52,12 +52,23 @@ namespace DENG {
 		public:
 			ScriptableEntity(Entity *_parent, const std::string &_name, EntityType _type) :
 				Entity(_parent, _name, _type) {}
+			ScriptableEntity(const ScriptableEntity& _se) = delete;
+			ScriptableEntity(ScriptableEntity&& _se) noexcept :
+				Entity(std::move(_se)),
+				m_script(_se.m_script),
+				_OnAttachFunction(_se._OnAttachFunction),
+				_OnUpdateFunction(_se._OnUpdateFunction),
+				_OnDestroyFunction(_se._OnDestroyFunction)
+			{
+				m_script = nullptr;
+			}
+
 			~ScriptableEntity() {
 				delete m_script;
 			}
 
 			template<typename T, typename... Types>
-			void BindScript(Types... args) {
+			inline void BindScript(Types... args) {
 				m_script = new T(this, args...);
 				_OnAttachFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnAttach(); };
 				_OnUpdateFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnUpdate(); };

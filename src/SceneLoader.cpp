@@ -11,6 +11,7 @@ namespace DENG {
     uint32_t SceneLoader::m_scene_index = 0;
 
     SceneLoader::SceneLoader(
+        Entity *_parent,
         Renderer &_rend, 
         Libdas::DasParser &_parser, 
         const Libdas::DasScene &_scene, 
@@ -18,23 +19,27 @@ namespace DENG {
         uint32_t _camera_offset, 
         std::vector<Animation> &_animations,
         const std::string &_framebuffer_id
-    ) {
+    ) : Entity(_parent, "", ENTITY_TYPE_SCENE) 
+    {
+        // give the scene a name if possible
+        std::string name = "Unnamed scene";
+        if (_scene.name != "")
+            name = _scene.name;
+        else name += std::to_string(m_scene_index++);
+
+        SetName(name);
+
         m_root_node_loaders.reserve(_scene.node_count);
         for (uint32_t i = 0; i < _scene.node_count; i++) {
             const Libdas::DasNode& node = _parser.AccessNode(_scene.nodes[i]);
-            m_root_node_loaders.emplace_back(_rend, node, &_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, TRS::Matrix4<float>());
+            m_root_node_loaders.emplace_back(this, _rend, node, &_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, TRS::Matrix4<float>());
         }
-
-        // give scene a name if possible
-        if(_scene.name != "")
-            m_scene_name = _scene.name;
-        else m_scene_name += std::to_string(m_scene_index++);
     }
 
 
     SceneLoader::SceneLoader(SceneLoader&& _sl) noexcept :
-        m_root_node_loaders(std::move(_sl.m_root_node_loaders)),
-        m_scene_name(std::move(_sl.m_scene_name)) {}
+        Entity(std::move(_sl)),
+        m_root_node_loaders(std::move(_sl.m_root_node_loaders)) {}
 
 
     void SceneLoader::_SetParser(Libdas::DasParser &_parser) {

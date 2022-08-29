@@ -35,7 +35,7 @@
 
 namespace DENG {
 
-    class DENG_API GridGenerator : ScriptableEntity {
+    class DENG_API GridGenerator : public Entity {
         private:
             float m_width;
             float m_height;
@@ -53,11 +53,7 @@ namespace DENG {
             const std::string m_framebuffer_id;
 
         private:
-            friend class Registry;
             void _GenerateVertices(Renderer &_rend);
-
-            void _Attach();
-            void _Update();
 
         public:
             GridGenerator(
@@ -71,7 +67,12 @@ namespace DENG {
                 uint32_t _camera_id,
                 const std::string &_framebuffer_id = MAIN_FRAMEBUFFER_NAME
             );
+            GridGenerator(const GridGenerator& _ge) = delete;
+            GridGenerator(GridGenerator&& _ge) noexcept;
             ~GridGenerator();
+
+            void Attach();
+            void Update();
 
             inline void SetColor(const TRS::Vector4<float> &_color) {
                 m_color = _color;
