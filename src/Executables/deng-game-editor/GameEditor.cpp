@@ -55,6 +55,7 @@ namespace DENG {
 		GameEditor::~GameEditor() {
 			delete m_grid;
 			delete m_camera;
+			m_model_loaders.clear();
 			Registry* reg = Registry::GetInstance();
 			reg->DeleteInstance();
 			m_mgr.UnInit();
@@ -174,9 +175,9 @@ namespace DENG {
 
 
 		void GameEditor::_OnOpenClick(wxCommandEvent& _ev) {
-			wxFileDialog dir_dialog = wxFileDialog(this, "Choose a project file", wxEmptyString, wxEmptyString, "game.xml");
-			if (dir_dialog.ShowModal() == wxID_OK) {
-				auto path = dir_dialog.GetPath().ToStdString();
+			wxFileDialog fdialog = wxFileDialog(this, "Choose a project file", wxEmptyString, wxEmptyString, "game.xml");
+			if (fdialog.ShowModal() == wxID_OK) {
+				auto path = fdialog.GetPath().ToStdString();
 				if (m_project.LoadProject(path)) {
 					_LoadProject();
 				}
@@ -190,7 +191,14 @@ namespace DENG {
 
 
 		void GameEditor::_OnDasImportClick(wxCommandEvent& _ev) {
-
+			wxFileDialog fdialog = wxFileDialog(this, "Choose a das file", wxEmptyString, wxEmptyString, "*.das");
+			if (fdialog.ShowModal() == wxID_OK) {
+				auto path = fdialog.GetPath().ToStdString();
+				m_model_loaders.emplace_back(nullptr, path, *m_viewport->GetRenderer(), m_camera->GetId());
+				Registry* reg = Registry::GetInstance();
+				reg->AttachEntities();
+				m_viewport->GetRenderer()->LoadShaders();
+			}
 		}
 
 

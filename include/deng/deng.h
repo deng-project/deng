@@ -6,6 +6,8 @@
 #ifndef DENG_H
 #define DENG_H
 
+// std includes
+#include <any>
 #include <string>
 #include <unordered_map>
 #include <chrono>
@@ -41,7 +43,11 @@
 
 // third party (libdas)
 #include "das/Api.h"
+#include "das/ErrorHandlers.h"
 #include "das/Algorithm.h"
+#include "das/DasStructures.h"
+#include "das/DasReaderCore.h"
+#include "das/DasParser.h"
 
 // basics
 #include "deng/Api.h"
@@ -53,6 +59,7 @@
 #include "deng/ProjectDataManager.h"
 
 // renderers
+#include "deng/RenderState.h"
 #include "deng/Renderer.h"
 #include "deng/OpenGLRenderer.h"
 #include "deng/VulkanRenderer.h"
@@ -65,6 +72,12 @@
 #include "deng/Camera3D.h"
 #include "deng/FirstPersonCamera.h"
 #include "deng/EditorCamera.h"
+#include "deng/AnimationSampler.h"
+#include "deng/MeshLoader.h"
+#include "deng/SkeletonLoader.h"
+#include "deng/NodeLoader.h"
+#include "deng/SceneLoader.h"
+#include "deng/ModelLoader.h"
 
 // python scripting
 #include "deng/PythonScriptExecutor.h"

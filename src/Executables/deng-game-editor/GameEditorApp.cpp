@@ -28,16 +28,16 @@ namespace DENG {
                 throw;
             }
             catch (std::exception& e) {
-                MessageBoxA(NULL, e.what(), "Unhandled C++ Exception Caught", MB_OK);
+                wxMessageBox(e.what(), "Unhandled C++ Exception Caught", wxICON_ERROR | wxOK);
             }
         }
 
         bool GameEditorApp::OnExceptionInMainLoop() {
             try { 
-                throw;  
+                throw;
             }
             catch (std::exception& e) {
-                MessageBoxA(NULL, e.what(), "C++ Exception Caught", MB_OK);
+                wxMessageBox(e.what(), "C++ Exception Caught", wxICON_ERROR | wxOK);
             }
 
             return true;

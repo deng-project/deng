@@ -77,7 +77,7 @@ namespace DENG {
 
             float *m_morph_weights = nullptr;
             uint32_t m_max_node = 0;
-            const std::string &m_framebuffer_id;
+            const std::string m_framebuffer_id;
 
         private:
             void _CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset);

@@ -46,6 +46,7 @@ namespace DENG {
 			std::string m_name;
 			const EntityType m_type;
 			uint32_t m_registry_id = UINT32_MAX;
+			bool m_is_moved = false;
 			bool m_is_attached = false;
 
 		protected:

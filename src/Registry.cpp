@@ -52,13 +52,13 @@ namespace DENG {
 
 
 	void Registry::AttachEntities() {
-		for (auto it = m_entities.begin(); it != m_entities.end(); it++) {
-			if (!*it) continue;
+		for (size_t i = 0; i < m_entities.size(); i++) {
+			if (!m_entities[i]) continue;
 
-			switch ((*it)->GetType()) {
+			switch (m_entities[i]->GetType()) {
 				case ENTITY_TYPE_EDITOR_CAMERA:
 				{
-					EditorCamera* cam = (EditorCamera*)*it;
+					EditorCamera* cam = (EditorCamera*)m_entities[i];
 					if (!cam->GetAttachedBit())
 						cam->Attach();
 					break;
@@ -66,7 +66,7 @@ namespace DENG {
 
 				case ENTITY_TYPE_FIRST_PERSON_CAMERA:
 				{
-					FirstPersonCamera* cam = (FirstPersonCamera*)*it;
+					FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
 					if (!cam->GetAttachedBit())
 						cam->Attach();
 					break;
@@ -74,7 +74,7 @@ namespace DENG {
 
 				case ENTITY_TYPE_GRID_MESH: 
 				{
-					GridGenerator* grid = (GridGenerator*)*it;
+					GridGenerator* grid = (GridGenerator*)m_entities[i];
 					if (!grid->GetAttachedBit())
 						grid->Attach();
 					break;
@@ -82,9 +82,10 @@ namespace DENG {
 
 				case ENTITY_TYPE_MODEL: 
 				{
-					ModelLoader* model = (ModelLoader*)*it;
-					if (!model->GetAttachedBit())
+					ModelLoader* model = (ModelLoader*)m_entities[i];
+					if (!model->GetAttachedBit()) {
 						model->Attach();
+					}
 				}
 
 				default:
@@ -95,13 +96,13 @@ namespace DENG {
 
 
 	void Registry::Update() {
-		for (auto it = m_entities.begin(); it != m_entities.end(); it++) {
-			if (!*it) continue;
+		for (size_t i = 0; i < m_entities.size(); i++) {
+			if (!m_entities[i]) continue;
 
-			switch ((*it)->GetType()) {
+			switch (m_entities[i]->GetType()) {
 				case ENTITY_TYPE_EDITOR_CAMERA:
 				{
-					EditorCamera* cam = (EditorCamera*)*it;
+					EditorCamera* cam = (EditorCamera*)m_entities[i];
 					if (cam->GetAttachedBit())
 						cam->Update();
 					break;
@@ -109,7 +110,7 @@ namespace DENG {
 
 				case ENTITY_TYPE_FIRST_PERSON_CAMERA:
 				{
-					FirstPersonCamera* cam = (FirstPersonCamera*)*it;
+					FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
 					if (cam->GetAttachedBit())
 						cam->Update();
 					break;
@@ -117,7 +118,7 @@ namespace DENG {
 
 				case ENTITY_TYPE_GRID_MESH:
 				{
-					GridGenerator* grid = (GridGenerator*)*it;
+					GridGenerator* grid = (GridGenerator*)m_entities[i];
 					if (grid->GetAttachedBit())
 						grid->Update();
 					break;
@@ -125,7 +126,7 @@ namespace DENG {
 
 				case ENTITY_TYPE_MODEL:
 				{
-					ModelLoader* model = (ModelLoader*)*it;
+					ModelLoader* model = (ModelLoader*)m_entities[i];
 					if (model->GetAttachedBit())
 						model->Update();
 					break;

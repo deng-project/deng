@@ -49,6 +49,7 @@ namespace DENG {
 				static_cast<uint32_t>(size.GetHeight())
 			};
 			m_config.title = "DENG game editor viewport";
+			RenderState* rs = RenderState::GetInstance();
 			switch (m_backend) {
 				case DXML::Configuration::Backend::VULKAN:
 #ifdef _WIN32
@@ -57,6 +58,7 @@ namespace DENG {
 #else
 #error "Consider implementing DENG::RendererConfig::xlib_dpy and DENG::RendererConfig::xlib_win values"
 #endif
+					rs->SetPrimary(RENDERER_TYPE_VULKAN);
 					mp_renderer = new VulkanRenderer(m_config);
 					break;
 				
@@ -66,6 +68,7 @@ namespace DENG {
 					mp_opengl_loader->MakeCurrent();
 					Window::LoadOpenGLFunctions();
 
+					rs->SetPrimary(RENDERER_TYPE_OPENGL);
 					mp_renderer = new OpenGLRenderer(m_config);
 					break;
 

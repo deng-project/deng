@@ -7,7 +7,6 @@
 #define GAME_EDITOR_H
 
 #ifdef GAME_EDITOR_CPP
-    #include <any>
     #include <wx/wx.h>
     #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
@@ -42,6 +41,7 @@ namespace DENG {
                 GridGenerator* m_grid = nullptr;
 
                 ProjectDataManager m_project;
+                std::vector<ModelLoader> m_model_loaders;
 
             private:
                 void _CreateMenubar();

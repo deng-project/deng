@@ -19,10 +19,13 @@ namespace DENG {
 	{
 		Registry* reg = Registry::GetInstance();
 		reg->Replace(m_registry_id, this);
+		m_is_moved = true;
 	}
 
 	Entity::~Entity() {
-		Registry* reg = Registry::GetInstance();
-		reg->RemoveEntity(m_registry_id);
+		if (!m_is_moved) {
+			Registry* reg = Registry::GetInstance();
+			reg->RemoveEntity(m_registry_id);
+		}
 	}
 }

@@ -26,7 +26,7 @@ namespace DENG {
     {
         m_parser.Parse();
 
-        std::string name;
+        std::string name = "Unnamed model";
         if(m_parser.GetProperties().model != "")
             name = m_parser.GetProperties().model;
         else name += std::to_string(m_model_index++);
@@ -123,7 +123,7 @@ namespace DENG {
             m_animations.back().samplers.reserve(ani.channel_count);
 
             for (uint32_t j = 0; j < ani.channel_count; j++) {
-                const std::string name = '{' + m_animations.back().name + "}_sampler" + std::to_string(j);
+                const std::string name = "{" + m_animations.back().name + "}_sampler" + std::to_string(j);
                 const Libdas::DasAnimationChannel& channel = m_parser.AccessAnimationChannel(ani.channels[j]);
                 m_animations.back().samplers.emplace_back(this, name, channel, m_parser);
             }

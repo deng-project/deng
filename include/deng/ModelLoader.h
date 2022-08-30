@@ -78,7 +78,7 @@ namespace DENG {
             std::vector<std::string> m_texture_names;
             std::vector<uint32_t> m_buffer_offsets;
             uint32_t m_camera_id;
-            const std::string &m_framebuffer_id;
+            const std::string m_framebuffer_id;
 
         private:
             void _AttachBuffersAndTextures();
@@ -89,7 +89,7 @@ namespace DENG {
                 const std::string &_file_name, 
                 Renderer &_rend,
                 uint32_t _camera_id,
-                const std::string &_framebuffer
+                const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME
             );
             ModelLoader(const ModelLoader &_ld) = delete;
             ModelLoader(ModelLoader&& _ld) noexcept;

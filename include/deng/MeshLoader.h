@@ -79,7 +79,7 @@ namespace DENG {
             TRS::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
 
             // framebuffer id
-            const std::string m_framebuffer_id;
+            std::string m_framebuffer_id;
             bool m_is_colored = true;
 
         private:
