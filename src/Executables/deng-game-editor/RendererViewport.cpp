@@ -172,10 +172,8 @@ namespace DENG {
 		void RendererViewport::_OnMouseWheel(wxMouseEvent &_ev) {
 			if (_ev.GetWheelRotation() > 0) {
 				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_SCROLL_UP);
-				std::cout << "Scrolling up" << std::endl;
 			} else if (_ev.GetWheelRotation() < 0) {
 				m_input.RegisterActiveKeyEvent(NEKO_MOUSE_SCROLL_DOWN);
-				std::cout << "Scrolling down" << std::endl;
 			}
 		}
 

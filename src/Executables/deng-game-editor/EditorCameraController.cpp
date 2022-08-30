@@ -15,7 +15,6 @@ namespace DENG {
 
 
 		void EditorCameraController::OnAttach() {
-			std::cout << "OnAttach called" << std::endl;
 			((EditorCamera*)m_scriptable_entity)->EnableCamera();
 		}
 
@@ -40,7 +39,6 @@ namespace DENG {
 
 
 		void EditorCameraController::OnDestroy() {
-			std::cout << "OnDestroy called" << std::endl;
 		}
 
 	}

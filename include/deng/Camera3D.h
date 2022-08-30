@@ -59,8 +59,8 @@ namespace DENG {
 
             inline TRS::Matrix4<float> _CalculateProjection() {
                 return TRS::Matrix4<float> {
-                    { _CalculateAspectRatio() / tanf(m_fov), 0.0f, 0.0f, 0.0f },
-                    { 0.0f, 1 / tanf(m_fov / 2), 0.0f, 0.0f },
+                    { 1.f / (tanf(m_fov / 2.f) * _CalculateAspectRatio()), 0.0f, 0.0f, 0.0f },
+                    { 0.0f, 1.f / tanf(m_fov / 2.f), 0.0f, 0.0f},
                     { 0.0f, 0.0f, m_planes.y / (m_planes.x + m_planes.y), 1.0f },
                     { 0.0f, 0.0f, (m_planes.x * m_planes.y) / (m_planes.x + m_planes.y), 0.0f }
                 };
