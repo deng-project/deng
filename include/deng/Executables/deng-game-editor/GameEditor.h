@@ -7,6 +7,7 @@
 #define GAME_EDITOR_H
 
 #ifdef GAME_EDITOR_CPP
+    #include <queue>
     #include <wx/wx.h>
     #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
@@ -20,6 +21,7 @@
     #include "deng/Executables/deng-game-editor/RendererViewport.h"
     #include "deng/Executables/deng-game-editor/NewProjectWizard.h"
     #include "deng/Executables/deng-game-editor/EditorCameraController.h"
+    #include "deng/Executables/deng-game-editor/TreeItemWrappers.h"
 #endif
 
 
@@ -32,6 +34,7 @@ namespace DENG {
 
                 wxToolBar* m_toolbar = nullptr;
                 wxTreeCtrl* m_hierarchy = nullptr;
+                wxTreeItemId m_root;
                 RendererViewport* m_viewport = nullptr;
                 wxTextCtrl* m_assets = nullptr;
                 wxTextCtrl* m_inspector = nullptr;
@@ -48,9 +51,14 @@ namespace DENG {
                 void _CreateRuntimeToolbar();
                 void _CreateEditorLayout();
                 void _SetupViewport();
+                void _RecurseNodesToHierarchy(wxTreeItemId _root_id, NodeLoader &_node);
+                void _AppendModelToHierarchy();
                 void _LoadProject();
 
                 void _OnNewProjectWizardClose(wxCloseEvent& _ev);
+
+                // tree events
+                void _OnHierarchyItemClick(wxTreeEvent& _ev);
 
                 // file
                 void _OnNewClick(wxCommandEvent& _ev);

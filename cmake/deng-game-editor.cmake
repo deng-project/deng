@@ -14,6 +14,7 @@ set(DENG_GAME_EDITOR_HEADERS
     include/deng/Executables/deng-game-editor/ProjectManager.h
 	include/deng/Executables/deng-game-editor/RendererViewport.h
 	include/deng/Executables/deng-game-editor/StaticResources.h
+	include/deng/Executables/deng-game-editor/TreeItemWrappers.h
 )
 	
 set(DENG_GAME_EDITOR_SOURCES 

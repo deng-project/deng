@@ -11,6 +11,9 @@ namespace DENG {
 
 
 		wxBEGIN_EVENT_TABLE(GameEditor, wxFrame)
+			// hierarchy
+			EVT_TREE_ITEM_ACTIVATED(ID_HIERARCHY_PANEL, GameEditor::_OnHierarchyItemClick)
+
 			// file
 			EVT_MENU(ID_NEW, GameEditor::_OnNewClick)
 			EVT_MENU(ID_OPEN, GameEditor::_OnOpenClick)
@@ -112,13 +115,12 @@ namespace DENG {
 
 		void GameEditor::_CreateEditorLayout() {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
-			m_hierarchy = new wxTreeCtrl(this, wxID_ANY);
+			m_hierarchy = new wxTreeCtrl(this, ID_HIERARCHY_PANEL, wxDefaultPosition, wxDefaultSize, wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
 			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			m_inspector = new wxTextCtrl(this, wxID_ANY, "Inspector panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 
-			auto id = m_hierarchy->AddRoot("Level 0");
-			m_hierarchy->AppendItem(id, "Some model desu");
+			m_root = m_hierarchy->AddRoot("hidden");
 
 			m_mgr.AddPane(m_toolbar, wxTOP, "Toolbar");
 			m_mgr.AddPane(m_hierarchy, wxLEFT, "Scene hierarchy");
@@ -146,6 +148,52 @@ namespace DENG {
 		}
 
 
+		void GameEditor::_RecurseNodesToHierarchy(wxTreeItemId _root_id, NodeLoader &_node) {
+			std::queue<std::pair<wxTreeItemId, NodeLoader*>> nodes;
+			nodes.push(std::make_pair(_root_id, &_node));
+
+			while (!nodes.empty()) {
+				wxTreeItemId id = m_hierarchy->AppendItem(nodes.front().first, nodes.front().second->GetName(), -1, -1, new TreeItemNode(nodes.front().second));
+
+				// check if the node contains a skeleton or a mesh
+				if (nodes.front().second->GetMeshLoader()) {
+					m_hierarchy->AppendItem(id, nodes.front().second->GetMeshLoader()->GetName(), -1, -1, new TreeItemMesh(nodes.front().second->GetMeshLoader()));
+				}
+				if (nodes.front().second->GetSkeleton()) {
+					m_hierarchy->AppendItem(id, nodes.front().second->GetSkeleton()->GetName(), -1, -1, new TreeItemSkeleton(nodes.front().second->GetSkeleton()));
+				}
+				
+				// add child nodes
+				for (auto it = nodes.front().second->GetChildNodes().begin(); it != nodes.front().second->GetChildNodes().end(); it++) {
+					nodes.push(std::make_pair(id, &(*it)));
+				}
+
+				nodes.pop();
+			}
+		}
+
+
+		void GameEditor::_AppendModelToHierarchy() {
+			ModelLoader& model = m_model_loaders.back();
+			wxTreeItemId model_id = m_hierarchy->AppendItem(m_root, model.GetName(), -1, -1, new TreeItem(TREE_ITEM_TYPE_MODEL));
+
+			// for each animation in the model append it to the hierarchy
+			for (auto ani_it = model.GetAnimations().begin(); ani_it != model.GetAnimations().end(); ani_it++) {
+				m_hierarchy->AppendItem(model_id, ani_it->name, -1, -1, new TreeItemAnimation(&(*ani_it)));
+			}
+
+			// for each scene in the model append it to the hierarchy
+			for (auto sc_it = model.GetScenes().begin(); sc_it != model.GetScenes().end(); sc_it++) {
+				wxTreeItemId scene_id = m_hierarchy->AppendItem(model_id, sc_it->GetName(), -1, -1, new TreeItemScene(&(*sc_it)));
+
+				// for each node in the scene append it to the hierarchy
+				for (auto node_it = sc_it->GetRootNodes().begin(); node_it != sc_it->GetRootNodes().end(); node_it++) {
+					_RecurseNodesToHierarchy(scene_id, *node_it);
+				}
+			}
+		}
+
+
 		void GameEditor::_LoadProject() {
 			// set the title accordingly
 			SetTitle(m_project.GetXMLGame().meta.name + " | DENG game editor");
@@ -163,6 +211,42 @@ namespace DENG {
 				wxMessageBox(std::string("Could not create a new project"), "Error", wxICON_ERROR | wxOK);
 			}
 			wiz->Destroy();
+		}
+
+
+		void GameEditor::_OnHierarchyItemClick(wxTreeEvent& _ev) {
+			TreeItem* item_type = reinterpret_cast<TreeItem*>(m_hierarchy->GetItemData(_ev.GetItem()));
+			DENG_ASSERT(item_type);
+
+			switch (item_type->GetType()) {
+				case TREE_ITEM_TYPE_MODEL:
+					std::cout << "Clicked model tree item" << std::endl;
+					break;
+
+				case TREE_ITEM_TYPE_SCENE:
+					std::cout << "Clicked scene tree item" << std::endl;
+					break;
+
+				case TREE_ITEM_TYPE_NODE:
+					std::cout << "Clicked node tree item" << std::endl;
+					break;
+
+				case TREE_ITEM_TYPE_SKELETON:
+					std::cout << "Clicked skeleton tree item" << std::endl;
+					break;
+
+				case TREE_ITEM_TYPE_MESH:
+					std::cout << "Clicked mesh tree item" << std::endl;
+					break;
+
+				case TREE_ITEM_TYPE_ANIMATION:
+					std::cout << "Clicked animation tree item" << std::endl;
+					break;
+
+				default:
+					break;
+			}
+			_ev.Skip();
 		}
 
 
@@ -197,6 +281,7 @@ namespace DENG {
 				m_model_loaders.emplace_back(nullptr, path, *m_viewport->GetRenderer(), m_camera->GetId());
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
+				_AppendModelToHierarchy();
 				m_viewport->GetRenderer()->LoadShaders();
 			}
 		}

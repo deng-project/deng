@@ -31,6 +31,8 @@ namespace DENG {
 			ID_CANCEL,
 			/** End of project management **/
 
+			ID_HIERARCHY_PANEL,
+
 			/** Menubar elements **/
 			// file
 			ID_NEW,
