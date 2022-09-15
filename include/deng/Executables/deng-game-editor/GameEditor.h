@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_CPP
     #include <queue>
     #include <wx/wx.h>
+    #include <wx/collpane.h>
     #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
 
@@ -22,6 +23,7 @@
     #include "deng/Executables/deng-game-editor/NewProjectWizard.h"
     #include "deng/Executables/deng-game-editor/EditorCameraController.h"
     #include "deng/Executables/deng-game-editor/TreeItemWrappers.h"
+    #include "deng/Executables/deng-game-editor/AnimationInspectorPanel.h"
 #endif
 
 
@@ -37,7 +39,9 @@ namespace DENG {
                 wxTreeItemId m_root;
                 RendererViewport* m_viewport = nullptr;
                 wxTextCtrl* m_assets = nullptr;
-                wxTextCtrl* m_inspector = nullptr;
+
+                wxStaticText* m_empty_inspector = nullptr;
+                AnimationInspectorPanel* m_animation_inspector = nullptr;
 
                 wxMenuBar* m_menubar = nullptr;
                 EditorCamera* m_camera = nullptr;
@@ -58,6 +62,7 @@ namespace DENG {
                 void _OnNewProjectWizardClose(wxCloseEvent& _ev);
 
                 // tree events
+                void _LoadAnimationPanel(Animation* _ani);
                 void _OnHierarchyItemClick(wxTreeEvent& _ev);
 
                 // file

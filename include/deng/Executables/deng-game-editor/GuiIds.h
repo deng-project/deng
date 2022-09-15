@@ -31,8 +31,6 @@ namespace DENG {
 			ID_CANCEL,
 			/** End of project management **/
 
-			ID_HIERARCHY_PANEL,
-
 			/** Menubar elements **/
 			// file
 			ID_NEW,
@@ -61,7 +59,15 @@ namespace DENG {
 			ID_EDITOR_CAMERA,
 			/** End of menubar elements **/
 
-			/** Toolbar elements **/
+			/** Hierarchy panel **/
+			ID_HIERARCHY_PANEL,
+			ID_ANIMATION_PANEL_TITLE,
+			ID_BIND_ANIMATION,
+			ID_REPEAT_ANIMATION,
+			ID_ANIMATE_TOGGLE,
+			/** End of hierarchy panel **/
+
+			/** Toolbar stuff **/
 			ID_TOOLBAR_RUN,
 		};
 	}

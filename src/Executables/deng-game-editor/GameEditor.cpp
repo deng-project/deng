@@ -118,15 +118,18 @@ namespace DENG {
 			m_hierarchy = new wxTreeCtrl(this, ID_HIERARCHY_PANEL, wxDefaultPosition, wxDefaultSize, wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
 			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
-			m_inspector = new wxTextCtrl(this, wxID_ANY, "Inspector panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
+			
+			// m_empty_inspector = new wxStaticText(this, wxID_ANY, "Select a hierarchy node to view inspector panel");
+			m_animation_inspector = new AnimationInspectorPanel(this);
 
+			// implicit root node
 			m_root = m_hierarchy->AddRoot("hidden");
 
 			m_mgr.AddPane(m_toolbar, wxTOP, "Toolbar");
 			m_mgr.AddPane(m_hierarchy, wxLEFT, "Scene hierarchy");
 			m_mgr.AddPane(m_viewport, wxCENTER, "Viewport");
 			m_mgr.AddPane(m_assets, wxBOTTOM, "Assets");
-			m_mgr.AddPane(m_inspector, wxRIGHT, "Inspector");
+			m_mgr.AddPane(m_animation_inspector, wxRIGHT, "Inspector");
 			m_mgr.Update();
 		}
 
@@ -214,6 +217,13 @@ namespace DENG {
 		}
 
 
+		void GameEditor::_LoadAnimationPanel(Animation *_ani) {
+			//m_mgr.DetachPane(m_empty_inspector);
+			//m_mgr.SetManagedWindow(m_animation_inspector);
+			m_animation_inspector->View(_ani);
+		}
+
+
 		void GameEditor::_OnHierarchyItemClick(wxTreeEvent& _ev) {
 			TreeItem* item_type = reinterpret_cast<TreeItem*>(m_hierarchy->GetItemData(_ev.GetItem()));
 			DENG_ASSERT(item_type);
@@ -240,8 +250,11 @@ namespace DENG {
 					break;
 
 				case TREE_ITEM_TYPE_ANIMATION:
-					std::cout << "Clicked animation tree item" << std::endl;
+				{
+					TreeItemAnimation* ani_tree_item = (TreeItemAnimation*)item_type;
+					_LoadAnimationPanel(ani_tree_item->GetAnimation());
 					break;
+				}
 
 				default:
 					break;

@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_APP_CPP
     #include <any>
     #include <wx/wx.h>
+    #include <wx/collpane.h>
     #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
     #include "deng/deng.h"
@@ -17,11 +18,12 @@
     #include "deng/Executables/deng-game-editor/StaticResources.h"
     #include "deng/Executables/deng-game-editor/OpenGLLoader.h"
     #include "deng/Executables/deng-game-editor/RendererViewport.h"
+    #include "deng/Executables/deng-game-editor/InspectorPanel.h"
     #include "deng/Executables/deng-game-editor/GameEditor.h"
     #include "deng/Version.h"
     
     #ifdef _WIN32
-        #pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup")
+        #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:WinMainCRTStartup")
     #endif
 #endif
 
