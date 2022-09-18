@@ -9,24 +9,26 @@
 namespace DENG {
 	namespace Editor {
 
-		AnimationInspectorPanel::AnimationInspectorPanel(wxWindow* _parent, Animation *_ani) :
-			wxScrolledWindow(_parent, wxID_ANY),
-			m_animation(_ani)
+		wxBEGIN_EVENT_TABLE(AnimationInspectorPanel, wxScrolledWindow)
+			EVT_CHECKBOX(ID_EDITOR_ANIMATION_PANEL_BIND, AnimationInspectorPanel::_OnBindCheck)
+			EVT_CHECKBOX(ID_EDITOR_ANIMATION_PANEL_REPEAT, AnimationInspectorPanel::_OnRepeatCheck)
+			EVT_BUTTON(ID_EDITOR_ANIMATION_PANEL_TOGGLE, AnimationInspectorPanel::_OnAnimateToggleClick)
+		wxEND_EVENT_TABLE()
+
+		AnimationInspectorPanel::AnimationInspectorPanel(wxWindow* _parent) :
+			wxScrolledWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(200, 150))
 		{
+			Bind(wxEVT_SIZE, &AnimationInspectorPanel::_OnResize, this, wxID_ANY);
 			m_sizer = new wxBoxSizer(wxVERTICAL);
-			m_title = new wxStaticText(this, ID_ANIMATION_PANEL_TITLE, "(null)");
+			m_title = new wxStaticText(this, ID_EDITOR_ANIMATION_PANEL_TITLE, "(null)");
 			m_sizer->Add(m_title, 0, wxALIGN_CENTER);
 			
 			m_samplers = new wxGenericCollapsiblePane(this, wxID_ANY, "List of all samplers", wxDefaultPosition, wxDefaultSize, wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
 			m_sizer->Add(m_samplers, 0, wxGROW | wxEXPAND);
 			
 			wxWindow* win = m_samplers->GetPane();
-			wxBoxSizer* m_pane_sizer = new wxBoxSizer(wxVERTICAL);
+			m_pane_sizer = new wxBoxSizer(wxVERTICAL);
 			
-			for (auto it = m_animation->samplers.begin(); it != m_animation->samplers.end(); it++) {
-				m_pane_sizer->Add(new wxStaticText(this, wxID_ANY, it->GetName()));
-			}
-
 			win->SetSizer(m_pane_sizer);
 			m_samplers->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, 
 				[this](wxCollapsiblePaneEvent& _ev) { 
@@ -36,15 +38,15 @@ namespace DENG {
 				}
 			);
 		
-			m_bind = new wxCheckBox(this, ID_BIND_ANIMATION, "Bind animation");
+			m_bind = new wxCheckBox(this, ID_EDITOR_ANIMATION_PANEL_BIND, "Bind animation");
 			m_sizer->Add(m_bind, 0, wxGROW | wxEXPAND);
-			m_repeat = new wxCheckBox(this, ID_REPEAT_ANIMATION, "Repeat animation");
+			m_repeat = new wxCheckBox(this, ID_EDITOR_ANIMATION_PANEL_REPEAT, "Repeat animation");
 			m_sizer->Add(m_repeat, 0, wxGROW | wxEXPAND);
 
-			m_bind->SetValue(!_ani->is_unbound);
-			m_repeat->SetValue(!_ani->is_animated);
+			m_bind->SetValue(false);
+			m_repeat->SetValue(false);
 
-			m_animate_toggle = new wxButton(this, ID_ANIMATE_TOGGLE, "Animate");
+			m_animate_toggle = new wxButton(this, ID_EDITOR_ANIMATION_PANEL_TOGGLE, "Animate");
 			m_sizer->Add(m_animate_toggle, 0, wxGROW | wxEXPAND);
 			SetSizer(m_sizer);
 			SetScrollRate(2, 2);
@@ -52,6 +54,8 @@ namespace DENG {
 
 
 		void AnimationInspectorPanel::View(Animation* _ani) {
+			m_animation = _ani;
+			Show();
 			m_title->SetLabelText(_ani->name);
 
 			// for each sampler in animation view it in the sampler pane
@@ -61,12 +65,43 @@ namespace DENG {
 			}
 
 			m_bind->SetValue(!_ani->is_unbound);
-			m_repeat->SetValue(!_ani->is_animated);
+			m_repeat->SetValue(_ani->is_repeated);
 
-			if (_ani->is_animated) {
+			if (!_ani->is_animated) {
 				m_animate_toggle->SetLabelText("Animate");
 			} else {
 				m_animate_toggle->SetLabelText("Stop animation");
+			}
+		}
+
+		void AnimationInspectorPanel::_OnBindCheck(wxCommandEvent& _evt) {
+			m_animation->is_unbound = !_evt.IsChecked();
+		}
+
+		void AnimationInspectorPanel::_OnRepeatCheck(wxCommandEvent& _evt) {
+			m_animation->is_repeated = _evt.IsChecked();
+			for (auto it = m_animation->samplers.begin(); it != m_animation->samplers.end(); it++) {
+				it->SetRepeat(m_animation->is_repeated);
+			}
+		}
+
+		void AnimationInspectorPanel::_OnResize(wxSizeEvent& _evt) {
+			std::cout << "Animation panel size: " << _evt.GetSize().GetX() << "x" << _evt.GetSize().GetY() << std::endl;
+			std::cout << "Minimum size: " << GetMinSize().GetX() << "x" << GetMinSize().GetY() << std::endl;
+		}
+
+		void AnimationInspectorPanel::_OnAnimateToggleClick(wxCommandEvent& _evt) {
+			m_animation->is_animated = !m_animation->is_animated;
+			if (!m_animation->is_animated) {
+				m_animate_toggle->SetLabelText("Animate");
+				for (auto it = m_animation->samplers.begin(); it != m_animation->samplers.end(); it++) {
+					it->Stop();
+				}
+			} else {
+				m_animate_toggle->SetLabelText("Stop animation");
+				for (auto it = m_animation->samplers.begin(); it != m_animation->samplers.end(); it++) {
+					it->Animate(m_animation->is_repeated);
+				}
 			}
 		}
 	}

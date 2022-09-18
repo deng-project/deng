@@ -5,11 +5,14 @@
 
 set(DENG_GAME_EDITOR_TARGET deng-game-editor)
 set(DENG_GAME_EDITOR_HEADERS 
+	include/deng/Executables/deng-game-editor/AnimationInspectorPanel.h
 	include/deng/Executables/deng-game-editor/EditorCameraController.h
     include/deng/Executables/deng-game-editor/GameEditor.h
 	include/deng/Executables/deng-game-editor/GameEditorApp.h
     include/deng/Executables/deng-game-editor/GuiIds.h
+	include/deng/Executables/deng-game-editor/InspectorPanel.h
 	include/deng/Executables/deng-game-editor/NewProjectWizard.h
+	include/deng/Executables/deng-game-editor/NodeInspectorPanel.h
 	include/deng/Executables/deng-game-editor/OpenGLLoader.h
     include/deng/Executables/deng-game-editor/ProjectManager.h
 	include/deng/Executables/deng-game-editor/RendererViewport.h
@@ -17,11 +20,14 @@ set(DENG_GAME_EDITOR_HEADERS
 	include/deng/Executables/deng-game-editor/TreeItemWrappers.h
 )
 	
-set(DENG_GAME_EDITOR_SOURCES 
+set(DENG_GAME_EDITOR_SOURCES
+	src/Executables/deng-game-editor/AnimationInspectorPanel.cpp
 	src/Executables/deng-game-editor/EditorCameraController.cpp
 	src/Executables/deng-game-editor/GameEditor.cpp
 	src/Executables/deng-game-editor/GameEditorApp.cpp
+	src/Executables/deng-game-editor/InspectorPanel.cpp
 	src/Executables/deng-game-editor/NewProjectWizard.cpp
+	src/Executables/deng-game-editor/NodeInspectorPanel.cpp
     src/Executables/deng-game-editor/ProjectManager.cpp
 	src/Executables/deng-game-editor/RendererViewport.cpp
 	src/Executables/deng-game-editor/StaticResources.cpp

@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_APP_CPP
     #include <any>
     #include <wx/wx.h>
+    #include <wx/valnum.h>
     #include <wx/collpane.h>
     #include <wx/treectrl.h>
     #include <wx/aui/aui.h>

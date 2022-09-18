@@ -12,36 +12,34 @@ namespace DENG {
 
 		wxBEGIN_EVENT_TABLE(GameEditor, wxFrame)
 			// hierarchy
-			EVT_TREE_ITEM_ACTIVATED(ID_HIERARCHY_PANEL, GameEditor::_OnHierarchyItemClick)
+			EVT_TREE_ITEM_ACTIVATED(ID_EDITOR_HIERARCHY_PANEL, GameEditor::_OnHierarchyItemClick)
 
 			// file
-			EVT_MENU(ID_NEW, GameEditor::_OnNewClick)
-			EVT_MENU(ID_OPEN, GameEditor::_OnOpenClick)
-			EVT_MENU(ID_SAVE, GameEditor::_OnSaveClick)
-
-			// file::import
-			EVT_MENU(ID_DAS, GameEditor::_OnDasImportClick)
-			EVT_MENU(ID_GLTF, GameEditor::_OnGLTFImportClick)
-			EVT_MENU(ID_OBJ, GameEditor::_OnWavefrontOBJImportClick)
-			EVT_MENU(ID_STL, GameEditor::_OnSTLImportClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_NEW, GameEditor::_OnNewClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_OPEN, GameEditor::_OnOpenClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_SAVE, GameEditor::_OnSaveClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_DAS, GameEditor::_OnDasImportClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_GLTF, GameEditor::_OnGLTFImportClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_OBJ, GameEditor::_OnWavefrontOBJImportClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_STL, GameEditor::_OnSTLImportClick)
 
 			// add
-			EVT_MENU(ID_NODE, GameEditor::_OnNodeClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_NODE, GameEditor::_OnNodeClick)
 
 			// add::mesh
-			EVT_MENU(ID_SPHERE, GameEditor::_OnSphereMeshClick)
-			EVT_MENU(ID_CUBE, GameEditor::_OnCubeMeshClick)
-			EVT_MENU(ID_CONE, GameEditor::_OnConeMeshClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_SPHERE, GameEditor::_OnSphereMeshClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_CUBE, GameEditor::_OnCubeMeshClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_CONE, GameEditor::_OnConeMeshClick)
 
 			// add::light
-			EVT_MENU(ID_DIRECTIONAL_LIGHT, GameEditor::_OnDirectionalLightClick)
-			EVT_MENU(ID_POINT_LIGHT, GameEditor::_OnPointLightClick)
-			EVT_MENU(ID_AMBIENT_LIGHT, GameEditor::_OnAmbientLightClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_LIGHT_DIRECTIONAL_LIGHT, GameEditor::_OnDirectionalLightClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_LIGHT_POINT_LIGHT, GameEditor::_OnPointLightClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_LIGHT_AMBIENT_LIGHT, GameEditor::_OnAmbientLightClick)
 
 			// add::camera
-			EVT_MENU(ID_FIRST_PERSON_CAMERA, GameEditor::_OnFirstPersonCameraClick)
-			EVT_MENU(ID_THIRD_PERSON_CAMERA, GameEditor::_OnThirdPersonCameraClick)
-			EVT_MENU(ID_EDITOR_CAMERA, GameEditor::_OnEditorCameraClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_FIRST_PERSON_CAMERA, GameEditor::_OnFirstPersonCameraClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_THIRD_PERSON_CAMERA, GameEditor::_OnThirdPersonCameraClick)
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA, GameEditor::_OnEditorCameraClick)
 		wxEND_EVENT_TABLE()
 
 		GameEditor::GameEditor() :
@@ -67,40 +65,41 @@ namespace DENG {
 
 		void GameEditor::_CreateMenubar() {
 			m_menubar = new wxMenuBar();
+
 			wxMenu* file = new wxMenu;
-			file->Append(ID_NEW, wxT("&New"), "Create a new deng project");
-			file->Append(ID_OPEN, wxT("&Open"), "Open an existing project");
-			file->Append(ID_SAVE, wxT("&Save"), "Save the current project");
+			file->Append(ID_EDITOR_MENUBAR_FILE_NEW, wxT("&New"), "Create a new deng project");
+			file->Append(ID_EDITOR_MENUBAR_FILE_OPEN, wxT("&Open"), "Open an existing project");
+			file->Append(ID_EDITOR_MENUBAR_FILE_SAVE, wxT("&Save"), "Save the current project");
 			
 			wxMenu* import = new wxMenu;
-			import->Append(ID_DAS, wxT("&DAS"), "Import a das model");
-			import->Append(ID_GLTF, wxT("&GLTF"), "Import a gltf model");
-			import->Append(ID_OBJ, wxT("&Wavefront Obj"), "Import a wavefront Obj model");
-			import->Append(ID_STL, wxT("&STL"), "Import a stl model");
+			import->Append(ID_EDITOR_MENUBAR_FILE_IMPORT_DAS, wxT("&DAS"), "Import a das model");
+			import->Append(ID_EDITOR_MENUBAR_FILE_IMPORT_GLTF, wxT("&GLTF"), "Import a gltf model");
+			import->Append(ID_EDITOR_MENUBAR_FILE_IMPORT_OBJ, wxT("&Wavefront Obj"), "Import a wavefront Obj model");
+			import->Append(ID_EDITOR_MENUBAR_FILE_IMPORT_STL, wxT("&STL"), "Import a stl model");
 			
-			file->Append(ID_IMPORT, wxT("&Import"), import, "Import a model");
+			file->Append(ID_EDITOR_MENUBAR_FILE_IMPORT, wxT("&Import"), import, "Import a model");
 			file->Append(wxID_EXIT, wxT("&Quit"), "Quit the application");
 			m_menubar->Append(file, "&File");
 
 			wxMenu* add = new wxMenu;
-			add->Append(ID_NODE, wxT("&Node"), "Add a new node to the scene");
+			add->Append(ID_EDITOR_MENUBAR_ADD_NODE, wxT("&Node"), "Add a new node to the scene");
 			wxMenu* mesh = new wxMenu;
-			mesh->Append(ID_SPHERE, wxT("&Sphere"), "Add a sphere to currently selected node");
-			mesh->Append(ID_CUBE, wxT("&Cube"), "Add a cube");
-			mesh->Append(ID_CONE, wxT("&Cone"), "Add a cone");
-			add->Append(ID_MESH, wxT("&Mesh"), mesh, "Add a mesh");
+			mesh->Append(ID_EDITOR_MENUBAR_ADD_MESH_SPHERE, wxT("&Sphere"), "Add a sphere to currently selected node");
+			mesh->Append(ID_EDITOR_MENUBAR_ADD_MESH_CUBE, wxT("&Cube"), "Add a cube");
+			mesh->Append(ID_EDITOR_MENUBAR_ADD_MESH_CONE, wxT("&Cone"), "Add a cone");
+			add->Append(ID_EDITOR_MENUBAR_ADD_MESH, wxT("&Mesh"), mesh, "Add a mesh");
 			
 			wxMenu* light = new wxMenu;
-			light->Append(ID_DIRECTIONAL_LIGHT, wxT("&Directional light"), "Add a directional light to the scene");
-			light->Append(ID_POINT_LIGHT, wxT("&Point light"), "Add a point light to the scene");
-			light->Append(ID_AMBIENT_LIGHT, wxT("&Ambient light"), "Add an ambient light to the scene");
-			add->Append(ID_LIGHT, wxT("&Light"), light, "Add a light source");
+			light->Append(ID_EDITOR_MENUBAR_ADD_LIGHT_DIRECTIONAL_LIGHT, wxT("&Directional light"), "Add a directional light to the scene");
+			light->Append(ID_EDITOR_MENUBAR_ADD_LIGHT_POINT_LIGHT, wxT("&Point light"), "Add a point light to the scene");
+			light->Append(ID_EDITOR_MENUBAR_ADD_LIGHT_AMBIENT_LIGHT, wxT("&Ambient light"), "Add an ambient light to the scene");
+			add->Append(ID_EDITOR_MENUBAR_ADD_LIGHT, wxT("&Light"), light, "Add a light source");
 
 			wxMenu* camera = new wxMenu;
-			camera->Append(ID_FIRST_PERSON_CAMERA, wxT("&First person camera"), "Add a first person camera to the scene");
-			camera->Append(ID_THIRD_PERSON_CAMERA, wxT("&Third person camera"), "Add a third person camera to the scene");
-			camera->Append(ID_EDITOR_CAMERA, wxT("&Editor camera"), "Add an editor camera to the scene");
-			add->Append(ID_CAMERA, wxT("&Camera"), camera, "Add a camera to the scene");
+			camera->Append(ID_EDITOR_MENUBAR_ADD_CAMERA_FIRST_PERSON_CAMERA, wxT("&First person camera"), "Add a first person camera to the scene");
+			camera->Append(ID_EDITOR_MENUBAR_ADD_CAMERA_THIRD_PERSON_CAMERA, wxT("&Third person camera"), "Add a third person camera to the scene");
+			camera->Append(ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA, wxT("&Editor camera"), "Add an editor camera to the scene");
+			add->Append(ID_EDITOR_MENUBAR_ADD_CAMERA, wxT("&Camera"), camera, "Add a camera to the scene");
 			m_menubar->Append(add, "&Add");
 			SetMenuBar(m_menubar);
 		}
@@ -115,12 +114,12 @@ namespace DENG {
 
 		void GameEditor::_CreateEditorLayout() {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
-			m_hierarchy = new wxTreeCtrl(this, ID_HIERARCHY_PANEL, wxDefaultPosition, wxDefaultSize, wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
+			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxDefaultSize, wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
 			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			
 			// m_empty_inspector = new wxStaticText(this, wxID_ANY, "Select a hierarchy node to view inspector panel");
-			m_animation_inspector = new AnimationInspectorPanel(this);
+			m_inspector_panel = new InspectorPanel(this);
 
 			// implicit root node
 			m_root = m_hierarchy->AddRoot("hidden");
@@ -129,7 +128,7 @@ namespace DENG {
 			m_mgr.AddPane(m_hierarchy, wxLEFT, "Scene hierarchy");
 			m_mgr.AddPane(m_viewport, wxCENTER, "Viewport");
 			m_mgr.AddPane(m_assets, wxBOTTOM, "Assets");
-			m_mgr.AddPane(m_animation_inspector, wxRIGHT, "Inspector");
+			m_mgr.AddPane(m_inspector_panel, wxRIGHT, "Inspector");
 			m_mgr.Update();
 		}
 
@@ -217,13 +216,6 @@ namespace DENG {
 		}
 
 
-		void GameEditor::_LoadAnimationPanel(Animation *_ani) {
-			//m_mgr.DetachPane(m_empty_inspector);
-			//m_mgr.SetManagedWindow(m_animation_inspector);
-			m_animation_inspector->View(_ani);
-		}
-
-
 		void GameEditor::_OnHierarchyItemClick(wxTreeEvent& _ev) {
 			TreeItem* item_type = reinterpret_cast<TreeItem*>(m_hierarchy->GetItemData(_ev.GetItem()));
 			DENG_ASSERT(item_type);
@@ -238,8 +230,11 @@ namespace DENG {
 					break;
 
 				case TREE_ITEM_TYPE_NODE:
-					std::cout << "Clicked node tree item" << std::endl;
+				{
+					TreeItemNode* node_tree_item = (TreeItemNode*)item_type;
+					m_inspector_panel->ShowNodePanel(node_tree_item->GetNodeLoader());
 					break;
+				}
 
 				case TREE_ITEM_TYPE_SKELETON:
 					std::cout << "Clicked skeleton tree item" << std::endl;
@@ -252,7 +247,7 @@ namespace DENG {
 				case TREE_ITEM_TYPE_ANIMATION:
 				{
 					TreeItemAnimation* ani_tree_item = (TreeItemAnimation*)item_type;
-					_LoadAnimationPanel(ani_tree_item->GetAnimation());
+					m_inspector_panel->ShowAnimationPanel(ani_tree_item->GetAnimation());
 					break;
 				}
 

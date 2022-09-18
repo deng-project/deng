@@ -27,13 +27,13 @@ namespace DENG {
 
         wxBEGIN_EVENT_TABLE(ProjectManager, wxFrame)
             // Project manager callbacks
-            EVT_BUTTON(ID_NEW_PROJECT, ProjectManager::_OnNewProject)
-            EVT_BUTTON(ID_OPEN_PROJECT, ProjectManager::_OnOpenProject)
+            EVT_BUTTON(ID_PROJECT_MANAGER_NEW, ProjectManager::_OnNewProject)
+            EVT_BUTTON(ID_PROJECT_MANAGER_OPEN, ProjectManager::_OnOpenProject)
 
             // About button callbacks
-            EVT_BUTTON(ID_DENG_WEBSITE, ProjectManager::_OnWebsite)
-            EVT_BUTTON(ID_DENG_FORUM, ProjectManager::_OnForum)
-            EVT_BUTTON(ID_GIT, ProjectManager::_OnGit)
+            EVT_BUTTON(ID_PROJECT_MANAGER_DENG_WEBSITE, ProjectManager::_OnWebsite)
+            EVT_BUTTON(ID_PROJECT_MANAGER_DENG_FORUM, ProjectManager::_OnForum)
+            EVT_BUTTON(ID_PROJECT_MANAGER_GIT, ProjectManager::_OnGit)
         wxEND_EVENT_TABLE()
 
 
@@ -47,18 +47,18 @@ namespace DENG {
             
             // Project buttons
             wxBoxSizer* prj_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-            prj_btn_sizer->Add(new wxButton(this, ID_NEW_PROJECT, "New project", wxDefaultPosition, PROJECT_BTN_SIZE),
+            prj_btn_sizer->Add(new wxButton(this, ID_PROJECT_MANAGER_NEW, "New project", wxDefaultPosition, PROJECT_BTN_SIZE),
                                0, wxALL, 10);
-            prj_btn_sizer->Add(new wxButton(this, ID_OPEN_PROJECT, "Open project", wxDefaultPosition, PROJECT_BTN_SIZE),
+            prj_btn_sizer->Add(new wxButton(this, ID_PROJECT_MANAGER_OPEN, "Open project", wxDefaultPosition, PROJECT_BTN_SIZE),
                                0, wxALL, 10);
 
-            // About and webinfo buttons
+            // About and weblink buttons
             wxBoxSizer* about_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-            about_btn_sizer->Add(new wxButton(this, ID_DENG_WEBSITE, "DENG website", wxDefaultPosition, ABOUT_BTN_SIZE),
+            about_btn_sizer->Add(new wxButton(this, ID_PROJECT_MANAGER_DENG_WEBSITE, "DENG website", wxDefaultPosition, ABOUT_BTN_SIZE),
                                  0, wxALL, 10);
-            about_btn_sizer->Add(new wxButton(this, ID_DENG_FORUM, "Forum", wxDefaultPosition, ABOUT_BTN_SIZE),
+            about_btn_sizer->Add(new wxButton(this, ID_PROJECT_MANAGER_DENG_FORUM, "Forum", wxDefaultPosition, ABOUT_BTN_SIZE),
                                  0, wxALL, 10);
-            about_btn_sizer->Add(new wxButton(this, ID_GIT, "Git repositories", wxDefaultPosition, ABOUT_BTN_SIZE),
+            about_btn_sizer->Add(new wxButton(this, ID_PROJECT_MANAGER_GIT, "Git repositories", wxDefaultPosition, ABOUT_BTN_SIZE),
                                  0, wxALL, 10);
 
             // Main sizer with image, text and previously defined buttons

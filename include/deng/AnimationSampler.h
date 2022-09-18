@@ -108,6 +108,10 @@ namespace DENG {
                 m_active_time = std::chrono::high_resolution_clock::now();
             }
 
+            inline void SetRepeat(bool _repeat) {
+                m_repeat = _repeat;
+            }
+
             inline void Stop() {
                 m_animate = false;
                 m_active_time = std::chrono::high_resolution_clock::now();

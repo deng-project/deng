@@ -10,12 +10,15 @@ namespace DENG {
 	namespace Editor {
 
 		InspectorPanel::InspectorPanel(wxWindow* _parent) :
-			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxDefaultSize) 
+			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(200, 400)) 
 		{
 			m_sizer = new wxBoxSizer(wxVERTICAL);
-			m_sizer->Add((m_ani_inspector = new AnimationInspectorPanel(this)), 0, wxALIGN_CENTER);
+			m_node_inspector = new NodeInspectorPanel(this);
+			m_ani_inspector = new AnimationInspectorPanel(this);
+			m_sizer->Add(m_ani_inspector, 0, wxALL, 5);
+			m_sizer->Add(m_node_inspector, 0, wxALL, 5);
+			_HideAll();
 			SetSizerAndFit(m_sizer);
 		}
-
 	}
 }

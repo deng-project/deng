@@ -4,7 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #ifndef ANIMATION_INSPECTOR_PANEL_H
-#define ANIMATION_INSPECTOR_PANEL_Hs
+#define ANIMATION_INSPECTOR_PANEL_H
 
 #ifdef ANIMATION_INSPECTOR_PANEL_CPP
 	#include <wx/wx.h>
@@ -32,8 +32,15 @@ namespace DENG {
 				wxCheckBox* m_repeat = nullptr;
 				wxButton* m_animate_toggle = nullptr;
 
+			private:
+				void _OnBindCheck(wxCommandEvent &_evt);
+				void _OnRepeatCheck(wxCommandEvent& _evt);
+				void _OnAnimateToggleClick(wxCommandEvent& _evt);
+				void _OnResize(wxSizeEvent& _evt);
+				wxDECLARE_EVENT_TABLE();
+
 			public:
-				AnimationInspectorPanel(wxWindow *_parent, Animation *_ani);
+				AnimationInspectorPanel(wxWindow *_parent);
 				void View(Animation* _ani);
 		};
 
