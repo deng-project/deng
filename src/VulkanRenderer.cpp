@@ -171,13 +171,18 @@ namespace DENG {
         
         // create texture image instances
         Vulkan::TextureData texture_data;
+        texture_data.width = _width;
+        texture_data.height = _height;
+        texture_data.depth = _bit_depth;
 
         uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
         mem_req = Vulkan::_CreateImage(m_instance_creator.GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_R8G8B8A8_UNORM, 
                                        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                                        VK_SAMPLE_COUNT_1_BIT);
 
-        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, texture_data.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, texture_data.memory, mem_req.memoryTypeBits, 
+                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
         vkBindImageMemory(m_instance_creator.GetDevice(), texture_data.image, texture_data.memory, 0);
         Vulkan::_TransitionImageLayout(m_instance_creator.GetDevice(), texture_data.image, pool, m_instance_creator.GetGraphicsQueue(),
                                        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
@@ -198,6 +203,46 @@ namespace DENG {
         _CreateTextureSampler(texture_data, mip_levels);
 
         m_vulkan_texture_handles[_name] = texture_data;
+    }
+
+
+    void VulkanRenderer::GetTexturePointer(const std::string& _name, RawTextureData &_out_data) {
+        auto texture = m_vulkan_texture_handles.find(_name);
+        _out_data.width = texture->second.width;
+        _out_data.height = texture->second.height;
+        _out_data.depth = texture->second.depth;
+
+        // allocate a temporary staging buffer
+        VkBuffer staging_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+
+        const VkDeviceSize size = static_cast<VkDeviceSize>(_out_data.width * _out_data.height * _out_data.depth);
+        
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, staging_buffer);
+        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, staging_memory, mem_req.memoryTypeBits,
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0);
+
+
+        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
+        VkCommandBuffer cmd_buf = VK_NULL_HANDLE;
+        Vulkan::_BeginCommandBufferSingleCommand(m_instance_creator.GetDevice(), pool, cmd_buf);
+            VkBufferImageCopy copy = {};
+            copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            copy.imageSubresource.layerCount = 1;
+            copy.imageExtent = VkExtent3D{ texture->second.width, texture->second.height, 1 };
+            vkCmdCopyImageToBuffer(cmd_buf, texture->second.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, staging_buffer, 1, &copy);
+        Vulkan::_EndCommandBufferSingleCommand(m_instance_creator.GetDevice(), m_instance_creator.GetGraphicsQueue(), pool, cmd_buf);
+    
+        // now copy from staging buffer to local memory
+        void* tmp = nullptr;
+        _out_data.raw = new unsigned char[size];
+        vkMapMemory(m_instance_creator.GetDevice(), staging_memory, 0, size, 0, &tmp);
+        memcpy(_out_data.raw, tmp, size);
+        vkUnmapMemory(m_instance_creator.GetDevice(), staging_memory);
+    
+        vkFreeMemory(m_instance_creator.GetDevice(), staging_memory, nullptr);
+        vkDestroyBuffer(m_instance_creator.GetDevice(), staging_buffer, nullptr);
     }
 
 

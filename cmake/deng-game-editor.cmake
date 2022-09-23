@@ -11,6 +11,7 @@ set(DENG_GAME_EDITOR_HEADERS
 	include/deng/Executables/deng-game-editor/GameEditorApp.h
     include/deng/Executables/deng-game-editor/GuiIds.h
 	include/deng/Executables/deng-game-editor/InspectorPanel.h
+	include/deng/Executables/deng-game-editor/MeshInspectorPanel.h
 	include/deng/Executables/deng-game-editor/NewProjectWizard.h
 	include/deng/Executables/deng-game-editor/NodeInspectorPanel.h
 	include/deng/Executables/deng-game-editor/OpenGLLoader.h
@@ -26,6 +27,7 @@ set(DENG_GAME_EDITOR_SOURCES
 	src/Executables/deng-game-editor/GameEditor.cpp
 	src/Executables/deng-game-editor/GameEditorApp.cpp
 	src/Executables/deng-game-editor/InspectorPanel.cpp
+	src/Executables/deng-game-editor/MeshInspectorPanel.cpp
 	src/Executables/deng-game-editor/NewProjectWizard.cpp
 	src/Executables/deng-game-editor/NodeInspectorPanel.cpp
     src/Executables/deng-game-editor/ProjectManager.cpp

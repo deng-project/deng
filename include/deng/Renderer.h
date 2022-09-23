@@ -50,6 +50,14 @@ namespace DENG {
         std::vector<UniformBufferBlock> ubo_blocks;
     };
 
+
+    struct RawTextureData {
+        unsigned char* raw;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+    };
+
     enum ResourceState {
         RESOURCE_ADDED,
         RESOURCE_LOADED,
@@ -121,6 +129,7 @@ namespace DENG {
 
             virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) = 0;
             virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
+            virtual void GetTexturePointer(const std::string &_name, RawTextureData &_out_data) = 0;
             virtual void RemoveTexture(const std::string &_name) = 0;
 
             MeshReference &GetMesh(uint32_t _id, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {

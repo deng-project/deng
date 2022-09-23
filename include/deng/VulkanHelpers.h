@@ -26,6 +26,10 @@ namespace DENG {
             VkDeviceMemory memory = VK_NULL_HANDLE;
             VkImageView image_view = VK_NULL_HANDLE;
             VkSampler sampler = VK_NULL_HANDLE;
+            
+            uint32_t width;
+            uint32_t height;
+            uint32_t depth;
         };
 
 

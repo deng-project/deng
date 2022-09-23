@@ -89,6 +89,16 @@ namespace DENG {
 			ID_EDITOR_NODE_PANEL_SCALE,
 			/** End of node inspector panel **/
 
+			/** Mesh inspector panel **/
+			ID_EDITOR_MESH_PANEL_TITLE,
+			ID_EDITOR_MESH_PANEL_USE_TEXTURES,
+			ID_EDITOR_MESH_PANEL_COLOR_PICKER,
+			ID_EDITOR_MESH_PANEL_PICK_TEXTURE,
+
+			ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_USE_TEXTURE,
+			ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_OK,
+			/** End of mesh inspector panel **/
+
 			/** Toolbar stuff **/
 			ID_TOOLBAR_RUN,
 		};

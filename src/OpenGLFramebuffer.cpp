@@ -14,7 +14,7 @@ namespace DENG {
         Framebuffer::Framebuffer(
             const std::string &_fb_name,
             std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
-            const std::unordered_map<std::string, GLuint> &_misc_textures,
+            const std::unordered_map<std::string, TextureData> &_misc_textures,
             const BufferData &_bd,
             const GLuint _image,
             const bool _is_default
@@ -412,7 +412,7 @@ namespace DENG {
                             glErrorCheck("glBindBufferRange");
                         } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && module.enable_texture_mapping) {
                             for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
-                                const GLuint tex_id = m_textures.find(*tex_it)->second;
+                                const GLuint tex_id = m_textures.find(*tex_it)->second.texture;
                                 glActiveTexture(GL_TEXTURE0 + binding);
                                 glErrorCheck("glActiveTexture");
                                 glBindTexture(GL_TEXTURE_2D, tex_id);

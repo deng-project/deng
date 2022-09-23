@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_APP_CPP
     #include <any>
     #include <wx/wx.h>
+    #include <wx/clrpicker.h>
     #include <wx/valnum.h>
     #include <wx/collpane.h>
     #include <wx/treectrl.h>
@@ -24,7 +25,7 @@
     #include "deng/Version.h"
     
     #ifdef _WIN32
-        #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:WinMainCRTStartup")
+        #pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup")
     #endif
 #endif
 

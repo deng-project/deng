@@ -9,11 +9,11 @@
 namespace DENG {
 	namespace Editor {
 
-        BEGIN_EVENT_TABLE(LogoPanel, wxPanel)
+        wxBEGIN_EVENT_TABLE(LogoPanel, wxPanel)
             EVT_PAINT(LogoPanel::PaintEvent)
-            END_EVENT_TABLE()
+        wxEND_EVENT_TABLE()
 
-            LogoPanel::LogoPanel(wxFrame* _parent) :
+        LogoPanel::LogoPanel(wxFrame* _parent) :
             wxPanel(_parent, wxID_ANY, wxDefaultPosition, wxSize(280, 280))
         {
             m_image = wxBitmap::NewFromPNGData(GetSmallLogo(), GetSmallLogoSize());

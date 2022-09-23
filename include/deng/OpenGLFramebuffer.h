@@ -25,6 +25,7 @@
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
+    #include "deng/OpenGLTextureData.h"
     #include "deng/OpenGLShaderLoader.h"
     #include "deng/OpenGLBufferLoader.h"
 
@@ -41,7 +42,7 @@ namespace DENG {
                 static uint32_t m_color_attachment_counter;
                 const std::string m_framebuffer_name;
                 std::unordered_map<std::string, FramebufferDrawData> &m_framebuffer_draws;
-                const std::unordered_map<std::string, GLuint> &m_textures;
+                const std::unordered_map<std::string, TextureData> &m_textures;
                 const BufferData m_buffer_data;
                 const GLuint m_image;
                 const bool m_is_default_framebuffer;
@@ -61,7 +62,7 @@ namespace DENG {
                 Framebuffer(
                     const std::string &_fb_name,
                     std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
-                    const std::unordered_map<std::string, GLuint> &_misc_textures,
+                    const std::unordered_map<std::string, TextureData> &_misc_textures,
                     const BufferData &_bd,
                     const GLuint _image,
                     const bool _is_default = false

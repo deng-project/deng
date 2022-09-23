@@ -43,6 +43,7 @@
 #endif
 
 #ifndef DEBUG_ONLY
+    #include "deng/OpenGLTextureData.h"
     #include "deng/OpenGLShaderLoader.h"
     #include "deng/OpenGLBufferLoader.h"
     #include "deng/OpenGLFramebuffer.h"
@@ -69,7 +70,7 @@ namespace DENG {
             std::vector<std::vector<uint32_t>> m_ubo_offsets;
 
             // texture handles
-            std::unordered_map<std::string, GLuint> m_opengl_textures;
+            std::unordered_map<std::string, OpenGL::TextureData> m_opengl_textures;
 
             // framebuffers
             // using shared_ptr is a bad solution and it is prefarable to just keep the OpenGL::Framebuffer instance 
@@ -83,6 +84,7 @@ namespace DENG {
             virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;
             virtual void PushTextureFromFile(const std::string &_name, const std::string& _file_name) override;
             virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual void GetTexturePointer(const std::string& _name, RawTextureData& _out_data) override;
             virtual void RemoveTexture(const std::string &_name) override;
 
             // slow

@@ -39,6 +39,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/OpenGLFramebuffer.h
     include/deng/OpenGLRenderer.h
     include/deng/OpenGLShaderLoader.h
+	include/deng/OpenGLTextureData.h
     include/deng/ProjectDataManager.h
     include/deng/PythonScriptExecutor.h
 	include/deng/Registry.h

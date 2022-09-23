@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_CPP
     #include <queue>
     #include <wx/wx.h>
+    #include <wx/clrpicker.h>
     #include <wx/valnum.h>
     #include <wx/collpane.h>
     #include <wx/treectrl.h>

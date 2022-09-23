@@ -112,7 +112,7 @@ namespace DENG {
 
         // delete texture objects
         for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
-            glDeleteTextures(1, &it->second);
+            glDeleteTextures(1, &it->second.texture);
     }
 
 
@@ -124,11 +124,15 @@ namespace DENG {
         // submit framebuffer draw to hashmap
         m_framebuffer_draws.insert(std::make_pair(_fb.image_name, _fb));
 
-        GLuint texture;
-        glGenTextures(1, &texture);
+        OpenGL::TextureData texture;
+        texture.width = _fb.extent.x;
+        texture.height = _fb.extent.y;
+        texture.depth = 3;
+
+        glGenTextures(1, &texture.texture);
         glErrorCheck("glGenTextures");
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, texture.texture);
         glErrorCheck("glBindTextures");
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei) _fb.extent.x, (GLsizei) _fb.extent.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
@@ -146,7 +150,7 @@ namespace DENG {
                 m_framebuffer_draws,
                 m_opengl_textures,
                 m_buffer_loader.GetBufferData(),
-                texture,
+                texture.texture,
                 false
             ))
         );
@@ -180,11 +184,14 @@ namespace DENG {
             std::exit(1);
         }
 
-        GLuint tex;
-        glGenTextures(1, &tex);
+        OpenGL::TextureData tex;
+        tex.width = _width;
+        tex.height = _height;
+        tex.depth = _bit_depth;
+        glGenTextures(1, &tex.texture);
         glErrorCheck("glGenTextures");
 
-        glBindTexture(GL_TEXTURE_2D, tex);
+        glBindTexture(GL_TEXTURE_2D, tex.texture);
         glErrorCheck("glBindTexture");
 
         switch(_bit_depth) {
@@ -210,6 +217,19 @@ namespace DENG {
     }
 
 
+    void OpenGLRenderer::GetTexturePointer(const std::string& _name, RawTextureData& _out_data) {
+        auto it = m_opengl_textures.find(_name);
+        DENG_ASSERT(it != m_opengl_textures.end());
+
+        _out_data.width = it->second.width;
+        _out_data.height = it->second.height;
+        _out_data.depth = it->second.depth;
+        const uint32_t size = _out_data.width * _out_data.height * _out_data.depth;
+        _out_data.raw = new unsigned char[size];
+        glGetTextureImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLsizei>(size), _out_data.raw);
+    }
+
+
     void OpenGLRenderer::RemoveTexture(const std::string &_name) {
         // check if texture does not exist in current hash map
         if(m_opengl_textures.find(_name) == m_opengl_textures.end()) {
@@ -218,7 +238,7 @@ namespace DENG {
             return;
         }
 
-        glDeleteTextures(1, &m_opengl_textures[_name]);
+        glDeleteTextures(1, &m_opengl_textures[_name].texture);
     }
 
 

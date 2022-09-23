@@ -49,7 +49,6 @@ namespace DENG {
 			_CreateMenubar();
 			_CreateEditorLayout();
 			_CreateRuntimeToolbar();
-			_SetupViewport();
 		}
 
 
@@ -118,8 +117,10 @@ namespace DENG {
 			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			
+			_SetupViewport();
+
 			// m_empty_inspector = new wxStaticText(this, wxID_ANY, "Select a hierarchy node to view inspector panel");
-			m_inspector_panel = new InspectorPanel(this);
+			m_inspector_panel = new InspectorPanel(this, m_viewport->GetRenderer());
 
 			// implicit root node
 			m_root = m_hierarchy->AddRoot("hidden");
@@ -241,8 +242,11 @@ namespace DENG {
 					break;
 
 				case TREE_ITEM_TYPE_MESH:
-					std::cout << "Clicked mesh tree item" << std::endl;
+				{
+					TreeItemMesh* mesh_tree_item = (TreeItemMesh*)item_type;
+					m_inspector_panel->ShowMeshPanel(mesh_tree_item->GetMeshLoader());
 					break;
+				}
 
 				case TREE_ITEM_TYPE_ANIMATION:
 				{
