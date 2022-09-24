@@ -9,10 +9,16 @@
 #ifdef RENDERER_VIEWPORT_CPP
 	#include <any>
 	#include <wx/wx.h>
+	#include <wx/clrpicker.h>
+	#include <wx/valnum.h>
+	#include <wx/collpane.h>
+	#include <wx/treectrl.h>
+	#include <wx/aui/aui.h>
 
 	#include "deng/deng.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoader.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoaderWin32.h"
+	#include "deng/Executables/deng-game-editor/GameEditor.h"
 #endif
 
 namespace DENG {
@@ -25,6 +31,9 @@ namespace DENG {
 			InputRegistry m_input;
 			Renderer* mp_renderer = nullptr;
 			OpenGLLoader* mp_opengl_loader = nullptr;
+
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time = std::chrono::high_resolution_clock::now();
 
 			struct {
 				bool enabled = false;

@@ -33,7 +33,8 @@ namespace DENG {
 				wxDECLARE_EVENT_TABLE();
 
 			public:
-				TextureWidget(wxWindow* _parent, MeshLoader *_mesh, const RawTextureData &_data, uint32_t _id);
+				TextureWidget(wxWindow* _parent, MeshLoader *_mesh, RawTextureData &_data, uint32_t _id);
+				~TextureWidget();
 		};
 
 

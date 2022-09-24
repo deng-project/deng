@@ -47,6 +47,7 @@ namespace DENG {
 			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING)
 		{
 			_CreateMenubar();
+			CreateStatusBar();
 			_CreateEditorLayout();
 			_CreateRuntimeToolbar();
 		}

@@ -32,8 +32,11 @@ namespace DENG {
 			private:
 				inline void _HideAll() {
 					m_ani_inspector->Hide();
+					m_ani_inspector->Disable();
 					m_node_inspector->Hide();
+					m_node_inspector->Disable();
 					m_mesh_inspector->Hide();
+					m_mesh_inspector->Disable();
 				}
 
 			public:
@@ -42,16 +45,19 @@ namespace DENG {
 				inline void ShowAnimationPanel(Animation* _ani) {
 					_HideAll();
 					m_ani_inspector->View(_ani);
+					m_ani_inspector->Enable();
 				}
 
 				inline void ShowNodePanel(NodeLoader* _node) {
 					_HideAll();
 					m_node_inspector->View(_node);
+					m_node_inspector->Enable();
 				}
 
 				inline void ShowMeshPanel(MeshLoader* _mesh) {
 					_HideAll();
 					m_mesh_inspector->View(_mesh);
+					m_mesh_inspector->Enable();
 				}
 				//void ShowScenePanel(SceneLoader* _scene);
 				//void ShowModelPanel(ModelLoader* _model);

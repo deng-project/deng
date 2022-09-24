@@ -8,6 +8,7 @@
 
 #ifdef GAME_EDITOR_CPP
     #include <queue>
+    #include <list>
     #include <wx/wx.h>
     #include <wx/clrpicker.h>
     #include <wx/valnum.h>
@@ -26,6 +27,13 @@
     #include "deng/Executables/deng-game-editor/EditorCameraController.h"
     #include "deng/Executables/deng-game-editor/TreeItemWrappers.h"
     #include "deng/Executables/deng-game-editor/InspectorPanel.h"
+#else
+    // forward declarations
+    class RendererViewport;
+    class InspectorPanel;
+    class EditorCamera;
+    class GridGenerator;
+    class ProjectDataManager;
 #endif
 
 
@@ -37,6 +45,7 @@ namespace DENG {
                 wxAuiManager m_mgr;
 
                 wxToolBar* m_toolbar = nullptr;
+                wxStatusBar* m_status = nullptr;
                 wxTreeCtrl* m_hierarchy = nullptr;
                 wxTreeItemId m_root;
                 RendererViewport* m_viewport = nullptr;
@@ -49,10 +58,11 @@ namespace DENG {
                 GridGenerator* m_grid = nullptr;
 
                 ProjectDataManager m_project;
-                std::vector<ModelLoader> m_model_loaders;
+                std::list<ModelLoader> m_model_loaders;
 
             private:
                 void _CreateMenubar();
+                void _CreateStatusBar();
                 void _CreateRuntimeToolbar();
                 void _CreateEditorLayout();
                 void _SetupViewport();

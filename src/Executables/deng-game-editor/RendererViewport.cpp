@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: RendererViewport.h - Editor viewport class header
+// file: RendererViewport.cpp - Editor viewport class implementation
 // author: Karl-Mihkel Ott
 
 #define RENDERER_VIEWPORT_CPP
@@ -86,6 +86,12 @@ namespace DENG {
 				m_input.FlushReleased();
 				_SwapBuffers();
 				mp_renderer->RenderFrame();
+
+				m_end_time = std::chrono::high_resolution_clock::now();
+				auto fps = 1000.f / std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_beg_time).count();
+				GameEditor* ed = (GameEditor*)GetParent();
+				ed->SetStatusText("FPS: " + std::to_string(fps));
+				m_beg_time = std::chrono::high_resolution_clock::now();
 			}
 			_ev.Skip();
 		}
@@ -109,6 +115,12 @@ namespace DENG {
 				_SwapBuffers();
 				mp_renderer->RenderFrame();
 				_ev.RequestMore();
+
+				m_end_time = std::chrono::high_resolution_clock::now();
+				auto fps = 1000.f / std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_beg_time).count();
+				GameEditor *ed = (GameEditor*)GetParent();
+				ed->SetStatusText("FPS: " + std::to_string(fps));
+				m_beg_time = std::chrono::high_resolution_clock::now();
 			}
 		}
 

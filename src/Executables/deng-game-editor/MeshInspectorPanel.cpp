@@ -14,7 +14,7 @@ namespace DENG {
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_USE_TEXTURE, TextureWidget::_OnCheckBoxClick)
 		wxEND_EVENT_TABLE()
 		
-		TextureWidget::TextureWidget(wxWindow* _parent, MeshLoader *_mesh, const RawTextureData &_data, uint32_t _id) :
+		TextureWidget::TextureWidget(wxWindow* _parent, MeshLoader *_mesh, RawTextureData &_data, uint32_t _id) :
 			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(96, 96)),
 			m_mesh(_mesh),
 			m_data(_data),
@@ -22,10 +22,14 @@ namespace DENG {
 		{
 			wxImage img = wxImage(wxSize(_data.width, _data.height), _data.raw);
 			img.Rescale(64, 64);
-			//delete[] _data.raw;
 			m_image = wxBitmap(img);
 
 			m_use = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_USE_TEXTURE, "Use this texture", wxPoint(0, 68));
+		}
+
+
+		TextureWidget::~TextureWidget() {
+			delete[] m_data.raw;
 		}
 
 
