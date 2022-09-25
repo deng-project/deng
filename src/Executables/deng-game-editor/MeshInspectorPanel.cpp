@@ -28,11 +28,6 @@ namespace DENG {
 		}
 
 
-		TextureWidget::~TextureWidget() {
-			delete[] m_data.raw;
-		}
-
-
 		void TextureWidget::_OnPaint(wxPaintEvent& _evt) {
 			wxClientDC dc(this);
 			dc.DrawBitmap(m_image, wxPoint(0, 0), true);
@@ -59,7 +54,7 @@ namespace DENG {
 		{
 			m_sizer = new wxBoxSizer(wxVERTICAL);
 			m_selected = new wxStaticText(this, wxID_ANY, "Selected " + std::to_string(m_picked_counter) + " textures");
-			m_grid = new wxGridSizer(2, wxSize(96, 96));
+			m_grid = new wxGridSizer(4, wxSize(96, 96));
 			m_ok = new wxButton(this, ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_OK, "OK");
 
 			m_sizer->Add(m_selected, 0, wxALIGN_CENTER);

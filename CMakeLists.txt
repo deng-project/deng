@@ -10,7 +10,8 @@ project(deng LANGUAGES CXX C)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(BUILD_TESTS "Build DENG testing applications" ON)
+option(DENG_BUILD_TESTS "Build DENG testing applications" ON)
+option(DENG_USE_LIBDAS_GIT "Use git version of libdas instead of the release version (requires more bandwidth)" ON)
 
 
 # Set appropriate compiler flags

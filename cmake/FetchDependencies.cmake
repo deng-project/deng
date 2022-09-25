@@ -38,12 +38,17 @@ GitClone(https://github.com/ocornut/imgui 8cbd391f096b9314a08670052cc0025cbcadb2
 GitClone(https://git.dengproject.org/deng/trs-headers 898e58a49f8f8f76dc3b07407b879cb6836ddc93 ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs trs)
 GitClone(https://git.dengproject.org/deng/minimal-ascii-reader f5d9b5d0d04da1063e2fab2fd124f6558c37de2c ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar mar)
 GitClone(https://git.dengproject.org/deng/nekowin 44c7267a109f867c5f556fcbcedb66aa07cb890f ${CMAKE_CURRENT_SOURCE_DIR}/deps/nekowin nekowin)
-DownloadAndExtract(
-	https://git.dengproject.org/deng/libdas/archive/v1.0.0.tar.gz
-	4ad0be627a9c626300e8be51812178dccf826fd8ea9dcfe12f0744f880980828
-	libdas-v1.0.0.tar.gz
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas
-)
+
+if(NOT DENG_USE_LIBDAS_GIT)
+	DownloadAndExtract(
+		https://git.dengproject.org/deng/libdas/archive/v1.0.0.tar.gz
+		4ad0be627a9c626300e8be51812178dccf826fd8ea9dcfe12f0744f880980828
+		libdas-v1.0.0.tar.gz
+		${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas
+	)
+else()
+	GitClone(https://git.dengproject.org/deng/libdas 52947247fb976a33ad06fbd64ceef2541d51aa69 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
+endif()
 
 target_include_directories(das-static
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include

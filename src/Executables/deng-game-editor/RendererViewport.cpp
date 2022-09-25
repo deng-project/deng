@@ -58,6 +58,7 @@ namespace DENG {
 #else
 #error "Consider implementing DENG::RendererConfig::xlib_dpy and DENG::RendererConfig::xlib_win values"
 #endif
+					m_rend_type = RENDERER_TYPE_VULKAN;
 					rs->SetPrimary(RENDERER_TYPE_VULKAN);
 					mp_renderer = new VulkanRenderer(m_config);
 					break;
@@ -67,6 +68,7 @@ namespace DENG {
 					mp_opengl_loader->CreateContext(GetHWND());
 					mp_opengl_loader->MakeCurrent();
 					Window::LoadOpenGLFunctions();
+					m_rend_type = RENDERER_TYPE_OPENGL;
 
 					rs->SetPrimary(RENDERER_TYPE_OPENGL);
 					mp_renderer = new OpenGLRenderer(m_config);
@@ -84,7 +86,10 @@ namespace DENG {
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
 				m_input.FlushReleased();
-				_SwapBuffers();
+				
+				if(m_rend_type == RENDERER_TYPE_OPENGL)
+					_SwapBuffers();
+
 				mp_renderer->RenderFrame();
 
 				m_end_time = std::chrono::high_resolution_clock::now();
@@ -112,7 +117,10 @@ namespace DENG {
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
 				m_input.FlushReleased();
-				_SwapBuffers();
+
+				if(m_rend_type == RENDERER_TYPE_OPENGL)
+					_SwapBuffers();
+
 				mp_renderer->RenderFrame();
 				_ev.RequestMore();
 

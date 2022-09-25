@@ -34,7 +34,6 @@ namespace DENG {
 
 			public:
 				TextureWidget(wxWindow* _parent, MeshLoader *_mesh, RawTextureData &_data, uint32_t _id);
-				~TextureWidget();
 		};
 
 

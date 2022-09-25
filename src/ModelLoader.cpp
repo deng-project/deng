@@ -140,6 +140,7 @@ namespace DENG {
             m_scene_loaders.emplace_back(this, m_renderer, m_parser, scene, m_buffer_offsets, offset, m_animations, m_framebuffer_id);
         }
 
+        m_parser.DeleteBuffers();
         SetAttachedBit(true);
     }
 
