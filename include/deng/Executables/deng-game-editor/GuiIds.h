@@ -99,6 +99,13 @@ namespace DENG {
 			ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_OK,
 			/** End of mesh inspector panel **/
 
+			/** Mesh generator dialog **/
+			ID_CUBE_GENERATOR_DIALOG_MIN,
+			ID_CUBE_GENERATOR_DIALOG_MAX,
+			ID_CUBE_GENERATOR_DIALOG_USE_NORMALS,
+			ID_CUBE_GENERATOR_DIALOG_OK,
+			/** End of mesh generator dialog **/
+
 			/** Toolbar stuff **/
 			ID_TOOLBAR_RUN,
 		};

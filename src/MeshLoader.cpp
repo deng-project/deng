@@ -87,6 +87,7 @@ namespace DENG {
             if(!i) {
                 attr_desc.normal = (prim.vertex_normal_buffer_id != UINT32_MAX);
                 attr_desc.tangent = (prim.vertex_tangent_buffer_id != UINT32_MAX);
+                attr_desc.index = (prim.index_buffer_id != UINT32_MAX);
                 attr_desc.texture_count = prim.texture_count;
                 attr_desc.color_mul_count = prim.color_mul_count;
                 attr_desc.joint_set_count = prim.joint_set_count;
@@ -103,6 +104,7 @@ namespace DENG {
                 MeshPrimitiveAttributeDescriptor cattr_desc;
                 cattr_desc.normal = (prim.vertex_normal_buffer_id != UINT32_MAX);
                 cattr_desc.tangent = (prim.vertex_tangent_buffer_id != UINT32_MAX);
+                cattr_desc.index = (prim.index_buffer_id != UINT32_MAX);
                 cattr_desc.texture_count = prim.texture_count;
                 cattr_desc.color_mul_count = prim.color_mul_count;
                 cattr_desc.joint_set_count = prim.joint_set_count;
@@ -161,8 +163,12 @@ namespace DENG {
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
             mesh.commands.emplace_back();
             const Libdas::DasMeshPrimitive &prim = mp_parser->AccessMeshPrimitive(m_mesh.primitives[i]);
-            uint32_t abs = m_mesh_buffer_offsets[prim.index_buffer_id] + prim.index_buffer_offset;
-            mesh.commands.back().indices_offset = abs;
+            
+            uint32_t abs = 0;
+            if (prim.index_buffer_id != UINT32_MAX) {
+                abs = m_mesh_buffer_offsets[prim.index_buffer_id] + prim.index_buffer_offset;
+                mesh.commands.back().indices_offset = abs;
+            }
             mesh.commands.back().draw_count = prim.indices_count;
             mesh.commands.back().attribute_offsets.reserve(3 + prim.texture_count + prim.color_mul_count + prim.joint_set_count * 2);
             abs = m_mesh_buffer_offsets[prim.vertex_buffer_id] + prim.vertex_buffer_offset;

@@ -47,7 +47,7 @@ if(NOT DENG_USE_LIBDAS_GIT)
 		${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas
 	)
 else()
-	GitClone(https://git.dengproject.org/deng/libdas 52947247fb976a33ad06fbd64ceef2541d51aa69 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
+	GitClone(https://git.dengproject.org/deng/libdas 85a2f46e927439953e1853629c3b412e2377e5f1 ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas libdas)
 endif()
 
 target_include_directories(das-static

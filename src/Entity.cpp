@@ -17,12 +17,12 @@ namespace DENG {
 		m_name(std::move(_ent.m_name)),
 		m_type(_ent.m_type) ,
 		m_registry_id(_ent.m_registry_id),
-		m_is_moved(_ent.m_is_moved),
 		m_is_attached(_ent.m_is_attached)
 	{
 		Registry* reg = Registry::GetInstance();
 		reg->Replace(m_registry_id, this);
 		m_is_moved = true;
+		_ent.m_is_moved = true;
 	}
 
 	Entity::~Entity() {

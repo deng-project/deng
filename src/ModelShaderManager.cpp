@@ -18,6 +18,7 @@ namespace DENG {
         ShaderModule module;
         module.enable_depth_testing = true;
         module.enable_blend = true;
+        module.enable_indexing = _mesh_attr_desc.index;
         uint32_t binding_id = 0;
 
         // push some uniform data layouts
@@ -131,6 +132,7 @@ namespace DENG {
         MeshPrimitiveAttributeDescriptor attr_desc;
         attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
         attr_desc.tangent = (_prim.vertex_tangent_buffer_id != UINT32_MAX);
+        attr_desc.index = (_prim.index_buffer_id != UINT32_MAX);
         attr_desc.texture_count = _prim.texture_count;
         attr_desc.color_mul_count = _prim.color_mul_count;
         attr_desc.joint_set_count = _prim.joint_set_count;

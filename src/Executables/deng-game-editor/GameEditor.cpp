@@ -29,7 +29,7 @@ namespace DENG {
 			// add::mesh
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_SPHERE, GameEditor::_OnSphereMeshClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_CUBE, GameEditor::_OnCubeMeshClick)
-			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_CONE, GameEditor::_OnConeMeshClick)
+			// EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_CONE, GameEditor::_OnConeMeshClick)
 
 			// add::light
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_LIGHT_DIRECTIONAL_LIGHT, GameEditor::_OnDirectionalLightClick)
@@ -323,19 +323,27 @@ namespace DENG {
 		}
 
 
+		void GameEditor::_OnCubeMeshClick(wxCommandEvent& _ev) {
+			CubeGeneratorDialog dialog(this);
+			if (dialog.ShowModal() == wxID_OK) {
+				CubeGenerator gen = dialog.ConstructCube();
+				m_model_loaders.push_back(std::move(gen.ToModelLoader(nullptr, *m_viewport->GetRenderer(), m_camera->GetId(), "cube.das", "Cube")));
+				Registry* reg = Registry::GetInstance();
+				reg->AttachEntities();
+				_AppendModelToHierarchy();
+				m_viewport->GetRenderer()->LoadShaders();
+			}
+		}
+
+
 		void GameEditor::_OnSphereMeshClick(wxCommandEvent& _ev) {
 
 		}
 
 
-		void GameEditor::_OnCubeMeshClick(wxCommandEvent& _ev) {
+		//void GameEditor::_OnConeMeshClick(wxCommandEvent& _ev) {
 
-		}
-
-
-		void GameEditor::_OnConeMeshClick(wxCommandEvent& _ev) {
-
-		}
+		//}
 
 
 		void GameEditor::_OnDirectionalLightClick(wxCommandEvent& _ev) {

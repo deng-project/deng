@@ -162,7 +162,6 @@ namespace DENG {
                 m_is_bound = true;
                 it->second->Update();
                 const uint32_t ani_joint = it->second->GetAnimationChannel().joint_id;
-                TRS::Matrix4<float> ani_mat;
 
                 switch(it->second->GetAnimationTarget()) {
                     case LIBDAS_ANIMATION_TARGET_TRANSLATION:

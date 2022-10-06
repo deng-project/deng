@@ -17,6 +17,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/BaseTypes.h
     include/deng/BufferAlignment.h
     include/deng/Camera3D.h
+	include/deng/CubeGenerator.h
     include/deng/EditorCamera.h
 	include/deng/Entity.h
     include/deng/ErrorDefinitions.h
@@ -70,6 +71,7 @@ set(DENG_COMPLETE_SOURCES
     deps/imgui/imgui_widgets.cpp
     src/AnimationSampler.cpp
     src/Camera3D.cpp
+	src/CubeGenerator.cpp
     src/EditorCamera.cpp
 	src/Entity.cpp
     src/FilePicker.cpp

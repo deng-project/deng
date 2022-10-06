@@ -27,6 +27,7 @@
     #include "deng/Executables/deng-game-editor/EditorCameraController.h"
     #include "deng/Executables/deng-game-editor/TreeItemWrappers.h"
     #include "deng/Executables/deng-game-editor/InspectorPanel.h"
+    #include "deng/Executables/deng-game-editor/MeshGeneratorDialog.h"
 #else
     // forward declarations
     class RendererViewport;
@@ -90,9 +91,9 @@ namespace DENG {
                 void _OnNodeClick(wxCommandEvent& _ev);
                 
                 // add::mesh
-                void _OnSphereMeshClick(wxCommandEvent& _ev);
                 void _OnCubeMeshClick(wxCommandEvent& _ev);
-                void _OnConeMeshClick(wxCommandEvent& _ev);
+                void _OnSphereMeshClick(wxCommandEvent& _ev);
+                //void _OnConeMeshClick(wxCommandEvent& _ev);
 
                 // add::light
                 void _OnDirectionalLightClick(wxCommandEvent& _ev);

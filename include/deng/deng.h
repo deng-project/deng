@@ -82,6 +82,10 @@
 // python scripting
 #include "deng/PythonScriptExecutor.h"
 
+// generators
+#include "deng/CubeGenerator.h"
+//#include "deng/SphereGenerator.h"
+
 // registries
 #include "deng/InputRegistry.h"
 #include "deng/Registry.h"

@@ -64,6 +64,7 @@ namespace DENG {
         const bool pos = true;
         bool normal = false;
         bool tangent = false;
+        bool index = false;
         uint32_t texture_count = 0;
         uint32_t color_mul_count = 0;
         uint32_t joint_set_count = 0;
@@ -73,6 +74,8 @@ namespace DENG {
         inline bool operator==(const MeshPrimitiveAttributeDescriptor &_m1) const {
             return _m1.pos == pos &&
                    _m1.normal == normal &&
+                   _m1.tangent == tangent &&
+                   _m1.index == index &&
                    _m1.texture_count == texture_count &&
                    _m1.color_mul_count == color_mul_count &&
                    _m1.joint_set_count == joint_set_count &&
