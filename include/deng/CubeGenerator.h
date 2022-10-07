@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: CubeGenerator.h - Cube generator class headers
+// file: CubeGenerator.h - Cube generator class header
 // author: Karl-Mihkel Ott
 
 #ifndef CUBE_GENERATOR_H
@@ -19,6 +19,7 @@
 	#include <Windows.h>
 #endif
 
+	// trs
 	#include "trs/Points.h"
 	#include "trs/Vector.h"	
 	#include "trs/Matrix.h"

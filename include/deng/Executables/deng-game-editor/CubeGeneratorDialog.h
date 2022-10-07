@@ -1,12 +1,12 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: MeshGeneratorDialog.h - Mesh generation gui dialog class header
+// file: CubeGeneratorDialog.h - Cube generation gui dialog class header
 // author: Karl-Mihkel Ott
 
-#ifndef MESH_GENERATOR_DIALOG_H
-#define MESH_GENERATOR_DIALOG_H
+#ifndef CUBE_GENERATOR_DIALOG_H
+#define CUBE_GENERATOR_DIALOG_H
 
-#ifdef MESH_GENERATOR_DIALOG_CPP
+#ifdef CUBE_GENERATOR_DIALOG_CPP
 	#include <wx/wx.h>
 	#include <wx/valnum.h>
 

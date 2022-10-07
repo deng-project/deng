@@ -96,6 +96,8 @@ namespace DENG {
 	}
 
 	ModelLoader CubeGenerator::ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_file_name, const std::string &_mesh_name) {
+		// NOTE: There is a bug regarding the buffer deletion after the cube is successfully loaded from cached file
+		// See DasParser.cpp:195
 		const std::string* p_name = nullptr;
 		if (_mesh_name == "")
 			p_name = &m_cube_name;
@@ -128,7 +130,7 @@ namespace DENG {
 			Libdas::DasScene scene;
 			scene.name = (*p_name) + " scene";
 			scene.node_count = 1;
-			scene.nodes = new uint32_t;
+			scene.nodes = new uint32_t[1];
 			*scene.nodes = 0;
 			writer.WriteScene(scene);
 
@@ -143,7 +145,7 @@ namespace DENG {
 			Libdas::DasMesh mesh;
 			mesh.name = (*p_name);
 			mesh.primitive_count = 1;
-			mesh.primitives = new uint32_t;
+			mesh.primitives = new uint32_t[1];
 			*mesh.primitives = 0;
 			writer.WriteMesh(mesh);
 

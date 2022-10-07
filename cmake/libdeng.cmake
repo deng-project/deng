@@ -50,6 +50,7 @@ set(DENG_COMPLETE_HEADERS
 	include/deng/ScriptableEntity.h
     include/deng/ShaderDefinitions.h
     include/deng/SkeletonLoader.h
+	include/deng/SphereGenerator.h
     include/deng/ThirdPersonCamera.h
     include/deng/Version.h
     include/deng/VulkanDescriptorAllocator.h
@@ -97,6 +98,7 @@ set(DENG_COMPLETE_SOURCES
     src/SceneLoader.cpp
     src/ShaderDefinitions.cpp
     src/SkeletonLoader.cpp
+	src/SphereGenerator.cpp
     src/ThirdPersonCamera.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp

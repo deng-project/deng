@@ -1,10 +1,10 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: MeshGeneratorDialog.h - Mesh generator gui dialog class implementation
+// file: CubeGeneratorDialog.cpp - Cube generator gui dialog class implementation
 // author: Karl-Mihkel Ott
 
-#define MESH_GENERATOR_DIALOG_CPP
-#include "deng/Executables/deng-game-editor/MeshGeneratorDialog.h"
+#define CUBE_GENERATOR_DIALOG_CPP
+#include "deng/Executables/deng-game-editor/CubeGeneratorDialog.h"
 
 namespace DENG {
 	namespace Editor {
@@ -53,6 +53,7 @@ namespace DENG {
 
 		void CubeGeneratorDialog::_OnUseNormalsCheck(wxCommandEvent& _evt) {
 			m_use_normals_bit = _evt.IsChecked();
+			_evt.Skip();
 		}
 
 		void CubeGeneratorDialog::_OnOkClick(wxCommandEvent& _evt) {

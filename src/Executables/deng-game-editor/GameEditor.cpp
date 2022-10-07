@@ -327,7 +327,7 @@ namespace DENG {
 			CubeGeneratorDialog dialog(this);
 			if (dialog.ShowModal() == wxID_OK) {
 				CubeGenerator gen = dialog.ConstructCube();
-				m_model_loaders.push_back(std::move(gen.ToModelLoader(nullptr, *m_viewport->GetRenderer(), m_camera->GetId(), "cube.das", "Cube")));
+				m_model_loaders.emplace_back(std::move(gen.ToModelLoader(nullptr, *m_viewport->GetRenderer(), m_camera->GetId(), "cube.das", "Cube")));
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				_AppendModelToHierarchy();
@@ -337,7 +337,15 @@ namespace DENG {
 
 
 		void GameEditor::_OnSphereMeshClick(wxCommandEvent& _ev) {
-
+			SphereGeneratorDialog dialog(this);
+			if (dialog.ShowModal() == wxID_OK) {
+				SphereGenerator gen = std::move(dialog.ConstructSphere());
+				m_model_loaders.emplace_back(std::move(gen.ToModelLoader(nullptr, *m_viewport->GetRenderer(), m_camera->GetId(), "sphere.das", "Sphere")));
+				Registry* reg = Registry::GetInstance();
+				reg->AttachEntities();
+				_AppendModelToHierarchy();
+				m_viewport->GetRenderer()->LoadShaders();
+			}
 		}
 
 

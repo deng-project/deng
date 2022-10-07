@@ -84,7 +84,7 @@
 
 // generators
 #include "deng/CubeGenerator.h"
-//#include "deng/SphereGenerator.h"
+#include "deng/SphereGenerator.h"
 
 // registries
 #include "deng/InputRegistry.h"

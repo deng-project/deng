@@ -106,6 +106,12 @@ namespace DENG {
 			ID_CUBE_GENERATOR_DIALOG_OK,
 			/** End of mesh generator dialog **/
 
+			/** Sphere generator dialog **/
+			ID_SPHERE_GENERATOR_DIALOG_RADIUS,
+			ID_SPHERE_GENERATOR_DIALOG_SUBDIVIDE,
+			ID_SPHERE_GENERATOR_DIALOG_OK,
+			/** End of sphere generator dialog **/
+
 			/** Toolbar stuff **/
 			ID_TOOLBAR_RUN,
 		};

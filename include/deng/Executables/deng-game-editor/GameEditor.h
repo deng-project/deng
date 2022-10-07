@@ -27,7 +27,8 @@
     #include "deng/Executables/deng-game-editor/EditorCameraController.h"
     #include "deng/Executables/deng-game-editor/TreeItemWrappers.h"
     #include "deng/Executables/deng-game-editor/InspectorPanel.h"
-    #include "deng/Executables/deng-game-editor/MeshGeneratorDialog.h"
+    #include "deng/Executables/deng-game-editor/CubeGeneratorDialog.h"
+    #include "deng/Executables/deng-game-editor/SphereGeneratorDialog.h"
 #else
     // forward declarations
     class RendererViewport;
