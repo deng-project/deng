@@ -18,19 +18,20 @@ namespace DENG {
 		}
 
 		// subdivide into more sphere looking mesh
+
+		m_vertices.reserve(m_vertices.size() * (size_t) std::pow(2., (double) _subdiv));
+		m_indices.reserve(m_indices.size() * (size_t) std::pow(4., (double) _subdiv));
 		for (uint32_t i = 0; i < _subdiv; i++)
 			_SubDivide(_radius);
 	}
 
 
 	void SphereGenerator::_SubDivide(float _diameter) {
-		std::vector<TRS::Vector3<float>> new_vertices;
-		new_vertices.reserve(m_vertices.size() * 2);
+		const size_t old_size = m_indices.size();
+		std::unordered_map<TRS::Vector3<float>, uint32_t, Libdas::Hash<TRS::Vector3<float>>> redundancy_map;
+		redundancy_map.reserve(m_vertices.size());
 
-		std::vector<TRS::Point3D<uint32_t>> new_indices;
-		new_indices.reserve(m_indices.size() * 4);
-		
-		for (size_t i = 0; i < m_indices.size(); i++) {
+		for (size_t i = 0; i < old_size; i++) {
 			// edges: v1 -> v2; v1 -> v3; v2 -> v3
 			auto v1 = (m_vertices[m_indices[i].x] + m_vertices[m_indices[i].y]) / 2.f;
 			auto v2 = (m_vertices[m_indices[i].x] + m_vertices[m_indices[i].z]) / 2.f;
@@ -43,24 +44,44 @@ namespace DENG {
 			v3.Normalise();
 			v3 *= _diameter;
 
-			uint32_t max = static_cast<uint32_t>(new_vertices.size());
-			new_vertices.push_back(m_vertices[m_indices[i].x]);
-			new_vertices.push_back(m_vertices[m_indices[i].y]);
-			new_vertices.push_back(m_vertices[m_indices[i].z]);
+			// v1 already exists
+			uint32_t ix = 0, iy = 0, iz = 0;
+			if (redundancy_map.find(v1) != redundancy_map.end()) {
+				ix = redundancy_map[v1];
+			} else {
+				m_vertices.push_back(v1);
+				ix = static_cast<uint32_t>(m_vertices.size() - 1);
+				redundancy_map[v1] = ix;
+			}
 
-			new_vertices.push_back(v1);
-			new_vertices.push_back(v2);
-			new_vertices.push_back(v3);
-			
-			// how do i know which vertex is which?
-			new_indices.emplace_back(max, max + 3, max + 4);
-			new_indices.emplace_back(max + 3, max + 4, max + 5);
-			new_indices.emplace_back(max + 4, max + 5, max + 2);
-			new_indices.emplace_back(max + 3, max + 1, max + 5);
+			// v2 already exists
+			if (redundancy_map.find(v2) != redundancy_map.end()) {
+				iy = redundancy_map[v2];
+			} else {
+				m_vertices.push_back(v2);
+				iy = static_cast<uint32_t>(m_vertices.size() - 1);
+				redundancy_map[v2] = iy;
+			}
+
+			// v3 already exists
+			if (redundancy_map.find(v3) != redundancy_map.end()) {
+				iz = redundancy_map[v3];
+			} else {
+				m_vertices.push_back(v3);
+				iz = static_cast<uint32_t>(m_vertices.size() - 1);
+				redundancy_map[v3] = iz;
+			}
+
+			const uint32_t oy = m_indices[i].y;
+			const uint32_t oz = m_indices[i].z;
+			m_indices[i].y = ix;
+			m_indices[i].z = iy;
+
+			m_indices.emplace_back(iz, iy, ix);
+			m_indices.emplace_back(iy, iz, oz);
+			m_indices.emplace_back(ix, oy, iz);
 		}
-
-		m_vertices = std::move(new_vertices);
-		m_indices = std::move(new_indices);
+		std::cout << "Sphere generation successful" << std::endl;
 	}
 
 

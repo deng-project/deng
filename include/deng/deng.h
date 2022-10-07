@@ -43,6 +43,7 @@
 
 // third party (libdas)
 #include "das/Api.h"
+#include "das/Hash.h"
 #include "das/ErrorHandlers.h"
 #include "das/Algorithm.h"
 #include "das/DasStructures.h"
