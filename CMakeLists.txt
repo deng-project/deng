@@ -76,7 +76,7 @@ include(cmake/TextureDump.cmake)
 
 
 # Non-experimental tests
-if(BUILD_TESTS)
+if(DENG_BUILD_TESTS)
     message(STATUS "Adding test build configurations")
     include(cmake/tests/TriangleApp.cmake)
 	include(cmake/tests/ImGuiTest.cmake)
@@ -84,6 +84,7 @@ if(BUILD_TESTS)
     include(cmake/tests/FilePickerTest.cmake)
     include(cmake/tests/MultiFramebuffer.cmake)
     include(cmake/tests/Grid3DTest.cmake)
+	include(cmake/tests/ODETest.cmake)
 
     if(EXPERIMENTAL_BUILD_CUBIC_SPLINE_TESTS)
         include(cmake/tests/CubicsInterp.cmake)

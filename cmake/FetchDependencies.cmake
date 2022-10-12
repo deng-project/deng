@@ -101,12 +101,12 @@ if(WIN32)
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}
     )
 
-    #DownloadAndExtract(
-        #https://sdks.dengproject.org/win32/ode-${ODE_VERSION}_win32-x86_64.zip
-        #F16A85523615A08B0D4897D9BE30846DC55862506B88935796EF37942AD04D60
-        #ode-${ODE_VERSION}_win32-x86_64.zip
-        #${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/ode-${ODE_VERSION}
-    #)
+    DownloadAndExtract(
+        https://sdks.dengproject.org/win32/ode-${ODE_VERSION}_win32-x86_64.zip
+        3E5B60D7DA6C80C7971E96C4B33B6C4A69E28A607C0FA2CC93AC64C5D923E04E
+        ode-${ODE_VERSION}_win32-x86_64.zip
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/ode-${ODE_VERSION}
+    )
 
     DownloadAndExtract(
         https://sdks.dengproject.org/win32/wxWidgets-3.2.0_win32-x86_64.zip
