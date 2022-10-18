@@ -144,7 +144,7 @@ namespace DENG {
 
         module.enable_blend = true;
         module.enable_depth_testing = true;
-        module.enable_texture_mapping = false;
+        module.enable_2d_textures = false;
         module.enable_scissor = false;
         module.enable_indexing = false;
         module.prim_mode = PRIMITIVE_MODE_LINES;

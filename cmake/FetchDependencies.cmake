@@ -41,9 +41,9 @@ GitClone(https://git.dengproject.org/deng/nekowin 44c7267a109f867c5f556fcbcedb66
 
 if(NOT DENG_USE_LIBDAS_GIT)
 	DownloadAndExtract(
-		https://git.dengproject.org/deng/libdas/archive/v1.0.0.tar.gz
-		4ad0be627a9c626300e8be51812178dccf826fd8ea9dcfe12f0744f880980828
-		libdas-v1.0.0.tar.gz
+		https://git.dengproject.org/deng/libdas/archive/1.0.1.tar.gz
+		8E614D829094E3A2E46F5B4FC8EF3E5E5E9F2F1B38FFE3EAD0112F28ABA6CC28
+		libdas-1.0.1.tar.gz
 		${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas
 	)
 else()

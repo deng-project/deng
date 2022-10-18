@@ -205,6 +205,20 @@ namespace DENG {
         m_vulkan_texture_handles[_name] = texture_data;
     }
 
+    
+    void VulkanRenderer::PushCubemapFromFiles(
+        const std::string& _name, 
+        const std::string& _right, 
+        const std::string& _left, 
+        const std::string& _top, 
+        const std::string& _bottom, 
+        const std::string& _back, 
+        const std::string& _front
+    ) {
+
+    }
+
+
 
     void VulkanRenderer::GetTexturePointer(const std::string& _name, RawTextureData &_out_data) {
         auto texture = m_vulkan_texture_handles.find(_name);

@@ -37,7 +37,8 @@ namespace DENG {
 		ENTITY_TYPE_ANIMATION_SAMPLER,
 		ENTITY_TYPE_SCRIPT,
 		ENTITY_TYPE_MESH,
-		ENTITY_TYPE_GRID_MESH
+		ENTITY_TYPE_GRID_MESH,
+		ENTITY_TYPE_SKYBOX
 	};
 
 	class DENG_API Entity {
@@ -46,6 +47,7 @@ namespace DENG {
 			std::string m_name;
 			const EntityType m_type;
 			uint32_t m_registry_id = UINT32_MAX;
+			bool m_is_active = false;
 			bool m_is_moved = false;
 			bool m_is_attached = false;
 

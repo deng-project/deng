@@ -410,7 +410,7 @@ namespace DENG {
 
                             glBindBufferRange(GL_UNIFORM_BUFFER, binding, m_buffer_data.ubo_buffer, offset, size);
                             glErrorCheck("glBindBufferRange");
-                        } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && module.enable_texture_mapping) {
+                        } else if(ubo->usage == UNIFORM_USAGE_PER_SHADER && module.enable_2d_textures) {
                             for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
                                 const GLuint tex_id = m_textures.find(*tex_it)->second.texture;
                                 glActiveTexture(GL_TEXTURE0 + binding);
@@ -418,6 +418,12 @@ namespace DENG {
                                 glBindTexture(GL_TEXTURE_2D, tex_id);
                                 glErrorCheck("glBindTexture");
                             }
+                        } else if (ubo->usage == UNIFORM_USAGE_PER_SHADER && module.enable_3d_textures) {
+                            DENG_ASSERT(cmd_it->texture_names.size() == 1);
+                            auto tex = cmd_it->texture_names.begin();
+                            DENG_ASSERT(m_textures.find(*tex) != m_textures.end());
+                            glBindTexture(GL_TEXTURE_CUBE_MAP, m_textures.find(*tex)->second.texture);
+                            glErrorCheck("glBindTexture");
                         }
                     }
 

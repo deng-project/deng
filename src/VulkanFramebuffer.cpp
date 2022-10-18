@@ -294,7 +294,7 @@ namespace DENG {
 
                         // per shader descriptor sets
                         if(shader.ubo_data_layouts.size()) {
-                            if(shader.enable_texture_mapping) {
+                            if(shader.enable_2d_textures) {
                                 std::vector<std::string> names;
                                 std::vector<Vulkan::TextureData> textures;
                                 names.reserve(cmd_it->texture_names.size());

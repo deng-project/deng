@@ -131,7 +131,8 @@ namespace DENG {
         std::string fragment_shader_src;
         Viewport viewport;
         bool enable_custom_viewport = false;
-        bool enable_texture_mapping = false;
+        bool enable_2d_textures = false;
+        bool enable_3d_textures = false;
         bool enable_scissor = false;
         bool enable_depth_testing = false;
         bool enable_stencil_testing = false;

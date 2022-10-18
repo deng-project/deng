@@ -491,7 +491,7 @@ namespace DENG {
         module.attribute_strides.push_back(sizeof(ImDrawVert));
         module.enable_blend = true;
         module.enable_scissor = true;
-        module.enable_texture_mapping = true;
+        module.enable_2d_textures = true;
         module.load_shaders_from_file = false;
 
         module.ubo_data_layouts.reserve(2);

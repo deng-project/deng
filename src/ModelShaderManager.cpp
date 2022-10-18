@@ -103,7 +103,7 @@ namespace DENG {
         }
 
         if(_mesh_attr_desc.texture_count) {
-            module.enable_texture_mapping = true;
+            module.enable_2d_textures = true;
             for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
                 module.ubo_data_layouts.push_back({
                     { binding_id++, 0, 0 },

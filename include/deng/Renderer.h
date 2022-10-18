@@ -129,6 +129,13 @@ namespace DENG {
 
             virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) = 0;
             virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
+            virtual void PushCubemapFromFiles(const std::string &_name, 
+                                              const std::string& _right, 
+                                              const std::string& _left, 
+                                              const std::string& _top, 
+                                              const std::string& _bottom, 
+                                              const std::string& _back, 
+                                              const std::string& _front) = 0;
             virtual void GetTexturePointer(const std::string &_name, RawTextureData &_out_data) = 0;
             virtual void RemoveTexture(const std::string &_name) = 0;
 

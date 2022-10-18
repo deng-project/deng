@@ -216,6 +216,66 @@ namespace DENG {
         m_opengl_textures[_name] = tex;
     }
 
+    void OpenGLRenderer::PushCubemapFromFiles(
+        const std::string& _name,
+        const std::string& _right,
+        const std::string& _left,
+        const std::string& _top,
+        const std::string& _bottom,
+        const std::string& _back,
+        const std::string& _front
+    ) {
+        DENG_ASSERT(m_opengl_textures.find(_name) == m_opengl_textures.end());
+        OpenGL::TextureData data;
+        glGenTextures(1, &data.texture);
+        glErrorCheck("glGenTextures");
+        glBindTexture(GL_TEXTURE_CUBE_MAP, data.texture);
+        glErrorCheck("glBindTexture");
+
+        const std::array<std::string, 6> files = {
+            _right,
+            _left,
+            _top,
+            _bottom,
+            _front,
+            _back
+        };
+
+        // load each texture into cubemap
+        int prev_x = 0, prev_y = 0;
+        for (uint32_t i = 0; i < 6; i++) {
+            Libdas::TextureReader reader(files[i]);
+            int x, y;
+            size_t len;
+            char* data = reader.GetRawBuffer(x, y, len);
+            
+            if (x > prev_x)
+                prev_x = x;
+            if (y > prev_y)
+                prev_y = y;
+
+            if (!data) {
+                throw std::runtime_error("Cubemap texture loading failed with file '" + files[i] + "'");
+            }
+
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        data.width = prev_x;
+        data.height = prev_y;
+        data.depth = 4;
+
+        m_opengl_textures[_name] = data;
+    }
+
+
 
     void OpenGLRenderer::GetTexturePointer(const std::string& _name, RawTextureData& _out_data) {
         auto it = m_opengl_textures.find(_name);

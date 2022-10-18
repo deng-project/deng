@@ -84,6 +84,7 @@ namespace DENG {
             virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;
             virtual void PushTextureFromFile(const std::string &_name, const std::string& _file_name) override;
             virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
+            virtual void PushCubemapFromFiles(const std::string& _name, const std::string& _right, const std::string& _left, const std::string& _top, const std::string& _bottom, const std::string& _back, const std::string& _front) override;
             virtual void GetTexturePointer(const std::string& _name, RawTextureData& _out_data) override;
             virtual void RemoveTexture(const std::string &_name) override;
 
