@@ -24,6 +24,7 @@ namespace DENG {
 			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_STL, GameEditor::_OnSTLImportClick)
 
 			// add
+			EVT_MENU(ID_EDITOR_MENUBAR_ADD_SKYBOX, GameEditor::_OnSkyboxClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_NODE, GameEditor::_OnNodeClick)
 
 			// add::mesh
@@ -82,6 +83,7 @@ namespace DENG {
 			m_menubar->Append(file, "&File");
 
 			wxMenu* add = new wxMenu;
+			add->Append(ID_EDITOR_MENUBAR_ADD_SKYBOX, wxT("&Skybox"), "Add a new skybox to the scene");
 			add->Append(ID_EDITOR_MENUBAR_ADD_NODE, wxT("&Node"), "Add a new node to the scene");
 			wxMenu* mesh = new wxMenu;
 			mesh->Append(ID_EDITOR_MENUBAR_ADD_MESH_SPHERE, wxT("&Sphere"), "Add a sphere to currently selected node");
@@ -115,7 +117,7 @@ namespace DENG {
 		void GameEditor::_CreateEditorLayout() {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
 			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxDefaultSize, wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
-			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
+			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::OPENGL);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(200, 150), wxNO_BORDER | wxTE_MULTILINE);
 			
 			_SetupViewport();
@@ -315,6 +317,12 @@ namespace DENG {
 		void GameEditor::_OnSTLImportClick(wxCommandEvent& _ev) {
 			wxMessageBox("GLTF is not yet supported", "Error", wxICON_ERROR | wxOK, this);
 			_ev.Skip();
+		}
+
+		
+		void GameEditor::_OnSkyboxClick(wxCommandEvent& _ev) {
+			SkyboxGeneratorDialog dialog(this);
+			dialog.ShowModal();
 		}
 
 

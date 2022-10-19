@@ -75,7 +75,7 @@ namespace DENG {
 
         // load missing texture
         int x, y, size;
-        const char *tex = GetMissingTexture(x, y, size);
+        const char *tex = GetMissingTextureRGBA(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, tex, x, y, 4);
 
         // create main framebuffer instance

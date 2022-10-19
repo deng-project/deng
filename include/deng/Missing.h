@@ -7,13 +7,15 @@
 #define MISSING_H
 
 #ifdef MISSING_CPP
+    #include "deng/Api.h"
     #include <cstdint>
 #endif
 
 #define MISSING_TEXTURE_NAME    "__none__"
 
 namespace DENG {
-    const char *GetMissingTexture(int &_x, int &_y, int &_size);
+    DENG_API const char *GetMissingTextureRGBA(int &_x, int &_y, int &_size);
+    DENG_API const char* GetMissingTextureRGB(int& _x, int& _y, int& _size);
 }
 
 #endif

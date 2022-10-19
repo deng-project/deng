@@ -58,6 +58,7 @@
 #include "deng/ErrorDefinitions.h"
 #include "deng/ShaderDefinitions.h"
 #include "deng/ProjectDataManager.h"
+#include "deng/Missing.h"
 
 // renderers
 #include "deng/RenderState.h"
@@ -79,6 +80,7 @@
 #include "deng/NodeLoader.h"
 #include "deng/SceneLoader.h"
 #include "deng/ModelLoader.h"
+#include "deng/Skybox.h"
 
 // python scripting
 #include "deng/PythonScriptExecutor.h"

@@ -60,7 +60,7 @@ namespace DENG {
 
         // push missing texture 
         int x, y, size;
-        const char *data = GetMissingTexture(x, y, size);
+        const char *data = GetMissingTextureRGBA(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
     }
 

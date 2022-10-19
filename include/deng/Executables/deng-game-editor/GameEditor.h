@@ -29,6 +29,7 @@
     #include "deng/Executables/deng-game-editor/InspectorPanel.h"
     #include "deng/Executables/deng-game-editor/CubeGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/SphereGeneratorDialog.h"
+    #include "deng/Executables/deng-game-editor/SkyboxGeneratorDialog.h"
 #else
     // forward declarations
     class RendererViewport;
@@ -89,6 +90,7 @@ namespace DENG {
                 void _OnSTLImportClick(wxCommandEvent& _ev);
 
                 // add
+                void _OnSkyboxClick(wxCommandEvent& _ev);
                 void _OnNodeClick(wxCommandEvent& _ev);
                 
                 // add::mesh

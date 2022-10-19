@@ -14,6 +14,7 @@
     #include <variant>
     #include <vulkan/vulkan.h>
 
+    #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/VulkanHelpers.h"
