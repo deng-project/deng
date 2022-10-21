@@ -82,6 +82,11 @@
 #include "deng/ModelLoader.h"
 #include "deng/Skybox.h"
 
+// debug entities
+#ifdef __DEBUG
+	#include "deng/Debug/TriangleTester.h"
+#endif
+
 // python scripting
 #include "deng/PythonScriptExecutor.h"
 

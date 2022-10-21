@@ -117,7 +117,7 @@ class TriangleApp {
             m_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
 
             m_module.load_shaders_from_file = true;
-            m_module.enable_texture_mapping = true;
+            m_module.enable_2d_textures = true;
 
             m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(g_verts), static_cast<uint32_t>(sizeof(g_verts))), 0);
             m_renderer.UpdateVertexDataBuffer(std::make_pair(reinterpret_cast<const char*>(g_indices), static_cast<uint32_t>(sizeof(g_indices))), static_cast<uint32_t>(sizeof(g_verts)));

@@ -41,6 +41,10 @@ namespace DENG {
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_FIRST_PERSON_CAMERA, GameEditor::_OnFirstPersonCameraClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_THIRD_PERSON_CAMERA, GameEditor::_OnThirdPersonCameraClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA, GameEditor::_OnEditorCameraClick)
+
+#ifdef __DEBUG
+			EVT_MENU(ID_EDITOR_MENUBAR_DEBUG_TRIANGLE, GameEditor::_OnDebugTriangleClick)
+#endif
 		wxEND_EVENT_TABLE()
 
 		GameEditor::GameEditor() :
@@ -50,6 +54,11 @@ namespace DENG {
 			_CreateMenubar();
 			CreateStatusBar();
 			_CreateEditorLayout();
+			if (m_viewport->GetBackend() == DXML::Configuration::Backend::OPENGL) {
+				SetTitle("DENG game editor (OpenGL)");
+			} else if (m_viewport->GetBackend() == DXML::Configuration::Backend::VULKAN) {
+				SetTitle("DENG game editor (Vulkan)");
+			}
 			_CreateRuntimeToolbar();
 		}
 
@@ -103,6 +112,12 @@ namespace DENG {
 			camera->Append(ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA, wxT("&Editor camera"), "Add an editor camera to the scene");
 			add->Append(ID_EDITOR_MENUBAR_ADD_CAMERA, wxT("&Camera"), camera, "Add a camera to the scene");
 			m_menubar->Append(add, "&Add");
+
+#ifdef __DEBUG
+			wxMenu* debug = new wxMenu;
+			debug->Append(ID_EDITOR_MENUBAR_DEBUG_TRIANGLE, wxT("&Triangle"));
+			m_menubar->Append(debug, "&Debug");
+#endif
 			SetMenuBar(m_menubar);
 		}
 
@@ -142,14 +157,13 @@ namespace DENG {
 
 			DENG::Renderer* rend = m_viewport->GetRenderer();
 
-			m_camera = new EditorCamera(NULL, "__GameEditor__", *rend, EditorCameraConfiguration());
+			m_camera = new EditorCamera(NULL, "__GameEditor__", *rend);
 			m_grid = new GridGenerator(NULL, "__Grid__", *rend, 50.f, 50.f, 0.4f, 0.4f, m_camera->GetId());
 			m_camera->BindScript<EditorCameraController>(m_viewport);
 
 			Registry* reg = Registry::GetInstance();
 			reg->AttachEntities();
 			rend->LoadShaders();
-			m_viewport->Refresh();
 			m_viewport->Update();
 		}
 
@@ -390,5 +404,23 @@ namespace DENG {
 		void GameEditor::_OnEditorCameraClick(wxCommandEvent& _ev) {
 
 		}
+
+#ifdef __DEBUG
+		void GameEditor::_OnDebugTriangleClick(wxCommandEvent& _ev) {
+			if (!m_triangle) {
+				std::array<TRS::Point2D<float>, 3> vtx = {
+					TRS::Point2D<float>{ -1.f, -1.f },
+					TRS::Point2D<float>{ 0.f, 1.f },
+					TRS::Point2D<float>{ 1.f, -1.f }
+				};
+				m_triangle = new TriangleTester(nullptr, *m_viewport->GetRenderer(), vtx);
+				m_triangle->ChangeColor({ 1.f, 0.f, 0.f, 1.f });
+
+				Registry* reg = Registry::GetInstance();
+				reg->AttachEntities();
+				m_viewport->GetRenderer()->LoadShaders();
+			}
+		}
+#endif
 	}
 }

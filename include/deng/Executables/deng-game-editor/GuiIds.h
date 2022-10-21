@@ -57,6 +57,11 @@ namespace DENG {
 			ID_EDITOR_MENUBAR_ADD_CAMERA_FIRST_PERSON_CAMERA,
 			ID_EDITOR_MENUBAR_ADD_CAMERA_THIRD_PERSON_CAMERA,
 			ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA,
+
+			// debug
+#ifdef __DEBUG
+			ID_EDITOR_MENUBAR_DEBUG_TRIANGLE,
+#endif
 			/** End of menubar elements **/
 
 			/** Hierarchy panel **/

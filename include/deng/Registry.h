@@ -45,6 +45,9 @@
 	#include "deng/EditorCamera.h"
 	#include "deng/FirstPersonCamera.h"
 	#include "deng/GridGenerator.h"
+#ifdef __DEBUG
+	#include "deng/Debug/TriangleTester.h"
+#endif
 	
 	#include "deng/MeshLoader.h"
 	#include "deng/AnimationSampler.h"

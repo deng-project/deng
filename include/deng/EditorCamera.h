@@ -45,13 +45,15 @@ namespace DENG {
         float action_delay = 10;                // ms
         float delta_rotate = PI / 36;           // radians
         float mouse_rotation_delta = 50.0f;     // virtual pixels
-        TRS::Point4D<float> origin = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
 
     class DENG_API EditorCamera : public Camera3D {
         private:
-            EditorCameraConfiguration m_config;
+            float m_zoom_step = 1.f;                // world units
+            float m_action_delay = 10.f;            // ms
+            float m_rotation_step = PI / 36.f;      // radians
+            float m_mouse_rotation_step = 50.f;     // virtual pixels
             TRS::Point3D<float> m_origin = { 0.0f, 0.0f, 0.0f };
 
             // camera TR properties
@@ -68,7 +70,7 @@ namespace DENG {
             void _ConstructViewMatrix();
 
         public:
-            EditorCamera(Entity *_parent, const std::string &_name, Renderer &_rend, EditorCameraConfiguration &_conf);
+            EditorCamera(Entity* _parent, const std::string& _name, Renderer& _rend);
             ~EditorCamera();
 
             void Attach();
@@ -77,12 +79,32 @@ namespace DENG {
             void Rotate(TRS::Vector2<int64_t> _mouse_delta);
             inline void ZoomIn() {
                 if (m_is_enabled)
-                    m_translation.z -= m_config.zoom_step;
+                    m_translation.z -= m_zoom_step;
             }
 
             inline void ZoomOut() {
                 if (m_is_enabled)
-                    m_translation.z += m_config.zoom_step;
+                    m_translation.z += m_zoom_step;
+            }
+
+            inline void SetZoomStep(float _step) {
+                m_zoom_step = _step;
+            }
+
+            inline void SetActionDelay(float _delay) {
+                m_action_delay = _delay;
+            }
+
+            inline void SetRotationStep(float _delta) {
+                m_rotation_step = _delta;
+            }
+
+            inline void SetMouseRotationStep(float _step) {
+                m_mouse_rotation_step = _step;
+            }
+
+            inline void SetOrigin(TRS::Point3D<float> _origin) {
+                m_origin = _origin;
             }
     };
 }

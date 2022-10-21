@@ -60,6 +60,10 @@ namespace DENG {
                 EditorCamera* m_camera = nullptr;
                 GridGenerator* m_grid = nullptr;
 
+#ifdef __DEBUG
+                TriangleTester* m_triangle = nullptr;
+#endif
+
                 ProjectDataManager m_project;
                 std::list<ModelLoader> m_model_loaders;
 
@@ -107,6 +111,11 @@ namespace DENG {
                 void _OnFirstPersonCameraClick(wxCommandEvent& _ev);
                 void _OnThirdPersonCameraClick(wxCommandEvent& _ev);
                 void _OnEditorCameraClick(wxCommandEvent& _ev);
+
+                // debug
+#ifdef __DEBUG
+                void _OnDebugTriangleClick(wxCommandEvent& _ev);
+#endif
 
                 wxDECLARE_EVENT_TABLE();
 

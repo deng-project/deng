@@ -8,9 +8,9 @@
 
 namespace DENG {
 
-    EditorCamera::EditorCamera(Entity* _parent, const std::string& _name, Renderer& _rend, EditorCameraConfiguration& _conf) :
+    EditorCamera::EditorCamera(Entity* _parent, const std::string& _name, Renderer& _rend) :
         Camera3D(_parent, _name, ENTITY_TYPE_EDITOR_CAMERA, _rend),
-        m_translation(0.0f, 0.0f, m_config.zoom_step) {}
+        m_translation(0.0f, 0.0f, m_zoom_step) {}
 
 
     EditorCamera::~EditorCamera() {
@@ -51,6 +51,7 @@ namespace DENG {
         GPUMemoryManager* mem_manager = GPUMemoryManager::GetInstance();
         m_ubo_offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, sizeof(ModelCameraUbo));
         SetAttachedBit(true);
+
         if (_OnAttachFunction)
             _OnAttachFunction(m_script);
     }
@@ -68,6 +69,7 @@ namespace DENG {
     }
 
 
+    // might be omitted in the future
     void EditorCamera::Rotate(TRS::Vector2<int64_t> _mouse_delta) {
         if (m_is_enabled) {
             TRS::Point2D<float> delta_mousef = {
@@ -76,8 +78,8 @@ namespace DENG {
             };
 
             TRS::Point2D<float> rot = {
-                -delta_mousef.y * m_config.delta_rotate / m_config.mouse_rotation_delta,
-                delta_mousef.x * m_config.delta_rotate / m_config.mouse_rotation_delta
+                -delta_mousef.y * m_rotation_step / m_mouse_rotation_step,
+                delta_mousef.x * m_rotation_step / m_mouse_rotation_step
             };
 
             m_rotation += rot;

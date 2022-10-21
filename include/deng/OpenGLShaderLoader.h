@@ -49,7 +49,6 @@ namespace DENG {
                 std::string _ReadShaderSource(const std::string &_file_name);
                 void _CheckCompileStatus(uint32_t _shader_id, const std::string &_shader);
                 void _CheckLinkingStatus(uint32_t _program_id);
-                void _CalculateStride(const ShaderModule &_module);
 
             public:
                 void CompileShaderToProgram(const ShaderModule &_module);

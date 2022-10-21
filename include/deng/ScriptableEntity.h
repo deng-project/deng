@@ -68,7 +68,7 @@ namespace DENG {
 			}
 
 			template<typename T, typename... Types>
-			inline void BindScript(Types... args) {
+			void BindScript(Types... args) {
 				m_script = new T(this, args...);
 				_OnAttachFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnAttach(); };
 				_OnUpdateFunction = [](ScriptComponent *_instance) { ((T*)_instance)->OnUpdate(); };

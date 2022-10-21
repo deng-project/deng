@@ -358,8 +358,6 @@ namespace DENG {
             glErrorCheck("glBindFramebuffer");
             glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
             glErrorCheck("glBindRenderbuffer");
-            glEnable(GL_DEPTH_TEST);
-            glErrorCheck("glEnable");
 
             GLint last_scissor_box[4];
             glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);

@@ -29,7 +29,6 @@ namespace DENG {
 			DXML::Configuration::Backend m_backend;
 			RendererConfig m_config;
 			InputRegistry m_input;
-			RendererType m_rend_type = RENDERER_TYPE_UNKNOWN;
 			Renderer* mp_renderer = nullptr;
 			OpenGLLoader* mp_opengl_loader = nullptr;
 
@@ -83,6 +82,10 @@ namespace DENG {
 
 				inline InputRegistry& GetInputRegistry() {
 					return m_input;
+				}
+
+				inline DXML::Configuration::Backend GetBackend() {
+					return m_backend;
 				}
 		};
 	}

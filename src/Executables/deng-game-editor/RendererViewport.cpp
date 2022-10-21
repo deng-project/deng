@@ -58,7 +58,6 @@ namespace DENG {
 #else
 #error "Consider implementing DENG::RendererConfig::xlib_dpy and DENG::RendererConfig::xlib_win values"
 #endif
-					m_rend_type = RENDERER_TYPE_VULKAN;
 					rs->SetPrimary(RENDERER_TYPE_VULKAN);
 					mp_renderer = new VulkanRenderer(m_config);
 					break;
@@ -68,7 +67,6 @@ namespace DENG {
 					mp_opengl_loader->CreateContext(GetHWND());
 					mp_opengl_loader->MakeCurrent();
 					Window::LoadOpenGLFunctions();
-					m_rend_type = RENDERER_TYPE_OPENGL;
 
 					rs->SetPrimary(RENDERER_TYPE_OPENGL);
 					mp_renderer = new OpenGLRenderer(m_config);
@@ -83,15 +81,16 @@ namespace DENG {
 
 		void RendererViewport::_OnPaint(wxPaintEvent &_ev) {
 			if (mp_renderer) {
+				mp_renderer->ClearFrame();
 				m_beg_time = std::chrono::high_resolution_clock::now();
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
 				m_input.FlushReleased();
 				
-				if(m_rend_type == RENDERER_TYPE_OPENGL)
+				mp_renderer->RenderFrame();
+				if(m_backend == DXML::Configuration::Backend::OPENGL)
 					_SwapBuffers();
 
-				mp_renderer->RenderFrame();
 
 				m_end_time = std::chrono::high_resolution_clock::now();
 				auto fps = 1.0e6f / std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_beg_time).count();
@@ -114,15 +113,16 @@ namespace DENG {
 
 		void RendererViewport::_OnIdle(wxIdleEvent& _ev) {
 			if (mp_renderer) {
+				mp_renderer->ClearFrame();
 				m_beg_time = std::chrono::high_resolution_clock::now();
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
 				m_input.FlushReleased();
 
-				if(m_rend_type == RENDERER_TYPE_OPENGL)
+				mp_renderer->RenderFrame();
+				if(m_backend == DXML::Configuration::Backend::OPENGL)
 					_SwapBuffers();
 
-				mp_renderer->RenderFrame();
 				_ev.RequestMore();
 
 				m_end_time = std::chrono::high_resolution_clock::now();

@@ -113,6 +113,14 @@ set(DENG_COMPLETE_SOURCES
     src/Window.cpp
 )
 
+# Debug sources
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+	list(APPEND DENG_COMPLETE_HEADERS
+		include/deng/Debug/TriangleTester.h)
+	
+	list(APPEND DENG_COMPLETE_SOURCES
+		src/Debug/TriangleTester.cpp)
+endif()
 
 # Library configurations
 add_library(${DENG_COMPLETE_TARGET} SHARED
@@ -134,6 +142,7 @@ target_include_directories(${DENG_COMPLETE_TARGET}
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/dxml/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui
 )
+
 
 # Vulkan sdk includes
 if(WIN32)

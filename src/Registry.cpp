@@ -72,6 +72,16 @@ namespace DENG {
 					break;
 				}
 
+#ifdef __DEBUG
+				case ENTITY_TYPE_TRIANGLE_TESTER:
+				{
+					TriangleTester* tester = (TriangleTester*)m_entities[i];
+					if (!tester->GetAttachedBit())
+						tester->Attach();
+					break;
+				}
+#endif
+
 				case ENTITY_TYPE_GRID_MESH: 
 				{
 					GridGenerator* grid = (GridGenerator*)m_entities[i];
@@ -108,6 +118,7 @@ namespace DENG {
 					break;
 				}
 
+
 				case ENTITY_TYPE_FIRST_PERSON_CAMERA:
 				{
 					FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
@@ -115,6 +126,16 @@ namespace DENG {
 						cam->Update();
 					break;
 				}
+
+#ifdef __DEBUG
+				case ENTITY_TYPE_TRIANGLE_TESTER:
+				{
+					TriangleTester* tester = (TriangleTester*)m_entities[i];
+					if (tester->GetAttachedBit())
+						tester->Update();
+					break;
+				}
+#endif
 
 				case ENTITY_TYPE_GRID_MESH:
 				{

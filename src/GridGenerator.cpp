@@ -12,7 +12,7 @@ namespace DENG {
         Entity *_parent, 
         const std::string &_name,
         Renderer &_rend,
-        float _width, 
+        float _width,
         float _height, 
         float _margin_x, 
         float _margin_y, 
