@@ -31,6 +31,9 @@ namespace DENG {
 			InputRegistry m_input;
 			Renderer* mp_renderer = nullptr;
 			OpenGLLoader* mp_opengl_loader = nullptr;
+#ifdef _WIN32
+			HDC m_dc = nullptr;
+#endif
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time = std::chrono::high_resolution_clock::now();

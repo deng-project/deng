@@ -30,6 +30,8 @@ namespace DENG {
 			Bind(wxEVT_RIGHT_UP, &RendererViewport::_OnMouseRightBtn, this, wxID_ANY);
 			Bind(wxEVT_MOTION, &RendererViewport::_OnMouseMotion, this, wxID_ANY);
 			Bind(wxEVT_MOUSEWHEEL, &RendererViewport::_OnMouseWheel, this, wxID_ANY);
+
+			m_dc = GetDC(GetHWND());
 		}
 
 
@@ -199,7 +201,7 @@ namespace DENG {
 
 		void RendererViewport::_SwapBuffers() {
 #ifdef _WIN32
-			SwapBuffers(GetDC(GetHWND()));
+			SwapBuffers(m_dc);
 #endif
 		}
 	}
