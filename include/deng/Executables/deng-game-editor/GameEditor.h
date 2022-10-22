@@ -59,6 +59,7 @@ namespace DENG {
                 wxMenuBar* m_menubar = nullptr;
                 EditorCamera* m_camera = nullptr;
                 GridGenerator* m_grid = nullptr;
+                Skybox* m_skybox = nullptr;
 
 #ifdef __DEBUG
                 TriangleTester* m_triangle = nullptr;

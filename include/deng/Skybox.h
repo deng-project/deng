@@ -10,6 +10,7 @@
 	#include <string>
 	#include <vector>
 	#include <unordered_map>
+	#include <functional>
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -20,12 +21,16 @@
 	#include "trs/Matrix.h"
 
 	#include "deng/Api.h"
+	#include "deng/BaseTypes.h"
 	#include "deng/Entity.h"
+	#include "deng/ScriptableEntity.h"
 	#include <deng/ErrorDefinitions.h>
 	#include "deng/ModelUniforms.h"
 	#include "deng/ShaderDefinitions.h"
 	#include "deng/Renderer.h"
 	#include "deng/GPUMemoryManager.h"
+	#include "deng/Registry.h"
+	#include "deng/Camera3D.h"
 #endif
 
 namespace DENG {
@@ -39,11 +44,13 @@ namespace DENG {
 			Renderer& m_renderer;
 			uint32_t m_camera_offset = 0;
 			const std::string m_framebuffer;
+			TRS::Vector4<float> m_ubo = { 1.f, 1.f, 1.f, 1.f };
+			uint32_t m_ubo_offset = 0;
 
 		public:
 			Skybox(Entity *_parent, 
 				   Renderer &_rend,
-				   uint32_t _camera_ubo,
+				   uint32_t _camera_id,
 				   const std::string &_right,
 				   const std::string &_left, 
 				   const std::string &_top,
@@ -54,6 +61,10 @@ namespace DENG {
 			Skybox(Skybox&& _sb) = default;
 			Skybox(const Skybox& _sb) = delete;
 			void Attach();
+			void Update();
+			inline void SetScale(float _scale) {
+				m_ubo = { _scale, _scale, _scale, 1.0f };
+			}
 	};
 
 }

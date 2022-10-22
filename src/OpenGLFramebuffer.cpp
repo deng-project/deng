@@ -420,6 +420,8 @@ namespace DENG {
                             DENG_ASSERT(cmd_it->texture_names.size() == 1);
                             auto tex = cmd_it->texture_names.begin();
                             DENG_ASSERT(m_textures.find(*tex) != m_textures.end());
+                            glActiveTexture(GL_TEXTURE0 + binding);
+                            glErrorCheck("glActiveTexture");
                             glBindTexture(GL_TEXTURE_CUBE_MAP, m_textures.find(*tex)->second.texture);
                             glErrorCheck("glBindTexture");
                         }

@@ -249,6 +249,7 @@ namespace DENG {
             size_t len;
             char* data = reader.GetRawBuffer(x, y, len);
             
+            // max
             if (x > prev_x)
                 prev_x = x;
             if (y > prev_y)
@@ -259,7 +260,7 @@ namespace DENG {
             }
 
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                         0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

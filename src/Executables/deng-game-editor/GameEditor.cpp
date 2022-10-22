@@ -336,7 +336,15 @@ namespace DENG {
 		
 		void GameEditor::_OnSkyboxClick(wxCommandEvent& _ev) {
 			SkyboxGeneratorDialog dialog(this);
-			dialog.ShowModal();
+			if (dialog.ShowModal() == wxID_OK) {
+				const auto &tx = dialog.GetTextures();
+				m_skybox = new Skybox(nullptr, *m_viewport->GetRenderer(), m_camera->GetId(),
+									  tx[3], tx[1], tx[0], tx[4], tx[5], tx[2]);
+				Registry* reg = Registry::GetInstance();
+				reg->AttachEntities();
+				m_skybox->SetScale(dialog.GetScale());
+				m_viewport->GetRenderer()->LoadShaders();
+			}
 		}
 
 

@@ -90,6 +90,14 @@ namespace DENG {
 					break;
 				}
 
+				case ENTITY_TYPE_SKYBOX:
+				{
+					Skybox* skybox = (Skybox*)m_entities[i];
+					if (!skybox->GetAttachedBit())
+						skybox->Attach();
+					break;
+				}
+
 				case ENTITY_TYPE_MODEL: 
 				{
 					ModelLoader* model = (ModelLoader*)m_entities[i];
@@ -142,6 +150,14 @@ namespace DENG {
 					GridGenerator* grid = (GridGenerator*)m_entities[i];
 					if (grid->GetAttachedBit())
 						grid->Update();
+					break;
+				}
+
+				case ENTITY_TYPE_SKYBOX:
+				{
+					Skybox* skybox = (Skybox*)m_entities[i];
+					if (skybox->GetAttachedBit())
+						skybox->Update();
 					break;
 				}
 

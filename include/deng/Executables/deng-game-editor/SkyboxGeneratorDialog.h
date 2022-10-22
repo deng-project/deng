@@ -28,36 +28,42 @@ namespace DENG {
 	namespace Editor {
 		
 		class SkyboxGeneratorDialog : public wxDialog {
-			private:
-				wxBoxSizer* m_vertical = nullptr;
-				wxBoxSizer* m_horizontal = nullptr;
-				// default texture ordering is following:
-				//	0 - top
-				//	1 - left
-				//	2 - front
-				//	3 - right
-				//	4 - bottom
-				//	5 - back
-				std::array<wxBitmapButton*, 6> m_bmp_buttons;
-				std::array<std::string, 6> m_files;
+		private:
+			wxBoxSizer* m_vertical = nullptr;
+			wxBoxSizer* m_horizontal = nullptr;
+			// default texture ordering is following:
+			//	0 - top
+			//	1 - left
+			//	2 - front
+			//	3 - right
+			//	4 - bottom
+			//	5 - back
+			std::array<wxBitmapButton*, 6> m_bmp_buttons;
+			std::array<std::string, 6> m_files;
 
-				wxStaticText* m_size_title = nullptr;
-				wxTextCtrl* m_size_ctrl = nullptr;
-				float m_size = 1.0f;
-				wxFloatingPointValidator<float> m_size_validator;
-				wxButton* m_ok = nullptr;
+			wxStaticText* m_size_title = nullptr;
+			wxTextCtrl* m_size_ctrl = nullptr;
+			float m_size = 1.0f;
+			wxFloatingPointValidator<float> m_size_validator;
+			wxButton* m_ok = nullptr;
 
-			private:
-				void _OnTextureClick(wxCommandEvent& _evt);
-				
-				void _OnSizeCtrlValueChange(wxCommandEvent& _evt);
-				void _OnOkClick(wxCommandEvent& _evt);
+		private:
+			void _OnTextureClick(wxCommandEvent& _evt);
 
-				wxDECLARE_EVENT_TABLE();
+			void _OnSizeCtrlValueChange(wxCommandEvent& _evt);
+			void _OnOkClick(wxCommandEvent& _evt);
 
-			public:
-				SkyboxGeneratorDialog(wxWindow *_parent);
-				const std::array<std::string, 6>& GetTextures();
+			wxDECLARE_EVENT_TABLE();
+
+		public:
+			SkyboxGeneratorDialog(wxWindow* _parent);
+			const std::array<std::string, 6>& GetTextures() {
+				return m_files;
+			}
+
+			inline float GetScale() {
+				return m_size;
+			}
 		};
 	}
 }
