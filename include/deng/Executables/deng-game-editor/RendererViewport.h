@@ -18,6 +18,7 @@
 	#include "deng/deng.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoader.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoaderWin32.h"
+	#include "deng/Executables/deng-game-editor/EditorMenubar.h"
 	#include "deng/Executables/deng-game-editor/GameEditor.h"
 #endif
 

@@ -21,6 +21,7 @@
     #include "deng/Executables/deng-game-editor/OpenGLLoader.h"
     #include "deng/Executables/deng-game-editor/RendererViewport.h"
     #include "deng/Executables/deng-game-editor/InspectorPanel.h"
+    #include "deng/Executables/deng-game-editor/EditorMenubar.h"
     #include "deng/Executables/deng-game-editor/GameEditor.h"
     #include "deng/Version.h"
     

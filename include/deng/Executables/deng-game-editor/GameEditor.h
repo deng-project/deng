@@ -30,13 +30,20 @@
     #include "deng/Executables/deng-game-editor/CubeGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/SphereGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/SkyboxGeneratorDialog.h"
+    #include "deng/Executables/deng-game-editor/EditorMenubar.h"
 #else
     // forward declarations
-    class RendererViewport;
-    class InspectorPanel;
-    class EditorCamera;
-    class GridGenerator;
-    class ProjectDataManager;
+    namespace DENG {
+        namespace Editor {
+            class EditorMenubar;
+            class RendererViewport;
+            class InspectorPanel;
+        }
+
+        class EditorCamera;
+        class GridGenerator;
+        class ProjectDataManager;
+    }
 #endif
 
 
@@ -54,9 +61,9 @@ namespace DENG {
                 RendererViewport* m_viewport = nullptr;
                 wxTextCtrl* m_assets = nullptr;
 
+                EditorMenubar* m_menubar = nullptr;
                 InspectorPanel *m_inspector_panel = nullptr;
 
-                wxMenuBar* m_menubar = nullptr;
                 EditorCamera* m_camera = nullptr;
                 GridGenerator* m_grid = nullptr;
                 Skybox* m_skybox = nullptr;
@@ -69,13 +76,11 @@ namespace DENG {
                 std::list<ModelLoader> m_model_loaders;
 
             private:
-                void _CreateMenubar();
                 void _CreateStatusBar();
                 void _CreateRuntimeToolbar();
                 void _CreateEditorLayout();
                 void _SetupViewport();
                 void _RecurseNodesToHierarchy(wxTreeItemId _root_id, NodeLoader &_node);
-                void _AppendModelToHierarchy();
                 void _LoadProject();
 
                 void _OnNewProjectWizardClose(wxCloseEvent& _ev);
@@ -83,45 +88,32 @@ namespace DENG {
                 // tree events
                 void _OnHierarchyItemClick(wxTreeEvent& _ev);
 
-                // file
-                void _OnNewClick(wxCommandEvent& _ev);
-                void _OnOpenClick(wxCommandEvent& _ev);
-                void _OnSaveClick(wxCommandEvent& _ev);
-
-                // file::import
-                void _OnDasImportClick(wxCommandEvent& _ev);
-                void _OnGLTFImportClick(wxCommandEvent& _ev);
-                void _OnWavefrontOBJImportClick(wxCommandEvent& _ev);
-                void _OnSTLImportClick(wxCommandEvent& _ev);
-
-                // add
-                void _OnSkyboxClick(wxCommandEvent& _ev);
-                void _OnNodeClick(wxCommandEvent& _ev);
-                
-                // add::mesh
-                void _OnCubeMeshClick(wxCommandEvent& _ev);
-                void _OnSphereMeshClick(wxCommandEvent& _ev);
-                //void _OnConeMeshClick(wxCommandEvent& _ev);
-
-                // add::light
-                void _OnDirectionalLightClick(wxCommandEvent& _ev);
-                void _OnPointLightClick(wxCommandEvent& _ev);
-                void _OnAmbientLightClick(wxCommandEvent& _ev);
-                
-                // add::camera
-                void _OnFirstPersonCameraClick(wxCommandEvent& _ev);
-                void _OnThirdPersonCameraClick(wxCommandEvent& _ev);
-                void _OnEditorCameraClick(wxCommandEvent& _ev);
-
-                // debug
-#ifdef __DEBUG
-                void _OnDebugTriangleClick(wxCommandEvent& _ev);
-#endif
-
                 wxDECLARE_EVENT_TABLE();
 
             public:
                 GameEditor();
+                void AppendModelToHierarchy();
+
+                inline std::list<ModelLoader>& GetModelLoaders() {
+                    return m_model_loaders;
+                }
+
+                inline EditorCamera* GetCamera() {
+                    return m_camera;
+                }
+
+                inline RendererViewport* GetViewport() {
+                    return m_viewport;
+                }
+
+                inline Skybox* GetSkybox() {
+                    return m_skybox;
+                }
+
+                inline void SetSkybox(Skybox* _skybox) {
+                    m_skybox = _skybox;
+                }
+
                 ~GameEditor();
         };
     }
