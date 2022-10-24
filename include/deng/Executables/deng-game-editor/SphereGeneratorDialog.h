@@ -28,21 +28,24 @@ namespace DENG {
 				wxTextCtrl* m_subdiv_ctrl = nullptr;
 				wxIntegerValidator<uint32_t> m_subdiv_validator;
 
+				wxCheckBox *m_use_normals_box = nullptr;
 				wxButton* m_ok = nullptr;
 
 				float m_radius = 0.5f;
 				uint32_t m_subdiv = 1;
+				bool m_use_normals = false;
 
 			private:
 				void _OnValueChange(wxCommandEvent& _evt);
 				void _OnOkClick(wxCommandEvent& _evt);
+				void _OnUseNormalsChange(wxCommandEvent& _evt);
 
 				wxDECLARE_EVENT_TABLE();
 
 			public:
 				SphereGeneratorDialog(wxWindow *_parent);
 				inline SphereGenerator ConstructSphere() {
-					return SphereGenerator(m_radius, m_subdiv);
+					return SphereGenerator(m_radius, m_subdiv, m_use_normals);
 				}
 		};
 	}

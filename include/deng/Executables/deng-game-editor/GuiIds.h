@@ -116,6 +116,7 @@ namespace DENG {
 			/** Sphere generator dialog **/
 			ID_SPHERE_GENERATOR_DIALOG_RADIUS,
 			ID_SPHERE_GENERATOR_DIALOG_SUBDIVIDE,
+			ID_SPHERE_GENERATOR_DIALOG_USE_NORMALS,
 			ID_SPHERE_GENERATOR_DIALOG_OK,
 			/** End of sphere generator dialog **/
 

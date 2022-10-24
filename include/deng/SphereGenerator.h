@@ -72,6 +72,8 @@ namespace DENG {
 				{z,x,n}, {-z,x, n}, {z,-x,n}, {-z,-x, n}
 			};
 
+			std::vector<TRS::Vector3<float>> m_normals;
+			
 			std::vector<TRS::Point3D<uint32_t>> m_indices = {
 				{ 0,4,1 }, { 0,9,4 }, { 9,5,4 }, { 4,5,8 }, { 4,8,1 },
 				{ 8,10,1 }, { 8,3,10 }, { 5,3,8 }, { 5,2,3 }, { 2,7,3 },
@@ -82,12 +84,14 @@ namespace DENG {
 			static uint32_t m_sphere_count;
 			const std::string m_sphere_name = "Generated sphere " + std::to_string(m_sphere_count);
 
+			bool m_use_normals;
 
 		private:
 			void _SubDivide(float _radius);
+			void _GenerateNormals();
 
 		public:
-			SphereGenerator(float _radius, uint32_t _subdiv);
+			SphereGenerator(float _radius, uint32_t _subdiv, bool _use_normals = false);
 			ModelLoader ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _file_name, const std::string& _mesh_name = "");
 	};
 }

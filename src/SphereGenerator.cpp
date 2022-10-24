@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: SphereGenerator.h - Sphere generator class implementation
+// file: SphereGenerator.cpp - Sphere generator class implementation
 // author: Karl-Mihkel Ott
 
 #define SPHERE_GENERATOR_CPP
@@ -10,7 +10,9 @@ namespace DENG {
 
 	uint32_t SphereGenerator::m_sphere_count = 0;
 
-	SphereGenerator::SphereGenerator(float _radius, uint32_t _subdiv) {
+	SphereGenerator::SphereGenerator(float _radius, uint32_t _subdiv, bool _use_normals) :
+		m_use_normals(_use_normals)
+	{
 		// initial step resize the icosahedron according to the given diameter
 		for (auto it = m_vertices.begin(); it != m_vertices.end(); it++) {
 			it->Normalise();
@@ -18,11 +20,14 @@ namespace DENG {
 		}
 
 		// subdivide into more sphere looking mesh
-
 		m_vertices.reserve(m_vertices.size() * (size_t) std::pow(2., (double) _subdiv));
 		m_indices.reserve(m_indices.size() * (size_t) std::pow(4., (double) _subdiv));
 		for (uint32_t i = 0; i < _subdiv; i++)
 			_SubDivide(_radius);
+
+		if (_use_normals) {
+			_GenerateNormals();
+		}
 	}
 
 
@@ -85,6 +90,30 @@ namespace DENG {
 	}
 
 
+	void SphereGenerator::_GenerateNormals() {
+		std::vector<TRS::Vector3<float>> vertices;
+		vertices.reserve(m_indices.size() * 3);
+		m_normals.reserve(m_indices.size() * 3);
+
+		// populate vectors with preindexed data
+		for (auto it = m_indices.begin(); it != m_indices.end(); it++) {
+			vertices.push_back(m_vertices[it->x]);
+			vertices.push_back(m_vertices[it->y]);
+			vertices.push_back(m_vertices[it->z]);
+
+			// calcuate surface normal
+			TRS::Vector3<float> u = m_vertices[it->y] - m_vertices[it->x];
+			TRS::Vector3<float> v = m_vertices[it->z] - m_vertices[it->x];
+
+			m_normals.emplace_back(TRS::Vector3<float>::Cross(u, v));
+			m_normals.push_back(m_normals.back());
+			m_normals.push_back(m_normals.back());
+		}
+
+		m_vertices = std::move(vertices);
+	}
+
+
 	ModelLoader SphereGenerator::ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _file_name, const std::string& _mesh_name) {
 		const std::string* p_name = nullptr;
 		if (_mesh_name == "")
@@ -102,10 +131,18 @@ namespace DENG {
 			writer.InitialiseFile(props);
 
 			Libdas::DasBuffer buffer;
-			buffer.data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_indices.size() * sizeof(TRS::Point3D<uint32_t>));
-			buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
-			buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_indices.data()), m_indices.size() * sizeof(TRS::Point3D<uint32_t>)));
-			buffer.type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_INDICES;
+
+			if (!m_use_normals) {
+				buffer.data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_indices.size() * sizeof(TRS::Point3D<uint32_t>));
+				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
+				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_indices.data()), m_indices.size() * sizeof(TRS::Point3D<uint32_t>)));
+				buffer.type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_INDICES;
+			} else {
+				buffer.data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_normals.size() * sizeof(TRS::Vector3<float>));
+				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
+				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_normals.data()), m_normals.size() * sizeof(TRS::Vector3<float>)));
+				buffer.type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_VERTEX_NORMAL;
+			}
 			writer.WriteBuffer(buffer);
 
 			Libdas::DasScene scene;
@@ -129,11 +166,18 @@ namespace DENG {
 			writer.WriteMesh(mesh);
 
 			Libdas::DasMeshPrimitive prim;
+			
 			prim.vertex_buffer_id = 0;
 			prim.vertex_buffer_offset = 0;
-			prim.indices_count = static_cast<uint32_t>(m_indices.size() * 3);
-			prim.index_buffer_id = 0;
-			prim.index_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
+			if (!m_use_normals) {
+				prim.indices_count = static_cast<uint32_t>(m_indices.size() * 3);
+				prim.index_buffer_id = 0;
+				prim.index_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
+			} else {
+				prim.indices_count = static_cast<uint32_t>(m_vertices.size());
+				prim.vertex_normal_buffer_id = 0;
+				prim.vertex_normal_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
+			}
 			writer.WriteMeshPrimitive(prim);
 		}
 

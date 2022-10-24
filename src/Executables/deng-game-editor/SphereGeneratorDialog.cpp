@@ -12,6 +12,7 @@ namespace DENG {
 		wxBEGIN_EVENT_TABLE(SphereGeneratorDialog, wxDialog)
 			EVT_TEXT(ID_SPHERE_GENERATOR_DIALOG_RADIUS, SphereGeneratorDialog::_OnValueChange)
 			EVT_TEXT(ID_SPHERE_GENERATOR_DIALOG_SUBDIVIDE, SphereGeneratorDialog::_OnValueChange)
+			EVT_CHECKBOX(ID_SPHERE_GENERATOR_DIALOG_USE_NORMALS, SphereGeneratorDialog::_OnUseNormalsChange)
 			EVT_BUTTON(ID_SPHERE_GENERATOR_DIALOG_OK, SphereGeneratorDialog::_OnOkClick)
 		wxEND_EVENT_TABLE()
 
@@ -32,6 +33,9 @@ namespace DENG {
 			m_subdiv_ctrl = new wxTextCtrl(this, ID_SPHERE_GENERATOR_DIALOG_SUBDIVIDE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, m_subdiv_validator);
 			m_sizer->Add(m_subdiv_ctrl, 0, wxALIGN_LEFT);
 
+			m_use_normals_box = new wxCheckBox(this, ID_SPHERE_GENERATOR_DIALOG_USE_NORMALS, wxT("Use normals"));
+			m_sizer->Add(m_use_normals_box, 0, wxALIGN_LEFT);
+
 			m_ok = new wxButton(this, ID_SPHERE_GENERATOR_DIALOG_OK, "OK");
 			m_sizer->Add(m_ok, 0, wxALIGN_RIGHT, 10);
 			
@@ -45,6 +49,10 @@ namespace DENG {
 			Validate();
 			TransferDataFromWindow();
 			_evt.Skip();
+		}
+
+		void SphereGeneratorDialog::_OnUseNormalsChange(wxCommandEvent& _evt) {
+			m_use_normals = _evt.IsChecked();
 		}
 
 		void SphereGeneratorDialog::_OnOkClick(wxCommandEvent& _evt) {
