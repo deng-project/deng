@@ -41,24 +41,41 @@ namespace DENG {
         }
 
 
-        VkImageViewCreateInfo _GetImageViewInfo(VkImage _img, VkFormat _format, VkImageAspectFlags _flags, uint32_t _mip_l) {
+        VkImageViewCreateInfo _GetImageViewInfo(
+            VkImage _img, 
+            VkFormat _format, 
+            VkImageViewType _type,
+            VkImageAspectFlags _flags, 
+            uint32_t _mip_l, 
+            uint32_t _array_count) 
+        {
             VkImageViewCreateInfo create_info = {};
             create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             create_info.image = _img;
-            create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            create_info.viewType = _type;
             create_info.format = _format;
 
             create_info.subresourceRange.aspectMask = _flags;
             create_info.subresourceRange.baseMipLevel = 0;
             create_info.subresourceRange.levelCount = _mip_l;
             create_info.subresourceRange.baseArrayLayer = 0;
-            create_info.subresourceRange.layerCount = 1;
+            create_info.subresourceRange.layerCount = _array_count;
             return create_info;
         }
 
 
-        VkMemoryRequirements _CreateImage(VkDevice _dev, VkImage &_img, uint32_t _width, uint32_t _height, uint32_t _mip_l, VkFormat _format, 
-                                          VkImageTiling _tiling, VkImageUsageFlags _usage, VkSampleCountFlagBits _sample_c) 
+        VkMemoryRequirements _CreateImage(
+            VkDevice _dev, 
+            VkImage &_img, 
+            uint32_t _width, 
+            uint32_t _height, 
+            uint32_t _mip_l,
+            uint32_t _array_layers,
+            VkFormat _format,
+            VkImageTiling _tiling,
+            VkImageUsageFlags _usage, 
+            VkSampleCountFlagBits _sample_c,
+            VkImageCreateFlags _flags) 
         {
             // Set up image createinfo
             VkImageCreateInfo image_createinfo = {};
@@ -68,13 +85,14 @@ namespace DENG {
             image_createinfo.extent.height = _height;
             image_createinfo.extent.depth = 1;
             image_createinfo.mipLevels = _mip_l;
-            image_createinfo.arrayLayers = 1;
+            image_createinfo.arrayLayers = _array_layers;
             image_createinfo.format = _format;
             image_createinfo.tiling = _tiling;
             image_createinfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             image_createinfo.usage = _usage;
             image_createinfo.samples = _sample_c;
             image_createinfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            image_createinfo.flags = _flags;
 
             // Create image
             if(vkCreateImage(_dev, &image_createinfo, nullptr, &_img) != VK_SUCCESS) 
@@ -88,8 +106,15 @@ namespace DENG {
         }
 
 
-        void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkImageLayout _old, 
-                                    VkImageLayout _new, uint32_t _mip_l) 
+        void _TransitionImageLayout(
+            VkDevice _dev, 
+            VkImage _img, 
+            VkCommandPool _cmd_pool, 
+            VkQueue _graphics_q, 
+            VkImageLayout _old,
+            VkImageLayout _new,
+            uint32_t _mip_l,
+            uint32_t _array_count)
         {
             // Begin recording cmd_buf
             VkCommandBuffer tmp_cmd_buf;
@@ -107,7 +132,7 @@ namespace DENG {
             memory_barrier.subresourceRange.baseMipLevel = 0;
             memory_barrier.subresourceRange.levelCount = _mip_l;
             memory_barrier.subresourceRange.baseArrayLayer = 0;
-            memory_barrier.subresourceRange.layerCount = 1;
+            memory_barrier.subresourceRange.layerCount = _array_count;
 
             // Set up pipeline stage flags
             VkPipelineStageFlags src_stage = 0;
@@ -135,7 +160,16 @@ namespace DENG {
         }
 
 
-        void _CopyBufferToImage(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkBuffer _src, VkImage _dst, uint32_t _width, uint32_t _height) {
+        void _CopyBufferToImage(
+            VkDevice _dev, 
+            VkCommandPool _cmd_pool, 
+            VkQueue _graphics_queue, 
+            VkBuffer _src, 
+            VkImage _dst, 
+            uint32_t _width, 
+            uint32_t _height,
+            uint32_t _array_count) 
+        {
             // Begin recording cmd_buf
             VkCommandBuffer tmp_cmd_buf;
             _BeginCommandBufferSingleCommand(_dev, _cmd_pool, tmp_cmd_buf);
@@ -148,8 +182,8 @@ namespace DENG {
             copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             copy_region.imageSubresource.mipLevel = 0;
             copy_region.imageSubresource.baseArrayLayer = 0;
-            copy_region.imageSubresource.layerCount = 1;
-            copy_region.imageOffset = {0, 0, 0};
+            copy_region.imageSubresource.layerCount = _array_count;
+            copy_region.imageOffset = { 0, 0, 0 };
             copy_region.imageExtent = { _width, _height, 1 };
             
             // Call Vulkan buffer to image copy handler

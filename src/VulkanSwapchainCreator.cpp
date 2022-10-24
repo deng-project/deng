@@ -286,9 +286,19 @@ namespace DENG {
 
         void SwapchainCreator::_CreateSwapchainImageViews() {
             for(uint32_t i = 0; i < static_cast<uint32_t>(m_swapchain_images.size()); i++) {
-                VkImageViewCreateInfo iview_info = _GetImageViewInfo(m_swapchain_images[i].image, m_selected_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+                VkImageViewCreateInfo image_view_info = {};
+                image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                image_view_info.image = m_swapchain_images[i].image;
+                image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                image_view_info.format = m_selected_surface_format.format;
+                
+                image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                image_view_info.subresourceRange.baseMipLevel = 0;
+                image_view_info.subresourceRange.levelCount = 1;
+                image_view_info.subresourceRange.baseArrayLayer = 0;
+                image_view_info.subresourceRange.layerCount = 1;
 
-                if(vkCreateImageView(m_instance_creator.GetDevice(), &iview_info, nullptr, &m_swapchain_images[i].image_view) != VK_SUCCESS)
+                if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &m_swapchain_images[i].image_view) != VK_SUCCESS)
                     VK_SWAPCHAIN_ERR("failed to create image views!");
             }
         }

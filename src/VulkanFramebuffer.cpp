@@ -88,15 +88,35 @@ namespace DENG {
             const VkPhysicalDevice gpu = m_instance_creator.GetPhysicalDevice();
             const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
 
-            VkMemoryRequirements mem_req = Vulkan::_CreateImage(device, m_color_resolve_image, fb_draw.extent.x, fb_draw.extent.y, 1, m_format, 
-                                                                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, m_sample_count);
+            VkMemoryRequirements mem_req = Vulkan::_CreateImage(
+                device, 
+                m_color_resolve_image, 
+                fb_draw.extent.x, 
+                fb_draw.extent.y, 
+                1,
+                1,
+                m_format, 
+                VK_IMAGE_TILING_OPTIMAL, 
+                VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
+                m_sample_count,
+                0);
             Vulkan::_AllocateMemory(device, gpu, mem_req.size, m_color_resolve_image_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
             vkBindImageMemory(device, m_color_resolve_image, m_color_resolve_image_memory, 0);
 
             // create image view
-            VkImageViewCreateInfo img_view_create_info = Vulkan::_GetImageViewInfo(m_color_resolve_image, m_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+            VkImageViewCreateInfo image_view_info = {};
+            image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            image_view_info.image = m_color_resolve_image;
+            image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            image_view_info.format = m_format;
+            
+            image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            image_view_info.subresourceRange.baseMipLevel = 0;
+            image_view_info.subresourceRange.levelCount = 1;
+            image_view_info.subresourceRange.baseArrayLayer = 0;
+            image_view_info.subresourceRange.layerCount = 1;
 
-            if(vkCreateImageView(device, &img_view_create_info, NULL, &m_color_resolve_image_view) != VK_SUCCESS)
+            if(vkCreateImageView(device, &image_view_info, NULL, &m_color_resolve_image_view) != VK_SUCCESS)
                 VK_RES_ERR("failed to create color image view");
         }
 
@@ -106,15 +126,43 @@ namespace DENG {
             const VkPhysicalDevice gpu = m_instance_creator.GetPhysicalDevice();
             const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
 
-            VkMemoryRequirements mem_req = Vulkan::_CreateImage(device, m_depth_image, fb_draw.extent.x, fb_draw.extent.y, 1, VK_FORMAT_D32_SFLOAT, 
-                                                                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, m_sample_count);
+            VkMemoryRequirements mem_req = Vulkan::_CreateImage(
+                device, 
+                m_depth_image, 
+                fb_draw.extent.x, 
+                fb_draw.extent.y, 
+                1,
+                1,
+                VK_FORMAT_D32_SFLOAT, 
+                VK_IMAGE_TILING_OPTIMAL, 
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
+                m_sample_count,
+                0);
+
             Vulkan::_AllocateMemory(device, gpu, mem_req.size, m_depth_image_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
             vkBindImageMemory(device, m_depth_image, m_depth_image_memory, 0);
 
             // create image view
-            VkImageViewCreateInfo img_view_create_info = Vulkan::_GetImageViewInfo(m_depth_image, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+            //VkImageViewCreateInfo img_view_create_info = Vulkan::_GetImageViewInfo(
+                //m_depth_image, 
+                //VK_FORMAT_D32_SFLOAT, 
+                //VK_IMAGE_ASPECT_DEPTH_BIT, 
+                //1, 
+                //1);
+            
+            VkImageViewCreateInfo image_view_info = {};
+            image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            image_view_info.image = m_depth_image;
+            image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            image_view_info.format = VK_FORMAT_D32_SFLOAT;
 
-            if(vkCreateImageView(device, &img_view_create_info, NULL, &m_depth_image_view) != VK_SUCCESS)
+            image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            image_view_info.subresourceRange.baseMipLevel = 0;
+            image_view_info.subresourceRange.levelCount = 1;
+            image_view_info.subresourceRange.baseArrayLayer = 0;
+            image_view_info.subresourceRange.layerCount = 1;
+
+            if(vkCreateImageView(device, &image_view_info, NULL, &m_depth_image_view) != VK_SUCCESS)
                 VK_RES_ERR("failed to create color image view");
         }
 
@@ -294,7 +342,7 @@ namespace DENG {
 
                         // per shader descriptor sets
                         if(shader.ubo_data_layouts.size()) {
-                            if(shader.enable_2d_textures) {
+                            if(shader.enable_2d_textures || shader.enable_3d_textures) {
                                 std::vector<std::string> names;
                                 std::vector<Vulkan::TextureData> textures;
                                 names.reserve(cmd_it->texture_names.size());

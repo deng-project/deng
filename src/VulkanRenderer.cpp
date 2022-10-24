@@ -103,13 +103,22 @@ namespace DENG {
 
         // create a new framebuffer image
         Vulkan::TextureData texture = {};
-        VkMemoryRequirements mem_req = Vulkan::_CreateImage(m_instance_creator.GetDevice(), texture.image, _fb.extent.x, _fb.extent.y, 1, VK_FORMAT_R8G8B8A8_UNORM, 
-                                                            VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT);
+        VkMemoryRequirements mem_req = Vulkan::_CreateImage(
+            m_instance_creator.GetDevice(), 
+            texture.image, 
+            _fb.extent.x, 
+            _fb.extent.y, 
+            1,
+            1,
+            VK_FORMAT_R8G8B8A8_UNORM, 
+            VK_IMAGE_TILING_OPTIMAL, 
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT,
+            0);
         Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, texture.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         vkBindImageMemory(m_instance_creator.GetDevice(), texture.image, texture.memory, 0);
 
         // create image view
-        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
         if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &texture.image_view) != VK_SUCCESS)
             VK_RES_ERR("Failed to create a framebuffer image for framebuffer draw " + _fb.image_name);
 
@@ -152,8 +161,7 @@ namespace DENG {
     void VulkanRenderer::PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
         // check if texture with specified key already exists
         if(m_vulkan_texture_handles.find(_name) != m_vulkan_texture_handles.end()) {
-            std::cerr << "Texture with name " << _name << " already exists" << std::endl;
-            DENG_ASSERT(false);
+            throw std::runtime_error("Texture with name " + _name + " already exists");
             return;
         }
         
@@ -175,28 +183,65 @@ namespace DENG {
         texture_data.height = _height;
         texture_data.depth = _bit_depth;
 
-        uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
-        mem_req = Vulkan::_CreateImage(m_instance_creator.GetDevice(), texture_data.image, _width, _height, mip_levels, VK_FORMAT_R8G8B8A8_UNORM, 
-                                       VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-                                       VK_SAMPLE_COUNT_1_BIT);
+        uint32_t mip_levels = CALC_MIPLVL(_width, _height);
+        mem_req = Vulkan::_CreateImage(
+            m_instance_creator.GetDevice(), 
+            texture_data.image, 
+            _width, 
+            _height,
+            mip_levels,
+            1,
+            VK_FORMAT_R8G8B8A8_UNORM, 
+            VK_IMAGE_TILING_OPTIMAL, 
+            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            VK_SAMPLE_COUNT_1_BIT,
+            0);
 
-        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, texture_data.memory, mem_req.memoryTypeBits, 
-                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Vulkan::_AllocateMemory(
+            m_instance_creator.GetDevice(), 
+            m_instance_creator.GetPhysicalDevice(), 
+            mem_req.size, 
+            texture_data.memory, 
+            mem_req.memoryTypeBits, 
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         vkBindImageMemory(m_instance_creator.GetDevice(), texture_data.image, texture_data.memory, 0);
-        Vulkan::_TransitionImageLayout(m_instance_creator.GetDevice(), texture_data.image, pool, m_instance_creator.GetGraphicsQueue(),
-                                       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
+        Vulkan::_TransitionImageLayout(
+            m_instance_creator.GetDevice(), 
+            texture_data.image, 
+            pool, 
+            m_instance_creator.GetGraphicsQueue(),
+            VK_IMAGE_LAYOUT_UNDEFINED, 
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+            mip_levels,
+            1);
 
-        Vulkan::_CopyBufferToImage(m_instance_creator.GetDevice(), pool, m_instance_creator.GetGraphicsQueue(), staging_buffer, texture_data.image, _width, _height);
+        Vulkan::_CopyBufferToImage(
+            m_instance_creator.GetDevice(), 
+            pool, 
+            m_instance_creator.GetGraphicsQueue(), 
+            staging_buffer, 
+            texture_data.image, 
+            _width, 
+            _height,
+            1);
 
         vkDestroyBuffer(m_instance_creator.GetDevice(), staging_buffer, nullptr);
         vkFreeMemory(m_instance_creator.GetDevice(), staging_memory, nullptr);
-
-        // Either create mipmaps or transition the layout
-        _CreateMipmaps(texture_data.image, _width, _height, mip_levels);
+        _CreateMipmaps(texture_data.image, _width, _height, mip_levels, 1);
 
         // create texture image view
-        VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(texture_data.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+        VkImageViewCreateInfo image_view_info = {};
+        image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        image_view_info.image = texture_data.image;
+        image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+        
+        image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        image_view_info.subresourceRange.baseArrayLayer = 0;
+        image_view_info.subresourceRange.layerCount = 1;
+        image_view_info.subresourceRange.baseMipLevel = 0;
+        image_view_info.subresourceRange.levelCount = mip_levels;
         if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &texture_data.image_view) != VK_SUCCESS)
             VK_RES_ERR("Failed to create texture image view");
 
@@ -207,17 +252,145 @@ namespace DENG {
 
     
     void VulkanRenderer::PushCubemapFromFiles(
-        const std::string& _name, 
-        const std::string& _right, 
-        const std::string& _left, 
-        const std::string& _top, 
-        const std::string& _bottom, 
-        const std::string& _back, 
+        const std::string& _name,
+        const std::string& _right,
+        const std::string& _left,
+        const std::string& _top,
+        const std::string& _bottom,
+        const std::string& _back,
         const std::string& _front
     ) {
+        // texture already exists
+        if (m_vulkan_texture_handles.find(_name) != m_vulkan_texture_handles.end()) {
+            throw std::runtime_error("Texture with name " + _name + " already exists");
+            return;
+        }
 
+        std::array<Libdas::TextureReader, 6> readers = {
+            std::move(Libdas::TextureReader(_right)),
+            std::move(Libdas::TextureReader(_left)),
+            std::move(Libdas::TextureReader(_top)),
+            std::move(Libdas::TextureReader(_bottom)),
+            std::move(Libdas::TextureReader(_front)),
+            std::move(Libdas::TextureReader(_back))
+        };
+
+        // count the total buffer size
+        VkDeviceSize size = 0;
+        const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
+
+        int base_x = 0, base_y = 0;
+        for (auto it = readers.begin(); it != readers.end(); it++) {
+            int x, y;
+            size_t len;
+            it->GetRawBuffer(x, y, len);
+
+            if (base_x && base_y && (x != base_x || y != base_y)) {
+                throw std::runtime_error("Invalid cubemap image dimentions " + std::to_string(x) + "x" + std::to_string(y));
+                return;
+            } else if (!base_x && !base_y) {
+                base_x = x;
+                base_y = y;
+            }
+            size += static_cast<VkDeviceSize>(len);
+        }
+
+        // allocate the staging buffer
+        VkBuffer staging_buffer = VK_NULL_HANDLE;
+        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
+        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, staging_memory,
+                                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        
+        DENG_ASSERT(vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0) == VK_SUCCESS);
+
+        VkDeviceSize offset = 0;
+        for (auto it = readers.begin(); it != readers.end(); it++) {
+            int x, y;
+            size_t len;
+            const char* data = it->GetRawBuffer(x, y, len);
+            Vulkan::_CopyToBufferMemory(m_instance_creator.GetDevice(), len, data, staging_memory, offset);
+            offset += len;
+        }
+        
+        Vulkan::TextureData texture;
+        texture.width = base_x;
+        texture.height = base_y;
+        texture.depth = 4;
+
+        mem_req = Vulkan::_CreateImage(
+            m_instance_creator.GetDevice(),
+            texture.image,
+            base_x,
+            base_y,
+            1,
+            6,
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            VK_SAMPLE_COUNT_1_BIT,
+            VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+
+        Vulkan::_AllocateMemory(
+            m_instance_creator.GetDevice(), 
+            m_instance_creator.GetPhysicalDevice(), 
+            mem_req.size, 
+            texture.memory,
+            mem_req.memoryTypeBits, 
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        DENG_ASSERT(vkBindImageMemory(m_instance_creator.GetDevice(), texture.image, texture.memory, 0) == VK_SUCCESS);
+        Vulkan::_TransitionImageLayout(
+            m_instance_creator.GetDevice(),
+            texture.image,
+            pool,
+            m_instance_creator.GetGraphicsQueue(),
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1,
+            6);
+
+        Vulkan::_CopyBufferToImage(
+            m_instance_creator.GetDevice(),
+            pool,
+            m_instance_creator.GetGraphicsQueue(),
+            staging_buffer,
+            texture.image,
+            static_cast<uint32_t>(base_x),
+            static_cast<uint32_t>(base_y),
+            6);
+
+        Vulkan::_TransitionImageLayout(
+            m_instance_creator.GetDevice(),
+            texture.image,
+            pool,
+            m_instance_creator.GetGraphicsQueue(),
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            1,
+            6);
+
+        // destroy staging buffers
+        vkDestroyBuffer(m_instance_creator.GetDevice(), staging_buffer, nullptr);
+        vkFreeMemory(m_instance_creator.GetDevice(), staging_memory, nullptr);
+        
+        VkImageViewCreateInfo image_view_info = {};
+        image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        image_view_info.image = texture.image;
+        image_view_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+        image_view_info.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+
+        image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        image_view_info.subresourceRange.baseMipLevel = 0;
+        image_view_info.subresourceRange.levelCount = 1;
+        image_view_info.subresourceRange.baseArrayLayer = 0;
+        image_view_info.subresourceRange.layerCount = 6;
+        DENG_ASSERT(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &texture.image_view) == VK_SUCCESS);
+        _CreateTextureSampler(texture, 1);
+
+        m_vulkan_texture_handles[_name] = texture;
     }
-
 
 
     void VulkanRenderer::GetTexturePointer(const std::string& _name, RawTextureData &_out_data) {
@@ -444,7 +617,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels) {
+    void VulkanRenderer::_CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels, uint32_t _array_count) {
         const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
         // OPTIONAL:
         // check if image format supports linear blitting
@@ -462,7 +635,8 @@ namespace DENG {
         mem_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         mem_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         mem_barrier.subresourceRange.baseArrayLayer = 0;
-        mem_barrier.subresourceRange.layerCount = 1;
+        mem_barrier.subresourceRange.layerCount = _array_count;
+        mem_barrier.subresourceRange.baseMipLevel = 0;
         mem_barrier.subresourceRange.levelCount = 1;
 
         for(uint32_t i = 1; i < _mip_levels; i++) {
@@ -481,7 +655,7 @@ namespace DENG {
             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.srcSubresource.baseArrayLayer = 0;
             blit.srcSubresource.mipLevel = i - 1;
-            blit.srcSubresource.layerCount = 1;
+            blit.srcSubresource.layerCount = _array_count;
             blit.dstOffsets[0] = { 0, 0, 0 };
             blit.dstOffsets[1] = { 
                 static_cast<int32_t>(_width) > 1 ? static_cast<int32_t>(_width) / 2 : 1, 
@@ -491,7 +665,7 @@ namespace DENG {
             blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.dstSubresource.baseArrayLayer = 0;
             blit.dstSubresource.mipLevel = i;
-            blit.dstSubresource.layerCount = 1;
+            blit.dstSubresource.layerCount = _array_count;
 
             vkCmdBlitImage(cmd_buf, _img, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, _img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 

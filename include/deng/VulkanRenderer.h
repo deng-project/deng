@@ -48,6 +48,8 @@
     #include "deng/Renderer.h"
     #include "deng/RenderState.h"
     #include "deng/GPUMemoryManager.h"
+
+    #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
 #endif
 
 #include "deng/VulkanHelpers.h"
@@ -98,7 +100,7 @@ namespace DENG {
             void _AllocateUniformBuffer();
             void _ReallocateBufferResources(VkDeviceSize _old_size);
             void _ReallocateUniformBuffer();
-            void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels);
+            void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels, uint32_t _array_count);
             void _CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels);
             void _Resize();
 

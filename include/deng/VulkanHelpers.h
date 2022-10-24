@@ -49,23 +49,70 @@ namespace DENG {
         
 
         void _AllocateMemory(VkDevice _device, VkPhysicalDevice _gpu, VkDeviceSize _size, VkDeviceMemory &_mem, uint32_t _type, VkMemoryPropertyFlags _props);
-        VkImageViewCreateInfo _GetImageViewInfo(VkImage _img, VkFormat _format, VkImageAspectFlags _flags, uint32_t _mip_l);
+        VkImageViewCreateInfo _GetImageViewInfo(
+            VkImage _img, 
+            VkFormat _format,
+            VkImageViewType _type,
+            VkImageAspectFlags _flags, 
+            uint32_t _mip_l, 
+            uint32_t _array_count);
         VkMemoryRequirements _CreateBuffer(VkDevice _dev, VkDeviceSize _size, VkBufferUsageFlags _flags, VkBuffer &_buffer);
-        VkMemoryRequirements _CreateImage(VkDevice _dev, VkImage &_img, uint32_t _width, uint32_t _height, uint32_t _mip_l, VkFormat _format, 
-                                          VkImageTiling _tiling, VkImageUsageFlags _usage, VkSampleCountFlagBits _sample_c);
-        void _TransitionImageLayout(VkDevice _dev, VkImage _img, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkImageLayout _old, 
-                                    VkImageLayout _new, uint32_t _mip_l);
-        void _CopyBufferToImage(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkBuffer _src, VkImage _dst, uint32_t _width, uint32_t _height);
+        VkMemoryRequirements _CreateImage(
+            VkDevice _dev, 
+            VkImage &_img, 
+            uint32_t _width, 
+            uint32_t _height, 
+            uint32_t _mip_l,
+            uint32_t _array_layers,
+            VkFormat _format, 
+            VkImageTiling _tiling, 
+            VkImageUsageFlags _usage,
+            VkSampleCountFlagBits _sample_c,
+            VkImageCreateFlags _flags);
+
+        void _TransitionImageLayout(
+            VkDevice _dev, 
+            VkImage _img, 
+            VkCommandPool _cmd_pool, 
+            VkQueue _graphics_q, 
+            VkImageLayout _old, 
+            VkImageLayout _new, 
+            uint32_t _mip_l,
+            uint32_t _array_count);
+
+        void _CopyBufferToImage(
+            VkDevice _dev,
+            VkCommandPool _cmd_pool, 
+            VkQueue _graphics_queue, 
+            VkBuffer _src, 
+            VkImage _dst, 
+            uint32_t _width, 
+            uint32_t _height,
+            uint32_t _array_count);
 
         void _CopyToBufferMemory(VkDevice _dev, VkDeviceSize _size, const void *_src, VkDeviceMemory _dst, VkDeviceSize _offset);
         // using malloc
         void *_CopyToDeviceMemory(VkDevice _dev, VkDeviceSize _size, VkDeviceMemory _src, VkDeviceSize _offset);
-        void _CopyBufferToBuffer(VkDevice _dev, VkCommandPool _cmd_pool, VkQueue _graphics_q, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size, 
-                                 VkDeviceSize _src_offset, VkDeviceSize _dst_offset);
+        void _CopyBufferToBuffer(
+            VkDevice _dev, 
+            VkCommandPool _cmd_pool, 
+            VkQueue _graphics_q, 
+            VkBuffer _src, 
+            VkBuffer _dst, 
+            VkDeviceSize _size, 
+            VkDeviceSize _src_offset, 
+            VkDeviceSize _dst_offset);
         
         // Similar _CopyToBufferMemory(), except using staging buffer for intermediate data storage
-        void _ImplicitDataToBufferCopy(VkDevice _dev, VkPhysicalDevice _gpu, VkCommandPool _cmd_pool, VkQueue _graphics_queue, VkDeviceSize _size, const void *_src, 
-                                       VkBuffer _dst, VkDeviceSize _offset);
+        void _ImplicitDataToBufferCopy(
+            VkDevice _dev, 
+            VkPhysicalDevice _gpu, 
+            VkCommandPool _cmd_pool, 
+            VkQueue _graphics_queue, 
+            VkDeviceSize _size, 
+            const void *_src, 
+            VkBuffer _dst, 
+            VkDeviceSize _offset);
 
         /////////////////////////////////////////////////////////////
         // ***** Universal temporary commandbuffer recording ***** //
