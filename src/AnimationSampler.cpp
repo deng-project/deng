@@ -13,19 +13,16 @@ namespace DENG {
     AnimationSampler::AnimationSampler(
         Entity *_parent, 
         const std::string &_name, 
-        const Libdas::DasAnimationChannel &_channel, 
-        Libdas::DasParser &_parser
+        const Libdas::DasAnimationChannel &_channel
     ) : 
         Entity(_parent, _name, ENTITY_TYPE_ANIMATION_SAMPLER),
-        m_channel(_channel),
-        m_parser(_parser) {}
+        m_channel(_channel) {}
 
 
     AnimationSampler::AnimationSampler(AnimationSampler&& _as) noexcept :
         Entity(std::move(_as)),
         m_morph_weights(_as.m_morph_weights),
         m_channel(_as.m_channel),
-        m_parser(_as.m_parser),
         m_ubo_offsets(std::move(_as.m_ubo_offsets)),
         m_beg_time(std::move(_as.m_beg_time)),
         m_active_time(std::move(_as.m_active_time)),

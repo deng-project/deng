@@ -114,74 +114,63 @@ namespace DENG {
 	}
 
 
-	ModelLoader SphereGenerator::ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _file_name, const std::string& _mesh_name) {
+	ModelLoader SphereGenerator::ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _mesh_name) {
 		const std::string* p_name = nullptr;
 		if (_mesh_name == "")
 			p_name = &m_sphere_name;
 		else p_name = &_mesh_name;
 
-		{
-			Libdas::DasWriterCore writer(_file_name);
-			
-			Libdas::DasProperties props;
-			props.author = "DENG v" + std::to_string(DENG_VERSION_MAJOR) + '.' + std::to_string(DENG_VERSION_MINOR) + '.' + std::to_string(DENG_VERSION_REVISION);
-			props.default_scene = 0;
-			props.moddate = static_cast<uint64_t>(time(NULL));
-			props.model = "SPHERE";
-			writer.InitialiseFile(props);
+		Libdas::DasModel model;
+		model.props.author = "DENG v" + std::to_string(DENG_VERSION_MAJOR) + '.' + std::to_string(DENG_VERSION_MINOR) + '.' + std::to_string(DENG_VERSION_REVISION);
+		model.props.default_scene = 0;
+		model.props.moddate = static_cast<uint64_t>(time(NULL));
+		model.props.model = *p_name;
 
-			Libdas::DasBuffer buffer;
+		model.buffers.emplace_back();
+		if (!m_use_normals) {
+			model.buffers.back().data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_indices.size() * sizeof(TRS::Point3D<uint32_t>));
+			model.buffers.back().data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
+			model.buffers.back().data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_indices.data()), m_indices.size() * sizeof(TRS::Point3D<uint32_t>)));
+			model.buffers.back().type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_INDICES;
+		} else {
+			model.buffers.back().data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_normals.size() * sizeof(TRS::Vector3<float>));
+			model.buffers.back().data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
+			model.buffers.back().data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_normals.data()), m_normals.size() * sizeof(TRS::Vector3<float>)));
+			model.buffers.back().type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_VERTEX_NORMAL;
+		}
+		model.buffers.back()._free_bit = false;
 
-			if (!m_use_normals) {
-				buffer.data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_indices.size() * sizeof(TRS::Point3D<uint32_t>));
-				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
-				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_indices.data()), m_indices.size() * sizeof(TRS::Point3D<uint32_t>)));
-				buffer.type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_INDICES;
-			} else {
-				buffer.data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>) + m_normals.size() * sizeof(TRS::Vector3<float>));
-				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Vector3<float>)));
-				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_normals.data()), m_normals.size() * sizeof(TRS::Vector3<float>)));
-				buffer.type = LIBDAS_BUFFER_TYPE_VERTEX | LIBDAS_BUFFER_TYPE_VERTEX_NORMAL;
-			}
-			writer.WriteBuffer(buffer);
+		model.scenes.emplace_back();
+		model.scenes.back().name = *p_name + " scene";
+		model.scenes.back().node_count = 1;
+		model.scenes.back().nodes = new uint32_t[1];
+		*model.scenes.back().nodes = 0;
 
-			Libdas::DasScene scene;
-			scene.name = *p_name + " scene";
-			scene.node_count = 1;
-			scene.nodes = new uint32_t[1];
-			*scene.nodes = 0;
-			writer.WriteScene(scene);
+		model.nodes.emplace_back();
+		model.nodes.back().name = *p_name + " node";
+		model.nodes.back().children_count = 0;
+		model.nodes.back().mesh = 0;
 
-			Libdas::DasNode node;
-			node.name = *p_name + " node";
-			node.children_count = 0;
-			node.mesh = 0;
-			writer.WriteNode(node);
+		model.meshes.emplace_back();
+		model.meshes.back().name = *p_name;
+		model.meshes.back().primitive_count = 1;
+		model.meshes.back().primitives = new uint32_t[1];
+		*model.meshes.back().primitives = 0;
 
-			Libdas::DasMesh mesh;
-			mesh.name = *p_name;
-			mesh.primitive_count = 1;
-			mesh.primitives = new uint32_t[1];
-			*mesh.primitives = 0;
-			writer.WriteMesh(mesh);
-
-			Libdas::DasMeshPrimitive prim;
-			
-			prim.vertex_buffer_id = 0;
-			prim.vertex_buffer_offset = 0;
-			if (!m_use_normals) {
-				prim.indices_count = static_cast<uint32_t>(m_indices.size() * 3);
-				prim.index_buffer_id = 0;
-				prim.index_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
-			} else {
-				prim.indices_count = static_cast<uint32_t>(m_vertices.size());
-				prim.vertex_normal_buffer_id = 0;
-				prim.vertex_normal_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
-			}
-			writer.WriteMeshPrimitive(prim);
+		model.mesh_primitives.emplace_back();
+		model.mesh_primitives.back().vertex_buffer_id = 0;
+		model.mesh_primitives.back().vertex_buffer_offset = 0;
+		if (!m_use_normals) {
+			model.mesh_primitives.back().draw_count = static_cast<uint32_t>(m_indices.size() * 3);
+			model.mesh_primitives.back().index_buffer_id = 0;
+			model.mesh_primitives.back().index_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
+		} else {
+			model.mesh_primitives.back().draw_count = static_cast<uint32_t>(m_vertices.size());
+			model.mesh_primitives.back().vertex_normal_buffer_id = 0;
+			model.mesh_primitives.back().vertex_normal_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
 		}
 
-		return ModelLoader(_parent, _file_name, _rend, _camera_id);
+		return ModelLoader(_parent, model, _rend, _camera_id);
 	}
 
 }

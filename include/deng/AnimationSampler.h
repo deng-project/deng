@@ -61,7 +61,6 @@ namespace DENG {
         private:
             std::array<float, MAX_MORPH_TARGETS> m_morph_weights = {};
             const Libdas::DasAnimationChannel &m_channel;
-            Libdas::DasParser &m_parser;
             const std::vector<uint32_t> m_ubo_offsets;
             std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
             std::chrono::time_point<std::chrono::high_resolution_clock> m_active_time = std::chrono::high_resolution_clock::now();
@@ -93,8 +92,7 @@ namespace DENG {
             AnimationSampler(
                 Entity *_parent,
                 const std::string &_name,
-                const Libdas::DasAnimationChannel &_channel, 
-                Libdas::DasParser &_parser
+                const Libdas::DasAnimationChannel &_channel
             );
             AnimationSampler(const AnimationSampler& _as) = delete;
             AnimationSampler(AnimationSampler&& _as) noexcept;

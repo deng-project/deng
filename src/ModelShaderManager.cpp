@@ -122,8 +122,8 @@ namespace DENG {
 
     uint32_t ModelShaderManager::RequestShaderModule(
         Renderer &_rend, 
-        Libdas::DasParser &_parser, 
-        const Libdas::DasMeshPrimitive &_prim, 
+        Libdas::DasModel &_model, 
+        const Libdas::DasMeshPrimitive &_prim,
         uint32_t _camera_offset, 
         uint32_t _skeleton_joint_count,
         const std::string &_framebuffer_id
@@ -139,7 +139,7 @@ namespace DENG {
         attr_desc.skeleton_joint_count = _skeleton_joint_count;
 
         for(uint32_t i = 0; i < _prim.morph_target_count; i++) {
-            const Libdas::DasMorphTarget &morph = _parser.AccessMorphTarget(_prim.morph_targets[i]);
+            const Libdas::DasMorphTarget &morph = _model.morph_targets[_prim.morph_targets[i]];
             attr_desc.morph_targets.emplace_back();
             attr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
             attr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);

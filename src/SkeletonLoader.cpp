@@ -13,12 +13,12 @@ namespace DENG {
     SkeletonLoader::SkeletonLoader(
         Entity *_ent,
         const TRS::Matrix4<float> &_node, 
-        Libdas::DasParser *_p_parser, 
+        Libdas::DasModel *_model, 
         const Libdas::DasSkeleton &_skeleton, 
         std::vector<Animation> &_animations
     ) : 
         Entity(_ent, "", ENTITY_TYPE_SKELETON),
-        mp_parser(_p_parser),
+        mp_model(_model),
         m_skeleton(_skeleton),
         m_node_transform(_node),
         m_inv_node_transform(_node.Inverse())
@@ -66,7 +66,7 @@ namespace DENG {
 
     SkeletonLoader::SkeletonLoader(SkeletonLoader &&_sm) noexcept :
         Entity(std::move(_sm)),
-        mp_parser(_sm.mp_parser),
+        mp_model(_sm.mp_model),
         m_skeleton(_sm.m_skeleton),
         m_node_transform(_sm.m_node_transform),
         m_inv_node_transform(_sm.m_inv_node_transform),
@@ -114,7 +114,7 @@ namespace DENG {
             const std::pair<uint32_t, uint32_t> child = children.front();
             children.pop();
 
-            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(child.first);
+            const Libdas::DasSkeletonJoint &joint = mp_model->joints[child.first];
             const TRS::Matrix4<float> &trs = m_joint_transforms[m_joint_lookup[child.first]];
 
             if(child.second == UINT32_MAX) {
@@ -138,7 +138,7 @@ namespace DENG {
             uint32_t curr_id = children.front();
             children.pop();
 
-            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(curr_id);
+            const Libdas::DasSkeletonJoint &joint = mp_model->joints[curr_id];
             if(m_is_bound) {
                 m_joint_matrices[m_joint_lookup[curr_id]] = m_inv_node_transform * m_joint_world_transforms[m_joint_lookup[curr_id]] * joint.inverse_bind_pos;
             } else {
@@ -185,7 +185,7 @@ namespace DENG {
 
         // update local joint transformations
         for(uint32_t i = 0; i < m_skeleton.joint_count; i++) {
-            const Libdas::DasSkeletonJoint &joint = mp_parser->AccessSkeletonJoint(m_skeleton.joints[i]);
+            const Libdas::DasSkeletonJoint &joint = mp_model->joints[m_skeleton.joints[i]];
             if(m_joint_animated_properties[m_joint_lookup[i]].is_t) {
                 const TRS::Matrix4<float> t = {
                     { 1.0f, 0.0f, 0.0f, m_animated_trs_values[m_joint_lookup[i]].t.first },

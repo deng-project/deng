@@ -60,7 +60,7 @@ namespace DENG {
                 float s;
             };
 
-            Libdas::DasParser *mp_parser;
+            Libdas::DasModel *mp_model;
             const Libdas::DasSkeleton &m_skeleton;
             const TRS::Matrix4<float> m_node_transform;
             const TRS::Matrix4<float> m_inv_node_transform;
@@ -85,7 +85,7 @@ namespace DENG {
             SkeletonLoader(
                 Entity *_ent,
                 const TRS::Matrix4<float> &_node, 
-                Libdas::DasParser *_p_parser, 
+                Libdas::DasModel *_model, 
                 const Libdas::DasSkeleton &_skeleton, 
                 std::vector<Animation> &_animations
             );

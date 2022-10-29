@@ -89,7 +89,7 @@ namespace DENG {
         public:
             static uint32_t RequestShaderModule(
                 Renderer &_rend, 
-                Libdas::DasParser &_parser, 
+                Libdas::DasModel &_parser, 
                 const Libdas::DasMeshPrimitive &_prim, 
                 uint32_t _camera_offset, 
                 uint32_t _skeleton_joint_count,

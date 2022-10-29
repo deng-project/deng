@@ -95,7 +95,7 @@ namespace DENG {
 		}
 	}
 
-	ModelLoader CubeGenerator::ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_file_name, const std::string &_mesh_name) {
+	ModelLoader CubeGenerator::ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_mesh_name) {
 		// NOTE: There is a bug regarding the buffer deletion after the cube is successfully loaded from cached file
 		// See DasParser.cpp:195
 		const std::string* p_name = nullptr;
@@ -103,62 +103,56 @@ namespace DENG {
 			p_name = &m_cube_name;
 		else p_name = &_mesh_name;
 
-		{
-			Libdas::DasWriterCore writer(_file_name);
-			Libdas::DasProperties props;
-			props.author = "DENG v" + std::to_string(DENG_VERSION_MAJOR) + '.' + std::to_string(DENG_VERSION_MINOR) + '.' + std::to_string(DENG_VERSION_REVISION);
-			props.moddate = static_cast<uint64_t>(time(nullptr));
-			props.model = "CUBE";
-			props.default_scene = 0;
-			writer.InitialiseFile(props);
+		Libdas::DasModel model;
+		model.props.author = "DENG v" + std::to_string(DENG_VERSION_MAJOR) + '.' + std::to_string(DENG_VERSION_MINOR) + '.' + std::to_string(DENG_VERSION_REVISION);
+		model.props.moddate = static_cast<uint64_t>(time(nullptr));
+		model.props.model = *p_name;
+		model.props.default_scene = 0;
 
-			// buffer
-			Libdas::DasBuffer buffer;
+		// buffer
+		model.buffers.emplace_back();
+		model.buffers.back().data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Point3D<float>));
+		model.buffers.back().data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Point3D<float>)));
+		model.buffers.back().type = LIBDAS_BUFFER_TYPE_VERTEX;
+		model.buffers.back()._free_bit = false;
 
-			buffer.data_len = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Point3D<float>));
-			buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_vertices.data()), m_vertices.size() * sizeof(TRS::Point3D<float>)));
-			buffer.type = LIBDAS_BUFFER_TYPE_VERTEX;
-
-			if (m_normal) {
-				buffer.data_len += static_cast<uint32_t>(m_normals.size() * sizeof(TRS::Point3D<float>));
-				buffer.data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_normals.data()), m_normals.size() * sizeof(TRS::Point3D<float>)));
-				buffer.type |= LIBDAS_BUFFER_TYPE_VERTEX_NORMAL;
-			}
-			writer.WriteBuffer(buffer);
-
-			// scene
-			Libdas::DasScene scene;
-			scene.name = (*p_name) + " scene";
-			scene.node_count = 1;
-			scene.nodes = new uint32_t[1];
-			*scene.nodes = 0;
-			writer.WriteScene(scene);
-
-			// node
-			Libdas::DasNode node;
-			node.name = (*p_name) + " node";
-			node.children_count = 0;
-			node.mesh = 0;
-			writer.WriteNode(node);
-
-			// mesh
-			Libdas::DasMesh mesh;
-			mesh.name = (*p_name);
-			mesh.primitive_count = 1;
-			mesh.primitives = new uint32_t[1];
-			*mesh.primitives = 0;
-			writer.WriteMesh(mesh);
-
-			// mesh primitive
-			Libdas::DasMeshPrimitive prim;
-			prim.vertex_buffer_id = 0;
-			prim.vertex_buffer_offset = 0;
-			prim.vertex_normal_buffer_id = 0;
-			prim.vertex_normal_buffer_offset = static_cast<uint32_t>(sizeof(TRS::Point3D<float>) * m_vertices.size());
-			prim.indices_count = 36;
-			writer.WriteMeshPrimitive(prim);
+		if (m_normal) {
+			model.buffers.back().data_len += static_cast<uint32_t>(m_normals.size() * sizeof(TRS::Point3D<float>));
+			model.buffers.back().data_ptrs.push_back(std::make_pair(reinterpret_cast<char*>(m_normals.data()), m_normals.size() * sizeof(TRS::Point3D<float>)));
+			model.buffers.back().type |= LIBDAS_BUFFER_TYPE_VERTEX_NORMAL;
 		}
 
-		return ModelLoader(_parent, _file_name, _rend, _camera_id);
+		// scene
+		model.scenes.emplace_back();
+		model.scenes.back().name = (*p_name) + " scene";
+		model.scenes.back().node_count = 1;
+		model.scenes.back().nodes = new uint32_t[1];
+		*model.scenes.back().nodes = 0;
+
+		// node
+		model.nodes.emplace_back();
+		model.nodes.back().name = (*p_name) + " node";
+		model.nodes.back().children_count = 0;
+		model.nodes.back().mesh = 0;
+
+		// mesh
+		model.meshes.emplace_back();
+		model.meshes.back().name = (*p_name);
+		model.meshes.back().primitive_count = 1;
+		model.meshes.back().primitives = new uint32_t[1];
+		*model.meshes.back().primitives = 0;
+
+		// mesh primitive
+		model.mesh_primitives.emplace_back();
+		model.mesh_primitives.back().vertex_buffer_id = 0;
+		model.mesh_primitives.back().vertex_buffer_offset = 0;
+
+		if (m_normal) {
+			model.mesh_primitives.back().vertex_normal_buffer_id = 0;
+			model.mesh_primitives.back().vertex_normal_buffer_offset = static_cast<uint32_t>(sizeof(TRS::Point3D<float>) * m_vertices.size());
+		}
+		model.mesh_primitives.back().draw_count = 36;
+
+		return ModelLoader(_parent, model, _rend, _camera_id);
 	}
 }

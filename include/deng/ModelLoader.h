@@ -69,7 +69,7 @@ namespace DENG {
 
     class DENG_API ModelLoader : public ScriptableEntity {
         private:
-            Libdas::DasParser m_parser;
+            Libdas::DasModel m_model;
             Renderer &m_renderer;
             std::vector<Animation> m_animations;
             std::vector<SceneLoader> m_scene_loaders;
@@ -86,7 +86,7 @@ namespace DENG {
         public:
             ModelLoader(
                 Entity *_parent,
-                const std::string &_file_name, 
+                const Libdas::DasModel &_model, 
                 Renderer &_rend,
                 uint32_t _camera_id,
                 const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME
@@ -110,8 +110,8 @@ namespace DENG {
                 return m_animations;
             }
 
-            inline Libdas::DasParser &GetParser() {
-                return m_parser;
+            inline Libdas::DasModel &GetModel() {
+                return m_model;
             }
     };
 }

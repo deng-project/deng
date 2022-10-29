@@ -88,7 +88,10 @@ namespace DENG {
 			if (dialog.ShowModal() == wxID_OK) {
 				GameEditor* editor = (GameEditor*)GetParent();
 				auto path = dialog.GetPath().ToStdString();
-				editor->GetModelLoaders().emplace_back(nullptr, path, *editor->GetViewport()->GetRenderer(), editor->GetCamera()->GetId());
+				Libdas::DasParser parser(path);
+				parser.Parse();
+
+				editor->GetModelLoaders().emplace_back(nullptr, parser.GetModel(), *editor->GetViewport()->GetRenderer(), editor->GetCamera()->GetId());
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->AppendModelToHierarchy();
@@ -131,7 +134,7 @@ namespace DENG {
 			if (dialog.ShowModal() == wxID_OK) {
 				CubeGenerator gen = dialog.ConstructCube();
 				editor->GetModelLoaders().emplace_back(std::move(gen.ToModelLoader(nullptr, *editor->GetViewport()->GetRenderer(), 
-																 editor->GetCamera()->GetId(), "cube.das", "Cube")));
+																 editor->GetCamera()->GetId())));
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->AppendModelToHierarchy();
@@ -146,7 +149,7 @@ namespace DENG {
 			if (dialog.ShowModal() == wxID_OK) {
 				SphereGenerator gen(std::move(dialog.ConstructSphere()));
 				editor->GetModelLoaders().emplace_back(std::move(gen.ToModelLoader(nullptr, *editor->GetViewport()->GetRenderer(), 
-																 editor->GetCamera()->GetId(), "sphere.das", "Sphere")));
+																 editor->GetCamera()->GetId())));
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->AppendModelToHierarchy();

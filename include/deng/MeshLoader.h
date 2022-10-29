@@ -55,7 +55,7 @@ namespace DENG {
         friend class NodeLoader;
         private:
             uint32_t m_mesh_ref_id = UINT32_MAX;
-            Libdas::DasParser *mp_parser;
+            Libdas::DasModel *mp_model;
             const Libdas::DasMesh &m_mesh;
             Renderer &m_renderer;
             static uint32_t m_mesh_index;
@@ -89,7 +89,7 @@ namespace DENG {
             MeshLoader(
                 Entity *_parent,
                 const Libdas::DasMesh &_mesh, 
-                Libdas::DasParser *_p_parser, 
+                Libdas::DasModel *_model, 
                 Renderer &_renderer, 
                 const std::vector<uint32_t> &_main_buffer_offsets, 
                 uint32_t _camera_offset, 

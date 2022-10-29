@@ -58,7 +58,7 @@ namespace DENG {
             SkeletonLoader *mp_skeleton = nullptr;
             MeshLoader *mp_mesh_loader = nullptr;
             const Libdas::DasNode &m_node;
-            Libdas::DasParser *mp_parser;
+            Libdas::DasModel *mp_model;
 
             std::vector<NodeLoader> m_child_nodes;
             std::vector<uint32_t> m_node_lookup;
@@ -83,14 +83,14 @@ namespace DENG {
             void _CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset);
             void _SearchForBoundAnimationSamplers(std::vector<Animation> &_animations);
             void _UpdateTransformTRS(TRS::Vector3<float> _translation, TRS::Quaternion _rotation, float _scale);
-            void _SetParser(Libdas::DasParser &_parser);
+            void _SetModel(Libdas::DasModel &_model);
  
         public:
             NodeLoader(
                 Entity *_parent,
                 Renderer &_rend, 
                 const Libdas::DasNode &_node, 
-                Libdas::DasParser *_p_parser, 
+                Libdas::DasModel *_p_model, 
                 const std::vector<uint32_t> &_main_buffer_offsets, 
                 uint32_t _camera_offset, 
                 std::vector<Animation> &_animations, 

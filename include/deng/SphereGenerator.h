@@ -92,7 +92,7 @@ namespace DENG {
 
 		public:
 			SphereGenerator(float _radius, uint32_t _subdiv, bool _use_normals = false);
-			ModelLoader ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _file_name, const std::string& _mesh_name = "");
+			ModelLoader ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _mesh_name = "");
 	};
 }
 

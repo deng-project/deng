@@ -59,13 +59,13 @@ namespace DENG {
             // recursive parser setting method
             // meant for ModelLoader class's move constructor
             friend class ModelLoader;
-            void _SetParser(Libdas::DasParser &_parser);
+            void _SetModel(Libdas::DasModel &_model);
 
         public:
             SceneLoader(
                 Entity *_parent,
                 Renderer &_rend,
-                Libdas::DasParser &_parser, 
+                Libdas::DasModel &_model, 
                 const Libdas::DasScene &_scene, 
                 const std::vector<uint32_t> &_main_buffer_offsets, 
                 uint32_t _camera_offset, 

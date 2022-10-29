@@ -69,7 +69,7 @@ namespace DENG {
 
 		public:
 			CubeGenerator(TRS::Point3D<float> _min, TRS::Point3D<float> _max, bool _normals = false);
-			ModelLoader ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_file_name, const std::string &_mesh_name = "");
+			ModelLoader ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_mesh_name = "");
 	};
 }
 

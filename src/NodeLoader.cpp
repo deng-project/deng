@@ -14,7 +14,7 @@ namespace DENG {
         Entity *_parent,
         Renderer &_rend, 
         const Libdas::DasNode &_node, 
-        Libdas::DasParser *_p_parser, 
+        Libdas::DasModel *_model,
         const std::vector<uint32_t> &_main_buffer_offsets, 
         uint32_t _camera_offset, 
         std::vector<Animation> &_animations, 
@@ -24,7 +24,7 @@ namespace DENG {
         Entity(_parent, "", ENTITY_TYPE_NODE),
         m_renderer(_rend),
         m_node(_node),
-        mp_parser(_p_parser),
+        mp_model(_model),
         m_parent_matrix(_parent_matrix),
         m_framebuffer_id(_framebuffer_id)
     {
@@ -51,8 +51,8 @@ namespace DENG {
             // create child nodes
             m_child_nodes.reserve(m_node.children_count);
             for(uint32_t i = 0; i < m_node.children_count; i++) {
-                const Libdas::DasNode &node = mp_parser->AccessNode(m_node.children[i]);
-                m_child_nodes.emplace_back(this, m_renderer, node, mp_parser, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, m_transform);
+                const Libdas::DasNode &node = mp_model->nodes[m_node.children[i]];
+                m_child_nodes.emplace_back(this, m_renderer, node, mp_model, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, m_transform);
             }
         }
 
@@ -67,7 +67,7 @@ namespace DENG {
         mp_skeleton(_node.mp_skeleton),
         mp_mesh_loader(_node.mp_mesh_loader),
         m_node(_node.m_node),
-        mp_parser(_node.mp_parser),
+        mp_model(_node.mp_model),
         m_child_nodes(std::move(_node.m_child_nodes)),
         m_node_lookup(std::move(_node.m_node_lookup)),
         m_animation_samplers(std::move(_node.m_animation_samplers)),
@@ -94,8 +94,8 @@ namespace DENG {
 
     void NodeLoader::_CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset) {
         if(m_node.skeleton != UINT32_MAX) {
-            const Libdas::DasSkeleton &skeleton = mp_parser->AccessSkeleton(m_node.skeleton);
-            mp_skeleton = new SkeletonLoader(this, m_transform, mp_parser, skeleton, _animations);
+            const Libdas::DasSkeleton &skeleton = mp_model->skeletons[m_node.skeleton];
+            mp_skeleton = new SkeletonLoader(this, m_transform, mp_model, skeleton, _animations);
 
             if(m_node.mesh == UINT32_MAX) {
                 WARNME("Unbound skeleton: " + skeleton.name);
@@ -103,12 +103,12 @@ namespace DENG {
         }
 
         if(m_node.mesh != UINT32_MAX) {
-            const Libdas::DasMesh &mesh = mp_parser->AccessMesh(m_node.mesh);
+            const Libdas::DasMesh &mesh = mp_model->meshes[m_node.mesh];
             if(mp_skeleton) {
                 const uint32_t joint_count = static_cast<uint32_t>(mp_skeleton->GetJointMatrices().size());
-                mp_mesh_loader = new MeshLoader(this, mesh, mp_parser, m_renderer, _main_buffer_offsets, _camera_offset, joint_count, m_framebuffer_id);
+                mp_mesh_loader = new MeshLoader(this, mesh, mp_model, m_renderer, _main_buffer_offsets, _camera_offset, joint_count, m_framebuffer_id);
             }
-            else mp_mesh_loader = new MeshLoader(this, mesh, mp_parser, m_renderer, _main_buffer_offsets, _camera_offset, 0, m_framebuffer_id);
+            else mp_mesh_loader = new MeshLoader(this, mesh, mp_model, m_renderer, _main_buffer_offsets, _camera_offset, 0, m_framebuffer_id);
             mp_mesh_loader->Attach();
             m_morph_weights = mp_mesh_loader->GetMorphWeights().data();
         }
@@ -120,7 +120,7 @@ namespace DENG {
         for(auto ani_it = _animations.begin(); ani_it != _animations.end(); ani_it++) {
             // for each sampler
             for(auto smp_it = ani_it->samplers.begin(); smp_it != ani_it->samplers.end(); smp_it++) {
-                const uint32_t index = static_cast<uint32_t>(&m_node - &mp_parser->AccessNode(0));
+                const uint32_t index = static_cast<uint32_t>(&m_node - &mp_model->nodes[0]);
                 if(smp_it->GetAnimationChannel().node_id == index)
                     m_animation_samplers.push_back(std::make_pair(&ani_it->is_unbound, &(*smp_it)));
             }
@@ -148,15 +148,15 @@ namespace DENG {
     }
 
 
-    void NodeLoader::_SetParser(Libdas::DasParser &_parser) {
-        mp_parser = &_parser;
+    void NodeLoader::_SetModel(Libdas::DasModel &_model) {
+        mp_model = &_model;
         if(mp_skeleton)
-            mp_skeleton->mp_parser = &_parser;
+            mp_skeleton->mp_model = &_model;
         if(mp_mesh_loader)
-            mp_mesh_loader->mp_parser = &_parser;
+            mp_mesh_loader->mp_model = &_model;
 
         for(auto it = m_child_nodes.begin(); it != m_child_nodes.end(); it++) {
-            it->_SetParser(_parser);
+            it->_SetModel(_model);
         }
     }
 

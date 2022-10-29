@@ -13,22 +13,20 @@ namespace DENG {
 
     ModelLoader::ModelLoader(
         Entity *_parent,
-        const std::string &_file_name, 
+        const Libdas::DasModel &_model, 
         Renderer &_rend, 
         uint32_t _camera_id,
         const std::string &_framebuffer
     ) : 
         ScriptableEntity(_parent, "", ENTITY_TYPE_MODEL),
-        m_parser(_file_name), 
+        m_model(_model), 
         m_renderer(_rend),
         m_camera_id(_camera_id),
         m_framebuffer_id(_framebuffer)
     {
-        m_parser.Parse();
-
         std::string name = "Unnamed model";
-        if(m_parser.GetProperties().model != "")
-            name = m_parser.GetProperties().model;
+        if(m_model.props.model != "")
+            name = m_model.props.model;
         else name += std::to_string(m_model_index++);
         
         SetName(name);
@@ -37,7 +35,7 @@ namespace DENG {
 
     ModelLoader::ModelLoader(ModelLoader &&_ld) noexcept :
         ScriptableEntity(std::move(_ld)),
-        m_parser(std::move(_ld.m_parser)),
+        m_model(std::move(_ld.m_model)),
         m_renderer(_ld.m_renderer),
         m_animations(std::move(_ld.m_animations)),
         m_scene_loaders(std::move(_ld.m_scene_loaders)),
@@ -48,7 +46,7 @@ namespace DENG {
     {
         if (GetAttachedBit()) {
             for (auto it = m_scene_loaders.begin(); it != m_scene_loaders.end(); it++) {
-                it->_SetParser(m_parser);
+                it->_SetModel(m_model);
             }
         }
     }
@@ -62,11 +60,11 @@ namespace DENG {
 
 
     void ModelLoader::_AttachBuffersAndTextures() {
-        m_buffer_offsets.reserve(m_parser.GetBufferCount());
+        m_buffer_offsets.reserve(m_model.buffers.size());
 
         // iterate through buffers
-        for(uint32_t i = 0; i < m_parser.GetBufferCount(); i++) {
-            const Libdas::DasBuffer &buffer = m_parser.AccessBuffer(i);
+        for(size_t i = 0; i < m_model.buffers.size(); i++) {
+            const Libdas::DasBuffer &buffer = m_model.buffers[i];
 
             // check if the buffer type is texture
             const BufferType texture_mask = LIBDAS_BUFFER_TYPE_TEXTURE_JPEG | LIBDAS_BUFFER_TYPE_TEXTURE_PNG |
@@ -99,8 +97,13 @@ namespace DENG {
                 }
             } else {
                 GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
-                m_buffer_offsets.push_back(mem_manager->RequestMainMemoryLocationP(4, static_cast<uint32_t>(buffer.data_ptrs.back().second)));
-                m_renderer.UpdateVertexDataBuffer(std::make_pair(buffer.data_ptrs.back().first, static_cast<uint32_t>(buffer.data_ptrs.back().second)), m_buffer_offsets[i]);
+                m_buffer_offsets.push_back(mem_manager->RequestMainMemoryLocationP(4, buffer.data_len));
+
+                uint32_t rel_offset = 0;
+                for (auto ptr_it = buffer.data_ptrs.begin(); ptr_it != buffer.data_ptrs.end(); ptr_it++) {
+                    m_renderer.UpdateVertexDataBuffer(std::make_pair(ptr_it->first, static_cast<uint32_t>(ptr_it->second)), m_buffer_offsets[i] + rel_offset);
+                    rel_offset += ptr_it->second;
+                }
             }
         }
     }
@@ -110,9 +113,9 @@ namespace DENG {
         _AttachBuffersAndTextures();
 
         // load each animation in model
-        m_animations.reserve(m_parser.GetAnimationCount());
-        for (uint32_t i = 0; i < m_parser.GetAnimationCount(); i++) {
-            const Libdas::DasAnimation& ani = m_parser.AccessAnimation(i);
+        m_animations.reserve(m_model.animations.size());
+        for (size_t i = 0; i < m_model.animations.size(); i++) {
+            const Libdas::DasAnimation& ani = m_model.animations[i];
             m_animations.emplace_back();
 
             // check if animation name was given
@@ -124,8 +127,8 @@ namespace DENG {
 
             for (uint32_t j = 0; j < ani.channel_count; j++) {
                 const std::string name = "{" + m_animations.back().name + "}_sampler" + std::to_string(j);
-                const Libdas::DasAnimationChannel& channel = m_parser.AccessAnimationChannel(ani.channels[j]);
-                m_animations.back().samplers.emplace_back(this, name, channel, m_parser);
+                const Libdas::DasAnimationChannel& channel = m_model.channels[ani.channels[j]];
+                m_animations.back().samplers.emplace_back(this, name, channel);
             }
         }
 
@@ -134,13 +137,11 @@ namespace DENG {
         const uint32_t offset = ((Camera3D*)reg->GetEntityById(m_camera_id))->GetUboOffset();
 
         // load each scene in the model
-        m_scene_loaders.reserve(m_parser.GetSceneCount());
-        for (uint32_t i = 0; i < m_parser.GetSceneCount(); i++) {
-            const Libdas::DasScene& scene = m_parser.AccessScene(i);
-            m_scene_loaders.emplace_back(this, m_renderer, m_parser, scene, m_buffer_offsets, offset, m_animations, m_framebuffer_id);
+        m_scene_loaders.reserve(m_model.scenes.size());
+        for (auto it = m_model.scenes.begin(); it != m_model.scenes.end(); it++) {
+            m_scene_loaders.emplace_back(this, m_renderer, m_model, *it, m_buffer_offsets, offset, m_animations, m_framebuffer_id);
         }
 
-        m_parser.DeleteBuffers();
         SetAttachedBit(true);
     }
 
