@@ -232,9 +232,8 @@ namespace DENG {
         // update skeleton if required
         if(mp_skeleton) {
             mp_skeleton->Update();
-            auto joints = mp_skeleton->GetJointMatrices();
             if(mp_mesh_loader)
-                mp_mesh_loader->UpdateJointMatrices(joints);
+                mp_mesh_loader->UpdateJointMatrices(mp_skeleton->GetJointMatrices());
         }
     }
 }
