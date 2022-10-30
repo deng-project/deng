@@ -37,6 +37,7 @@ namespace DENG {
 				wxMenu* m_add_light = nullptr;
 				wxMenu* m_add_camera = nullptr;
 
+
 			private:
 				void _OnFile_NewClick(wxCommandEvent& _evt);
 				void _OnFile_OpenClick(wxCommandEvent& _evt);
@@ -57,6 +58,8 @@ namespace DENG {
 				void _OnAdd_Camera_FirstPersonCameraClick(wxCommandEvent& _evt);
 				void _OnAdd_Camera_ThirdPersonCameraClick(wxCommandEvent& _evt);
 				void _OnAdd_Camera_EditorCameraClick(wxCommandEvent& _evt);
+
+				void _OnView_GridCheck(wxCommandEvent& _evt);
 
 				wxDECLARE_EVENT_TABLE();
 

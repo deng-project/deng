@@ -102,7 +102,7 @@ namespace DENG {
                 uint32_t rel_offset = 0;
                 for (auto ptr_it = buffer.data_ptrs.begin(); ptr_it != buffer.data_ptrs.end(); ptr_it++) {
                     m_renderer.UpdateVertexDataBuffer(std::make_pair(ptr_it->first, static_cast<uint32_t>(ptr_it->second)), m_buffer_offsets[i] + rel_offset);
-                    rel_offset += ptr_it->second;
+                    rel_offset += static_cast<uint32_t>(ptr_it->second);
                 }
             }
         }

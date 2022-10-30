@@ -88,6 +88,8 @@ namespace DENG {
 
 			// O(n)
 			uint32_t FindIdByName(const std::string &_name);
+			Entity* GetFirstEntityByType(EntityType _type);
+			Entity* GetLastEntityByType(EntityType _type);
 
 			inline Entity* GetEntityById(uint32_t _id) {
 				DENG_ASSERT(_id < static_cast<uint32_t>(m_entities.size()));

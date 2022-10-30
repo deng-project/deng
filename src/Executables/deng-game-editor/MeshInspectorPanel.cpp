@@ -102,6 +102,10 @@ namespace DENG {
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_USE_TEXTURES, MeshInspectorPanel::_OnUseTextureChecked)
 			EVT_COLOURPICKER_CHANGED(ID_EDITOR_MESH_PANEL_COLOR_PICKER, MeshInspectorPanel::_OnColorChanged)
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_PICK_TEXTURE, MeshInspectorPanel::_OnPickTexturesClick)
+
+			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_VERTEX_SHADER, MeshInspectorPanel::_OnEditVertexShaderClick)
+			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_FRAGMENT_SHADER, MeshInspectorPanel::_OnEditFragmentShaderClick)
+			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_GEOMETRY_SHADER, MeshInspectorPanel::_OnEditGeometryShaderClick)
 		wxEND_EVENT_TABLE()
 
 		MeshInspectorPanel::MeshInspectorPanel(wxWindow *_parent, Renderer *_rend) :
@@ -125,6 +129,15 @@ namespace DENG {
 			m_sizer->Add(m_color_picker, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_pick_textures, 0, wxALIGN_LEFT, 5);
 
+			m_shader_mod_title = new wxStaticText(this , wxID_ANY, wxT("Shader modifications"));
+			m_edit_vertex_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_VERTEX_SHADER, wxT("Edit vertex shader"));
+			m_edit_fragment_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_FRAGMENT_SHADER, wxT("Edit fragment shader"));
+			m_edit_geometry_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_GEOMETRY_SHADER, wxT("Edit geometry shader"));
+
+			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_CENTER, 10);
+			m_sizer->Add(m_edit_vertex_shader, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_edit_fragment_shader, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_edit_geometry_shader, 0, wxALIGN_LEFT);
 			SetSizerAndFit(m_sizer);
 		}
 
@@ -174,6 +187,24 @@ namespace DENG {
 				m_mesh->UseTextures(names);
 				m_mesh->SetUseColorBit(false);
 			} 
+		}
+
+		void MeshInspectorPanel::_OnEditVertexShaderClick(wxCommandEvent& _evt) {
+			uint32_t id = m_mesh->GetShaderId();
+			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(id).vertex_shader_src, "vert.txt");
+			viewer->ShowModal();
+		}
+
+		void MeshInspectorPanel::_OnEditFragmentShaderClick(wxCommandEvent& _evt) {
+			uint32_t id = m_mesh->GetShaderId();
+			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(id).fragment_shader_src, "frag.txt");
+			viewer->ShowModal();
+		}
+
+		void MeshInspectorPanel::_OnEditGeometryShaderClick(wxCommandEvent& _evt) {
+			uint32_t id = m_mesh->GetShaderId();
+			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(id).geometry_shader_src, "geom.txt");
+			viewer->ShowModal();
 		}
 	}
 }

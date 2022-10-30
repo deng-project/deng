@@ -47,6 +47,7 @@
                                         "   vec4 color;\n"\
                                         "   vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
                                         "   uint is_color;\n"\
+                                        "   uint use_environment_map;\n"\
                                         "} model;\n"
 
     #define VERTEX_MAIN                 "void main() {\n"\

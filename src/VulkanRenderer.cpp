@@ -135,10 +135,10 @@ namespace DENG {
                 m_uniform_buffer, 
                 m_main_buffer, 
                 VK_FORMAT_R8G8B8A8_UNORM, 
-                m_sample_count, 
-                _fb.image_name, 
-                m_framebuffer_draws, 
-                images, 
+                m_sample_count,
+                _fb.image_name,
+                m_framebuffer_draws,
+                images,
                 m_vulkan_texture_handles, 
                 true
             ))

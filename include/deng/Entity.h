@@ -15,7 +15,6 @@
 	namespace DENG {
 		class Entity;
 	}
-	#include "deng/Registry.h"
 #endif
 
 namespace DENG {
@@ -43,6 +42,12 @@ namespace DENG {
 		ENTITY_TYPE_TRIANGLE_TESTER,
 #endif
 	};
+}
+#ifdef ENTITY_CPP
+	#include "deng/Registry.h"
+#endif
+
+namespace DENG {
 
 	class DENG_API Entity {
 		private:

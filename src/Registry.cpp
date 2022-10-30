@@ -33,7 +33,7 @@ namespace DENG {
 	}
 
 
-	uint32_t Registry::AddEntity(Entity *_ent) {
+	uint32_t Registry::AddEntity(Entity* _ent) {
 		// check if there are any entity elements with nullptr value
 		size_t i = 0;
 		for (; i < m_entities.size(); i++) {
@@ -44,7 +44,8 @@ namespace DENG {
 		if (i < m_entities.size()) {
 			m_entities[i] = _ent;
 			return static_cast<uint32_t>(i);
-		} else {
+		}
+		else {
 			m_entities.push_back(_ent);
 			return static_cast<uint32_t>(m_entities.size() - 1);
 		}
@@ -56,58 +57,58 @@ namespace DENG {
 			if (!m_entities[i]) continue;
 
 			switch (m_entities[i]->GetType()) {
-				case ENTITY_TYPE_EDITOR_CAMERA:
-				{
-					EditorCamera* cam = (EditorCamera*)m_entities[i];
-					if (!cam->GetAttachedBit())
-						cam->Attach();
-					break;
-				}
+			case ENTITY_TYPE_EDITOR_CAMERA:
+			{
+				EditorCamera* cam = (EditorCamera*)m_entities[i];
+				if (!cam->GetAttachedBit())
+					cam->Attach();
+				break;
+			}
 
-				case ENTITY_TYPE_FIRST_PERSON_CAMERA:
-				{
-					FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
-					if (!cam->GetAttachedBit())
-						cam->Attach();
-					break;
-				}
+			case ENTITY_TYPE_FIRST_PERSON_CAMERA:
+			{
+				FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
+				if (!cam->GetAttachedBit())
+					cam->Attach();
+				break;
+			}
 
 #ifdef __DEBUG
-				case ENTITY_TYPE_TRIANGLE_TESTER:
-				{
-					TriangleTester* tester = (TriangleTester*)m_entities[i];
-					if (!tester->GetAttachedBit())
-						tester->Attach();
-					break;
-				}
+			case ENTITY_TYPE_TRIANGLE_TESTER:
+			{
+				TriangleTester* tester = (TriangleTester*)m_entities[i];
+				if (!tester->GetAttachedBit())
+					tester->Attach();
+				break;
+			}
 #endif
 
-				case ENTITY_TYPE_GRID_MESH: 
-				{
-					GridGenerator* grid = (GridGenerator*)m_entities[i];
-					if (!grid->GetAttachedBit())
-						grid->Attach();
-					break;
-				}
+			case ENTITY_TYPE_GRID_MESH:
+			{
+				GridGenerator* grid = (GridGenerator*)m_entities[i];
+				if (!grid->GetAttachedBit())
+					grid->Attach();
+				break;
+			}
 
-				case ENTITY_TYPE_SKYBOX:
-				{
-					Skybox* skybox = (Skybox*)m_entities[i];
-					if (!skybox->GetAttachedBit())
-						skybox->Attach();
-					break;
-				}
+			case ENTITY_TYPE_SKYBOX:
+			{
+				Skybox* skybox = (Skybox*)m_entities[i];
+				if (!skybox->GetAttachedBit())
+					skybox->Attach();
+				break;
+			}
 
-				case ENTITY_TYPE_MODEL: 
-				{
-					ModelLoader* model = (ModelLoader*)m_entities[i];
-					if (!model->GetAttachedBit()) {
-						model->Attach();
-					}
+			case ENTITY_TYPE_MODEL:
+			{
+				ModelLoader* model = (ModelLoader*)m_entities[i];
+				if (!model->GetAttachedBit()) {
+					model->Attach();
 				}
+			}
 
-				default:
-					break;
+			default:
+				break;
 			}
 		}
 	}
@@ -118,62 +119,62 @@ namespace DENG {
 			if (!m_entities[i]) continue;
 
 			switch (m_entities[i]->GetType()) {
-				case ENTITY_TYPE_EDITOR_CAMERA:
-				{
-					EditorCamera* cam = (EditorCamera*)m_entities[i];
-					if (cam->GetAttachedBit())
-						cam->Update();
-					break;
-				}
+			case ENTITY_TYPE_EDITOR_CAMERA:
+			{
+				EditorCamera* cam = (EditorCamera*)m_entities[i];
+				if (cam->GetAttachedBit())
+					cam->Update();
+				break;
+			}
 
 
-				case ENTITY_TYPE_FIRST_PERSON_CAMERA:
-				{
-					FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
-					if (cam->GetAttachedBit())
-						cam->Update();
-					break;
-				}
+			case ENTITY_TYPE_FIRST_PERSON_CAMERA:
+			{
+				FirstPersonCamera* cam = (FirstPersonCamera*)m_entities[i];
+				if (cam->GetAttachedBit())
+					cam->Update();
+				break;
+			}
 
 #ifdef __DEBUG
-				case ENTITY_TYPE_TRIANGLE_TESTER:
-				{
-					TriangleTester* tester = (TriangleTester*)m_entities[i];
-					if (tester->GetAttachedBit())
-						tester->Update();
-					break;
-				}
+			case ENTITY_TYPE_TRIANGLE_TESTER:
+			{
+				TriangleTester* tester = (TriangleTester*)m_entities[i];
+				if (tester->GetAttachedBit())
+					tester->Update();
+				break;
+			}
 #endif
 
-				case ENTITY_TYPE_GRID_MESH:
-				{
-					GridGenerator* grid = (GridGenerator*)m_entities[i];
-					if (grid->GetAttachedBit())
-						grid->Update();
-					break;
-				}
+			case ENTITY_TYPE_GRID_MESH:
+			{
+				GridGenerator* grid = (GridGenerator*)m_entities[i];
+				if (grid->GetAttachedBit())
+					grid->Update();
+				break;
+			}
 
-				case ENTITY_TYPE_SKYBOX:
-				{
-					Skybox* skybox = (Skybox*)m_entities[i];
-					if (skybox->GetAttachedBit())
-						skybox->Update();
-					break;
-				}
+			case ENTITY_TYPE_SKYBOX:
+			{
+				Skybox* skybox = (Skybox*)m_entities[i];
+				if (skybox->GetAttachedBit())
+					skybox->Update();
+				break;
+			}
 
-				case ENTITY_TYPE_MODEL:
-				{
-					ModelLoader* model = (ModelLoader*)m_entities[i];
-					if (model->GetAttachedBit())
-						model->Update();
-					break;
-				}
+			case ENTITY_TYPE_MODEL:
+			{
+				ModelLoader* model = (ModelLoader*)m_entities[i];
+				if (model->GetAttachedBit())
+					model->Update();
+				break;
+			}
 			}
 		}
 	}
 
 
-	uint32_t Registry::FindIdByName(const std::string &_name) {
+	uint32_t Registry::FindIdByName(const std::string& _name) {
 		for (uint32_t i = 0; i < static_cast<uint32_t>(m_entities.size()); i++) {
 			if (!m_entities[i]) continue;
 
@@ -182,5 +183,24 @@ namespace DENG {
 		}
 
 		return UINT32_MAX;
+	}
+
+
+	Entity* Registry::GetFirstEntityByType(EntityType _type) {
+		for (Entity* ent : m_entities) {
+			if (ent->GetType() == _type)
+				return ent;
+		}
+
+		return nullptr;
+	}
+
+	Entity* Registry::GetLastEntityByType(EntityType _type) {
+		for (int i = static_cast<int>(m_entities.size()); i >= 0; i--) {
+			if (m_entities[i]->GetType() == _type)
+				return m_entities[i];
+		}
+
+		return nullptr;
 	}
 }

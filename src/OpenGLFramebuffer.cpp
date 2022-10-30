@@ -369,6 +369,9 @@ namespace DENG {
 
             // draw each mesh to the screen
             for(auto mesh_it = draw.meshes.begin(); mesh_it < draw.meshes.end(); mesh_it++) {
+                if (!mesh_it->first.enable)
+                    continue;
+                
                 const uint32_t shader_id = mesh_it->first.shader_module_id;
                 const ShaderModule &module = draw.shaders[shader_id].first;
 

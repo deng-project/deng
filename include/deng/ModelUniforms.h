@@ -19,6 +19,7 @@ namespace DENG {
         TRS::Vector4<float> color;
         float morph_weights[MAX_MORPH_TARGETS] = {};
         uint32_t use_color = 0;
+        uint32_t use_environment_map = 0;
     };
 }
 

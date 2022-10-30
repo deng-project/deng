@@ -17,7 +17,7 @@ namespace DENG {
 			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_GLTF, EditorMenubar::_OnFile_Import_GLTFClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_OBJ, EditorMenubar::_OnFile_Import_WavefrontOBJClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_FILE_IMPORT_STL, EditorMenubar::_OnFile_Import_STLClick)
-			
+
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_SKYBOX, EditorMenubar::_OnAdd_SkyboxClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_NODE, EditorMenubar::_OnAdd_NodeClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_MESH_CUBE, EditorMenubar::_OnAdd_Mesh_CubeClick)
@@ -29,6 +29,8 @@ namespace DENG {
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_FIRST_PERSON_CAMERA, EditorMenubar::_OnAdd_Camera_FirstPersonCameraClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_THIRD_PERSON_CAMERA, EditorMenubar::_OnAdd_Camera_ThirdPersonCameraClick)
 			EVT_MENU(ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA, EditorMenubar::_OnAdd_Camera_EditorCameraClick)
+
+			EVT_MENU(ID_EDITOR_MENUBAR_VIEW_GRID, EditorMenubar::_OnView_GridCheck)
 		wxEND_EVENT_TABLE()
 
 		EditorMenubar::EditorMenubar() : wxMenuBar() {
@@ -45,8 +47,13 @@ namespace DENG {
 
 			m_file->Append(ID_EDITOR_MENUBAR_FILE_IMPORT, wxT("&Import"), m_file_import, "Import a 3D model");
 			m_file->Append(wxID_EXIT, wxT("&Quit"), "Quit the application");
-			Append(m_file, "&File");
+			Append(m_file, wxT("&File"));
 
+			m_view = new wxMenu;
+			wxMenuItem* view_grid = new wxMenuItem(m_view, ID_EDITOR_MENUBAR_VIEW_GRID, wxT("&Grid"), wxT("Toggle grid in editor"), wxITEM_CHECK);
+			m_view->Append(view_grid);
+			view_grid->Check(true);
+			Append(m_view, wxT("&View"));
 
 			m_add = new wxMenu;
 			m_add->Append(ID_EDITOR_MENUBAR_ADD_SKYBOX, wxT("&Skybox"), "Add a skybox to the scene");
@@ -69,7 +76,7 @@ namespace DENG {
 			m_add_camera->Append(ID_EDITOR_MENUBAR_ADD_CAMERA_THIRD_PERSON_CAMERA, wxT("&Third person camera"), "Add a third person camera");
 			m_add_camera->Append(ID_EDITOR_MENUBAR_ADD_CAMERA_EDITOR_CAMERA, wxT("&Editor camera"), "Add an editor camera");
 			m_add->Append(ID_EDITOR_MENUBAR_ADD_CAMERA, wxT("&Camera"), m_add_camera, "Add a camera");
-			Append(m_add, "&Add");
+			Append(m_add, wxT("&Add"));
 		}
 
 
@@ -176,6 +183,17 @@ namespace DENG {
 		}
 
 		void EditorMenubar::_OnAdd_Camera_EditorCameraClick(wxCommandEvent& _evt) {
+		}
+
+		void EditorMenubar::_OnView_GridCheck(wxCommandEvent& _evt) {
+			Registry* reg = Registry::GetInstance();
+			GridGenerator* grid = (GridGenerator*)reg->GetFirstEntityByType(ENTITY_TYPE_GRID_MESH);
+
+			if (grid) {
+				grid->Show(_evt.IsChecked());
+			} else {
+				wxMessageBox("Could not find ENTITY_TYPE_GRID_MESH entity", "Error", wxICON_ERROR | wxOK, GetParent());
+			}
 		}
 
 	}

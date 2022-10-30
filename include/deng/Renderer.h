@@ -48,6 +48,7 @@ namespace DENG {
         uint32_t shader_module_id = 0;
         std::vector<DrawCommand> commands;
         std::vector<UniformBufferBlock> ubo_blocks;
+        bool enable = true;
     };
 
 

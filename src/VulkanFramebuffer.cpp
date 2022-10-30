@@ -311,6 +311,9 @@ namespace DENG {
 
                 // Iterate through every mesh, bind resources and issue a draw call to commandbuffer
                 for(auto mesh_it = fb_draw.meshes.begin(); mesh_it != fb_draw.meshes.end(); mesh_it++) {
+                    if (!mesh_it->first.enable)
+                        continue;
+
                     const uint32_t shader_id = mesh_it->first.shader_module_id;
                     const uint32_t mesh_id = static_cast<uint32_t>(mesh_it - fb_draw.meshes.begin());
                     const ShaderModule &shader = fb_draw.shaders[shader_id].first;

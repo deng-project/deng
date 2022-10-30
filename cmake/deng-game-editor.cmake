@@ -19,6 +19,7 @@ set(DENG_GAME_EDITOR_HEADERS
 	include/deng/Executables/deng-game-editor/OpenGLLoader.h
     include/deng/Executables/deng-game-editor/ProjectManager.h
 	include/deng/Executables/deng-game-editor/RendererViewport.h
+	include/deng/Executables/deng-game-editor/ShaderViewer.h
 	include/deng/Executables/deng-game-editor/SkyboxGeneratorDialog.h
 	include/deng/Executables/deng-game-editor/StaticResources.h
 	include/deng/Executables/deng-game-editor/SphereGeneratorDialog.h
@@ -38,6 +39,7 @@ set(DENG_GAME_EDITOR_SOURCES
 	src/Executables/deng-game-editor/NodeInspectorPanel.cpp
     src/Executables/deng-game-editor/ProjectManager.cpp
 	src/Executables/deng-game-editor/RendererViewport.cpp
+	src/Executables/deng-game-editor/ShaderViewer.cpp
 	src/Executables/deng-game-editor/SkyboxGeneratorDialog.cpp
 	src/Executables/deng-game-editor/StaticResources.cpp
 	src/Executables/deng-game-editor/SphereGeneratorDialog.cpp

@@ -14,6 +14,7 @@
 	#include "deng/deng.h"
 
 	#include "deng/Executables/deng-game-editor/GuiIds.h"
+	#include "deng/Executables/deng-game-editor/ShaderViewer.h"
 #endif
 
 namespace DENG {
@@ -91,6 +92,11 @@ namespace DENG {
 				wxStaticText* m_color_picker_text = nullptr;
 				wxColourPickerCtrl* m_color_picker = nullptr;
 
+				wxStaticText* m_shader_mod_title = nullptr;
+				wxButton* m_edit_vertex_shader = nullptr;
+				wxButton* m_edit_fragment_shader = nullptr;
+				wxButton* m_edit_geometry_shader = nullptr;
+
 				wxGenericCollapsiblePane* m_texture_names = nullptr;
 				wxButton* m_pick_textures = nullptr;
 				// TexturePicker* m_texture_picker = nullptr;
@@ -99,6 +105,10 @@ namespace DENG {
 				void _OnColorChanged(wxColourPickerEvent& _evt);
 				void _OnUseTextureChecked(wxCommandEvent& _evt);
 				void _OnPickTexturesClick(wxCommandEvent& _evt);
+
+				void _OnEditVertexShaderClick(wxCommandEvent& _evt);
+				void _OnEditFragmentShaderClick(wxCommandEvent& _evt);
+				void _OnEditGeometryShaderClick(wxCommandEvent& _evt);
 				wxDECLARE_EVENT_TABLE();
 
 			public:

@@ -183,14 +183,14 @@ namespace DENG {
     }
 
 
-    void ModelShaderGenerator::_MixTextures(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, std::string &_shader, std::string &_custom_code) {
+    void ModelShaderGenerator::_MixTextures(const MeshPrimitiveAttributeDescriptor& _mesh_attr_desc, std::string& _shader, std::string& _custom_code) {
         DENG_ASSERT(!_mesh_attr_desc.color_mul_count || !_mesh_attr_desc.texture_count || _mesh_attr_desc.color_mul_count == _mesh_attr_desc.texture_count);
         // write texture coordinate and color multiplier attributes
-        for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+        for (uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 uv" + std::to_string(i) + ";\n";
             const std::string id = std::to_string(i);
-            RenderState *rs = RenderState::GetInstance();
-            switch(rs->GetPrimary()) {
+            RenderState* rs = RenderState::GetInstance();
+            switch (rs->GetPrimary()) {
                 case RENDERER_TYPE_VULKAN:
                     _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
                     break;

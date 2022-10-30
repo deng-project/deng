@@ -71,6 +71,10 @@ namespace DENG {
             GridGenerator(GridGenerator&& _ge) noexcept;
             ~GridGenerator();
 
+            inline void Show(bool _show) {
+                m_renderer.GetMesh(m_mesh_id, m_framebuffer_id).enable = _show;
+            }
+
             void Attach();
             void Update();
 
