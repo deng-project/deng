@@ -36,6 +36,7 @@ namespace DENG {
 			SetSizerAndFit(m_sizer);
 		}
 
+
 		void ShaderViewer::_OnEditShaderClick(wxCommandEvent& _evt) {
 			std::string path = std::filesystem::temp_directory_path().u8string() + m_tmp_file_name;
 			std::ofstream stream(path);
@@ -55,18 +56,14 @@ namespace DENG {
 			delete type;
 		}
 
+
 		void ShaderViewer::_OnCommitChangesClick(wxCommandEvent& _evt) {
 			std::string path = std::filesystem::temp_directory_path().u8string() + m_tmp_file_name;
 			std::ifstream stream(path);
 
-			stream.seekg(0, std::ios_base::end);
-			size_t len = stream.tellg();
-			stream.seekg(0, std::ios_base::beg);
-
-			m_source.clear();
-			m_source.resize(len + 1);
-			stream.read(m_source.data(), len);
-
+			std::stringstream buffer;
+			buffer << stream.rdbuf();
+			m_source = buffer.str();
 			m_shader_src_area->SetValue(m_source);
 		}
 

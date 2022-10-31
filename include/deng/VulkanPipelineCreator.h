@@ -79,8 +79,12 @@ namespace DENG {
                 ~PipelineCreator() noexcept;
                 //PipelineCreator &operator=(PipelineCreator &&_pc) noexcept = default;
 
+                inline void SetShaderModule(const ShaderModule& _module) {
+                    m_module = _module;
+                }
+
                 void DestroyPipelineData();
-                void RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext);
+                void RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext, bool _recompile = false);
 
                 inline VkPipelineLayout GetPipelineLayout() { return m_pipeline_layout; }
                 inline VkPipeline GetPipeline() { return m_pipeline; }

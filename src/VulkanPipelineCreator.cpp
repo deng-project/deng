@@ -15,7 +15,7 @@ namespace DENG {
             m_desc_set_layouts(_desc_set_layouts), 
             m_ext(_ext), 
             m_samples(_samples), 
-            m_module(_module), 
+            m_module(_module),
             m_render_pass(_render_pass)
         {
             _CreatePipelineLayout();
@@ -80,12 +80,12 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext) {
+        void PipelineCreator::RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext, bool _recompile) {
             m_render_pass = _render_pass;
             m_ext = _ext;
 
             _CreatePipelineLayout();
-            VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = _GeneratePipelineCreateInfo(false);
+            VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = _GeneratePipelineCreateInfo(_recompile);
 
             if(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, nullptr, &m_pipeline) != VK_SUCCESS)
                 VK_PIPELINEC_ERR("failed to create a pipeline");
@@ -285,6 +285,7 @@ namespace DENG {
             shaderc::Compiler compiler;
             shaderc::CompileOptions options;
 
+            _target.clear();
             options.SetOptimizationLevel(shaderc_optimization_level_size);
             shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(_src, _kind, _file_name.c_str(), options);
 
@@ -348,6 +349,7 @@ namespace DENG {
                 _CheckAndCompileShaderSources();
 
                 // Create vertex and fragment shader modules
+                m_shader_modules.clear();
                 m_shader_modules.reserve(3);
                 m_shader_modules.push_back(_CreateShaderModule(m_vertex_bin)); 
                 if(m_module.geometry_shader_src.size())

@@ -480,6 +480,20 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer) {
+        DENG_ASSERT(m_framebuffers.find(_framebuffer) != m_framebuffers.end());
+        auto& fb = m_framebuffers.find(_framebuffer)->second;
+        auto& fb_draw = m_framebuffer_draws.find(_framebuffer)->second;
+        auto& pipeline = fb->GetPipelineCreator(_shader_id);
+
+        VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
+        vkDeviceWaitIdle(m_instance_creator.GetDevice());
+        pipeline.DestroyPipelineData();
+        pipeline.SetShaderModule(GetShaderModule(_shader_id, _framebuffer));
+        pipeline.RecreatePipeline(fb->GetRenderPass(), ext, true);
+    }
+
+
     void VulkanRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
         // check if reallocation should occur
         if(static_cast<VkDeviceSize>(_size + _offset) >= m_uniform_size) {

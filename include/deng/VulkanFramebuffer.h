@@ -128,8 +128,17 @@ namespace DENG {
                     return m_command_pool;
                 }
 
+                inline VkRenderPass GetRenderPass() {
+                    return m_renderpass;
+                }
+
                 inline const std::vector<Vulkan::TextureData> &GetFramebufferImages() {
                     return m_framebuffer_images;
+                }
+
+                inline PipelineCreator& GetPipelineCreator(uint32_t _id) {
+                    DENG_ASSERT(_id < static_cast<uint32_t>(m_pipeline_creators.size()));
+                    return m_pipeline_creators[_id];
                 }
 
                 inline VkSemaphore GetSwapchainImageAcquisitionSemaphore() {

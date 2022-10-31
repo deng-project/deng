@@ -26,7 +26,11 @@
     #include "deng/Version.h"
     
     #ifdef _WIN32
-        #pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup")
+        #ifdef __DEBUG
+            #pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup")
+        #else
+            #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:WinMainCRTStartup")
+        #endif    
     #endif
 #endif
 

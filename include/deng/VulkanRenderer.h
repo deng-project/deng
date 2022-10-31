@@ -120,6 +120,7 @@ namespace DENG {
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
             virtual void LoadShaders() override;
+            virtual void ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer = MAIN_FRAMEBUFFER_NAME) override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

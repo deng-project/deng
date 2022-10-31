@@ -190,21 +190,28 @@ namespace DENG {
 		}
 
 		void MeshInspectorPanel::_OnEditVertexShaderClick(wxCommandEvent& _evt) {
-			uint32_t id = m_mesh->GetShaderId();
-			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(id).vertex_shader_src, "vert.txt");
-			viewer->ShowModal();
+			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src, "vert.txt");
+			if (viewer->ShowModal() == wxID_OK) {
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src = viewer->GetSource();
+				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
+			}
 		}
 
 		void MeshInspectorPanel::_OnEditFragmentShaderClick(wxCommandEvent& _evt) {
-			uint32_t id = m_mesh->GetShaderId();
-			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(id).fragment_shader_src, "frag.txt");
-			viewer->ShowModal();
+			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(m_mesh->GetShaderId()).fragment_shader_src, "frag.txt");
+			if (viewer->ShowModal() == wxID_OK) {
+				auto& shader = m_renderer->GetShaderModule(m_mesh->GetShaderId());
+				shader.fragment_shader_src = viewer->GetSource();
+				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
+			}
 		}
 
 		void MeshInspectorPanel::_OnEditGeometryShaderClick(wxCommandEvent& _evt) {
-			uint32_t id = m_mesh->GetShaderId();
-			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(id).geometry_shader_src, "geom.txt");
-			viewer->ShowModal();
+			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src, "geom.txt");
+			if (viewer->ShowModal() == wxID_OK) {
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src = viewer->GetSource();
+				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
+			}
 		}
 	}
 }

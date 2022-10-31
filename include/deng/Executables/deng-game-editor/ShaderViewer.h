@@ -9,6 +9,7 @@
 #ifdef SHADER_VIEWER_CPP
 	#include <filesystem>
 	#include <fstream>
+	#include <sstream>
 
 	#include <wx/wx.h>
 	#include <wx/filename.h>

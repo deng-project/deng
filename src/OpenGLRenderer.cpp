@@ -325,6 +325,11 @@ namespace DENG {
     }
 
 
+    void OpenGLRenderer::ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer) {
+
+    }
+
+
     void OpenGLRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
         m_buffer_loader.RequestMemory(_offset + _size, GL_UNIFORM_BUFFER);
 

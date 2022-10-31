@@ -161,6 +161,7 @@ namespace DENG {
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;
             virtual void LoadShaders() = 0;
+            virtual void ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer = MAIN_FRAMEBUFFER_NAME) = 0;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) = 0;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;
