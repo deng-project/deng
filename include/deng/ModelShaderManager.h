@@ -34,6 +34,7 @@
     #include "das/DasReaderCore.h"
     #include "das/DasParser.h"
     #include "das/Hash.h"
+    #include "das/TextureReader.h"
 
     #include "deng/Api.h"
     #include "deng/Window.h"

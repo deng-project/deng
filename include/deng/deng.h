@@ -49,6 +49,7 @@
 #include "das/DasStructures.h"
 #include "das/DasReaderCore.h"
 #include "das/DasParser.h"
+#include "das/TextureReader.h"
 
 // basics
 #include "deng/Api.h"

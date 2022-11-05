@@ -12,6 +12,7 @@
     #include <cstring>
     #include <cmath>
     #include <vector>
+    #include <array>
     #include <variant>
     #include <string>
     #include <unordered_map>
@@ -24,6 +25,10 @@
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
     #include "trs/Quaternion.h"
+
+    #include "das/Api.h"
+    #include "das/DasStructures.h"
+    #include "das/TextureReader.h"
 
     #include "deng/Api.h"
     #include "deng/BaseTypes.h"

@@ -12,10 +12,11 @@
 #endif
 
 #define MISSING_TEXTURE_NAME    "__none__"
+#define MISSING_3D_TEXTURE_NAME "__none3d__"
 
 namespace DENG {
-    DENG_API const char *GetMissingTextureRGBA(int &_x, int &_y, int &_size);
-    DENG_API const char* GetMissingTextureRGB(int& _x, int& _y, int& _size);
+    DENG_API char *GetMissingTextureRGBA(int &_x, int &_y, int &_size);
+    DENG_API char* GetMissingTextureRGB(int& _x, int& _y, int& _size);
 }
 
 #endif

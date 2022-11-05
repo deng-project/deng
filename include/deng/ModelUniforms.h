@@ -12,6 +12,7 @@ namespace DENG {
     struct ModelCameraUbo {
         TRS::Matrix4<float> projection_matrix;
         TRS::Matrix4<float> view_matrix;
+        TRS::Vector4<float> pos;
     };
 
     struct ModelUbo {

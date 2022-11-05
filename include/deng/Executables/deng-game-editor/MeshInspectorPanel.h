@@ -97,6 +97,8 @@ namespace DENG {
 				wxButton* m_edit_fragment_shader = nullptr;
 				wxButton* m_edit_geometry_shader = nullptr;
 
+				wxCheckBox* m_use_environment_mapping = nullptr;
+
 				wxGenericCollapsiblePane* m_texture_names = nullptr;
 				wxButton* m_pick_textures = nullptr;
 				// TexturePicker* m_texture_picker = nullptr;
@@ -109,6 +111,8 @@ namespace DENG {
 				void _OnEditVertexShaderClick(wxCommandEvent& _evt);
 				void _OnEditFragmentShaderClick(wxCommandEvent& _evt);
 				void _OnEditGeometryShaderClick(wxCommandEvent& _evt);
+
+				void _OnUseEnvironmentMapping(wxCommandEvent& _evt);
 				wxDECLARE_EVENT_TABLE();
 
 			public:

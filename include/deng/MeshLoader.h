@@ -35,6 +35,7 @@
     #include "das/DasReaderCore.h"
     #include "das/DasParser.h"
     #include "das/Hash.h"
+    #include "das/TextureReader.h"
 
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
@@ -80,7 +81,11 @@ namespace DENG {
 
             // framebuffer id
             std::string m_framebuffer_id;
+
+            // mesh properties
+            std::string m_environment_map = MISSING_3D_TEXTURE_NAME;
             bool m_is_colored = true;
+            bool m_use_environment_mapping = false;
 
         private:
             void _CheckMeshPrimitives();
@@ -132,9 +137,19 @@ namespace DENG {
                 return m_is_colored;
             }
 
+            inline bool GetUseEnvironmentMapBit() {
+                return m_use_environment_mapping;
+            }
+
             inline void SetUseColorBit(bool _use_color) {
                 m_is_colored = _use_color;
             }
+
+            inline void SetUseEnvironmentMapBit(bool _use_env) {
+                m_use_environment_mapping = _use_env;
+            }
+
+            void SetEnvironmentMap(const std::string& _texture);
 
             inline bool GetDisableJointTransforms() const {
                 return m_disable_joint_transforms;

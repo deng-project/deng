@@ -77,7 +77,8 @@ namespace DENG {
                             bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                             break;
 
-                        case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                        case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
+                        case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
                             bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                             break;
 
@@ -124,7 +125,8 @@ namespace DENG {
                             bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                             break;
 
-                        case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                        case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
+                        case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
                             bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                             break;
 

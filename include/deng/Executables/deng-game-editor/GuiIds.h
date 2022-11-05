@@ -110,6 +110,8 @@ namespace DENG {
 
 			ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_USE_TEXTURE,
 			ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_OK,
+
+			ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING,
 			/** End of mesh inspector panel **/
 
 			/** Shader viewer dialog **/

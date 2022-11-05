@@ -58,8 +58,6 @@ namespace DENG {
 			SetStatusBar(m_status);
 
 			_SetupViewport();
-
-			// m_empty_inspector = new wxStaticText(this, wxID_ANY, "Select a hierarchy node to view inspector panel");
 			m_inspector_panel = new InspectorPanel(this, m_viewport->GetRenderer());
 
 			// implicit root node

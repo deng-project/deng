@@ -220,7 +220,8 @@ namespace DENG {
             uint32_t offset = mp_mesh_loader->GetMeshUboOffset();
             ModelUbo ubo;
             ubo.node_transform = m_transform.Transpose();
-            ubo.use_color = mp_mesh_loader->GetUseColorBit();
+            ubo.use_color = static_cast<uint32_t>(mp_mesh_loader->GetUseColorBit());
+            ubo.use_environment_map = static_cast<uint32_t>(mp_mesh_loader->GetUseEnvironmentMapBit());
             ubo.color = mp_mesh_loader->GetColor();
 
             // check if morph weights are given

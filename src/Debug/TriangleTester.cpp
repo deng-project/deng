@@ -53,7 +53,7 @@ namespace DENG {
 		_module.ubo_data_layouts.emplace_back();
 		_module.ubo_data_layouts.back().block.binding = 0;
 		_module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
-		_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
+		_module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
 		_module.ubo_data_layouts.back().usage = DENG::UNIFORM_USAGE_PER_SHADER;
 
 	}

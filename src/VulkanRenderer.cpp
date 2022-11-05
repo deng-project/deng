@@ -60,8 +60,20 @@ namespace DENG {
 
         // push missing texture 
         int x, y, size;
-        const char *data = GetMissingTextureRGBA(x, y, size);
+        char *data = GetMissingTextureRGBA(x, y, size);
         PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
+
+        // push a missing cubemap
+        std::array<Libdas::TextureReader, 6> readers = {
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false))
+        };
+
+        PushCubemapFromMemory(MISSING_3D_TEXTURE_NAME, readers);
     }
 
 
@@ -250,15 +262,10 @@ namespace DENG {
         m_vulkan_texture_handles[_name] = texture_data;
     }
 
-    
-    void VulkanRenderer::PushCubemapFromFiles(
+
+    void VulkanRenderer::PushCubemapFromMemory(
         const std::string& _name,
-        const std::string& _right,
-        const std::string& _left,
-        const std::string& _top,
-        const std::string& _bottom,
-        const std::string& _back,
-        const std::string& _front
+        std::array<Libdas::TextureReader, 6> &_readers
     ) {
         // texture already exists
         if (m_vulkan_texture_handles.find(_name) != m_vulkan_texture_handles.end()) {
@@ -266,21 +273,13 @@ namespace DENG {
             return;
         }
 
-        std::array<Libdas::TextureReader, 6> readers = {
-            std::move(Libdas::TextureReader(_right)),
-            std::move(Libdas::TextureReader(_left)),
-            std::move(Libdas::TextureReader(_top)),
-            std::move(Libdas::TextureReader(_bottom)),
-            std::move(Libdas::TextureReader(_front)),
-            std::move(Libdas::TextureReader(_back))
-        };
-
         // count the total buffer size
         VkDeviceSize size = 0;
         const VkCommandPool pool = m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->GetCommandPool();
 
+        // tmp until Libdas::TextureReader is fixed
         int base_x = 0, base_y = 0;
-        for (auto it = readers.begin(); it != readers.end(); it++) {
+        for (auto it = _readers.begin(); it != _readers.end(); it++) {
             int x, y;
             size_t len;
             it->GetRawBuffer(x, y, len);
@@ -305,7 +304,7 @@ namespace DENG {
         DENG_ASSERT(vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0) == VK_SUCCESS);
 
         VkDeviceSize offset = 0;
-        for (auto it = readers.begin(); it != readers.end(); it++) {
+        for (auto it = _readers.begin(); it != _readers.end(); it++) {
             int x, y;
             size_t len;
             const char* data = it->GetRawBuffer(x, y, len);

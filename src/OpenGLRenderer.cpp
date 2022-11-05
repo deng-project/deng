@@ -75,8 +75,19 @@ namespace DENG {
 
         // load missing texture
         int x, y, size;
-        const char *tex = GetMissingTextureRGBA(x, y, size);
-        PushTextureFromMemory(MISSING_TEXTURE_NAME, tex, x, y, 4);
+        char *data = GetMissingTextureRGBA(x, y, size);
+        PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
+        
+        // push a missing cubemap
+        std::array<Libdas::TextureReader, 6> readers = {
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
+            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false))
+        };
+        PushCubemapFromMemory(MISSING_3D_TEXTURE_NAME, readers);
 
         // create main framebuffer instance
         m_framebuffer_draws.insert({
@@ -216,14 +227,9 @@ namespace DENG {
         m_opengl_textures[_name] = tex;
     }
 
-    void OpenGLRenderer::PushCubemapFromFiles(
+    void OpenGLRenderer::PushCubemapFromMemory(
         const std::string& _name,
-        const std::string& _right,
-        const std::string& _left,
-        const std::string& _top,
-        const std::string& _bottom,
-        const std::string& _back,
-        const std::string& _front
+        std::array<Libdas::TextureReader, 6> &_readers
     ) {
         DENG_ASSERT(m_opengl_textures.find(_name) == m_opengl_textures.end());
         OpenGL::TextureData data;
@@ -232,33 +238,14 @@ namespace DENG {
         glBindTexture(GL_TEXTURE_CUBE_MAP, data.texture);
         glErrorCheck("glBindTexture");
 
-        const std::array<std::string, 6> files = {
-            _right,
-            _left,
-            _top,
-            _bottom,
-            _front,
-            _back
-        };
 
         // load each texture into cubemap
         int prev_x = 0, prev_y = 0;
-        for (uint32_t i = 0; i < 6; i++) {
-            Libdas::TextureReader reader(files[i]);
+        for (uint32_t i = 0; i < (uint32_t)_readers.size(); i++) {
             int x, y;
             size_t len;
-            char* data = reader.GetRawBuffer(x, y, len);
+            char* data = _readers[i].GetRawBuffer(x, y, len);
             
-            // max
-            if (x > prev_x)
-                prev_x = x;
-            if (y > prev_y)
-                prev_y = y;
-
-            if (!data) {
-                throw std::runtime_error("Cubemap texture loading failed with file '" + files[i] + "'");
-            }
-
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                          0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         }

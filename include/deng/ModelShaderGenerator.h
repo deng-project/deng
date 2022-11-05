@@ -13,6 +13,7 @@
     #include <utility>
     #include <cstring>
     #include <unordered_map>
+    #include <array>
 
 #ifdef __DEBUG
     #include <iostream>
@@ -21,6 +22,11 @@
     #include "trs/Points.h"
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
+    #include "trs/Quaternion.h"
+
+    #include "das/Api.h"
+    #include "das/DasStructures.h"
+    #include "das/TextureReader.h"
 
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
@@ -39,6 +45,7 @@
                                         "layout(std140, ${SET} binding = 0) uniform CameraUbo {\n"\
                                         "    mat4 projection;\n"\
                                         "    mat4 view;\n"\
+                                        "    vec4 pos;\n"\
                                         "} camera;\n"\
                                         "\n"\
                                         "// Model uniform data\n"\
@@ -49,6 +56,7 @@
                                         "   uint is_color;\n"\
                                         "   uint use_environment_map;\n"\
                                         "} model;\n"
+    #define SHADER_SET_COUNT 1
 
     #define VERTEX_MAIN                 "void main() {\n"\
                                         "    mat4 custom = mat4(1.0f);\n"\
@@ -66,7 +74,7 @@ namespace DENG {
         bool normal = false;
         bool tangent = false;
         bool index = false;
-        uint32_t texture_count = 0;
+        uint32_t texture_2d_count = 0;
         uint32_t color_mul_count = 0;
         uint32_t joint_set_count = 0;
         uint32_t skeleton_joint_count = 0;
@@ -77,7 +85,7 @@ namespace DENG {
                    _m1.normal == normal &&
                    _m1.tangent == tangent &&
                    _m1.index == index &&
-                   _m1.texture_count == texture_count &&
+                   _m1.texture_2d_count == texture_2d_count &&
                    _m1.color_mul_count == color_mul_count &&
                    _m1.joint_set_count == joint_set_count &&
                    _m1.morph_targets == morph_targets;

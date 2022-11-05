@@ -76,15 +76,8 @@ namespace DENG {
                 const std::string texture_name = "{" + GetName() + "}" + "_TEX" + std::to_string(m_texture_names.size());
                 m_texture_names.push_back(texture_name);
 
-                // not raw texture data
-                if(!(buffer.type & LIBDAS_BUFFER_TYPE_TEXTURE_RAW)) {
-                    Libdas::TextureReader reader(buffer.data_ptrs.back());
-                    int x, y;
-                    size_t len;
-                    const char *data = reader.GetRawBuffer(x, y, len);
-
-                    m_renderer.PushTextureFromMemory(texture_name, data, static_cast<uint32_t>(x), static_cast<uint32_t>(y), 4);
-                }  else { // raw texture
+                // raw texture data
+                if(buffer.type & LIBDAS_BUFFER_TYPE_TEXTURE_RAW) {
                     const char *data = buffer.data_ptrs.back().first;
                     uint32_t width = *reinterpret_cast<const uint32_t*>(data);
                     data += sizeof(uint32_t);

@@ -15,6 +15,7 @@ namespace DENG {
     void ModelShaderGenerator::_WriteBaseAttributes(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, std::string &_shader, std::string &_custom_code) {
         if(_mesh_attr_desc.pos) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_pos;\n";
+            _shader += "layout(location = " + std::to_string(m_out_id++) + ") out vec3 out_pos;\n";
             _custom_code += "\tvec3 pos = in_pos;\n";
         }
         if(_mesh_attr_desc.normal) {
@@ -29,7 +30,7 @@ namespace DENG {
         }
 
         // texture samplers
-        for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+        for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 in_uv" + std::to_string(i) + ";\n";
             _shader += "layout(location = " + std::to_string(m_out_id++) + ") out vec2 out_uv" + std::to_string(i) + ";\n"; 
             _custom_code += "\tvec2 uv" + std::to_string(i) +" = in_uv" + std::to_string(i) + ";\n"; 
@@ -70,7 +71,7 @@ namespace DENG {
     void ModelShaderGenerator::_WriteMorphTargets(const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, std::string &_shader, std::string &_custom_code) {
         // write morph targets
         if(_mesh_attr_desc.morph_targets.size()) {
-            const uint32_t morphed_uv_count = _mesh_attr_desc.morph_targets.front().texture_count;
+            const uint32_t morphed_uv_count = _mesh_attr_desc.morph_targets.front().texture_2d_count;
             const uint32_t morphed_color_count = _mesh_attr_desc.morph_targets.front().color_mul_count;
             const bool is_normal = _mesh_attr_desc.morph_targets.front().normal;
             const bool is_tang = _mesh_attr_desc.morph_targets.front().tangent;
@@ -80,9 +81,9 @@ namespace DENG {
                 const size_t index = it - _mesh_attr_desc.morph_targets.begin();
                 DENG_ASSERT(is_normal == it->normal);
                 DENG_ASSERT(is_tang == it->tangent);
-                DENG_ASSERT(morphed_uv_count == it->texture_count);
+                DENG_ASSERT(morphed_uv_count == it->texture_2d_count);
                 DENG_ASSERT(morphed_color_count == it->color_mul_count);
-                DENG_ASSERT(!it->texture_count || it->texture_count == _mesh_attr_desc.texture_count);
+                DENG_ASSERT(!it->texture_2d_count || it->texture_2d_count == _mesh_attr_desc.texture_2d_count);
                 DENG_ASSERT(!it->color_mul_count || it->color_mul_count == _mesh_attr_desc.color_mul_count);
 
                 std::string str;
@@ -93,7 +94,7 @@ namespace DENG {
                     _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_morph_normal" + std::to_string(index) + ";\n";
                 if(it->tangent)
                     _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 in_morph_tangent" + std::to_string(index) + ";\n";
-                for(uint32_t i = 0; i < it->texture_count; i++)
+                for(uint32_t i = 0; i < it->texture_2d_count; i++)
                     _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 in_morph_uv" + std::to_string(index) + "_" + std::to_string(i) + ";\n";
                 for(uint32_t i = 0; i < it->color_mul_count; i++)
                     _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 in_morph_color" + std::to_string(index) + "_" + std::to_string(i) + ";\n";
@@ -184,12 +185,15 @@ namespace DENG {
 
 
     void ModelShaderGenerator::_MixTextures(const MeshPrimitiveAttributeDescriptor& _mesh_attr_desc, std::string& _shader, std::string& _custom_code) {
-        DENG_ASSERT(!_mesh_attr_desc.color_mul_count || !_mesh_attr_desc.texture_count || _mesh_attr_desc.color_mul_count == _mesh_attr_desc.texture_count);
+        DENG_ASSERT(!_mesh_attr_desc.color_mul_count || 
+                    !_mesh_attr_desc.texture_2d_count || 
+                    _mesh_attr_desc.color_mul_count == _mesh_attr_desc.texture_2d_count);
+
         // write texture coordinate and color multiplier attributes
-        for (uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+        RenderState* rs = RenderState::GetInstance();
+        for (uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 uv" + std::to_string(i) + ";\n";
             const std::string id = std::to_string(i);
-            RenderState* rs = RenderState::GetInstance();
             switch (rs->GetPrimary()) {
                 case RENDERER_TYPE_VULKAN:
                     _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
@@ -204,12 +208,25 @@ namespace DENG {
             }
         }
 
+        switch (rs->GetPrimary()) {
+            case RENDERER_TYPE_VULKAN:
+                _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform samplerCube env;\n";
+                break;
+
+            case RENDERER_TYPE_OPENGL:
+                _shader += "layout(binding = " + std::to_string(m_binding_id++) + ") uniform samplerCube env;\n";
+                break;
+
+            default:
+                break;
+        }
+
         for(uint32_t i = 0; i < _mesh_attr_desc.color_mul_count; i++)
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 col" + std::to_string(i) + ";\n";
 
-        if(_mesh_attr_desc.texture_count) {
-            _custom_code += "\t\tfloat tex_alpha = " + std::to_string(1.0f / static_cast<float>(_mesh_attr_desc.texture_count)) + ";\n";
-            for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+        if(_mesh_attr_desc.texture_2d_count) {
+            _custom_code += "\t\tfloat tex_alpha = " + std::to_string(1.0f / static_cast<float>(_mesh_attr_desc.texture_2d_count)) + ";\n";
+            for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
                 if(_mesh_attr_desc.color_mul_count)
                     _custom_code += "\t\tvec4 tcol" + std::to_string(i) + " = col" + std::to_string(i) + " * texture(smp" + std::to_string(i) + ", uv" + std::to_string(i) + ");\n";
                 else _custom_code += "\t\tvec4 tcol" + std::to_string(i) + " = texture(smp" + std::to_string(i) + ", uv" + std::to_string(i) + ");\n";
@@ -219,7 +236,7 @@ namespace DENG {
             // c_n - nth color 
             // m_n - nth mixed color
             std::queue<std::pair<char, uint32_t>> mix_ids;
-            for(int32_t i = static_cast<int32_t>(_mesh_attr_desc.texture_count - 1); i >= 0; i--)
+            for(int32_t i = static_cast<int32_t>(_mesh_attr_desc.texture_2d_count - 1); i >= 0; i--)
                 mix_ids.push(std::make_pair('c', i));
 
             uint32_t max_mix = 0;
@@ -265,11 +282,12 @@ namespace DENG {
         _WriteMorphTargets(_mesh_attr_desc, shader, custom_code);
 
         // finalize outputs
+        custom_code += "\tout_pos = vec3(custom * vec4(pos, 1.f));\n";
         if(_mesh_attr_desc.normal)
             custom_code += "\tout_norm = norm;\n";
         if(_mesh_attr_desc.tangent)
             custom_code += "\tout_tang = tang;\n";
-        for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++)
+        for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++)
             custom_code += "\tout_uv" + std::to_string(i) + " = uv" + std::to_string(i) + ";\n";
         for(uint32_t i = 0; i < _mesh_attr_desc.color_mul_count; i++)
             custom_code += "\tout_col" + std::to_string(i) + " = color" + std::to_string(i) + ";\n";
@@ -277,14 +295,13 @@ namespace DENG {
         // position calculation
         custom_code += "\tgl_Position = cam * m * custom * vec4(pos, 1.0f);\n";
 
-        // set calculations
-        std::size_t pos = 0;
-        std::size_t fpos = 0;
+        // ${SET} variable calculations
+        std::size_t pos = 0, fpos = 0, i = 0;
         while((fpos = shader.find("${SET}", pos)) != std::string::npos) {
             RenderState *rs = RenderState::GetInstance();
             switch(rs->GetPrimary()) {
                 case RENDERER_TYPE_VULKAN:
-                    if(pos == 0) {
+                    if(i < SHADER_SET_COUNT) {
                         shader = shader.replace(fpos, std::strlen("${SET}"), "set = 0,");
                     } else {
                         shader = shader.replace(fpos, std::strlen("${SET}"), "set = 1,");
@@ -298,6 +315,8 @@ namespace DENG {
                 default:
                     break;
             }
+
+            i++;
             pos = fpos;
         }
 
@@ -312,59 +331,67 @@ namespace DENG {
         m_in_id = 0;
         m_out_id = 0;
         m_binding_id = _mesh_attr_desc.joint_set_count ? 3 : 2;
-        std::string shader;  
+        std::string shader = SHADER_HEADING;  
+        
+        // ${SET} variable configuration
+        {
+            std::size_t pos = 0, fpos = 0, i = 0;
+            while ((fpos = shader.find("${SET}", pos)) != std::string::npos) {
+                RenderState* rs = RenderState::GetInstance();
+                switch (rs->GetPrimary()) {
+                case RENDERER_TYPE_VULKAN:
+                    if (i < SHADER_SET_COUNT) {
+                        shader = shader.replace(fpos, std::strlen("${SET}"), "set = 0,");
+                    }
+                    else {
+                        shader = shader.replace(fpos, std::strlen("${SET}"), "set = 1,");
+                    }
+                    break;
 
-        // correct shader uniform declaration according to the backend used
-        RenderState *rs = RenderState::GetInstance();
-        switch(rs->GetPrimary()) {
-            case RENDERER_TYPE_VULKAN:
-                shader = "#version 450\n"\
-                         "#extension GL_ARB_separate_shader_objects : enable\n"\
-                         "layout(std140, set = 1, binding = 1) uniform ModelUbo {\n"\
-                         "    mat4 node;\n"\
-                         "    vec4 color;\n"\
-                         "    vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
-                         "    uint is_color;\n"\
-                         "} model;\n"\
-                         "layout(location = " + std::to_string(m_out_id++) + ") out vec4 out_color;\n";
-                break;
+                case RENDERER_TYPE_OPENGL:
+                    shader = shader.replace(fpos, std::strlen("${SET}"), "");
+                    break;
 
-            case RENDERER_TYPE_OPENGL:
-                shader = "#version 450\n"\
-                         "#extension GL_ARB_separate_shader_objects : enable\n"\
-                         "layout(std140, binding = 1) uniform ModelUbo {\n"\
-                         "    mat4 node;\n"\
-                         "    vec4 color;\n"\
-                         "    vec4 morph_weights[" + std::to_string(MAX_MORPH_TARGETS / 4) + "];\n"\
-                         "    uint is_color;\n"\
-                         "} model;\n"\
-                         "layout(location = " + std::to_string(m_out_id++) + ") out vec4 out_color;\n";
-                break;
+                default:
+                    break;
+                }
 
-            default:
-                break;
+                i++;
+                pos = fpos;
+            }
         }
 
-        
         std::string body = 
             "void main() {\n"\
-            "\tif(model.is_color != 0)\n"\
+            "\tif(model.is_color != 0 && model.use_environment_map == 0)\n"\
             "\t\tout_color = model.color;\n"\
-            "\telse {\n"\
+            "\telse if (model.use_environment_map == 0) {\n"\
             "${CUSTOM_CODE}"\
+            "\t}\n"\
+            "\telse {\n"\
+            "${CUSTOM_CODE}\n"\
             "\t}\n"\
             "}";
         std::string custom_code = "";
 
+        shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_pos;\n";
         if(_mesh_attr_desc.normal)
             shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_norm;\n";
         if(_mesh_attr_desc.tangent)
             shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 in_tang;\n";
+        shader += "layout(location = 0) out vec4 out_color;\n";
 
         _MixTextures(_mesh_attr_desc, shader, custom_code);
 
-        const auto pos = body.find("${CUSTOM_CODE}");
-        const std::string mod_body = body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
+        auto pos = body.find("${CUSTOM_CODE}");
+        std::string mod_body = body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
+
+        custom_code =
+            "\t\tvec3 I = normalize(in_pos - camera.pos.xyz);\n"\
+            "\t\tvec3 R = reflect(I, normalize(in_norm));\n"\
+            "\t\tout_color = vec4(texture(env, R).rgb, 1.f);\n";
+        pos = body.find("${CUSTOM_CODE}");
+        mod_body = mod_body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
         shader += mod_body;
         return shader;
     }

@@ -88,7 +88,7 @@ namespace DENG {
                 attr_desc.normal = (prim.vertex_normal_buffer_id != UINT32_MAX);
                 attr_desc.tangent = (prim.vertex_tangent_buffer_id != UINT32_MAX);
                 attr_desc.index = (prim.index_buffer_id != UINT32_MAX);
-                attr_desc.texture_count = prim.texture_count;
+                attr_desc.texture_2d_count = prim.texture_count;
                 attr_desc.color_mul_count = prim.color_mul_count;
                 attr_desc.joint_set_count = prim.joint_set_count;
 
@@ -97,7 +97,7 @@ namespace DENG {
                     attr_desc.morph_targets.emplace_back();
                     attr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
                     attr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
-                    attr_desc.morph_targets.back().texture_count = morph.texture_count;
+                    attr_desc.morph_targets.back().texture_2d_count = morph.texture_count;
                     attr_desc.morph_targets.back().color_mul_count = morph.color_mul_count;
                 }
             } else {
@@ -105,7 +105,7 @@ namespace DENG {
                 cattr_desc.normal = (prim.vertex_normal_buffer_id != UINT32_MAX);
                 cattr_desc.tangent = (prim.vertex_tangent_buffer_id != UINT32_MAX);
                 cattr_desc.index = (prim.index_buffer_id != UINT32_MAX);
-                cattr_desc.texture_count = prim.texture_count;
+                cattr_desc.texture_2d_count = prim.texture_count;
                 cattr_desc.color_mul_count = prim.color_mul_count;
                 cattr_desc.joint_set_count = prim.joint_set_count;
 
@@ -114,7 +114,7 @@ namespace DENG {
                     cattr_desc.morph_targets.emplace_back();
                     cattr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
                     cattr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
-                    cattr_desc.morph_targets.back().texture_count = morph.texture_count;
+                    cattr_desc.morph_targets.back().texture_2d_count = morph.texture_count;
                     cattr_desc.morph_targets.back().color_mul_count = morph.color_mul_count;
                 }
 
@@ -126,7 +126,7 @@ namespace DENG {
             }
         }
 
-        m_supported_texture_count = attr_desc.texture_count;
+        m_supported_texture_count = attr_desc.texture_2d_count;
     }
 
 
@@ -186,6 +186,7 @@ namespace DENG {
                 mesh.commands.back().attribute_offsets.push_back(abs);
                 mesh.commands.back().texture_names.push_back(MISSING_TEXTURE_NAME);
             }
+            mesh.commands.back().texture_names.push_back(MISSING_3D_TEXTURE_NAME);
             for(uint32_t j = 0; j < prim.color_mul_count; j++) {
                 abs = m_mesh_buffer_offsets[prim.color_mul_buffer_ids[j]] + prim.color_mul_buffer_offsets[j];
                 mesh.commands.back().attribute_offsets.push_back(abs);
@@ -229,6 +230,17 @@ namespace DENG {
 
         for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++) {
             cmd->texture_names = _names;
+            cmd->texture_names.push_back(m_environment_map);
+        }
+    }
+
+
+    void MeshLoader::SetEnvironmentMap(const std::string& _texture) {
+        m_environment_map = _texture;
+        MeshReference& ref = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
+
+        for (auto it = ref.commands.begin(); it != ref.commands.end(); it++) {
+            it->texture_names.back() = m_environment_map;
         }
     }
 

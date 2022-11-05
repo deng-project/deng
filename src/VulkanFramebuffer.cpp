@@ -142,14 +142,7 @@ namespace DENG {
             Vulkan::_AllocateMemory(device, gpu, mem_req.size, m_depth_image_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
             vkBindImageMemory(device, m_depth_image, m_depth_image_memory, 0);
 
-            // create image view
-            //VkImageViewCreateInfo img_view_create_info = Vulkan::_GetImageViewInfo(
-                //m_depth_image, 
-                //VK_FORMAT_D32_SFLOAT, 
-                //VK_IMAGE_ASPECT_DEPTH_BIT, 
-                //1, 
-                //1);
-            
+            // create image view info
             VkImageViewCreateInfo image_view_info = {};
             image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             image_view_info.image = m_depth_image;
@@ -350,6 +343,7 @@ namespace DENG {
                                 std::vector<Vulkan::TextureData> textures;
                                 names.reserve(cmd_it->texture_names.size());
                                 textures.reserve(cmd_it->texture_names.size());
+
                                 for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
                                     DENG_ASSERT(m_misc_textures.find(*tex_it) != m_misc_textures.end());
                                     names.push_back(*tex_it);
@@ -357,7 +351,7 @@ namespace DENG {
                                 }
 
                                 Vulkan::DescriptorAllocator &alloc = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]];
-                                const uint32_t request_size = static_cast<uint32_t>(alloc.GetSamplerCount() * m_misc_textures.size() - alloc.GetBoundTextureCount());
+                                const uint32_t request_size = static_cast<uint32_t>((alloc.Get2DSamplerCount() + alloc.Get3DSamplerCount()) * m_misc_textures.size() - alloc.GetBoundTextureCount());
                                 desc_sets.push_back(alloc.RequestDescriptorSetByTextures(names, textures, m_current_frame, request_size));
                             } else {
                                 desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByFrame(m_current_frame));
@@ -408,7 +402,8 @@ namespace DENG {
 
             // reserve memory for mesh descriptor set creators 
             m_mesh_desc_allocators.reserve(fb_draw.meshes.size());
-            auto &missing = m_misc_textures.find(MISSING_TEXTURE_NAME)->second;
+            auto& missing_2d = m_misc_textures.find(MISSING_TEXTURE_NAME)->second;
+            auto& missing_3d = m_misc_textures.find(MISSING_3D_TEXTURE_NAME)->second;
             const uint32_t fb_img_count = static_cast<uint32_t>(m_framebuffer_images.size());
 
             // for each shader create pipelines
@@ -432,7 +427,7 @@ namespace DENG {
                         // check if per shader descriptor set layout is present
                         if(layouts[0] != VK_NULL_HANDLE) {
                             const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
-                            m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], it->first.ubo_data_layouts, fb_img_count, missing, pool_cap);
+                            m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], it->first.ubo_data_layouts, fb_img_count, missing_2d, missing_3d, pool_cap);
                             m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
                         } else {
                             m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
@@ -450,7 +445,7 @@ namespace DENG {
                         const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
 
                         const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[it->first.shader_module_id].GetPerMeshDescriptorSetLayout();
-                        m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, it->first.ubo_blocks, fb_img_count, missing, pool_cap);
+                        m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, it->first.ubo_blocks, fb_img_count, missing_2d, missing_3d, pool_cap);
                         m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
                     } else {
                         m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);

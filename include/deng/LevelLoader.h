@@ -11,6 +11,7 @@
 	#include <vector>
 	#include <unordered_map>
 	#include <chrono>
+	#include <array>
 
 #ifdef _WIN32
 	#include <wtypes.h>
@@ -20,6 +21,10 @@
 	#include "trs/Vector.h"
 	#include "trs/Matrix.h"
 	#include "trs/Quaternion.h"
+
+	#include "das/Api.h"
+	#include "das/DasStructures.h"
+	#include "das/TextureReader.h"
 
 	#include "dxml/GameStructs.h"
 

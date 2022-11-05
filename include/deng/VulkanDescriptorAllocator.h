@@ -31,7 +31,8 @@ namespace DENG {
                 const VkDescriptorSetLayout m_descriptor_set_layout;
                 const std::variant<std::vector<UniformDataLayout>, std::vector<UniformBufferBlock>> m_ubo_desc; // 0 - per shader ubo; 1 - per mesh ubo
                 const uint32_t m_swapchain_image_count;
-                const Vulkan::TextureData &m_missing;
+                const Vulkan::TextureData &m_2d_missing;
+                const Vulkan::TextureData& m_3d_missing;
                 bool m_is_sampled = false;
                 bool m_is_pool_transfer = false;
                 VkDescriptorPool m_primary_pool = VK_NULL_HANDLE;
@@ -40,7 +41,8 @@ namespace DENG {
                 std::vector<VkDescriptorSet> m_descriptor_sets; 
                 std::vector<bool> m_descriptor_set_pool_flags;          // true represents primary pool and false secondary
                 std::unordered_map<std::string, uint32_t> m_texture_bound_desc_sets;
-                size_t m_sampler_count = 0;
+                size_t m_2d_sampler_count = 0;
+                size_t m_3d_sampler_count = 0;
 
             private:
                 void _FindSamplerCountPerDescription();
@@ -56,7 +58,8 @@ namespace DENG {
                     VkDescriptorSetLayout _layout, 
                     const std::variant<std::vector<UniformDataLayout>, std::vector<UniformBufferBlock>> &_ubo_desc, 
                     uint32_t _sc_img_c, 
-                    const Vulkan::TextureData &_missing, 
+                    const Vulkan::TextureData &_missing,
+                    const Vulkan::TextureData &_3d_missing,
                     uint32_t _pool_cap = 1
                 );
                 DescriptorAllocator(DescriptorAllocator &&_da) noexcept;
@@ -88,8 +91,12 @@ namespace DENG {
                     return m_pool_capacity;
                 }
 
-                inline size_t GetSamplerCount() {
-                    return m_sampler_count;
+                inline size_t Get2DSamplerCount() {
+                    return m_2d_sampler_count;
+                }
+
+                inline size_t Get3DSamplerCount() {
+                    return m_3d_sampler_count;
                 }
 
                 inline size_t GetBoundTextureCount() {

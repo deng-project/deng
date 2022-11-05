@@ -106,6 +106,8 @@ namespace DENG {
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_VERTEX_SHADER, MeshInspectorPanel::_OnEditVertexShaderClick)
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_FRAGMENT_SHADER, MeshInspectorPanel::_OnEditFragmentShaderClick)
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_GEOMETRY_SHADER, MeshInspectorPanel::_OnEditGeometryShaderClick)
+			
+			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, MeshInspectorPanel::_OnUseEnvironmentMapping)
 		wxEND_EVENT_TABLE()
 
 		MeshInspectorPanel::MeshInspectorPanel(wxWindow *_parent, Renderer *_rend) :
@@ -134,10 +136,13 @@ namespace DENG {
 			m_edit_fragment_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_FRAGMENT_SHADER, wxT("Edit fragment shader"));
 			m_edit_geometry_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_GEOMETRY_SHADER, wxT("Edit geometry shader"));
 
+			m_use_environment_mapping = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, wxT("Use environment mapping"));
+
 			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_CENTER, 10);
 			m_sizer->Add(m_edit_vertex_shader, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_edit_fragment_shader, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_edit_geometry_shader, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_use_environment_mapping, 0, wxALIGN_LEFT);
 			SetSizerAndFit(m_sizer);
 		}
 
@@ -211,6 +216,19 @@ namespace DENG {
 			if (viewer->ShowModal() == wxID_OK) {
 				m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src = viewer->GetSource();
 				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
+			}
+		}
+
+		void MeshInspectorPanel::_OnUseEnvironmentMapping(wxCommandEvent& _evt) {
+			m_mesh->SetUseEnvironmentMapBit(_evt.IsChecked());
+
+			if (_evt.IsChecked()) {
+				// find if skybox instance is present
+				Registry* reg = Registry::GetInstance();
+				Entity *ent = reg->GetFirstEntityByType(ENTITY_TYPE_SKYBOX);
+				if (reg->GetFirstEntityByType(ENTITY_TYPE_SKYBOX)) {
+					m_mesh->SetEnvironmentMap(((Skybox*)ent)->GetTextureName());
+				}
 			}
 		}
 	}

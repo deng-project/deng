@@ -11,6 +11,7 @@
     #include <cstring>
     #include <cmath>
     #include <vector>
+    #include <array>
     #include <unordered_map>
 #ifdef __DEBUG
     #include <iostream>
@@ -18,6 +19,11 @@
     #include "trs/Points.h"
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
+    #include "trs/Quaternion.h"
+
+    #include "das/Api.h"
+    #include "das/DasStructures.h"
+    #include "das/TextureReader.h"
 
     #include "deng/Api.h"
     #include "deng/BaseTypes.h"

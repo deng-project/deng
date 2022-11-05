@@ -26,7 +26,7 @@ namespace DENG {
         module.ubo_data_layouts.push_back({
             { binding_id++, static_cast<uint32_t>(sizeof(ModelCameraUbo)), _camera_offset },
             UNIFORM_DATA_TYPE_BUFFER,
-            SHADER_STAGE_VERTEX,
+            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT,
             UNIFORM_USAGE_PER_SHADER
         });
 
@@ -37,8 +37,8 @@ namespace DENG {
             UNIFORM_USAGE_PER_MESH
         });
 
-        module.attributes.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
-        module.attribute_strides.reserve(3 + _mesh_attr_desc.texture_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
+        module.attributes.reserve(3 + _mesh_attr_desc.texture_2d_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
+        module.attribute_strides.reserve(3 + _mesh_attr_desc.texture_2d_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
         module.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
         module.attribute_strides.push_back(sizeof(TRS::Vector3<float>));
 
@@ -51,7 +51,7 @@ namespace DENG {
             module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
         }
 
-        for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+        for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
             module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
             module.attribute_strides.push_back(sizeof(TRS::Vector2<float>));
         }
@@ -91,7 +91,7 @@ namespace DENG {
                 module.attribute_strides.push_back(sizeof(TRS::Vector4<float>));
             }
 
-            for(uint32_t i = 0; i < it->texture_count; i++) {
+            for(uint32_t i = 0; i < it->texture_2d_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
                 module.attribute_strides.push_back(sizeof(TRS::Vector2<float>));
             }
@@ -102,17 +102,25 @@ namespace DENG {
             }
         }
 
-        if(_mesh_attr_desc.texture_count) {
+        if(_mesh_attr_desc.texture_2d_count) {
             module.enable_2d_textures = true;
-            for(uint32_t i = 0; i < _mesh_attr_desc.texture_count; i++) {
+            for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
                 module.ubo_data_layouts.push_back({
                     { binding_id++, 0, 0 },
-                    UNIFORM_DATA_TYPE_IMAGE_SAMPLER,
+                    UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER,
                     SHADER_STAGE_FRAGMENT,
                     UNIFORM_USAGE_PER_SHADER
                 });
             }
         }
+
+        module.enable_3d_textures = true;
+        module.ubo_data_layouts.push_back({
+            { binding_id++, 0, 0 },
+            UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER,
+            SHADER_STAGE_FRAGMENT,
+            UNIFORM_USAGE_PER_SHADER
+        });
 
         module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(_mesh_attr_desc);
         module.fragment_shader_src = ModelShaderGenerator::GenerateFragmentShaderSource(_mesh_attr_desc);
@@ -133,7 +141,7 @@ namespace DENG {
         attr_desc.normal = (_prim.vertex_normal_buffer_id != UINT32_MAX);
         attr_desc.tangent = (_prim.vertex_tangent_buffer_id != UINT32_MAX);
         attr_desc.index = (_prim.index_buffer_id != UINT32_MAX);
-        attr_desc.texture_count = _prim.texture_count;
+        attr_desc.texture_2d_count = _prim.texture_count;
         attr_desc.color_mul_count = _prim.color_mul_count;
         attr_desc.joint_set_count = _prim.joint_set_count;
         attr_desc.skeleton_joint_count = _skeleton_joint_count;
@@ -143,7 +151,7 @@ namespace DENG {
             attr_desc.morph_targets.emplace_back();
             attr_desc.morph_targets.back().normal = (morph.vertex_normal_buffer_id != UINT32_MAX);
             attr_desc.morph_targets.back().tangent = (morph.vertex_tangent_buffer_id != UINT32_MAX);
-            attr_desc.morph_targets.back().texture_count = morph.texture_count;
+            attr_desc.morph_targets.back().texture_2d_count = morph.texture_count;
             attr_desc.morph_targets.back().color_mul_count = morph.color_mul_count;
         }
         

@@ -32,6 +32,7 @@
 	#include "das/DasStructures.h"
 	#include "das/DasReaderCore.h"
 	#include "das/DasParser.h"
+	#include "das/TextureReader.h"
 
 	#include "deng/Api.h"
 	#include "deng/BaseTypes.h"

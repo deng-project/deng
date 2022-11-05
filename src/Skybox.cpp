@@ -141,16 +141,18 @@ namespace DENG {
         module.ubo_data_layouts.emplace_back();
         module.ubo_data_layouts.back().block.binding = 2;
         module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
-        module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
+        module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER;
         module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
         uint32_t shader_id = m_renderer.PushShader(module, m_framebuffer);
+        
+        m_texture_name = m_name_prefix + "TEX" + std::to_string(m_skybox_counter);
 
         MeshReference mesh;
         mesh.shader_module_id = shader_id;
         mesh.name = m_name_prefix + std::to_string(m_skybox_counter);
         DrawCommand cmd;
         cmd.attribute_offsets.push_back(offset);
-        cmd.texture_names.push_back(m_name_prefix + "TEX" + std::to_string(m_skybox_counter));
+        cmd.texture_names.push_back(m_texture_name);
         cmd.draw_count = 36;
         mesh.commands.emplace_back(std::move(cmd));
         m_renderer.PushMeshReference(mesh, m_framebuffer);

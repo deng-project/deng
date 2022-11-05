@@ -16,7 +16,8 @@ namespace DENG {
             VkDescriptorSetLayout _layout, 
             const std::variant<std::vector<UniformDataLayout>, std::vector<UniformBufferBlock>> &_ubo_desc, 
             uint32_t _sc_img_c, 
-            const Vulkan::TextureData &_missing, 
+            const Vulkan::TextureData &_2d_missing,
+            const Vulkan::TextureData &_3d_missing,
             uint32_t _pool_cap
         ) :
             m_device(_dev),
@@ -24,7 +25,8 @@ namespace DENG {
             m_descriptor_set_layout(_layout),
             m_ubo_desc(_ubo_desc),
             m_swapchain_image_count(_sc_img_c),
-            m_missing(_missing),
+            m_2d_missing(_2d_missing),
+            m_3d_missing(_3d_missing),
             m_pool_capacity(_pool_cap)
         {
             _AllocateDescriptorPool(m_primary_pool);
@@ -38,11 +40,13 @@ namespace DENG {
             std::vector<Vulkan::TextureData> textures;
             std::vector<std::string> names;
             
-            if(m_sampler_count) {
-                textures.resize(m_sampler_count);
-                names.resize(m_sampler_count);
-                std::fill(names.begin(), names.end(), MISSING_TEXTURE_NAME);
-                std::fill(textures.begin(), textures.end(), m_missing);
+            if(m_2d_sampler_count || m_3d_sampler_count) {
+                textures.resize(m_2d_sampler_count + m_3d_sampler_count);
+                names.resize(m_2d_sampler_count + m_3d_sampler_count);
+                std::fill(names.begin(), names.begin() + m_2d_sampler_count, MISSING_TEXTURE_NAME);
+                std::fill(names.begin() + m_2d_sampler_count, names.end(), MISSING_3D_TEXTURE_NAME);
+                std::fill(textures.begin(), textures.begin() + m_2d_sampler_count, m_2d_missing);
+                std::fill(textures.begin() + m_2d_sampler_count, textures.end(), m_3d_missing);
 
                 std::string name = "";
                 for(size_t i = 0; i != names.size(); i++) {
@@ -62,7 +66,8 @@ namespace DENG {
             m_descriptor_set_layout(_da.m_descriptor_set_layout),
             m_ubo_desc(_da.m_ubo_desc),
             m_swapchain_image_count(_da.m_swapchain_image_count),
-            m_missing(_da.m_missing),
+            m_2d_missing(_da.m_2d_missing),
+            m_3d_missing(_da.m_3d_missing),
             m_is_sampled(_da.m_is_sampled),
             m_is_pool_transfer(_da.m_is_pool_transfer),
             m_primary_pool(_da.m_primary_pool),
@@ -71,7 +76,8 @@ namespace DENG {
             m_descriptor_sets(std::move(_da.m_descriptor_sets)),
             m_descriptor_set_pool_flags(std::move(_da.m_descriptor_set_pool_flags)),
             m_texture_bound_desc_sets(std::move(_da.m_texture_bound_desc_sets)),
-            m_sampler_count(_da.m_sampler_count)
+            m_2d_sampler_count(_da.m_2d_sampler_count),
+            m_3d_sampler_count(_da.m_3d_sampler_count)
         {
             _da.m_primary_pool = VK_NULL_HANDLE;
             _da.m_secondary_pool = VK_NULL_HANDLE;
@@ -92,8 +98,10 @@ namespace DENG {
                 {
                     const std::vector<UniformDataLayout> &desc = std::get<std::vector<UniformDataLayout>>(m_ubo_desc);
                     for(auto it = desc.begin(); it != desc.end(); it++) {
-                        if(it->type == UNIFORM_DATA_TYPE_IMAGE_SAMPLER) {
-                            m_sampler_count++;
+                        if(it->type == UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER) {
+                            m_2d_sampler_count++;
+                        } else if(it->type == UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER) {
+                            m_3d_sampler_count++;
                         }
                     }
                     break;
@@ -124,7 +132,8 @@ namespace DENG {
                                         desc_sizes.back().type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                                         break;
 
-                                    case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                    case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
+                                    case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
                                         desc_sizes.back().type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                                         break;
 
@@ -217,7 +226,8 @@ namespace DENG {
                                         buffer_infos.back().range = it->block.size;
                                         break;
 
-                                    case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                    case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
+                                    case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
                                         DENG_ASSERT(texture_index < _textures.size());
                                         img_infos.emplace_back();
 
@@ -258,7 +268,8 @@ namespace DENG {
                                             write_sets.back().pImageInfo = nullptr;
                                             break;
 
-                                        case UNIFORM_DATA_TYPE_IMAGE_SAMPLER:
+                                        case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
+                                        case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
                                             write_sets.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                                             write_sets.back().pImageInfo = &img_infos[used_imgs++];
                                             write_sets.back().pBufferInfo = nullptr;
@@ -406,11 +417,13 @@ namespace DENG {
 
             std::vector<std::string> names;
             std::vector<Vulkan::TextureData> textures;
-            if(m_sampler_count) {
-                names.resize(m_sampler_count);
-                textures.resize(m_sampler_count);
-                std::fill(names.begin(), names.end(), MISSING_TEXTURE_NAME);
-                std::fill(textures.begin(), textures.end(), m_missing);
+            if(m_2d_sampler_count + m_3d_sampler_count) {
+                names.resize(m_2d_sampler_count + m_3d_sampler_count);
+                textures.resize(m_2d_sampler_count + m_3d_sampler_count);
+                std::fill(names.begin(), names.begin() + m_2d_sampler_count, MISSING_TEXTURE_NAME);
+                std::fill(names.begin() + m_2d_sampler_count, names.end(), MISSING_3D_TEXTURE_NAME);
+                std::fill(textures.begin(), textures.begin() + m_2d_sampler_count, m_2d_missing);
+                std::fill(textures.begin() + m_2d_sampler_count, textures.end(), m_3d_missing);
 
                 std::string name = "";
                 for(size_t i = 0; i < names.size(); i++) {
@@ -426,9 +439,9 @@ namespace DENG {
 
 
         VkDescriptorSet DescriptorAllocator::RequestDescriptorSetByTextures(const std::vector<std::string> &_names, const std::vector<Vulkan::TextureData> &_textures, uint32_t _current_frame, uint32_t _reserve_pool_size) {
-            DENG_ASSERT(m_sampler_count);
+            DENG_ASSERT(m_2d_sampler_count + m_3d_sampler_count);
             DENG_ASSERT(_names.size() == _textures.size());
-            DENG_ASSERT(_names.size() == m_sampler_count);
+            DENG_ASSERT(_names.size() == m_2d_sampler_count + m_3d_sampler_count);
 
             std::string name = "";
 

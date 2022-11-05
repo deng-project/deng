@@ -505,7 +505,7 @@ namespace DENG {
         module.ubo_data_layouts.emplace_back();
         module.ubo_data_layouts.back().block.binding = 1;
         module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
-        module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_IMAGE_SAMPLER;
+        module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
 
         m_shader_id = mp_renderer->PushShader(module, m_framebuffer_name);
 

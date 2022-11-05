@@ -13,6 +13,7 @@
     #include <string>
     #include <cstring>
     #include <unordered_map>
+    #include <array>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -21,6 +22,11 @@
     #include "trs/Points.h"
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
+    #include "trs/Quaternion.h"
+
+    #include "das/Api.h"
+    #include "das/DasStructures.h"
+    #include "das/TextureReader.h"
 
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"

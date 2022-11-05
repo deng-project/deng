@@ -11,6 +11,7 @@
 	#include <vector>
 	#include <unordered_map>
 	#include <functional>
+	#include <array>
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -19,6 +20,11 @@
 	#include "trs/Points.h"
 	#include "trs/Vector.h"
 	#include "trs/Matrix.h"
+	#include "trs/Quaternion.h"
+
+	#include "das/Api.h"
+	#include "das/DasStructures.h"
+	#include "das/TextureReader.h"
 
 	#include "deng/Api.h"
 	#include "deng/BaseTypes.h"
@@ -44,6 +50,7 @@ namespace DENG {
 			Renderer& m_renderer;
 			uint32_t m_camera_offset = 0;
 			const std::string m_framebuffer;
+			std::string m_texture_name;
 			TRS::Vector4<float> m_ubo = { 1.f, 1.f, 1.f, 1.f };
 			uint32_t m_ubo_offset = 0;
 
@@ -64,6 +71,10 @@ namespace DENG {
 			void Update();
 			inline void SetScale(float _scale) {
 				m_ubo = { _scale, _scale, _scale, 1.0f };
+			}
+
+			inline const std::string &GetTextureName() {
+				return m_texture_name;
 			}
 	};
 

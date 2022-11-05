@@ -65,7 +65,8 @@ namespace DENG {
 
     enum UniformDataType {
         UNIFORM_DATA_TYPE_BUFFER,
-        UNIFORM_DATA_TYPE_IMAGE_SAMPLER
+        UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER,
+        UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER
     };
 
 

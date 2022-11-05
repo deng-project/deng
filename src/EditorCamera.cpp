@@ -36,10 +36,17 @@ namespace DENG {
 
     void EditorCamera::_ConstructViewMatrix() {
         // construct translation matrix
+        m_ubo.pos = TRS::Vector4<float>{
+            m_translation.x - m_origin.x,
+            m_translation.y - m_origin.y,
+            m_translation.z - m_origin.z,
+            1.f,
+        };
+
         TRS::Matrix4<float> translation = {
-            { 1.0f, 0.0f, 0.0f, m_translation.x - m_origin.x },
-            { 0.0f, 1.0f, 0.0f, m_translation.y - m_origin.y },
-            { 0.0f, 0.0f, 1.0f, m_translation.z - m_origin.z },
+            { 1.0f, 0.0f, 0.0f, m_ubo.pos.first },
+            { 0.0f, 1.0f, 0.0f, m_ubo.pos.second },
+            { 0.0f, 0.0f, 1.0f, m_ubo.pos.third },
             { 0.0f, 0.0f, 0.0f, 1.0f },
         };
 
