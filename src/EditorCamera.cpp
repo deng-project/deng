@@ -50,6 +50,7 @@ namespace DENG {
             { 0.0f, 0.0f, 0.0f, 1.0f },
         };
 
+        m_ubo.pos = m_x_rot * m_y_rot * m_ubo.pos;
         m_ubo.view_matrix = translation * (m_x_rot * m_y_rot).ExpandToMatrix4();
         m_ubo.view_matrix = m_ubo.view_matrix.Transpose();
     }

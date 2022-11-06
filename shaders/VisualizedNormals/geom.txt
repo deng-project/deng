@@ -1,0 +1,48 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(triangles) in;
+layout(line_strip, max_vertices=6) out;
+
+layout(location = 0) in Vertex {
+	vec4 normal;
+	vec4 pos;
+} vertex[];
+
+layout(std140, set = 0, binding = 0) uniform CameraUbo {
+	mat4 projection;
+	mat4 view;
+	vec4 pos;
+} camera;
+
+layout(std140, set = 1, binding = 1) uniform ModelUbo {
+	mat4 node;
+	vec4 color;
+	vec4 morph_weights[4];
+	uint use_color;
+	uint use_environment_map;
+} model;
+
+const float normal_length = 0.1f;
+const vec4 normal_color = vec4(1.f, 0.f, 0.f, 1.f);
+
+layout(location = 0) out vec4 out_color;
+
+void main() {
+	for(int i = 0; i < vertex.length(); i++) {
+		vec3 p = vertex[i].pos.xyz;
+		vec3 n = normalize(vertex[i].normal.xyz);
+	
+		// first vertex
+		gl_Position = camera.projection * camera.view * vec4(p, 1.f);
+		out_color = normal_color;
+		EmitVertex();
+		
+		// second vertex
+		gl_Position = camera.projection * camera.view * vec4(p + n * normal_length, 1.f);
+		out_color = normal_color;
+		EmitVertex();
+		
+		EndPrimitive();
+	}
+}

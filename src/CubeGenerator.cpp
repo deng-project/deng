@@ -86,9 +86,9 @@ namespace DENG {
 		if (_normals) {
 			for (int i = 0; i < 6; i++) {
 				m_normals[i] = TRS::Point3D(0.f, -1.f, 0.f);
-				m_normals[i + 6] = TRS::Point3D(0.f, 0.f, 1.f);
+				m_normals[i + 6] = TRS::Point3D(0.f, 0.f, -1.f);
 				m_normals[i + 6 * 2] = TRS::Point3D(-1.f, 0.f, 0.f);
-				m_normals[i + 6 * 3] = TRS::Point3D(0.f, 0.f, -1.f);
+				m_normals[i + 6 * 3] = TRS::Point3D(0.f, 0.f, 1.f);
 				m_normals[i + 6 * 4] = TRS::Point3D(1.f, 0.f, 0.f);
 				m_normals[i + 6 * 5] = TRS::Point3D(0.f, 1.f, 0.f);
 			}

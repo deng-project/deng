@@ -129,6 +129,10 @@ namespace DENG {
                 return m_mesh_ref_id;
             }
 
+            inline const Libdas::DasMesh& GetDasMesh() {
+                return m_mesh;
+            }
+
             inline uint32_t GetShaderId() {
                 return m_shader_id;
             }

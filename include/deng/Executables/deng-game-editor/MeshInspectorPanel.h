@@ -88,14 +88,13 @@ namespace DENG {
 				MeshLoader* m_mesh = nullptr;
 				wxBoxSizer* m_sizer = nullptr;
 				wxStaticText* m_title = nullptr;
+				wxStaticText* m_primitive_count_text = nullptr;
 				wxCheckBox* m_use_textures = nullptr;
 				wxStaticText* m_color_picker_text = nullptr;
 				wxColourPickerCtrl* m_color_picker = nullptr;
 
 				wxStaticText* m_shader_mod_title = nullptr;
-				wxButton* m_edit_vertex_shader = nullptr;
-				wxButton* m_edit_fragment_shader = nullptr;
-				wxButton* m_edit_geometry_shader = nullptr;
+				wxButton* m_edit_shaders = nullptr;
 
 				wxCheckBox* m_use_environment_mapping = nullptr;
 
@@ -108,9 +107,7 @@ namespace DENG {
 				void _OnUseTextureChecked(wxCommandEvent& _evt);
 				void _OnPickTexturesClick(wxCommandEvent& _evt);
 
-				void _OnEditVertexShaderClick(wxCommandEvent& _evt);
-				void _OnEditFragmentShaderClick(wxCommandEvent& _evt);
-				void _OnEditGeometryShaderClick(wxCommandEvent& _evt);
+				void _OnEditShadersClick(wxCommandEvent& _evt);
 
 				void _OnUseEnvironmentMapping(wxCommandEvent& _evt);
 				wxDECLARE_EVENT_TABLE();

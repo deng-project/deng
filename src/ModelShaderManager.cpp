@@ -26,14 +26,14 @@ namespace DENG {
         module.ubo_data_layouts.push_back({
             { binding_id++, static_cast<uint32_t>(sizeof(ModelCameraUbo)), _camera_offset },
             UNIFORM_DATA_TYPE_BUFFER,
-            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT,
+            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT | SHADER_STAGE_GEOMETRY,
             UNIFORM_USAGE_PER_SHADER
         });
 
         module.ubo_data_layouts.push_back({
             { binding_id++, static_cast<uint32_t>(sizeof(ModelUbo)), 0 },
             UNIFORM_DATA_TYPE_BUFFER,
-            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT,
+            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT | SHADER_STAGE_FRAGMENT,
             UNIFORM_USAGE_PER_MESH
         });
 

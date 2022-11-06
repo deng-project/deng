@@ -103,9 +103,7 @@ namespace DENG {
 			EVT_COLOURPICKER_CHANGED(ID_EDITOR_MESH_PANEL_COLOR_PICKER, MeshInspectorPanel::_OnColorChanged)
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_PICK_TEXTURE, MeshInspectorPanel::_OnPickTexturesClick)
 
-			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_VERTEX_SHADER, MeshInspectorPanel::_OnEditVertexShaderClick)
-			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_FRAGMENT_SHADER, MeshInspectorPanel::_OnEditFragmentShaderClick)
-			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_GEOMETRY_SHADER, MeshInspectorPanel::_OnEditGeometryShaderClick)
+			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_SHADERS, MeshInspectorPanel::_OnEditShadersClick)
 			
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, MeshInspectorPanel::_OnUseEnvironmentMapping)
 		wxEND_EVENT_TABLE()
@@ -115,7 +113,8 @@ namespace DENG {
 			m_renderer(_rend)
 		{
 			m_sizer = new wxBoxSizer(wxVERTICAL);
-			m_title = new wxStaticText(this, ID_EDITOR_MESH_PANEL_TITLE, wxT("(null)"));
+			m_title = new wxStaticText(this, ID_EDITOR_MESH_PANEL_TITLE, wxEmptyString);
+			m_primitive_count_text = new wxStaticText(this, ID_EDITOR_MESH_PANEL_PRIMITIVE_COUNT, wxEmptyString);
 			m_use_textures = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_USE_TEXTURES, "Use textures");
 			m_use_textures->SetValue(false);
 			
@@ -126,22 +125,19 @@ namespace DENG {
 			m_pick_textures->Disable();
 
 			m_sizer->Add(m_title, 0, wxALIGN_CENTER);
+			m_sizer->Add(m_primitive_count_text, 0, wxALIGN_CENTER);
 			m_sizer->Add(m_use_textures, 0, wxALIGN_LEFT, 10);
 			m_sizer->Add(m_color_picker_text, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_color_picker, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_pick_textures, 0, wxALIGN_LEFT, 5);
 
 			m_shader_mod_title = new wxStaticText(this , wxID_ANY, wxT("Shader modifications"));
-			m_edit_vertex_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_VERTEX_SHADER, wxT("Edit vertex shader"));
-			m_edit_fragment_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_FRAGMENT_SHADER, wxT("Edit fragment shader"));
-			m_edit_geometry_shader = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_GEOMETRY_SHADER, wxT("Edit geometry shader"));
+			m_edit_shaders = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_SHADERS, wxT("Edit shaders"));
 
 			m_use_environment_mapping = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, wxT("Use environment mapping"));
 
 			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_CENTER, 10);
-			m_sizer->Add(m_edit_vertex_shader, 0, wxALIGN_LEFT);
-			m_sizer->Add(m_edit_fragment_shader, 0, wxALIGN_LEFT);
-			m_sizer->Add(m_edit_geometry_shader, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_edit_shaders, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_use_environment_mapping, 0, wxALIGN_LEFT);
 			SetSizerAndFit(m_sizer);
 		}
@@ -150,6 +146,7 @@ namespace DENG {
 		void MeshInspectorPanel::View(MeshLoader* _mesh) {
 			m_mesh = _mesh;
 			m_title->SetLabelText(m_mesh->GetName());
+			m_primitive_count_text->SetLabelText("This mesh uses " + std::to_string(m_mesh->GetDasMesh().primitive_count) + " primitives");
 
 			Show();
 		}
@@ -194,30 +191,20 @@ namespace DENG {
 			} 
 		}
 
-		void MeshInspectorPanel::_OnEditVertexShaderClick(wxCommandEvent& _evt) {
-			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src, "vert.txt");
+		void MeshInspectorPanel::_OnEditShadersClick(wxCommandEvent& _evt) {
+			ShaderViewer* viewer = new ShaderViewer(this, 
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src,
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src,
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).fragment_shader_src);
+
 			if (viewer->ShowModal() == wxID_OK) {
-				m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src = viewer->GetSource();
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src = viewer->GetVertexSource();
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src = viewer->GetGeometrySource();
+				m_renderer->GetShaderModule(m_mesh->GetShaderId()).fragment_shader_src = viewer->GetFragmentSource();
 				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
 			}
 		}
 
-		void MeshInspectorPanel::_OnEditFragmentShaderClick(wxCommandEvent& _evt) {
-			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(m_mesh->GetShaderId()).fragment_shader_src, "frag.txt");
-			if (viewer->ShowModal() == wxID_OK) {
-				auto& shader = m_renderer->GetShaderModule(m_mesh->GetShaderId());
-				shader.fragment_shader_src = viewer->GetSource();
-				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
-			}
-		}
-
-		void MeshInspectorPanel::_OnEditGeometryShaderClick(wxCommandEvent& _evt) {
-			ShaderViewer* viewer = new ShaderViewer(this, m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src, "geom.txt");
-			if (viewer->ShowModal() == wxID_OK) {
-				m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src = viewer->GetSource();
-				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
-			}
-		}
 
 		void MeshInspectorPanel::_OnUseEnvironmentMapping(wxCommandEvent& _evt) {
 			m_mesh->SetUseEnvironmentMapBit(_evt.IsChecked());

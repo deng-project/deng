@@ -14,6 +14,7 @@
 	#include <wx/wx.h>
 	#include <wx/filename.h>
 	#include <wx/mimetype.h>
+	#include <wx/statline.h>
 
 	#include "deng/deng.h"
 	#include "deng/Executables/deng-game-editor/GuiIds.h"
@@ -24,15 +25,28 @@ namespace DENG {
 
 		class ShaderViewer : public wxDialog {
 			private:
-				wxGridSizer* m_btn_sizer = nullptr;
 				wxBoxSizer* m_sizer = nullptr;
-				wxButton* m_edit_shader = nullptr;
-				wxButton* m_commit_changes = nullptr;
-				wxTextCtrl* m_shader_src_area = nullptr;
+				
+				wxGridSizer* m_vert_btn_sizer = nullptr;
+				wxButton* m_edit_vert_shader = nullptr;
+				wxButton* m_commit_vert_shader_changes = nullptr;
+				wxTextCtrl* m_vert_shader_src_area = nullptr;
+
+				wxGridSizer* m_geom_btn_sizer = nullptr;
+				wxButton* m_edit_geom_shader = nullptr;
+				wxButton* m_commit_geom_shader_changes = nullptr;
+				wxTextCtrl* m_geom_shader_src_area = nullptr;
+
+				wxGridSizer* m_frag_btn_sizer = nullptr;
+				wxButton* m_edit_frag_shader = nullptr;
+				wxButton* m_commit_frag_shader_changes = nullptr;
+				wxTextCtrl* m_frag_shader_src_area = nullptr;
+				
 				wxButton* m_save_changes = nullptr;
 
-				std::string m_source;
-				const std::string m_tmp_file_name;
+				std::string m_vert_src;
+				std::string m_geom_src;
+				std::string m_frag_src;
 
 			private:
 				void _OnEditShaderClick(wxCommandEvent& _evt);
@@ -41,10 +55,18 @@ namespace DENG {
 				wxDECLARE_EVENT_TABLE();
 
 			public:
-				ShaderViewer(wxWindow *_parent, const std::string &_src, const std::string &_tmpfile_name);
+				ShaderViewer(wxWindow *_parent, const std::string &_vert, const std::string &_geom, const std::string &_frag);
 				
-				inline const std::string& GetSource() {
-					return m_source;
+				inline const std::string& GetVertexSource() {
+					return m_vert_src;
+				}
+
+				inline const std::string& GetGeometrySource() {
+					return m_geom_src;
+				}
+
+				inline const std::string& GetFragmentSource() {
+					return m_frag_src;
 				}
 		};
 
