@@ -75,6 +75,7 @@
 #include "deng/Camera3D.h"
 #include "deng/FirstPersonCamera.h"
 #include "deng/EditorCamera.h"
+#include "deng/VertexNormalVisualizer.h"
 #include "deng/AnimationSampler.h"
 #include "deng/MeshLoader.h"
 #include "deng/SkeletonLoader.h"

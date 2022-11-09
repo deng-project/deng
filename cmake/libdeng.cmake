@@ -54,6 +54,7 @@ set(DENG_COMPLETE_HEADERS
 	include/deng/SphereGenerator.h
     include/deng/ThirdPersonCamera.h
     include/deng/Version.h
+	include/deng/VertexNormalVisualizer.h
     include/deng/VulkanDescriptorAllocator.h
     include/deng/VulkanDescriptorSetLayoutCreator.h
     include/deng/VulkanFramebuffer.h
@@ -102,6 +103,7 @@ set(DENG_COMPLETE_SOURCES
 	src/Skybox.cpp
 	src/SphereGenerator.cpp
     src/ThirdPersonCamera.cpp
+	src/VertexNormalVisualizer.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp
     src/VulkanFramebuffer.cpp

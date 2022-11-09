@@ -131,14 +131,12 @@ namespace DENG {
 
 
     void MeshLoader::Attach() {
-        m_mesh_ref_id = m_renderer.NewMeshReference(m_framebuffer_id);
-        MeshReference &mesh = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
+        MeshReference mesh;
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
 
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
 
-        // ModelUbo
         uint32_t binding_id = 1;
         mesh.ubo_blocks.reserve(3);
         mesh.ubo_blocks.emplace_back();
@@ -160,22 +158,29 @@ namespace DENG {
 
         // create mesh draw commands
         mesh.commands.reserve(m_mesh.primitive_count);
+        m_normal_visualizers.reserve(m_mesh.primitive_count);
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
             mesh.commands.emplace_back();
             const Libdas::DasMeshPrimitive &prim = mp_model->mesh_primitives[m_mesh.primitives[i]];
             
             uint32_t abs = 0;
+            uint32_t ioff = UINT32_MAX;
             if (prim.index_buffer_id != UINT32_MAX) {
                 abs = m_mesh_buffer_offsets[prim.index_buffer_id] + prim.index_buffer_offset;
+                ioff = abs;
                 mesh.commands.back().indices_offset = abs;
             }
             mesh.commands.back().draw_count = prim.draw_count;
             mesh.commands.back().attribute_offsets.reserve(3 + prim.texture_count + prim.color_mul_count + prim.joint_set_count * 2);
+            
             abs = m_mesh_buffer_offsets[prim.vertex_buffer_id] + prim.vertex_buffer_offset;
+            uint32_t voff = abs;
             mesh.commands.back().attribute_offsets.push_back(abs);
             if(prim.vertex_normal_buffer_id != UINT32_MAX) {
                 abs = m_mesh_buffer_offsets[prim.vertex_normal_buffer_id] + prim.vertex_normal_buffer_offset;
+                uint32_t noff = abs;
                 mesh.commands.back().attribute_offsets.push_back(abs);
+                m_normal_visualizers.emplace_back(this, "__nviz__", m_renderer, voff, noff, ioff, prim.draw_count, m_framebuffer_id);
             }
             if(prim.vertex_tangent_buffer_id != UINT32_MAX) {
                 abs = m_mesh_buffer_offsets[prim.vertex_tangent_buffer_id] + prim.vertex_tangent_buffer_offset;
@@ -222,6 +227,8 @@ namespace DENG {
                 }
             }
         }
+
+        m_mesh_ref_id = m_renderer.PushMeshReference(mesh, m_framebuffer_id);
     }
 
 
@@ -246,6 +253,7 @@ namespace DENG {
 
 
     void MeshLoader::UpdateJointMatrices(const std::vector<TRS::Matrix4<float>> &_matrices) {
+        VertexNormalVisualizer::Update(m_renderer);
         if(!m_disable_joint_transforms) {
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(_matrices.data()), static_cast<uint32_t>(_matrices.size() * sizeof(TRS::Matrix4<float>)), m_mesh_joints_ubo_offset);
         }

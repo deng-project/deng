@@ -48,9 +48,11 @@
     #include "deng/ModelShaderGenerator.h"
     #include "deng/ModelShaderManager.h"
     #include "deng/ModelUniforms.h"
+    #include "deng/VertexNormalVisualizer.h"
 #endif
 
 namespace DENG {
+    class VertexNormalVisualizer;
 
     class DENG_API MeshLoader : public Entity {
         friend class NodeLoader;
@@ -86,6 +88,8 @@ namespace DENG {
             std::string m_environment_map = MISSING_3D_TEXTURE_NAME;
             bool m_is_colored = true;
             bool m_use_environment_mapping = false;
+
+            std::vector<VertexNormalVisualizer> m_normal_visualizers;
 
         private:
             void _CheckMeshPrimitives();
