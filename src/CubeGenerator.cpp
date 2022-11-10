@@ -33,25 +33,25 @@ namespace DENG {
 		m_vertices[0] = base[2];
 		m_vertices[1] = base[0];
 		m_vertices[2] = base[1];
-
+		
 		m_vertices[3] = base[1];
 		m_vertices[4] = base[3];
 		m_vertices[5] = base[2];
-
+		
 		// back
 		m_vertices[6] = base[2];
 		m_vertices[7] = base[6];
 		m_vertices[8] = base[7];
-
+		
 		m_vertices[9] = base[7];
 		m_vertices[10] = base[3];
 		m_vertices[11] = base[2];
-
+		
 		// left
 		m_vertices[12] = base[0];
 		m_vertices[13] = base[4];
 		m_vertices[14] = base[6];
-
+		
 		m_vertices[15] = base[6];
 		m_vertices[16] = base[2];
 		m_vertices[17] = base[0];
@@ -69,7 +69,7 @@ namespace DENG {
 		m_vertices[24] = base[1];
 		m_vertices[25] = base[5];
 		m_vertices[26] = base[7];
-
+		
 		m_vertices[27] = base[7];
 		m_vertices[28] = base[3];
 		m_vertices[29] = base[1];
@@ -86,9 +86,9 @@ namespace DENG {
 		if (_normals) {
 			for (int i = 0; i < 6; i++) {
 				m_normals[i] = TRS::Point3D(0.f, -1.f, 0.f);
-				m_normals[i + 6] = TRS::Point3D(0.f, 0.f, -1.f);
+				m_normals[i + 6] = TRS::Point3D(0.f, 0.f, 1.f);
 				m_normals[i + 6 * 2] = TRS::Point3D(-1.f, 0.f, 0.f);
-				m_normals[i + 6 * 3] = TRS::Point3D(0.f, 0.f, 1.f);
+				m_normals[i + 6 * 3] = TRS::Point3D(0.f, 0.f, -1.f);
 				m_normals[i + 6 * 4] = TRS::Point3D(1.f, 0.f, 0.f);
 				m_normals[i + 6 * 5] = TRS::Point3D(0.f, 1.f, 0.f);
 			}

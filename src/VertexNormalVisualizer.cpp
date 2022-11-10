@@ -33,7 +33,7 @@ namespace DENG {
 		mesh.commands.back().attribute_offsets.push_back(_normal_offset);
 		mesh.commands.back().draw_count = _draw_count;
 		mesh.commands.back().indices_offset = _index_offset;
-		mesh.enable = true;
+		mesh.enable = false;
 		mesh.shader_module_id = id;
 
 		m_mesh_id = m_renderer.PushMeshReference(mesh, m_framebuffer_name);
@@ -70,7 +70,7 @@ namespace DENG {
 
 			// binding 1 (color)
 			module.ubo_data_layouts.push_back({
-				{ 1, static_cast<uint32_t>(sizeof(TRS::Vector4<float>)), m_visualizer_ubo_offset },
+				{ 1, static_cast<uint32_t>(sizeof(NormalVisualizerUniform)), m_visualizer_ubo_offset },
 				UNIFORM_DATA_TYPE_BUFFER,
 				SHADER_STAGE_GEOMETRY,
 				UNIFORM_USAGE_PER_SHADER
@@ -123,11 +123,11 @@ namespace DENG {
 						"\t\tvec3 p = vertex[i].pos.xyz;\n"\
 						"\t\tvec3 n = normalize(vertex[i].normal.xyz);\n"\
 						"\t\tgl_Position = camera.projection * camera.view * vec4(p, 1.f);\n"\
-						"\t\tout_color = vec4(1.f, 0.f, 0.f, 1.f);\n"\
+						"\t\tout_color = normal.color;\n"\
 						"\t\tEmitVertex();\n"\
 						"\n"\
-						"\t\tgl_Position = camera.projection * camera.view * vec4(p + n * 0.4f, 1.f);\n"\
-						"\t\tout_color = vec4(1.f, 0.f, 0.f, 1.f);\n"\
+						"\t\tgl_Position = camera.projection * camera.view * vec4(p + n * normal.len.x, 1.f);\n"\
+						"\t\tout_color = normal.color;\n"\
 						"\t\tEmitVertex();\n"\
 						"\t\tEndPrimitive();\n"\
 						"\t}\n"\
@@ -154,7 +154,7 @@ namespace DENG {
 							"\n"\
 							"layout(std140, binding = 1) uniform NormalUbo {\n"\
 							"\tvec4 color;\n"
-							"\tvec4 length;\n"\
+							"\tvec4 len;\n"\
 							"} normal;\n"\
 							"\n"\
 							"const float normal_length = 0.1f;\n"\
@@ -167,10 +167,11 @@ namespace DENG {
 							"\t\tout_color = normal.color;\n"\
 							"\t\tEmitVertex();\n"\
 							"\n"\
-							"\t\tgl_Position = camera.projection * camera.view * vec4(p + n, 1.f) * normal.len;\n"\
+							"\t\tgl_Position = camera.projection * camera.view * vec4(p + n * normal.len.x, 1.f);\n"\
 							"\t\tout_color = normal.color;\n"\
 							"\t\tEmitVertex();\n"\
 							"\t\tEndPrimitive();\n"\
+							"\t}"\
 							"}\n";
 						break;
 
@@ -194,6 +195,7 @@ namespace DENG {
 			const uint32_t id = m_renderer.PushShader(module, m_framebuffer_name);
 			if (_index) m_indexed_shader_id = id;
 			else m_unindexed_shader_id = id;
+
 			return id;
 		} else if (_index) {
 			return m_indexed_shader_id;

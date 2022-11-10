@@ -228,6 +228,9 @@ namespace DENG {
             if(m_morph_weights) std::memcpy(ubo.morph_weights, m_morph_weights, sizeof(float[MAX_MORPH_TARGETS]));
             else std::memset(ubo.morph_weights, 0, sizeof(float[MAX_MORPH_TARGETS]));
             m_renderer.UpdateUniform(reinterpret_cast<const char*>(&ubo), sizeof(ModelUbo), offset);
+        
+            for (auto it = mp_mesh_loader->GetNormalVisualizers().begin(); it != mp_mesh_loader->GetNormalVisualizers().end(); it++)
+                it->Update(m_renderer);
         }
 
         // update skeleton if required

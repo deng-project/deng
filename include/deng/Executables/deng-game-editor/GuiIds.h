@@ -111,6 +111,7 @@ namespace DENG {
 			ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_OK,
 
 			ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING,
+			ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS,
 			/** End of mesh inspector panel **/
 
 			/** Shader viewer dialog **/

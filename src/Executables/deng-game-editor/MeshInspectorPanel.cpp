@@ -106,6 +106,7 @@ namespace DENG {
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_EDIT_SHADERS, MeshInspectorPanel::_OnEditShadersClick)
 			
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, MeshInspectorPanel::_OnUseEnvironmentMapping)
+			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS, MeshInspectorPanel::_OnVisualizeVertexNormals)
 		wxEND_EVENT_TABLE()
 
 		MeshInspectorPanel::MeshInspectorPanel(wxWindow *_parent, Renderer *_rend) :
@@ -135,10 +136,13 @@ namespace DENG {
 			m_edit_shaders = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_SHADERS, wxT("Edit shaders"));
 
 			m_use_environment_mapping = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, wxT("Use environment mapping"));
+			m_visualize_vertex_normals = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS, wxT("Visualize vertex normals"));
 
 			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_CENTER, 10);
 			m_sizer->Add(m_edit_shaders, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_use_environment_mapping, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_visualize_vertex_normals, 0, wxALIGN_LEFT);
+			
 			SetSizerAndFit(m_sizer);
 		}
 
@@ -217,6 +221,12 @@ namespace DENG {
 					m_mesh->SetEnvironmentMap(((Skybox*)ent)->GetTextureName());
 				}
 			}
+		}
+
+		void MeshInspectorPanel::_OnVisualizeVertexNormals(wxCommandEvent& _evt) {
+			auto& viz = m_mesh->GetNormalVisualizers();
+			for (auto it = viz.begin(); it != viz.end(); it++)
+				it->Toggle(_evt.IsChecked());
 		}
 	}
 }

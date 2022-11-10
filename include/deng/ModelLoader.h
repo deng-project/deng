@@ -50,10 +50,11 @@
     #include "deng/Renderer.h"
     #include "deng/GPUMemoryManager.h"
     #include "deng/ModelUniforms.h"
-    #include "deng/ModelUniforms.h"
     #include "deng/Entity.h"
     #include "deng/ScriptableEntity.h"
     #include "deng/Camera3D.h"
+
+    #include "deng/VertexNormalVisualizer.h"
     #include "deng/MeshLoader.h"
     #include "deng/AnimationSampler.h"
     #include "deng/ModelShaderGenerator.h"

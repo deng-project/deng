@@ -51,6 +51,7 @@
 	#include "deng/Debug/TriangleTester.h"
 #endif
 	
+	#include "deng/VertexNormalVisualizer.h"
 	#include "deng/MeshLoader.h"
 	#include "deng/AnimationSampler.h"
 	#include "deng/SkeletonLoader.h"

@@ -52,7 +52,6 @@
 #endif
 
 namespace DENG {
-    class VertexNormalVisualizer;
 
     class DENG_API MeshLoader : public Entity {
         friend class NodeLoader;
@@ -131,6 +130,10 @@ namespace DENG {
 
             inline uint32_t &GetMeshReferenceId() {
                 return m_mesh_ref_id;
+            }
+
+            inline std::vector<VertexNormalVisualizer>& GetNormalVisualizers() {
+                return m_normal_visualizers;
             }
 
             inline const Libdas::DasMesh& GetDasMesh() {

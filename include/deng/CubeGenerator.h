@@ -48,6 +48,7 @@
 	#include "deng/ScriptableEntity.h"
 	#include "deng/Renderer.h"
 
+	#include "deng/VertexNormalVisualizer.h"
 	#include "deng/MeshLoader.h"
 	#include "deng/AnimationSampler.h"
 	#include "deng/SkeletonLoader.h"

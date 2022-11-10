@@ -51,6 +51,8 @@ namespace DENG {
         };
 
         m_ubo.pos = m_x_rot * m_y_rot * m_ubo.pos;
+        m_ubo.pos.third = -m_ubo.pos.third;
+        std::cout << "Camera position: (" << m_ubo.pos.first << "; " << m_ubo.pos.second << "; " << m_ubo.pos.third << ")" << std::endl;
         m_ubo.view_matrix = translation * (m_x_rot * m_y_rot).ExpandToMatrix4();
         m_ubo.view_matrix = m_ubo.view_matrix.Transpose();
     }
