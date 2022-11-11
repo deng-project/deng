@@ -110,7 +110,7 @@ namespace DENG {
 		wxEND_EVENT_TABLE()
 
 		MeshInspectorPanel::MeshInspectorPanel(wxWindow *_parent, Renderer *_rend) :
-			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(200, 400)),
+			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxDefaultSize),
 			m_renderer(_rend)
 		{
 			m_sizer = new wxBoxSizer(wxVERTICAL);
@@ -125,20 +125,23 @@ namespace DENG {
 			m_pick_textures = new wxButton(this, ID_EDITOR_MESH_PANEL_PICK_TEXTURE, "Pick textures");
 			m_pick_textures->Disable();
 
-			m_sizer->Add(m_title, 0, wxALIGN_CENTER);
-			m_sizer->Add(m_primitive_count_text, 0, wxALIGN_CENTER);
+			m_sizer->Add(m_title, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_primitive_count_text, 0, wxALIGN_LEFT);
+			m_sizer->AddSpacer(10);
 			m_sizer->Add(m_use_textures, 0, wxALIGN_LEFT, 10);
 			m_sizer->Add(m_color_picker_text, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_color_picker, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_pick_textures, 0, wxALIGN_LEFT, 5);
 
+			m_sizer->AddSpacer(10);
 			m_shader_mod_title = new wxStaticText(this , wxID_ANY, wxT("Shader modifications"));
 			m_edit_shaders = new wxButton(this, ID_EDITOR_MESH_PANEL_EDIT_SHADERS, wxT("Edit shaders"));
 
 			m_use_environment_mapping = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, wxT("Use environment mapping"));
 			m_visualize_vertex_normals = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS, wxT("Visualize vertex normals"));
 
-			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_CENTER, 10);
+			m_sizer->AddSpacer(10);
+			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_edit_shaders, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_use_environment_mapping, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_visualize_vertex_normals, 0, wxALIGN_LEFT);
@@ -152,6 +155,7 @@ namespace DENG {
 			m_title->SetLabelText(m_mesh->GetName());
 			m_primitive_count_text->SetLabelText("This mesh uses " + std::to_string(m_mesh->GetDasMesh().primitive_count) + " primitives");
 
+			SetSizerAndFit(m_sizer);
 			Show();
 		}
 

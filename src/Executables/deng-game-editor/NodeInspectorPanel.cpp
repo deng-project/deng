@@ -34,7 +34,7 @@ namespace DENG {
 		wxEND_EVENT_TABLE()
 
 		NodeInspectorPanel::NodeInspectorPanel(wxWindow* _parent) :
-			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(200, 800)),
+			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxDefaultSize),
 			m_translation_x_validator(2, &m_translation.first),
 			m_translation_y_validator(2, &m_translation.second),
 			m_translation_z_validator(2, &m_translation.third),
@@ -49,6 +49,7 @@ namespace DENG {
 			// title property
 			m_title = new wxStaticText(this, ID_EDITOR_NODE_PANEL_TITLE, wxT("(null)"));
 			m_sizer->Add(m_title, 0, wxALIGN_CENTER);
+			m_sizer->AddSpacer(10);
 
 			// translation properties
 			// NOTE: (-100, 100) is just some arbitrary value
@@ -92,7 +93,7 @@ namespace DENG {
 			m_sizer->Add(m_scale_ctrl, 0, wxALIGN_CENTER);
 			m_sizer->Add(m_scale_slider, 0, wxALIGN_LEFT);
 
-			SetSizer(m_sizer);
+			SetSizerAndFit(m_sizer);
 		}
 
 
@@ -113,6 +114,7 @@ namespace DENG {
 			m_scale = m_node->GetCustomScale();
 			m_scale_slider->SetValue(static_cast<int>(m_scale * FLOAT_PRECISION));
 			
+			SetSizerAndFit(m_sizer);
 			Show();
 			TransferDataToWindow();
 		}

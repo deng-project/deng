@@ -13,7 +13,7 @@ namespace DENG {
 	namespace Editor {
 
 		RendererViewport::RendererViewport(wxWindow *_parent, DXML::Configuration::Backend _backend) :
-			wxWindow(_parent, wxID_ANY),
+			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxDefaultSize),
 			m_backend(_backend)
 		{
 			Bind(wxEVT_PAINT, &RendererViewport::_OnPaint, this, wxID_ANY);

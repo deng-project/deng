@@ -16,12 +16,13 @@ namespace DENG {
 		wxEND_EVENT_TABLE()
 
 		AnimationInspectorPanel::AnimationInspectorPanel(wxWindow* _parent) :
-			wxScrolledWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(200, 150))
+			wxScrolledWindow(_parent, wxID_ANY, wxDefaultPosition, wxDefaultSize)
 		{
 			Bind(wxEVT_SIZE, &AnimationInspectorPanel::_OnResize, this, wxID_ANY);
 			m_sizer = new wxBoxSizer(wxVERTICAL);
 			m_title = new wxStaticText(this, ID_EDITOR_ANIMATION_PANEL_TITLE, "(null)");
-			m_sizer->Add(m_title, 0, wxALIGN_CENTER);
+			m_sizer->Add(m_title, 0, wxALIGN_LEFT);
+			m_sizer->AddSpacer(10);
 			
 			m_samplers = new wxGenericCollapsiblePane(this, wxID_ANY, "List of all samplers", wxDefaultPosition, wxDefaultSize, wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
 			m_sizer->Add(m_samplers, 0, wxGROW | wxEXPAND);
@@ -32,8 +33,8 @@ namespace DENG {
 			win->SetSizer(m_pane_sizer);
 			m_samplers->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, 
 				[this](wxCollapsiblePaneEvent& _ev) { 
+					wxWindow* win = m_samplers->GetPane();
 					m_samplers->Layout();
-					m_sizer->Layout();
 					FitInside();
 				}
 			);
@@ -48,15 +49,16 @@ namespace DENG {
 
 			m_animate_toggle = new wxButton(this, ID_EDITOR_ANIMATION_PANEL_TOGGLE, "Animate");
 			m_sizer->Add(m_animate_toggle, 0, wxGROW | wxEXPAND);
-			SetSizer(m_sizer);
-			SetScrollRate(2, 2);
+			SetSizerAndFit(m_sizer);
+			SetScrollRate(3, 3);
 		}
 
 
 		void AnimationInspectorPanel::View(Animation* _ani) {
 			m_animation = _ani;
-			Show();
 			m_title->SetLabelText(_ani->name);
+			SetSizerAndFit(m_sizer);
+			Show();
 
 			// for each sampler in animation view it in the sampler pane
 			m_pane_sizer->Clear(true);
@@ -86,8 +88,9 @@ namespace DENG {
 		}
 
 		void AnimationInspectorPanel::_OnResize(wxSizeEvent& _evt) {
-			std::cout << "Animation panel size: " << _evt.GetSize().GetX() << "x" << _evt.GetSize().GetY() << std::endl;
-			std::cout << "Minimum size: " << GetMinSize().GetX() << "x" << GetMinSize().GetY() << std::endl;
+			m_sizer->Layout();
+			SetSize(GetParent()->GetVirtualSize());
+			FitInside();
 		}
 
 		void AnimationInspectorPanel::_OnAnimateToggleClick(wxCommandEvent& _evt) {
