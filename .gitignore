@@ -9,7 +9,6 @@ release/
 *.sln
 *~*
 *.log
-deps/
 normalising.txt
 compile_commands.json
 compile_flags.txt

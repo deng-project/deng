@@ -94,7 +94,7 @@ set(DENG_COMPLETE_SOURCES
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/ProjectDataManager.cpp
-    src/PythonScriptExecutor.cpp
+    #src/PythonScriptExecutor.cpp
 	src/Registry.cpp
     src/RenderState.cpp
     src/SceneLoader.cpp
@@ -115,15 +115,6 @@ set(DENG_COMPLETE_SOURCES
     src/Window.cpp
 )
 
-# Debug sources
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-	list(APPEND DENG_COMPLETE_HEADERS
-		include/deng/Debug/TriangleTester.h)
-	
-	list(APPEND DENG_COMPLETE_SOURCES
-		src/Debug/TriangleTester.cpp)
-endif()
-
 # Library configurations
 add_library(${DENG_COMPLETE_TARGET} SHARED
     ${DENG_COMPLETE_HEADERS}
@@ -132,7 +123,6 @@ add_library(${DENG_COMPLETE_TARGET} SHARED
 
 # Compile definitions
 target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE DENG_COMPLETE_EXPORT_LIBRARY)
-
 
 # Include directories
 target_include_directories(${DENG_COMPLETE_TARGET} 
@@ -145,68 +135,21 @@ target_include_directories(${DENG_COMPLETE_TARGET}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui
 )
 
+target_link_directories(${DENG_COMPLETE_TARGET}
+	PUBLIC C:/VulkanSDK/1.2.182.0/Lib)
 
-# Vulkan sdk includes
-if(WIN32)
-	target_include_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Include
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}/include)
-		
-	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		add_custom_command(TARGET ${DENG_COMPLETE_TARGET} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E remove_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/python3.10
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/python3.10
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/Lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/python3.10
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/python310_d.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libcrypto-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libssl-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libffi-7.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}
-		)
-	elseif(CMAKE_BUILD_TYPE MATCHES Release)
-		add_custom_target(TARGET ${DENG_COMPLETE_TARGET} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS-E remove_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/python3.10
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/python3.10
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/Lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/python3.10
-			COMMAND ${CMAKE_COMMAND} 
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/python310.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libcrypto-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libssl-1_1.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/libffi-7.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}	
-		)
-	endif()
-elseif(UNIX)
-    target_include_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/include)
-endif()
-
-# CPython includes
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_include_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/include/python3.10d)
-else()
-    target_include_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/include/python3.10)
-endif()
 
 # Linking
 target_link_libraries(${DENG_COMPLETE_TARGET}
     PRIVATE mar
     PRIVATE nwin-static
-    PUBLIC das-static
-	PUBLIC dxml)
+	PRIVATE Vulkan::Headers Vulkan::Registry
+    PRIVATE unofficial::shaderc::shaderc
+	PRIVATE ODE::ODE
+	PUBLIC Python3::Python
+	PUBLIC das-static
+	PUBLIC dxml
+	PRIVATE vulkan-1)
 
 target_compile_definitions(${DENG_COMPLETE_TARGET}
     PUBLIC ImDrawIdx=unsigned\ int
@@ -219,42 +162,8 @@ if(WIN32)
         PRIVATE IMGUI_API=_declspec\(dllexport\)
         INTERFACE IMGUI_API=_declspec\(dllimport\)
 	)
-
-    target_link_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/Lib
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/shaderc-${SHADERC_VERSION}/lib
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION})
-
-	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		target_link_libraries(${DENG_COMPLETE_TARGET} 
-			PUBLIC python310_d)
-	elseif(CMAKE_BUILD_TYPE MATCHES Release)
-		target_link_libraries(${DENG_COMPLETE_TARGET} 
-            PUBLIC python310)
-	endif()
-
-    target_link_libraries(${DENG_COMPLETE_TARGET}
-        PUBLIC shaderc_combined
-        PUBLIC vulkan-1)
-	
-elseif(UNIX AND NOT MACOS)
-    target_link_directories(${DENG_COMPLETE_TARGET}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/VulkanSDK-${VULKAN_SDK_VERSION}/lib
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/cpython-${PYTHON_VERSION}/lib)
-
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
-        target_link_libraries(${DENG_COMPLETE_TARGET}
-            PUBLIC python3.10d)
-    elseif(CMAKE_BUILD_TYPE MATCHES Release)
-        target_link_libraries(${DENG_COMPLETE_TARGET}
-            PUBLIC python3.10)
-    endif()
-
-    target_link_libraries(${DENG_COMPLETE_TARGET}
-        PUBLIC util
-        PUBLIC shaderc_combined)
 endif()
-
+	
 add_dependencies(${DENG_COMPLETE_TARGET}
     das-static
     dastool

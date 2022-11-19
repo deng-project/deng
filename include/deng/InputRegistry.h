@@ -11,7 +11,7 @@ namespace DENG {
 		public:
 			InputRegistry() {
 				std::fill(m_active_table.begin(), m_active_table.end(), false);
-				std::fill(m_released_table.begin(), m_active_table.end(), false);
+				std::fill(m_released_table.begin(), m_released_table.end(), false);
 			}
 
 			inline void RegisterActiveKeyEvent(neko_HidEvent _hid) {

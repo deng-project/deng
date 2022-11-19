@@ -26,7 +26,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #define Py_BUILD_CORE_BUILTIN
-#include "Python.h"
+#include <Python.h>
 
 namespace DENG {
 

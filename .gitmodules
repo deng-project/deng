@@ -1,0 +1,22 @@
+[submodule "deps/vcpkg"]
+	path = deps/vcpkg
+	url = https://github.com/Microsoft/vcpkg
+[submodule "deps/libdas"]
+	path = deps/libdas
+	url = https://git.dengproject.org/deng/libdas
+[submodule "deps/dxml"]
+	path = deps/dxml
+	url = https://git.dengproject.org/deng/dengxml
+[submodule "deps/mar"]
+	path = deps/mar
+	url = https://git.dengproject.org/deng/minimal-ascii-reader
+[submodule "deps/trs"]
+	path = deps/trs
+	url = https://git.dengproject.org/deng/trs-headers
+[submodule "deps/nekowin"]
+	path = deps/nekowin
+	url = https://git.dengproject.org/deng/nekowin
+[submodule "deps/imgui"]
+	path = deps/imgui
+	url = https://github.com/ocornut/imgui
+	branch = docking
