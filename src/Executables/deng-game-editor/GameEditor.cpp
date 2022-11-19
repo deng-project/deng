@@ -52,7 +52,7 @@ namespace DENG {
 		void GameEditor::_CreateEditorLayout() {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
 			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxSize(200, 600), wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
-			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::OPENGL);
+			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(600, 200), wxNO_BORDER | wxTE_MULTILINE);
 			m_status = new wxStatusBar(this, wxID_ANY);
 			SetStatusBar(m_status);
