@@ -71,7 +71,7 @@ namespace DENG {
                 // vulkan queue handles
                 VkQueue m_graphics_queue;
                 VkQueue m_presentation_queue;
-#ifdef __DEBUG
+#ifdef _DEBUG
                 const char *m_validation_layer = "VK_LAYER_KHRONOS_validation";
                 VkDebugUtilsMessengerEXT m_debug_messenger = {};
 #endif
@@ -83,7 +83,7 @@ namespace DENG {
             private:
                 void _CreateInstance();
                 VkResult _CreateNativeSurface();
-#ifdef __DEBUG
+#ifdef _DEBUG
                 bool _CheckValidationLayerSupport();
                 void _CreateDebugMessenger();
 

@@ -12,7 +12,7 @@
 namespace DENG {
 	namespace Editor {
 
-		RendererViewport::RendererViewport(wxWindow *_parent, DXML::Configuration::Backend _backend) :
+		RendererViewport::RendererViewport(wxWindow *_parent, DXML::GraphicsBackend _backend) :
 			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxDefaultSize),
 			m_backend(_backend)
 		{
@@ -53,7 +53,7 @@ namespace DENG {
 			m_config.title = "DENG game editor viewport";
 			RenderState* rs = RenderState::GetInstance();
 			switch (m_backend) {
-				case DXML::Configuration::Backend::VULKAN:
+				case DXML::GRAPHICS_BACKEND_VULKAN:
 #ifdef _WIN32
 					m_config.win32_hwnd = GetHWND();
 					m_config.win32_instance = GetModuleHandle(NULL);
@@ -64,7 +64,7 @@ namespace DENG {
 					mp_renderer = new VulkanRenderer(m_config);
 					break;
 				
-				case DXML::Configuration::Backend::OPENGL:
+				case DXML::GRAPHICS_BACKEND_OPENGL:
 					mp_opengl_loader = new OpenGLLoaderWin32;
 					mp_opengl_loader->CreateContext(GetHWND());
 					mp_opengl_loader->MakeCurrent();
@@ -90,7 +90,7 @@ namespace DENG {
 				m_input.FlushReleased();
 				
 				mp_renderer->RenderFrame();
-				if(m_backend == DXML::Configuration::Backend::OPENGL)
+				if(m_backend == DXML::GRAPHICS_BACKEND_OPENGL)
 					_SwapBuffers();
 
 
@@ -122,7 +122,7 @@ namespace DENG {
 				m_input.FlushReleased();
 
 				mp_renderer->RenderFrame();
-				if(m_backend == DXML::Configuration::Backend::OPENGL)
+				if(m_backend == DXML::GRAPHICS_BACKEND_OPENGL)
 					_SwapBuffers();
 
 				_ev.RequestMore();

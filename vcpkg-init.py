@@ -8,7 +8,9 @@ VCPKG_PACKAGES = [
     "spirv-tools:x64-windows",
     "shaderc:x64-windows",
     "ode:x64-windows",
-    "python3:x64-windows"
+    "python3:x64-windows",
+    "pybind11:x64-windows",
+    "cryptopp:x64-windows"
 ]
 
 def check_and_install_vcpkg():

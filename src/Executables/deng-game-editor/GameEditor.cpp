@@ -23,9 +23,9 @@ namespace DENG {
 			SetMenuBar(m_menubar);
 			
 			_CreateEditorLayout();
-			if (m_viewport->GetBackend() == DXML::Configuration::Backend::OPENGL) {
+			if (m_viewport->GetBackend() == DXML::GRAPHICS_BACKEND_OPENGL) {
 				SetTitle("DENG game editor (OpenGL)");
-			} else if (m_viewport->GetBackend() == DXML::Configuration::Backend::VULKAN) {
+			} else if (m_viewport->GetBackend() == DXML::GRAPHICS_BACKEND_VULKAN) {
 				SetTitle("DENG game editor (Vulkan)");
 			}
 			_CreateRuntimeToolbar();
@@ -35,6 +35,9 @@ namespace DENG {
 		GameEditor::~GameEditor() {
 			delete m_grid;
 			delete m_camera;
+			
+			Destroy();
+
 			m_model_loaders.clear();
 			Registry* reg = Registry::GetInstance();
 			reg->DeleteInstance();
@@ -52,7 +55,7 @@ namespace DENG {
 		void GameEditor::_CreateEditorLayout() {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
 			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxSize(200, 600), wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
-			m_viewport = new RendererViewport(this, DXML::Configuration::Backend::VULKAN);
+			m_viewport = new RendererViewport(this, DXML::GRAPHICS_BACKEND_VULKAN);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(600, 200), wxNO_BORDER | wxTE_MULTILINE);
 			m_status = new wxStatusBar(this, wxID_ANY);
 			SetStatusBar(m_status);
@@ -136,7 +139,7 @@ namespace DENG {
 
 		void GameEditor::_LoadProject() {
 			// set the title accordingly
-			SetTitle(m_project.GetXMLGame().meta.name + " | DENG game editor");
+
 			
 			// for(auto it = game.rt.levels.)
 

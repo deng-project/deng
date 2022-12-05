@@ -16,9 +16,18 @@
 	#include <unordered_map>
     #include <cmath>
 
+#ifdef _WIN32
+	#include <Windows.h>
+#endif
+
 	#include "trs/Vector.h"
 	#include "trs/Points.h"
 	#include "trs/Quaternion.h"
+	#include "trs/Matrix.h"
+
+	#include <python3.10/pyconfig.h>
+	#include <pybind11/pybind11.h>
+	namespace py = pybind11;
 
 	#include "mar/AsciiStreamReader.h"
 	#include "mar/AsciiLineReader.h"
@@ -27,53 +36,81 @@
 	#include "dxml/XMLTag.h"
 	#include "dxml/XMLWriter.h"
 	#include "dxml/XMLParser.h"
-	#include "dxml/GameConfigurationReader.h"
-	#include "dxml/GameConfigurationWriter.h"
+	#include "dxml/GameXMLReader.h"
 
 	#include "das/Api.h"
 	#include "das/Algorithm.h"
+	#include "das/DasStructures.h"
+	#include "das/TextureReader.h"
 
 	#include "deng/Api.h"
 	#include "deng/ErrorDefinitions.h"
+	#include "deng/ShaderDefinitions.h"
+	#include "deng/Renderer.h"
 #endif
 
 namespace DENG {
 
 	class DENG_API ProjectDataManager {
 		private:
-			std::string m_project_path;
-			DXML::XMLGame m_xml_game;
+			DXML::SerializedGame m_game;
+			bool m_save_bit = false;
+			const bool m_read_bit;
+
+			// filename and parent directory to consider
+			const std::string m_file_name;
+			const std::string m_parent_dir;
+
+		private:
+			void _CreateNewProject();
 
 		public:
-			ProjectDataManager() = default;
-			ProjectDataManager(const std::string &_path, const std::string &_name, DXML::Configuration::Backend _backend);
-			ProjectDataManager(const ProjectDataManager &_pd) = default;
-			ProjectDataManager(ProjectDataManager &&_pd) = default;
+			ProjectDataManager(const std::string &_file_name, const std::string& _parent_dir = ".", bool _read_bit = true);
+			ProjectDataManager(const ProjectDataManager& _pdm) = default;
 
-			ProjectDataManager& operator=(const ProjectDataManager& _pm) = default;
-
-			bool CreateEmptyProject();
-			bool LoadProject(const std::string &_game_xml_path);
-			bool Move(const std::string& _new_path);
-
-			inline void SetProjectPath(const std::string &_path) {
-				m_project_path = _path;
+			inline void SetMetadata(const DXML::GameMetadata& _meta) {
+				m_game.metadata = _meta;
 			}
 
-			inline void SetProjectName(const std::string& _name) {
-				m_xml_game.meta.name = _name;
+			inline void SetConfiguration(const DXML::GameConfiguration& _conf) {
+				m_game.config = _conf;
 			}
 
-			inline void SetDefaultBackend(DXML::Configuration::Backend _backend) {
-				m_xml_game.cfg.default_backend = _backend;
+			inline uint32_t AddLevel() {
+				m_game.levels.emplace_back();
+				return static_cast<uint32_t>(m_game.levels.size()-1);
 			}
 
-			inline const std::string& GetProjectPath() const {
-				return m_project_path;
+			inline void SetLevelDescriptor(uint32_t _id, DXML::LevelDescriptor& _desc) {
+				DENG_ASSERT(_id < m_game.levels.size());
+				m_game.levels[_id] = _desc;
 			}
 
-			inline DXML::XMLGame& GetXMLGame() {
-				return m_xml_game;
+			inline void SetEntryScript(const std::string& _script) {
+				m_game.entryScript = _script;
+			}
+
+			inline const DXML::GameMetadata& GetMetadata() const {
+				return m_game.metadata;
+			}
+
+			inline const DXML::GameConfiguration& GetConfiguration() const {
+				return m_game.config;
+			}
+
+			inline const size_t GetLevelCount() const {
+				return m_game.levels.size();
+			}
+
+			inline const std::vector<DXML::LevelDescriptor>& GetLevels() const {
+				return m_game.levels;
+			}
+
+			void Load();
+			void Save();
+
+			inline bool GetSaveBit() {
+				return m_save_bit;
 			}
 	};
 }

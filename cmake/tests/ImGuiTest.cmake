@@ -13,6 +13,7 @@ add_executable(${OGL_IMGUI_TEST_TARGET}
 	${OGL_IMGUI_TEST_SOURCES})
 add_dependencies(${OGL_IMGUI_TEST_TARGET} ${DENG_COMPLETE_TARGET})
 target_link_libraries(${OGL_IMGUI_TEST_TARGET} ${DENG_COMPLETE_TARGET})
+set_target_properties(${OGL_IMGUI_TEST_TARGET} PROPERTIES FOLDER ${MANUAL_TEST_DIR})
 
 # Vulkan ImGui application
 set(VK_IMGUI_TEST_TARGET VulkanImGui)
@@ -24,3 +25,4 @@ add_executable(${VK_IMGUI_TEST_TARGET}
 	${VK_IMGUI_TEST_SOURCES})
 add_dependencies(${VK_IMGUI_TEST_TARGET} ${DENG_COMPLETE_TARGET})
 target_link_libraries(${VK_IMGUI_TEST_TARGET} ${DENG_COMPLETE_TARGET})
+set_target_properties(${VK_IMGUI_TEST_TARGET} PROPERTIES FOLDER ${MANUAL_TEST_DIR})

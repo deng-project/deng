@@ -15,7 +15,7 @@
     #include <memory>
     #include <cmath>
     #include <unordered_map>
-#ifdef __DEBUG
+#ifdef _DEBUG
     #include <iostream>
 #endif
     #include <string>
@@ -51,7 +51,7 @@
 
 namespace DENG {
 
-#ifdef __DEBUG
+#ifdef _DEBUG
         /// Global OpenGL error checking function
         void lglErrorCheck(const std::string &_func, const std::string &_file, const uint32_t _line);
 #endif

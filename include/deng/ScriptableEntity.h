@@ -20,7 +20,6 @@ namespace DENG {
 		public:
 			ScriptComponent(Entity *_scriptable_entity) :
 				m_scriptable_entity(_scriptable_entity) {}
-			
 	};
 
 	template<typename T>

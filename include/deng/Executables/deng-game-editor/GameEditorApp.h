@@ -8,6 +8,9 @@
 
 #ifdef GAME_EDITOR_APP_CPP
     #include <any>
+#ifdef _DEBUG
+    #include <crtdbg.h>
+#endif
     #include <wx/wx.h>
     #include <wx/clrpicker.h>
     #include <wx/valnum.h>
@@ -26,7 +29,7 @@
     #include "deng/Version.h"
     
     #ifdef _WIN32
-        #ifdef __DEBUG
+        #ifdef _DEBUG
             #pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup")
         #else
             #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:WinMainCRTStartup")
@@ -39,10 +42,12 @@ namespace DENG {
      
         class GameEditorApp : public wxApp {
             private:
+                GameEditor* m_editor = nullptr;
                 ProjectManager* m_frame = nullptr;
 
             public:
                 virtual bool OnInit() override;
+                virtual int OnExit() override;
                 virtual void OnUnhandledException() override;
                 virtual bool OnExceptionInMainLoop() override;
         };

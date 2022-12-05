@@ -72,7 +72,7 @@ namespace DENG {
                 TriangleTester* m_triangle = nullptr;
 #endif
 
-                ProjectDataManager m_project;
+                //ProjectDataManager m_project;
                 std::list<ModelLoader> m_model_loaders;
 
             private:

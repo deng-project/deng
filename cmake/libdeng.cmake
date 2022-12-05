@@ -4,13 +4,22 @@
 # author: Karl-Mihkel Ott
 
 set(DENG_COMPLETE_TARGET deng-complete)
+set(DENG_IMGUI_HEADERS 
+	deps/imgui/imgui.h
+	deps/imgui/imconfig.h
+	deps/imgui/imgui_internal.h
+	deps/imgui/imstb_rectpack.h
+	deps/imgui/imstb_textedit.h
+	deps/imgui/imstb_truetype.h)
+	
+set(DENG_IMGUI_SRC
+	deps/imgui/imgui.cpp
+    deps/imgui/imgui_demo.cpp
+    deps/imgui/imgui_draw.cpp
+    deps/imgui/imgui_tables.cpp
+    deps/imgui/imgui_widgets.cpp)
+
 set(DENG_COMPLETE_HEADERS
-    deps/imgui/imgui.h
-    deps/imgui/imconfig.h
-    deps/imgui/imgui_internal.h
-    deps/imgui/imstb_rectpack.h
-    deps/imgui/imstb_textedit.h
-    deps/imgui/imstb_truetype.h
 	include/deng/deng.h
     include/deng/AnimationSampler.h
     include/deng/Api.h
@@ -28,7 +37,6 @@ set(DENG_COMPLETE_HEADERS
     include/deng/HardwareInfo.h
     include/deng/ImGuiLayer.h
 	include/deng/InputRegistry.h
-	include/deng/LevelLoader.h
     include/deng/MeshLoader.h
     include/deng/Missing.h
     include/deng/ModelLoader.h
@@ -67,11 +75,6 @@ set(DENG_COMPLETE_HEADERS
 )
 
 set(DENG_COMPLETE_SOURCES
-    deps/imgui/imgui.cpp
-    deps/imgui/imgui_demo.cpp
-    deps/imgui/imgui_draw.cpp
-    deps/imgui/imgui_tables.cpp
-    deps/imgui/imgui_widgets.cpp
     src/AnimationSampler.cpp
     src/Camera3D.cpp
 	src/CubeGenerator.cpp
@@ -82,7 +85,6 @@ set(DENG_COMPLETE_SOURCES
     src/GPUMemoryManager.cpp
     src/GridGenerator.cpp
     src/ImGuiLayer.cpp
-	src/LevelLoader.cpp
     src/MeshLoader.cpp
     src/Missing.cpp
     src/ModelLoader.cpp
@@ -94,7 +96,6 @@ set(DENG_COMPLETE_SOURCES
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
     src/ProjectDataManager.cpp
-    #src/PythonScriptExecutor.cpp
 	src/Registry.cpp
     src/RenderState.cpp
     src/SceneLoader.cpp
@@ -118,8 +119,13 @@ set(DENG_COMPLETE_SOURCES
 # Library configurations
 add_library(${DENG_COMPLETE_TARGET} SHARED
     ${DENG_COMPLETE_HEADERS}
+	${DENG_IMGUI_HEADERS}
     ${DENG_COMPLETE_SOURCES}
+	${DENG_IMGUI_SRC}
 )
+
+# Source groups
+source_group("ImGui" FILES ${DENG_IMGUI_HEADERS} ${DENG_IMGUI_SRC})
 
 # Compile definitions
 target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE DENG_COMPLETE_EXPORT_LIBRARY)
@@ -146,7 +152,10 @@ target_link_libraries(${DENG_COMPLETE_TARGET}
 	PRIVATE Vulkan::Headers Vulkan::Registry
     PRIVATE unofficial::shaderc::shaderc
 	PRIVATE ODE::ODE
-	PUBLIC Python3::Python
+	PRIVATE pybind11::lto
+	PRIVATE pybind11::embed
+	PRIVATE pybind11::module
+	PRIVATE cryptopp::cryptopp
 	PUBLIC das-static
 	PUBLIC dxml
 	PRIVATE vulkan-1)

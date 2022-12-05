@@ -13,6 +13,7 @@ add_executable(${OGL_TRIANGLE_TARGET}
 	${OGL_TRIANGLE_SOURCES})
 add_dependencies(${OGL_TRIANGLE_TARGET} ${DENG_COMPLETE_TARGET})
 target_link_libraries(${OGL_TRIANGLE_TARGET} PRIVATE ${DENG_COMPLETE_TARGET})
+set_target_properties(${OGL_TRIANGLE_TARGET} PROPERTIES FOLDER ${MANUAL_TEST_DIR})
 
 # VulkanTriangle application
 set(VK_TRIANGLE_TARGET VulkanTriangle)
@@ -24,6 +25,7 @@ add_executable(${VK_TRIANGLE_TARGET}
 	${VK_TRIANGLE_SOURCES})
 add_dependencies(${VK_TRIANGLE_TARGET} ${DENG_COMPLETE_TARGET})
 target_link_libraries(${VK_TRIANGLE_TARGET} PRIVATE ${DENG_COMPLETE_TARGET})
+set_target_properties(${VK_TRIANGLE_TARGET} PROPERTIES FOLDER ${MANUAL_TEST_DIR})
 
 # Custom commands regarding runtime data
 add_custom_command(TARGET ${OGL_TRIANGLE_TARGET}

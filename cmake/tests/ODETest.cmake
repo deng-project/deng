@@ -21,3 +21,4 @@ target_link_libraries(${ODE_TEST_TARGET}
 	
 target_include_directories(${ODE_TEST_TARGET}
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/ode-0.16.2/include)
+set_target_properties(${ODE_TEST_TARGET} PROPERTIES FOLDER ${MANUAL_TEST_DIR})

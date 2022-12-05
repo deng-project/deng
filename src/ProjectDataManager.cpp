@@ -7,60 +7,99 @@
 #include "deng/ProjectDataManager.h"
 
 namespace DENG {
-
-	ProjectDataManager::ProjectDataManager(const std::string& _path, const std::string& _name, DXML::Configuration::Backend _backend) :
-		m_project_path(_path)
+	
+	ProjectDataManager::ProjectDataManager(const std::string& _file_name, const std::string& _parent_dir, bool _read_bit) :
+		m_read_bit(_read_bit),
+		m_file_name(_file_name),
+		m_parent_dir(_parent_dir)
 	{
-		m_xml_game.meta.name = _name;
-		m_xml_game.cfg.default_backend = _backend;
-	}
-
-
-	bool ProjectDataManager::CreateEmptyProject() {
-		DENG_ASSERT(m_project_path.size());
-
-		// check if the project path exists and if it doesn't create it
-		if (!std::filesystem::exists(m_project_path)) {
-			std::filesystem::create_directories(m_project_path);
-
-			// create directories for sfx, models, models/static, models/dynamic, scripts
-			std::filesystem::create_directory(m_project_path + "/sfx");
-			std::filesystem::create_directory(m_project_path + "/models");
-			std::filesystem::create_directory(m_project_path + "/models/static");
-			std::filesystem::create_directory(m_project_path + "/models/dynamic");
-			std::filesystem::create_directory(m_project_path + "/scripts");
-			std::filesystem::create_directory(m_project_path + "/materials");
-
-			const std::string parent = std::filesystem::path(m_project_path).filename().u8string();
-			m_xml_game.cfg.runtime_executable = parent;
-#ifdef _WIN32
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\deng-complete.dll", m_project_path + "\\deng-complete.dll");
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\rt.exe", m_project_path + "\\" + parent + ".exe");
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\libcrypto-1_1.dll", m_project_path + "\\libcrypto-1_1.dll");
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\libssl-1_1.dll", m_project_path + "\\libssl-1_1.dll");
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\libffi-7.dll", m_project_path + "\\libffi-7.dll");
-			std::filesystem::copy(Libdas::Algorithm::GetProgramPath() + "\\python3.10", m_project_path + "\\python3.10", std::filesystem::copy_options::recursive);
-#ifdef __DEBUG
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\python310_d.dll", m_project_path + "\\python310_d.dll");
-#else
-			std::filesystem::copy_file(Libdas::Algorithm::GetProgramPath() + "\\python310.dll", m_project_path + "\\python310.dll");
-#endif
-#else
-#error "Project creation is not implemented in GNU/Linux"
-#endif
-			DXML::GameConfigurationWriter cfg_writer(m_project_path + "/game.xml");
-			cfg_writer.Write(m_xml_game);
-			return true;
+		// should the game be read
+		if (_read_bit) {
+			Load();
+		} else {
+			_CreateNewProject();
 		}
-
-		return false;
 	}
 
 
-	bool ProjectDataManager::LoadProject(const std::string &_game_xml_path) {
-		DXML::GameConfigurationReader reader(_game_xml_path);
-		reader.Parse();
-		m_xml_game = reader.GetXMLGame();
-		return true;
+	void ProjectDataManager::_CreateNewProject() {
+		// create the parent directory
+		if (!std::filesystem::exists(m_parent_dir))
+			std::filesystem::create_directories(std::filesystem::path(m_parent_dir));
+
+		// Game\Assets
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Assets"));
+		// Game\Scripts
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Scripts"));
+		// Game\Shaders
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Shaders"));
+		// Game\SoundEffects
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\SoundEffects"));
+		// Game\Textures
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Textures"));
+		// Game\Videos
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Videos"));
+		// Game\Python
+		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Python"));
+
+		// Game\deng-complete.dll
+		std::filesystem::copy_file(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\deng-complete.dll"),
+			std::filesystem::path(m_parent_dir + "\\deng-complete.dll"));
+		
+		// Game\drt.exe
+		std::filesystem::copy_file(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\drt.exe"),
+			std::filesystem::path(m_parent_dir + "\\drt.exe"));
+
+#ifdef _DEBUG
+		// Game\python310_d.dll
+		std::filesystem::copy_file(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\python310_d.dll"),
+			std::filesystem::path(m_parent_dir + "\\python310_d.dll"));
+#else
+		// Game\python310.dll
+		std::filesystem::copy_file(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\python310.dll"),
+			std::filesystem::path(m_parent_dir + "\\python310.dll"));
+#endif
+
+		// Game\vcruntime140.dll
+		std::filesystem::copy_file(
+			std::filesystem::path("C:\\Windows\\System32\\vcruntime140.dll"),
+			std::filesystem::path(m_parent_dir + "\\vcruntime140.dll"));
+	}
+
+
+	void ProjectDataManager::Load() {
+		// check if the file is in XML format
+		std::filesystem::path pth(m_parent_dir + "/" + m_file_name);
+		if (pth.extension() == ".xml") {
+			DXML::GameXMLReader reader(m_parent_dir + "/" + m_file_name);
+			reader.Parse();
+
+			// throw an error if there were any errors present
+			if (reader.ErrorStackSize()) {
+				std::string errmsg;
+				while (reader.ErrorStackSize()) {
+					errmsg += reader.PopErrorStack() + "\n";
+				}
+
+				throw std::runtime_error(errmsg);
+			}
+
+			m_game = reader.GetSerializedGame();
+		}
+		else if (pth.extension() == ".dat") {
+			std::ifstream stream(m_parent_dir + "/" + m_file_name);
+
+			if (!stream.is_open()) {
+				throw std::runtime_error("Failed to open file " + m_parent_dir + "/" + m_file_name);
+			}
+
+			m_game.Unserialize(stream);
+			stream.close();
+		}
+		else DENG_ASSERT(false);
 	}
 }

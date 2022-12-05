@@ -13,38 +13,7 @@
 #define WIDTH   1280
 #define HEIGHT  720
 
-#include <string>
-#include <chrono>
-#include <vector>
-#include <array>
-#include <cstring>
-#include <variant>
-#include <memory>
-#include <unordered_map>
-
-#ifdef _DEBUG
-    #include <iostream>
-#endif
-#include <vulkan/vulkan.h>
-
-#include "trs/Points.h"
-#include "trs/Vector.h"
-#include "trs/Matrix.h"
-
-#include "deng/Api.h"
-#include "deng/ErrorDefinitions.h"
-#include "deng/BaseTypes.h"
-#include "deng/Window.h"
-#include "deng/ShaderDefinitions.h"
-#include "deng/Renderer.h"
-
-#if defined(USE_OPENGL)
-    #include "deng/OpenGLRenderer.h"
-#elif defined(USE_VULKAN)
-    #include "deng/VulkanRenderer.h"
-#endif
-
-#include "deng/ImGuiLayer.h"
+#include "deng/deng.h"
 
 
 class ImGuiApp {

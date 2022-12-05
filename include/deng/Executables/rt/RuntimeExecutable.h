@@ -7,30 +7,27 @@
 #define RUNTIME_EXECUTABLE_H
 
 #ifdef RUNTIME_EXECUTABLE_CPP
-	#ifdef _WIN32
-		// #pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-	#endif
-
-	#include "deng/deng.h"
+	#include <iostream>
+	#include "deng/Pydeng/EmbedModules.h"
 #endif
 
-namespace DENG {
-	namespace Runtime {
-
-		class GameRuntime {
-			private:
-				DXML::GameConfigurationReader m_conf_reader;
-				Window* m_window = nullptr;
-				Renderer* m_rend = nullptr;
-
-			public:
-				GameRuntime();
-				~GameRuntime();
-
-				void Run();
-		};
-
-	}
-}
+//namespace DENG {
+//	namespace Runtime {
+//
+//		class GameRuntime {
+//			private:
+//				DXML::GameConfigurationReader m_conf_reader;
+//				Window* m_window = nullptr;
+//				Renderer* m_rend = nullptr;
+//
+//			public:
+//				GameRuntime();
+//				~GameRuntime();
+//
+//				void Run();
+//		};
+//
+//	}
+//}
 
 #endif

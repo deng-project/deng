@@ -26,25 +26,25 @@ namespace DENG {
 	namespace Editor {
 		
 		class RendererViewport : public wxWindow {
-		private:
-			DXML::Configuration::Backend m_backend;
-			RendererConfig m_config;
-			InputRegistry m_input;
-			Renderer* mp_renderer = nullptr;
-			OpenGLLoader* mp_opengl_loader = nullptr;
+			private:
+				DXML::GraphicsBackend m_backend;
+				RendererConfig m_config;
+				InputRegistry m_input;
+				Renderer* mp_renderer = nullptr;
+				OpenGLLoader* mp_opengl_loader = nullptr;
 #ifdef _WIN32
-			HDC m_dc = nullptr;
+				HDC m_dc = nullptr;
 #endif
 
-			std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
+				std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time = std::chrono::high_resolution_clock::now();
 
-			struct {
-				bool enabled = false;
-				TRS::Vector2<int64_t> center;
-				TRS::Vector2<int64_t> delta;
-			} m_virtual;
-			TRS::Vector2<int64_t> m_cursor_pos;
+				struct {
+					bool enabled = false;
+					TRS::Vector2<int64_t> center;
+					TRS::Vector2<int64_t> delta;
+				} m_virtual;
+				TRS::Vector2<int64_t> m_cursor_pos;
 
 			private:
 				void _OnPaint(wxPaintEvent& _ev);
@@ -62,7 +62,7 @@ namespace DENG {
 				void _SwapBuffers();
 
 			public:
-				RendererViewport(wxWindow *_parent, DXML::Configuration::Backend _backend);
+				RendererViewport(wxWindow *_parent, DXML::GraphicsBackend _backend);
 				~RendererViewport();
 
 				void Setup();
@@ -88,7 +88,7 @@ namespace DENG {
 					return m_input;
 				}
 
-				inline DXML::Configuration::Backend GetBackend() {
+				inline DXML::GraphicsBackend GetBackend() {
 					return m_backend;
 				}
 		};

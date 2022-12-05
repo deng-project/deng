@@ -16,7 +16,7 @@ namespace DENG {
             if (_CreateNativeSurface() != VK_SUCCESS)
                 VK_INSTANCE_ERR("failed to create a native window surface");
 
-#ifdef __DEBUG
+#ifdef _DEBUG
             _CreateDebugMessenger();
 #endif
             _PickPhysicalDevice();
@@ -100,7 +100,7 @@ namespace DENG {
             instance_createinfo.pApplicationInfo = &appinfo;
 
             // Check required surface extensions
-#ifdef __DEBUG
+#ifdef _DEBUG
             std::array<const char*, 3> extensions = {
                 "VK_EXT_debug_utils",
                 "VK_KHR_surface",
@@ -130,7 +130,7 @@ namespace DENG {
             instance_createinfo.ppEnabledExtensionNames = extensions.data();
             
             // Check for validatation layer support
-#ifdef __DEBUG
+#ifdef _DEBUG
             if(!_CheckValidationLayerSupport()) {
                 VK_INSTANCE_ERR("validation layers usage specified, but none are available!");
             } else {
@@ -183,7 +183,7 @@ namespace DENG {
         }
 
 
-#ifdef __DEBUG
+#ifdef _DEBUG
         bool InstanceCreator::_CheckValidationLayerSupport() {
             const std::string validation_lname = "VK_LAYER_KHRONOS_validation";
             uint32_t layer_count;
@@ -407,7 +407,7 @@ namespace DENG {
             logical_device_createinfo.enabledExtensionCount = static_cast<uint32_t>(required_exts.size());
             logical_device_createinfo.ppEnabledExtensionNames = required_exts.data();
 
-#ifdef __DEBUG
+#ifdef _DEBUG
             logical_device_createinfo.enabledLayerCount = 1;
             logical_device_createinfo.ppEnabledLayerNames = &m_validation_layer;
 #else

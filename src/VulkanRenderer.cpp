@@ -300,8 +300,7 @@ namespace DENG {
         VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, staging_buffer);
         Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, staging_memory,
                                 mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        
-        DENG_ASSERT(vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0) == VK_SUCCESS);
+        vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0);
 
         VkDeviceSize offset = 0;
         for (auto it = _readers.begin(); it != _readers.end(); it++) {
@@ -338,7 +337,7 @@ namespace DENG {
             mem_req.memoryTypeBits, 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-        DENG_ASSERT(vkBindImageMemory(m_instance_creator.GetDevice(), texture.image, texture.memory, 0) == VK_SUCCESS);
+        vkBindImageMemory(m_instance_creator.GetDevice(), texture.image, texture.memory, 0);
         Vulkan::_TransitionImageLayout(
             m_instance_creator.GetDevice(),
             texture.image,
@@ -385,7 +384,7 @@ namespace DENG {
         image_view_info.subresourceRange.levelCount = 1;
         image_view_info.subresourceRange.baseArrayLayer = 0;
         image_view_info.subresourceRange.layerCount = 6;
-        DENG_ASSERT(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &texture.image_view) == VK_SUCCESS);
+        vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &texture.image_view);
         _CreateTextureSampler(texture, 1);
 
         m_vulkan_texture_handles[_name] = texture;

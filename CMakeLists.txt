@@ -9,11 +9,13 @@ project(deng)
 # Constant config values
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 option(DENG_BUILD_TESTS "Build DENG testing applications" ON)
 option(DENG_USE_LIBDAS_GIT "Use git version of libdas instead of the release version (requires more bandwidth)" ON)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # List of dependencies to install
 #	wxWidgets:x64-windows
@@ -22,6 +24,7 @@ option(DENG_USE_LIBDAS_GIT "Use git version of libdas instead of the release ver
 #	shaderc:x64-windows
 #	ode:x64-windows
 #	python3:x64-windows
+# 	pybind11
 find_package(VulkanHeaders CONFIG REQUIRED)
 find_package(ode CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
@@ -35,6 +38,8 @@ find_package(SPIRV-Tools-lint CONFIG REQUIRED)
 find_package(unofficial-shaderc_util CONFIG REQUIRED)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(Python3 COMPONENTS Development REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
 
 
 # Set appropriate compiler flags
@@ -85,16 +90,18 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/dxml)
 target_include_directories(dxml
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include)
 
-# include(cmake/copy.cmake)
 include(cmake/libdeng.cmake)
-include(cmake/rt.cmake)
 include(cmake/deng-game-editor.cmake)
 include(cmake/TextureDump.cmake)
 
+# Pydeng include
+include(cmake/pydeng.cmake)
+include(cmake/rt.cmake)
 
 # Non-experimental tests
 if(DENG_BUILD_TESTS)
     message(STATUS "Adding test build configurations")
+	set(MANUAL_TEST_DIR ManualTests)
     include(cmake/tests/TriangleApp.cmake)
 	include(cmake/tests/ImGuiTest.cmake)
     include(cmake/tests/ShaderGenerator.cmake)

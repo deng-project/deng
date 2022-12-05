@@ -51,8 +51,8 @@ namespace DENG {
             property_sizer->Add(new wxStaticText(this, wxID_ANY, "Default rendering backend"), 0,
                                 wxALIGN_LEFT | wxLEFT | wxTOP, 10);
             wxComboBox* backends = new wxComboBox(this, ID_NEW_PROJECT_WIZARD_BACKEND, "Select a default backend", wxDefaultPosition, wxSize(300, 20));
-            backends->Insert(wxT("Vulkan"), (unsigned int)DXML::Configuration::Backend::VULKAN);
-            backends->Insert(wxT("OpenGL"), (unsigned int) DXML::Configuration::Backend::OPENGL);
+            backends->Insert(wxT("Vulkan"), (unsigned int) DXML::GRAPHICS_BACKEND_VULKAN);
+            backends->Insert(wxT("OpenGL"), (unsigned int) DXML::GRAPHICS_BACKEND_OPENGL);
             property_sizer->Add(backends, 0, wxALIGN_LEFT | wxLEFT, 10);
 
             // separator
@@ -91,32 +91,32 @@ namespace DENG {
                 return false;
             }
 
-            if (api != (int) DXML::Configuration::Backend::VULKAN && api != (int) DXML::Configuration::Backend::OPENGL) {
+            if (api != (int) DXML::GRAPHICS_BACKEND_VULKAN && api != (int) DXML::GRAPHICS_BACKEND_OPENGL) {
                 wxMessageBox("Please select appropriate rendering backend", "Error", wxICON_ERROR | wxOK);
                 return false;
             }
 
 #ifdef _WIN32
-            if (root_path.back() == '\\') {
-                m_data_mgr->SetProjectPath(root_path + dir_name);
-            } else {
-                m_data_mgr->SetProjectPath(root_path + '\\' + dir_name);
-            }
+            //if (root_path.back() == '\\') {
+            //    m_data_mgr->SetProjectPath(root_path + dir_name);
+            //} else {
+            //    m_data_mgr->SetProjectPath(root_path + '\\' + dir_name);
+            //}
 #else
-            if (root_path.back() == '/') {
-                data.SetProjectPath(root_path + dir_name);
-            } else {
-                data.SetProjectPath(root_path + '/' + dir_name);
-            }
+            //if (root_path.back() == '/') {
+            //    data.SetProjectPath(root_path + dir_name);
+            //} else {
+            //    data.SetProjectPath(root_path + '/' + dir_name);
+            //}
 #endif
 
-            m_data_mgr->SetProjectName(project_name);
-            m_data_mgr->SetDefaultBackend(DXML::Configuration::VULKAN);
-            if (!m_data_mgr->CreateEmptyProject()) {
-                wxMessageBox("Could not create an empty project in " + m_data_mgr->GetProjectPath(), "Error", wxICON_ERROR | wxOK);
-                return false;
-            }
-            
+            //m_data_mgr->SetProjectName(project_name);
+            //m_data_mgr->SetDefaultBackend(DXML::Configuration::VULKAN);
+            //if (!m_data_mgr->CreateEmptyProject()) {
+            //    wxMessageBox("Could not create an empty project in " + m_data_mgr->GetProjectPath(), "Error", wxICON_ERROR | wxOK);
+            //    return false;
+            //}
+            //
             return true;
         }
 

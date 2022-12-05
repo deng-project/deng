@@ -9,7 +9,7 @@
 
 namespace DENG {
 
-#ifdef __DEBUG
+#ifdef _DEBUG
     void lglErrorCheck(const std::string &_func, const std::string &_file, const uint32_t _line) {
         GLenum error;
         while((error = glGetError()) != GL_NO_ERROR) {

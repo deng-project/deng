@@ -11,5 +11,6 @@ set(RT_SOURCES
 	src/Executables/rt/RuntimeExecutable.cpp)
 
 add_executable(${RT_TARGET} ${RT_HEADERS} ${RT_SOURCES})
-add_dependencies(${RT_TARGET} ${DENG_COMPLETE_TARGET})
-target_link_libraries(${RT_TARGET} PRIVATE ${DENG_COMPLETE_TARGET})
+add_dependencies(${RT_TARGET} ${PYDENG_TARGET})
+target_link_libraries(${RT_TARGET} 
+	PRIVATE ${PYDENG_TARGET})

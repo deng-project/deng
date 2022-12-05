@@ -38,8 +38,8 @@
 #include "dxml/XMLTag.h"
 #include "dxml/XMLWriter.h"
 #include "dxml/XMLParser.h"
-#include "dxml/GameConfigurationReader.h"
-#include "dxml/GameConfigurationWriter.h"
+#include "dxml/GameXMLReader.h"
+#include "dxml/GameXMLWriter.h"
 
 // third party (libdas)
 #include "das/Api.h"
@@ -68,6 +68,7 @@
 #include "deng/VulkanRenderer.h"
 
 // entities
+#include "deng/ImGuiLayer.h"
 #include "deng/ModelUniforms.h"
 #include "deng/Entity.h"
 #include "deng/ScriptableEntity.h"
@@ -88,9 +89,6 @@
 #ifdef __DEBUG
 	#include "deng/Debug/TriangleTester.h"
 #endif
-
-// python scripting
-#include "deng/PythonScriptExecutor.h"
 
 // generators
 #include "deng/CubeGenerator.h"

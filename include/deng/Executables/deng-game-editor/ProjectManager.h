@@ -35,7 +35,8 @@ namespace DENG {
 
         class ProjectManager : public wxFrame {
             private:
-                ProjectDataManager m_project;
+                //ProjectDataManager m_project;
+            
             private:
                 void _OnNewProject(wxCommandEvent& _ev);
                 void _OnOpenProject(wxCommandEvent& _ev);

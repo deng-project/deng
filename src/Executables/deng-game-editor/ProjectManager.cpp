@@ -77,8 +77,8 @@ namespace DENG {
 
         // Event handler callbacks for ProjectManager
         void ProjectManager::_OnNewProject(wxCommandEvent& _ev) {
-            NewProjectWizard* wiz = new NewProjectWizard(this, &m_project);
-            wiz->Show(true);
+            //NewProjectWizard* wiz = new NewProjectWizard(this, &m_project);
+            //wiz->Show(true);
             _ev.Skip();
         }
 
