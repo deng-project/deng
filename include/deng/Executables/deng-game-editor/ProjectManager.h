@@ -7,6 +7,7 @@
 #define PROJECT_MANAGER_H
 
 #ifdef PROJECT_MANAGER_CPP
+    #include <filesystem>
     #include <wx/wx.h>
     #include "deng/deng.h"
     
@@ -26,7 +27,7 @@ namespace DENG {
                 wxBitmap m_image;
 
             public:
-                LogoPanel(wxFrame* _parent);
+                LogoPanel(wxWindow* _parent);
                 void PaintEvent(wxPaintEvent& _ev);
 
                 DECLARE_EVENT_TABLE();
@@ -35,20 +36,22 @@ namespace DENG {
 
         class ProjectManager : public wxFrame {
             private:
-                //ProjectDataManager m_project;
+                wxPanel* m_panel = nullptr;
+                wxBoxSizer* m_sizer = nullptr;
+                ProjectDataManager *m_project = nullptr;
             
             private:
                 void _OnNewProject(wxCommandEvent& _ev);
                 void _OnOpenProject(wxCommandEvent& _ev);
 
-                void _OnWebsite(wxCommandEvent& _ev);
-                void _OnForum(wxCommandEvent& _ev);
-                void _OnGit(wxCommandEvent& _ev);
-
                 wxDECLARE_EVENT_TABLE();
 
             public:
                 ProjectManager();
+
+                inline ProjectDataManager* GetDataManager() {
+                    return m_project;
+                }
         };
 	}
 }

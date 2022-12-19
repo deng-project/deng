@@ -13,7 +13,7 @@
 namespace DENG {
 
 	// NOTE: Each scriptable entity can have one instance of ScriptComponent
-	class DENG_API ScriptComponent {
+	class ScriptComponent {
 		protected:
 			Entity *m_scriptable_entity;
 		

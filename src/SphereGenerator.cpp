@@ -170,7 +170,7 @@ namespace DENG {
 			model.mesh_primitives.back().vertex_normal_buffer_offset = static_cast<uint32_t>(m_vertices.size() * sizeof(TRS::Vector3<float>));
 		}
 
-		return ModelLoader(_parent, model, _rend, _camera_id);
+		return ModelLoader(_parent, model, _rend);
 	}
 
 }

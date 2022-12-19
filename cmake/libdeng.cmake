@@ -142,7 +142,7 @@ target_include_directories(${DENG_COMPLETE_TARGET}
 )
 
 target_link_directories(${DENG_COMPLETE_TARGET}
-	PUBLIC C:/VulkanSDK/1.2.182.0/Lib)
+	PUBLIC C:/VulkanSDK/1.3.236.0/Lib)
 
 
 # Linking

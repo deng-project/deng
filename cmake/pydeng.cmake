@@ -28,6 +28,7 @@ set(PYDENG_HEADERS
 	include/deng/Pydeng/Framebuffer.h
 	include/deng/Pydeng/Networking.h
 	include/deng/Pydeng/SceneLoader.h
+	include/deng/Pydeng/Scriptable.h
 	include/deng/Pydeng/SoundPlayer.h
 	include/deng/Pydeng/VideoPlayer.h)
 	
@@ -47,7 +48,28 @@ set(PYDENG_SRC
 add_library(${PYDENG_TARGET} STATIC
 	${PYDENG_HEADERS}
 	${PYDENG_SRC})
+
 add_dependencies(${PYDENG_TARGET} ${DENG_COMPLETE_TARGET})
 target_link_libraries(${PYDENG_TARGET}
 	PUBLIC ${DENG_COMPLETE_TARGET}
 	PUBLIC pybind11::embed)
+	
+if(WIN32)
+	# For debug build
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/installed/x64-windows/tools/python3/DLLs
+		DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python
+	)
+	
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/installed/x64-windows/tools/python3/Lib
+		DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/Python
+	)
+	
+	# For release build
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/installed/x64-windows/tools/python3/DLLs
+		DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Python
+	)
+	
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/installed/x64-windows/tools/python3/Lib
+		DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Python
+	)
+endif()

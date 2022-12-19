@@ -25,6 +25,9 @@
     #include <iostream>
 #endif
 
+    #include <python3.10/pyconfig.h>
+    #include <pybind11/embed.h>
+
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
     #include "trs/Points.h"
@@ -41,6 +44,8 @@
     #include "das/stb_image.h"
     #include "das/TextureReader.h"
     #include "das/Hash.h"
+    
+    #include "dxml/GameStructs.h"
 
     #include "deng/Api.h"
     #include "deng/BaseTypes.h"
@@ -78,7 +83,7 @@ namespace DENG {
             static uint32_t m_animation_index;
             std::vector<std::string> m_texture_names;
             std::vector<uint32_t> m_buffer_offsets;
-            uint32_t m_camera_id;
+            uint32_t m_camera_id = UINT32_MAX;
             const std::string m_framebuffer_id;
 
         private:
@@ -89,12 +94,15 @@ namespace DENG {
                 Entity *_parent,
                 const Libdas::DasModel &_model, 
                 Renderer &_rend,
-                uint32_t _camera_id,
                 const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME
             );
             ModelLoader(const ModelLoader &_ld) = delete;
             ModelLoader(ModelLoader&& _ld) noexcept;
-            ~ModelLoader();
+            ~ModelLoader(); 
+
+            inline void BindCamera(uint32_t _camera) {
+                m_camera_id = _camera;
+            }
 
             void Attach();
             void Update();

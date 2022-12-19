@@ -3,7 +3,7 @@
 # file: rt.cmake - DENG runtime executable binary build configuration
 # author: Karl-Mihkel Ott
 
-set(RT_TARGET rt)
+set(RT_TARGET drt)
 set(RT_HEADERS
 	include/deng/Executables/rt/RuntimeExecutable.h)
 	
@@ -12,5 +12,6 @@ set(RT_SOURCES
 
 add_executable(${RT_TARGET} ${RT_HEADERS} ${RT_SOURCES})
 add_dependencies(${RT_TARGET} ${PYDENG_TARGET})
+
 target_link_libraries(${RT_TARGET} 
 	PRIVATE ${PYDENG_TARGET})

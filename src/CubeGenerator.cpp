@@ -153,6 +153,6 @@ namespace DENG {
 		}
 		model.mesh_primitives.back().draw_count = 36;
 
-		return ModelLoader(_parent, model, _rend, _camera_id);
+		return ModelLoader(_parent, model, _rend);
 	}
 }

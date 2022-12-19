@@ -10,6 +10,7 @@
 #include <any>
 #include <string>
 #include <unordered_map>
+#include <algorithm>
 #include <chrono>
 #include <variant>
 #include <fstream>
@@ -21,6 +22,9 @@
 	#include <wtypes.h>
 #endif
 #include <vulkan/vulkan.h>
+
+#include <python3.10/pyconfig.h>
+#include <pybind11/embed.h>
 
 // third party (TRS)
 #include "trs/Iterators.h"

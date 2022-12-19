@@ -39,12 +39,22 @@ namespace DENG {
 		ENTITY_TYPE_GRID_MESH,
 		ENTITY_TYPE_SKYBOX,
 		ENTITY_TYPE_VERTEX_NORMAL_VISUALIZER,
+		ENTITY_TYPE_UNKNOWN,
 #ifdef __DEBUG
 		ENTITY_TYPE_TRIANGLE_TESTER,
 #endif
 	};
 }
 #ifdef ENTITY_CPP
+	#include <python3.10/pyconfig.h>
+	#include <pybind11/embed.h>
+
+	#include "trs/Vector.h"
+	#include "trs/Matrix.h"
+	#include "trs/Quaternion.h"
+	
+	#include "dxml/GameStructs.h"
+
 	#include "deng/Registry.h"
 #endif
 

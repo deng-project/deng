@@ -59,11 +59,6 @@ else()
 endif()
 
 
-# Check if debugging definition should be considered
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-D__DEBUG)
-endif()
-
 # Libnwin configuration
 set(NEKOWIN_BUILD_STATIC_LIB ON CACHE BOOL "Build static nekowin library")
 set(NEKOWIN_BUILD_SHARED_LIB OFF CACHE BOOL "Build shared nekowin library")
@@ -91,12 +86,13 @@ target_include_directories(dxml
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include)
 
 include(cmake/libdeng.cmake)
-include(cmake/deng-game-editor.cmake)
 include(cmake/TextureDump.cmake)
 
 # Pydeng include
 include(cmake/pydeng.cmake)
 include(cmake/rt.cmake)
+
+include(cmake/deng-game-editor.cmake)
 
 # Non-experimental tests
 if(DENG_BUILD_TESTS)

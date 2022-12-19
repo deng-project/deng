@@ -1,6 +1,6 @@
 // Pydeng: DENG Python scripting API 
 // licence: Apache, see LICENCE file
-// file: EmbedModules.h - Declare all Pydeng embedded modules
+// file: Configuration.h - Configuration class header for pydeng
 // author: Karl-Mihkel Ott
 
 #ifndef PYDENG_CONFIGURATION_H
@@ -16,11 +16,24 @@
 namespace Pydeng {
 	class Configuration {
 		public:
-			Configuration() = default;
-			void SetGraphicsBackend(DXML::GraphicsBackend);
-			void SetMSAA(uint32_t _msaa);
-			void SetCustomData(pybind11::dict &_dict);
-			void Save();
+			inline void SetGraphicsBackend(DXML::GraphicsBackend _backend) {
+				DENG::Registry* reg = DENG::Registry::GetInstance();
+				reg->SetGraphicsBackend(_backend);
+			}
+
+			inline void SetMSAA(uint32_t _msaa) {
+				DENG::Registry* reg = DENG::Registry::GetInstance();
+				reg->SetMSAA(_msaa);
+			}
+
+			inline void SetCustomData(pybind11::dict& _dict) {
+				DENG::Registry* reg = DENG::Registry::GetInstance();
+				reg->SetCustomData(_dict);
+			}
+
+			inline void Save() {
+				std::cout << "[Saving]" << std::endl;
+			}
 	};
 }
 

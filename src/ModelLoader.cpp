@@ -14,14 +14,12 @@ namespace DENG {
     ModelLoader::ModelLoader(
         Entity *_parent,
         const Libdas::DasModel &_model, 
-        Renderer &_rend, 
-        uint32_t _camera_id,
+        Renderer &_rend,
         const std::string &_framebuffer
     ) : 
         ScriptableEntity(_parent, "", ENTITY_TYPE_MODEL),
         m_model(_model), 
         m_renderer(_rend),
-        m_camera_id(_camera_id),
         m_framebuffer_id(_framebuffer)
     {
         std::string name = "Unnamed model";

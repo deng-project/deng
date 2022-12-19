@@ -14,7 +14,9 @@
 	#include <fstream>
 	#include <unordered_map>
 	#include <array>
-
+	
+	#include <python3.10/pyconfig.h>
+	#include <pybind11/embed.h>
 #ifdef _WIN32
 	#include <wtypes.h>
 #endif
@@ -33,6 +35,8 @@
 	#include "das/DasReaderCore.h"
 	#include "das/DasParser.h"
 	#include "das/TextureReader.h"
+
+	#include "dxml/GameStructs.h"
 
 	#include "deng/Api.h"
 	#include "deng/BaseTypes.h"
@@ -65,6 +69,10 @@ namespace DENG {
 	class DENG_API Registry {
 		private:
 			std::vector<Entity*> m_entities;
+			DXML::GraphicsBackend m_backend = DXML::GRAPHICS_BACKEND_UNKNOWN;
+			uint32_t m_msaa = 1;
+			pybind11::dict m_custom_data;
+
 			static Registry* m_instance;
 
 		private:
@@ -96,6 +104,30 @@ namespace DENG {
 			inline Entity* GetEntityById(uint32_t _id) {
 				DENG_ASSERT(_id < static_cast<uint32_t>(m_entities.size()));
 				return m_entities[_id];
+			}
+
+			inline void SetGraphicsBackend(DXML::GraphicsBackend _backend) {
+				m_backend = _backend;
+			}
+
+			inline void SetMSAA(uint32_t _msaa) {
+				m_msaa = _msaa;
+			}
+
+			inline void SetCustomData(const pybind11::dict& _data) {
+				m_custom_data = _data;
+			}
+
+			inline DXML::GraphicsBackend GetGraphicsBackend() {
+				return m_backend;
+			}
+
+			inline uint32_t GetMSAA() {
+				return m_msaa;
+			}
+
+			inline pybind11::dict& GetCustomData() {
+				return m_custom_data;
 			}
 	};
 }

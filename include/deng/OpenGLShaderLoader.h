@@ -15,8 +15,13 @@
     #include <cstring>
     #include <cmath>
     #include <array>
+    #include <algorithm>
 #ifdef __DEBUG
     #include <iostream>
+#endif
+
+#ifdef _WIN32
+    #include <Windows.h>
 #endif
 
     #include "trs/Points.h"

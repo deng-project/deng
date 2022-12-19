@@ -15,8 +15,13 @@
     #include <memory>
     #include <cmath>
     #include <unordered_map>
+    #include <algorithm>
 #ifdef _DEBUG
     #include <iostream>
+#endif
+
+#ifdef _WIN32
+    #include <Windows.h>
 #endif
     #include <string>
 

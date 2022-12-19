@@ -40,7 +40,10 @@ namespace DENG {
 		// Game\Videos
 		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Videos"));
 		// Game\Python
-		std::filesystem::create_directory(std::filesystem::path(m_parent_dir + "\\Python"));
+		std::filesystem::copy(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\Python"), 
+			std::filesystem::path(m_parent_dir + "\\Python"),
+			std::filesystem::copy_options::recursive);
 
 		// Game\deng-complete.dll
 		std::filesystem::copy_file(
@@ -57,11 +60,21 @@ namespace DENG {
 		std::filesystem::copy_file(
 			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\python310_d.dll"),
 			std::filesystem::path(m_parent_dir + "\\python310_d.dll"));
+
+		// Game\zlibd.dll
+		std::filesystem::copy_file(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\zlibd1.dll"),
+			std::filesystem::path(m_parent_dir + "\\zlibd1.dll"));
 #else
 		// Game\python310.dll
 		std::filesystem::copy_file(
 			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\python310.dll"),
 			std::filesystem::path(m_parent_dir + "\\python310.dll"));
+
+		// Game\zlib.dll
+		std::filesystem::copy_file(
+			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\zlib1.dll"),
+			std::filesystem::path(m_parent_dir + "\\zlib1.dll"));
 #endif
 
 		// Game\vcruntime140.dll

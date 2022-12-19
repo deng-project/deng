@@ -9,114 +9,69 @@
 namespace DENG {
     namespace Editor {
 
-        wxBEGIN_EVENT_TABLE(NewProjectWizard, wxFrame)
+        wxBEGIN_EVENT_TABLE(NewProjectWizard, wxDialog)
             EVT_BUTTON(ID_NEW_PROJECT_WIZARD_CHOOSE_DIRECTORY, NewProjectWizard::_OnChooseDirectoryClick)
+            EVT_BUTTON(ID_NEW_PROJECT_WIZARD_USE_XML_DATA, NewProjectWizard::_OnCheckUseXMLGame)
             EVT_BUTTON(ID_NEW_PROJECT_WIZARD_CREATE_NEW_PROJECT, NewProjectWizard::_OnCreateNewProjectClick)
             EVT_BUTTON(ID_NEW_PROJECT_WIZARD_CANCEL, NewProjectWizard::_OnCancelClick)
         wxEND_EVENT_TABLE()
 
-        NewProjectWizard::NewProjectWizard(wxFrame* _parent, ProjectDataManager *_p_mgr) :
-            wxFrame(_parent, ID_NEW_PROJECT_WIZARD, "Create a new project"),
-            m_data_mgr(_p_mgr)
+        NewProjectWizard::NewProjectWizard(wxWindow* _parent) :
+            wxDialog(_parent, ID_NEW_PROJECT_WIZARD, "Create a new project", wxDefaultPosition, wxSize(500, 200))
         {
             wxIcon icon;
             wxBitmap bmp = wxBitmap::NewFromPNGData(GetLogoIcon32x32(), GetLogoIcon32x32Size());
             icon.CopyFromBitmap(bmp);
             SetIcon(icon);
 
-            wxBoxSizer* property_sizer = new wxBoxSizer(wxVERTICAL);
-            // project root directory
-            property_sizer->Add(new wxStaticText(this, wxID_ANY, "Project root directory"),
-                                0, wxALIGN_LEFT | wxLEFT | wxTOP, 10);
-            wxBoxSizer* path_sizer = new wxBoxSizer(wxHORIZONTAL);
-            path_sizer->Add(new wxTextCtrl(this, ID_NEW_PROJECT_WIZARD_PATH, _GetDefaultProjectPath(), wxDefaultPosition, wxSize(300, 20)),
-                            0, wxALIGN_LEFT | wxLEFT, 10);
-            path_sizer->Add(new wxButton(this, ID_NEW_PROJECT_WIZARD_CHOOSE_DIRECTORY, "Choose path"),
-                            0, wxRIGHT, 10);
-            property_sizer->Add(path_sizer, wxSizerFlags(0).Left());
+            m_sizer = new wxBoxSizer(wxVERTICAL);
+            m_project_name_desc = new wxStaticText(this, wxID_ANY, wxT("Project name:"));
+            m_project_name_ctrl = new wxTextCtrl(this, ID_NEW_PROJECT_WIZARD_PROJECT_NAME, wxT("New Project"), wxDefaultPosition, wxSize(300, 20));
+            m_sizer->Add(m_project_name_desc, 0, wxALIGN_LEFT, 0);
+            m_sizer->Add(m_project_name_ctrl, 0, wxALIGN_LEFT, 0);
 
-            // project name
-            property_sizer->Add(new wxStaticText(this, wxID_ANY, "Project name"), 0, 
-                                wxALIGN_LEFT | wxLEFT | wxTOP, 10);
-            property_sizer->Add(new wxTextCtrl(this, ID_NEW_PROJECT_WIZARD_PROJECT_NAME, "New Project", wxDefaultPosition, wxSize(300, 20)),
-                                0, wxALIGN_LEFT | wxLEFT, 10);
+            m_project_root_desc = new wxStaticText(this, wxID_ANY, wxT("Root directory:"));
 
-            // directory name
-            property_sizer->Add(new wxStaticText(this, wxID_ANY, "Project directory name"), 0,
-                                wxALIGN_LEFT | wxLEFT | wxTOP, 10);
-            property_sizer->Add(new wxTextCtrl(this, ID_NEW_PROJECT_WIZARD_DIRECTORY_NAME, "new-project", wxDefaultPosition, wxSize(300, 20)),
-                                0, wxALIGN_LEFT | wxLEFT, 10);
+            m_picked_root_dir = new wxStaticText(this, ID_NEW_PROJECT_WIZARD_PATH, wxT("Not selected"), wxDefaultPosition, wxSize(200, 20));
+            m_project_root_picker = new wxButton(this, ID_NEW_PROJECT_WIZARD_CHOOSE_DIRECTORY, wxT("Choose directory"), wxDefaultPosition, wxSize(100, 30));
 
-            // api selector
-            property_sizer->Add(new wxStaticText(this, wxID_ANY, "Default rendering backend"), 0,
-                                wxALIGN_LEFT | wxLEFT | wxTOP, 10);
-            wxComboBox* backends = new wxComboBox(this, ID_NEW_PROJECT_WIZARD_BACKEND, "Select a default backend", wxDefaultPosition, wxSize(300, 20));
-            backends->Insert(wxT("Vulkan"), (unsigned int) DXML::GRAPHICS_BACKEND_VULKAN);
-            backends->Insert(wxT("OpenGL"), (unsigned int) DXML::GRAPHICS_BACKEND_OPENGL);
-            property_sizer->Add(backends, 0, wxALIGN_LEFT | wxLEFT, 10);
-
-            // separator
-            property_sizer->Add(new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(450, 2)), 0, wxALL, 10);
+            m_sizer->Add(m_project_root_desc, 0, wxALIGN_LEFT, 0);
+            m_sizer->Add(m_picked_root_dir, 0, wxALIGN_LEFT, 0);
+            m_sizer->Add(m_project_root_picker, 0, wxALIGN_LEFT, 0);
             
-            // OK / Cancel
-            wxBoxSizer* btns = new wxBoxSizer(wxHORIZONTAL);
-            btns->Add(new wxButton(this, ID_NEW_PROJECT_WIZARD_CREATE_NEW_PROJECT, "Create new project"), 0, wxALL, 5);
-            btns->Add(new wxButton(this, ID_NEW_PROJECT_WIZARD_CANCEL, "Cancel"), 0, wxALL, 5);
-            property_sizer->Add(btns, wxSizerFlags(0).Right());
+            m_use_xml_checkbox = new wxCheckBox(this, ID_NEW_PROJECT_WIZARD_USE_XML_DATA, "Use XML data");
+            m_use_xml_checkbox->SetValue(true);
+            m_sizer->Add(m_use_xml_checkbox, 0, wxALIGN_LEFT, 0);
 
-            SetSizerAndFit(property_sizer);
+            m_ok_btn = new wxButton(this, ID_NEW_PROJECT_WIZARD_CREATE_NEW_PROJECT, wxT("OK"));
+            m_cancel_btn = new wxButton(this, ID_NEW_PROJECT_WIZARD_CANCEL, wxT("Cancel"));
+            
+            wxBoxSizer* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
+            btn_sizer->Add(m_ok_btn);
+            btn_sizer->Add(m_cancel_btn);
+
+            m_sizer->Add(btn_sizer);
+
+            SetSizerAndFit(m_sizer);
         }
 
 
         bool NewProjectWizard::_CreateNewProject() {
             // check for possible errors
-            const std::string root_path = ((wxTextCtrl*) wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD_PATH))->GetLineText(0).ToStdString();
-            const std::string dir_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD_DIRECTORY_NAME))->GetLineText(0).ToStdString();
-            const std::string project_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD_PROJECT_NAME))->GetLineText(0).ToStdString();
-            const int api = ((wxComboBox*) wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD_BACKEND))->GetSelection();
+            m_project_name = ((wxTextCtrl*) wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD_PROJECT_NAME))->GetLineText(0).ToStdString();
+            m_root_dir = ((wxStaticText*) wxWindow::FindWindowById(ID_NEW_PROJECT_WIZARD_PATH))->GetLabel().ToStdString();
 
             // check if root_path or dir_name are empty strings
-            if (root_path == "") {
+            if (m_root_dir == "Not selected") {
                 wxMessageBox("Root directory path cannot be empty", "Error", wxICON_ERROR | wxOK);
                 return false;
             }
 
-            if (dir_name == "") {
-                wxMessageBox("Directory name cannot be empty", "Error", wxICON_ERROR | wxOK);
-                return false;
-            }
-
-            if (project_name == "") {
+            if (m_project_name == "") {
                 wxMessageBox("Project name cannot be empty", "Error", wxICON_ERROR | wxOK);
                 return false;
             }
 
-            if (api != (int) DXML::GRAPHICS_BACKEND_VULKAN && api != (int) DXML::GRAPHICS_BACKEND_OPENGL) {
-                wxMessageBox("Please select appropriate rendering backend", "Error", wxICON_ERROR | wxOK);
-                return false;
-            }
-
-#ifdef _WIN32
-            //if (root_path.back() == '\\') {
-            //    m_data_mgr->SetProjectPath(root_path + dir_name);
-            //} else {
-            //    m_data_mgr->SetProjectPath(root_path + '\\' + dir_name);
-            //}
-#else
-            //if (root_path.back() == '/') {
-            //    data.SetProjectPath(root_path + dir_name);
-            //} else {
-            //    data.SetProjectPath(root_path + '/' + dir_name);
-            //}
-#endif
-
-            //m_data_mgr->SetProjectName(project_name);
-            //m_data_mgr->SetDefaultBackend(DXML::Configuration::VULKAN);
-            //if (!m_data_mgr->CreateEmptyProject()) {
-            //    wxMessageBox("Could not create an empty project in " + m_data_mgr->GetProjectPath(), "Error", wxICON_ERROR | wxOK);
-            //    return false;
-            //}
-            //
             return true;
         }
 
@@ -146,10 +101,16 @@ namespace DENG {
             _ev.Skip();
         }
 
+
+        void NewProjectWizard::_OnCheckUseXMLGame(wxCommandEvent& _ev) {
+            m_use_xml = m_use_xml_checkbox->IsChecked();
+        }
+
+
         void NewProjectWizard::_OnCreateNewProjectClick(wxCommandEvent &_ev) {
             if (_CreateNewProject()) {
                 m_success_bit = true;
-                Close(true);
+                EndModal(wxID_OK);
             }
         }
 

@@ -17,6 +17,9 @@
 	#include <Windows.h>
 #endif
 
+	#include <python3.10/pyconfig.h>
+	#include <pybind11/embed.h>
+
 	#include "trs/Points.h"
 	#include "trs/Vector.h"
 	#include "trs/Matrix.h"
@@ -25,6 +28,8 @@
 	#include "das/Api.h"
 	#include "das/DasStructures.h"
 	#include "das/TextureReader.h"
+	
+	#include "dxml/GameStructs.h"
 
 	#include "deng/Api.h"
 	#include "deng/BaseTypes.h"
