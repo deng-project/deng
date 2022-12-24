@@ -17,20 +17,10 @@
     #include "deng/ErrorDefinitions.h"
 #endif
 
+#define VK_FORMAT_DEFAULT_IMAGE VK_FORMAT_R8G8B8A8_UNORM
+
 namespace DENG {
     namespace Vulkan {
-
-        struct TextureData {
-            VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-            VkImage image = VK_NULL_HANDLE;
-            VkDeviceMemory memory = VK_NULL_HANDLE;
-            VkImageView image_view = VK_NULL_HANDLE;
-            VkSampler sampler = VK_NULL_HANDLE;
-            
-            uint32_t width;
-            uint32_t height;
-            uint32_t depth;
-        };
 
 
         struct HardwareInfo {
@@ -89,6 +79,7 @@ namespace DENG {
             uint32_t _width, 
             uint32_t _height,
             uint32_t _array_count);
+        VkSampler _CreateTextureSampler(VkDevice _dev, float _max_sampler_anisotropy, uint32_t _mip_levels);
 
         void _CopyToBufferMemory(VkDevice _dev, VkDeviceSize _size, const void *_src, VkDeviceMemory _dst, VkDeviceSize _offset);
         // using malloc

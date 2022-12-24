@@ -14,6 +14,7 @@
     #include <cstring>
     #include <unordered_map>
     #include <array>
+    #include <queue>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -43,25 +44,16 @@ namespace DENG {
         class DescriptorSetLayoutCreator {
             private:
                 VkDevice m_device;
-                ShaderModule const *m_shader_module;
-                VkDescriptorSetLayout m_per_shader_descriptor_set_layout = VK_NULL_HANDLE;
-                VkDescriptorSetLayout m_per_mesh_descriptor_set_layout = VK_NULL_HANDLE;
-
-            private:
-                void _CreatePerShaderDescriptorSetLayout();
-                void _CreatePerMeshDescriptorSetLayout();
+                const std::vector<UniformDataLayout>& m_ubo_layouts;
+                VkDescriptorSetLayout m_descriptor_set_layout = VK_NULL_HANDLE;
 
             public:
-                DescriptorSetLayoutCreator(VkDevice _dev, const ShaderModule &_module);
+                DescriptorSetLayoutCreator(VkDevice _dev, const std::vector<UniformDataLayout>& _layouts);
                 DescriptorSetLayoutCreator(const DescriptorSetLayoutCreator &_dslc) = delete;
                 DescriptorSetLayoutCreator(DescriptorSetLayoutCreator &&_dslc) noexcept;
                 ~DescriptorSetLayoutCreator();
 
-                DescriptorSetLayoutCreator &operator=(const DescriptorSetLayoutCreator &_dslc) noexcept;
-                DescriptorSetLayoutCreator &operator=(DescriptorSetLayoutCreator &&_dslc) noexcept;
-
-                inline VkDescriptorSetLayout GetPerShaderDescriptorSetLayout() { return m_per_shader_descriptor_set_layout; }
-                inline VkDescriptorSetLayout GetPerMeshDescriptorSetLayout() { return m_per_mesh_descriptor_set_layout; }
+                inline VkDescriptorSetLayout GetDescriptorSetLayout() { return m_descriptor_set_layout; }
         };
     }
 }

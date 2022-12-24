@@ -10,6 +10,7 @@
     #include <string>
     #include <cstring>
     #include <vector>
+    #include <queue>
 
 #ifdef __DEBUG
     #include <iostream>
@@ -24,7 +25,6 @@
     #include "deng/Window.h"
 #endif
 
-#define MAIN_FRAMEBUFFER_NAME   "__main_fb__"
 #include "deng/Missing.h"
 
 namespace DENG {
@@ -32,7 +32,7 @@ namespace DENG {
     struct DrawCommand {
         uint32_t indices_offset = 0;
         uint32_t draw_count = 0; // if used with indices, this property specifies index count, otherwise it describes attribute count
-        std::vector<std::string> texture_names;
+        std::vector<uint32_t> texture_ids;
         std::vector<std::size_t> attribute_offsets;
 
         struct {
@@ -46,30 +46,10 @@ namespace DENG {
     struct MeshReference {
         std::string name = "Mesh";
         uint32_t shader_module_id = 0;
+        std::vector<uint32_t> framebuffer_ids;
         std::vector<DrawCommand> commands;
-        std::vector<UniformBufferBlock> ubo_blocks;
+        std::vector<UniformDataLayout> ubo_data_layouts;
         bool enable = true;
-    };
-
-
-    struct RawTextureData {
-        unsigned char* raw;
-        uint32_t width;
-        uint32_t height;
-        uint32_t depth;
-    };
-
-    enum ResourceState {
-        RESOURCE_ADDED,
-        RESOURCE_LOADED,
-        RESOURCE_DESTROYED
-    };
-
-    struct FramebufferDrawData {
-        std::string image_name;
-        std::vector<std::pair<MeshReference, ResourceState>> meshes;
-        std::vector<std::pair<ShaderModule, ResourceState>> shaders;
-        TRS::Point2D<uint32_t> extent;
     };
 
 
@@ -87,83 +67,77 @@ namespace DENG {
         TRS::Vector4<float> clear_color = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
+    struct FramebufferIndices {
+        FramebufferIndices() = default;
+        FramebufferIndices(const FramebufferIndices&) = default;
+        FramebufferIndices(uint32_t _tid, uint32_t _fid) :
+            texture_id(_tid), framebuffer_id(_fid) {}
+
+        uint32_t texture_id;
+        uint32_t framebuffer_id;
+    };
+
 
     class DENG_API Renderer {
         protected:
-            uint32_t m_id = UINT32_MAX;
-            std::unordered_map<std::string, FramebufferDrawData> m_framebuffer_draws;
             const RendererConfig &m_conf;
+            std::vector<MeshReference*> m_meshes;
+            std::vector<ShaderModule*> m_shader_modules;
+
+            std::queue<MeshReference> m_removed_mesh_queue;
+            std::queue<ShaderModule> m_removed_shader_queue;
 
         public:
             Renderer(const RendererConfig &_conf) : m_conf(_conf) {}
             ~Renderer() {}
 
-            virtual void PushFramebuffer(const FramebufferDrawData &_fb) = 0;
+            // .x - image id
+            // .y - framebuffer id
+            virtual FramebufferIndices AddFramebuffer(TRS::Point2D<uint32_t> _extent) = 0;
 
-            inline uint32_t PushMeshReference(const MeshReference &_mesh, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
-                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
-                m_framebuffer_draws[_framebuffer].meshes.push_back(std::make_pair(_mesh, RESOURCE_ADDED));
-                return static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].meshes.size() - 1);
+            inline uint32_t PushMeshReference(const MeshReference &_mesh) {
+                m_meshes.push_back(new MeshReference(_mesh));
+                return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
-            inline uint32_t NewMeshReference(const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
-                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
-                m_framebuffer_draws[_framebuffer].meshes.emplace_back();
-                m_framebuffer_draws[_framebuffer].meshes.back().second = RESOURCE_ADDED;
-                return static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].meshes.size() - 1);
+            inline uint32_t NewMeshReference() {
+                m_meshes.push_back(new MeshReference);
+                return static_cast<uint32_t>(m_meshes.size() - 1);
             }
 
             // it doesn't clean renderer resources
-            inline MeshReference RemoveMeshReference(uint32_t _id, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
-                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
-                DENG_ASSERT(_id < static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].meshes.size()));
-                MeshReference mesh = m_framebuffer_draws[_framebuffer].meshes[_id].first;
-                m_framebuffer_draws[_framebuffer].meshes.erase(m_framebuffer_draws[_framebuffer].meshes.begin() + _id);
-                return mesh;
+            inline void RemoveMeshReference(uint32_t _id) {
+                if (_id >= static_cast<uint32_t>(m_meshes.size()))
+                    throw std::runtime_error("Cannot remove mesh with " + std::to_string(_id) + " (index out of bounds)");
+                else if (m_meshes[_id] == nullptr)
+                    throw std::runtime_error("Mesh with id " + std::to_string(_id) + " is already removed");
+
+                m_removed_mesh_queue.push(*m_meshes[_id]);
+                delete m_meshes[_id];
+                m_meshes[_id] = nullptr;
             }
 
-            inline uint32_t PushShader(const ShaderModule &_module, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
-                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
-                m_framebuffer_draws[_framebuffer].shaders.push_back(std::make_pair(_module, RESOURCE_ADDED));
-                return static_cast<uint32_t>(m_framebuffer_draws[_framebuffer].shaders.size() - 1);
+            inline uint32_t PushShaderModule(const ShaderModule &_module) {
+                m_shader_modules.push_back(new ShaderModule(_module));
+                return static_cast<uint32_t>(m_shader_modules.size() - 1);
             }
 
-            virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) = 0;
-            virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) = 0;
-            virtual void PushCubemapFromMemory(const std::string& _name, std::array<Libdas::TextureReader, 6>& readers) = 0;
-            inline void PushCubemapFromFiles(
-                const std::string& _name,
-                const std::string& _right,
-                const std::string& _left,
-                const std::string& _top,
-                const std::string& _bottom,
-                const std::string& _back,
-                const std::string& _front)
-            {
-                std::array<Libdas::TextureReader, 6> readers = {
-                    std::move(Libdas::TextureReader(_right)),
-                    std::move(Libdas::TextureReader(_left)),
-                    std::move(Libdas::TextureReader(_top)),
-                    std::move(Libdas::TextureReader(_bottom)),
-                    std::move(Libdas::TextureReader(_front)),
-                    std::move(Libdas::TextureReader(_back))
-                };
-
-                PushCubemapFromMemory(_name, readers);
-            }
-            virtual void GetTexturePointer(const std::string &_name, RawTextureData &_out_data) = 0;
-            virtual void RemoveTexture(const std::string &_name) = 0;
-
-            MeshReference &GetMesh(uint32_t _id, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
-                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
-                DENG_ASSERT(_id < static_cast<uint32_t>(m_framebuffer_draws.find(_framebuffer)->second.meshes.size()));
-                return m_framebuffer_draws.find(_framebuffer)->second.meshes[_id].first;
+            MeshReference &GetMesh(uint32_t _id) {
+                if (_id >= static_cast<uint32_t>(m_meshes.size()))
+                    throw std::runtime_error("Cannot get mesh with id " + std::to_string(_id) + " (index out of bounds)");
+                else if (m_meshes[_id] == nullptr)
+                    throw std::runtime_error("Cannot get mesh with id " + std::to_string(_id) + " (mesh is removed)");
+                
+                return *m_meshes[_id];
             }
 
-            ShaderModule &GetShaderModule(uint32_t _id, const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME) {
-                DENG_ASSERT(m_framebuffer_draws.find(_framebuffer) != m_framebuffer_draws.end());
-                DENG_ASSERT(_id < static_cast<uint32_t>(m_framebuffer_draws.find(_framebuffer)->second.shaders.size()));
-                return m_framebuffer_draws.find(_framebuffer)->second.shaders[_id].first;
+            ShaderModule &GetShaderModule(uint32_t _id) {
+                if (_id >= static_cast<uint32_t>(m_shader_modules.size()))
+                    throw std::runtime_error("Cannot get shader module with id " + std::to_string(_id) + " (index out of bounds)");
+                else if (m_shader_modules[_id] == nullptr)
+                    throw std::runtime_error("Cannot get shader module with id " + std::to_string(_id) + " (shader module is removed)");
+                
+                return *m_shader_modules[_id];
             }
 
             inline const RendererConfig& GetConfig() {
@@ -175,7 +149,7 @@ namespace DENG {
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) = 0;
             virtual void LoadShaders() = 0;
-            virtual void ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer = MAIN_FRAMEBUFFER_NAME) = 0;
+            virtual void ReloadShaderModule(uint32_t _shader_id) = 0;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) = 0;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) = 0;
             virtual void ClearFrame() = 0;

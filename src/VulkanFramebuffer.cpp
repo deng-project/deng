@@ -14,31 +14,29 @@ namespace DENG {
             InstanceCreator &_ic, 
             VkBuffer &_uniform, 
             VkBuffer &_main, 
-            VkFormat _format, 
-            VkSampleCountFlagBits _sample_c, 
-            const std::string &_fb_name,
-            std::unordered_map<std::string, FramebufferDrawData> &_fb_draws, 
-            const std::vector<Vulkan::TextureData> &_fb_images, 
-            const std::unordered_map<std::string, Vulkan::TextureData> &_misc_images, 
+            VkSampleCountFlagBits _sample_c,
+            TRS::Point2D<uint32_t> _extent,
+            uint32_t _missing_2d,
+            uint32_t _missing_3d,
             bool _no_swapchain
         ) :
             m_instance_creator(_ic),
             m_uniform(_uniform),
             m_main_buffer(_main),
-            m_format(_format),
             m_sample_count(_sample_c),
-            m_framebuffer_name(_fb_name),
-            m_framebuffer_draws(_fb_draws),
-            m_framebuffer_images(_fb_images),
-            m_misc_textures(_misc_images),
             m_no_swapchain(_no_swapchain),
+            m_extent(_extent),
+            m_missing_2d(_missing_2d),
+            m_missing_3d(_missing_3d),
             m_current_frame(0)
         {
-            DENG_ASSERT(m_framebuffer_draws.find(m_framebuffer_name) != m_framebuffer_draws.end());
             if(m_no_swapchain) {
-                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, VK_SAMPLE_COUNT_1_BIT, m_no_swapchain);
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), VK_FORMAT_DEFAULT_IMAGE, VK_SAMPLE_COUNT_1_BIT, m_no_swapchain);
+                _CreateFramebufferImage();
             } else {
-                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, m_sample_count, m_no_swapchain);
+                m_swapchain_creator = new SwapchainCreator(m_instance_creator, m_extent, m_sample_count);
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), VK_FORMAT_DEFAULT_IMAGE, m_sample_count, m_no_swapchain);
+                m_framebuffer_image_ids = m_swapchain_creator->GetSwapchainImageIds();
             }
             _CreateColorResources();
             _CreateDepthResources();
@@ -52,15 +50,19 @@ namespace DENG {
         Framebuffer::~Framebuffer() {
             const VkDevice device = m_instance_creator.GetDevice();
 
+            TextureDatabase* db = TextureDatabase::GetInstance();
+
             // clean depth image resources
-            vkDestroyImageView(device, m_depth_image_view, nullptr);
-            vkDestroyImage(device, m_depth_image, nullptr);
-            vkFreeMemory(device, m_depth_image_memory, nullptr);
+            Vulkan::TextureData tex_data = std::get<Vulkan::TextureData>(db->GetResource(m_depth_image_id).vendor);
+            vkDestroyImageView(device, tex_data.image_view, nullptr);
+            vkDestroyImage(device, tex_data.image, nullptr);
+            vkFreeMemory(device, tex_data.memory, nullptr);
 
             // clean color image resources
-            vkDestroyImageView(device, m_color_resolve_image_view, nullptr);
-            vkDestroyImage(device, m_color_resolve_image, nullptr);
-            vkFreeMemory(device, m_color_resolve_image_memory, nullptr);
+            tex_data = std::get<Vulkan::TextureData>(db->GetResource(m_color_resolve_image_id).vendor);
+            vkDestroyImageView(device, tex_data.image_view, nullptr);
+            vkDestroyImage(device, tex_data.image, nullptr);
+            vkFreeMemory(device, tex_data.memory, nullptr);
 
             // destroy framebuffer resources
             for(VkFramebuffer fb : m_framebuffers)
@@ -73,7 +75,7 @@ namespace DENG {
             _CleanPipelineResources();
 
             // destroy semaphores and fences
-            for(size_t i = 0; i < m_framebuffer_images.size(); i++) {
+            for(size_t i = 0; i < m_render_finished_semaphores.size(); i++) {
                 if(!m_no_swapchain) {
                     vkDestroySemaphore(device, m_render_finished_semaphores[i], nullptr);
                     vkDestroySemaphore(device, m_image_available_semaphores[i], nullptr);
@@ -86,29 +88,37 @@ namespace DENG {
         void Framebuffer::_CreateColorResources() {
             const VkDevice device = m_instance_creator.GetDevice();
             const VkPhysicalDevice gpu = m_instance_creator.GetPhysicalDevice();
-            const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
+            
+            TextureResource res = {};
+            res.width = m_extent.x;
+            res.height = m_extent.y;
+            res.bit_depth = 4;
+            res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
+            res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
+
+            Vulkan::TextureData tex_data = {};
 
             VkMemoryRequirements mem_req = Vulkan::_CreateImage(
                 device, 
-                m_color_resolve_image, 
-                fb_draw.extent.x, 
-                fb_draw.extent.y, 
+                tex_data.image,
+                m_extent.x, 
+                m_extent.y, 
                 1,
                 1,
-                m_format, 
+                VK_FORMAT_DEFAULT_IMAGE, 
                 VK_IMAGE_TILING_OPTIMAL, 
                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
                 m_sample_count,
                 0);
-            Vulkan::_AllocateMemory(device, gpu, mem_req.size, m_color_resolve_image_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            vkBindImageMemory(device, m_color_resolve_image, m_color_resolve_image_memory, 0);
+            Vulkan::_AllocateMemory(device, gpu, mem_req.size, tex_data.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            vkBindImageMemory(device, tex_data.image, tex_data.memory, 0);
 
             // create image view
             VkImageViewCreateInfo image_view_info = {};
             image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            image_view_info.image = m_color_resolve_image;
+            image_view_info.image = tex_data.image;
             image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            image_view_info.format = m_format;
+            image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
             
             image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             image_view_info.subresourceRange.baseMipLevel = 0;
@@ -116,21 +126,38 @@ namespace DENG {
             image_view_info.subresourceRange.baseArrayLayer = 0;
             image_view_info.subresourceRange.layerCount = 1;
 
-            if(vkCreateImageView(device, &image_view_info, NULL, &m_color_resolve_image_view) != VK_SUCCESS)
+            if(vkCreateImageView(device, &image_view_info, NULL, &tex_data.image_view) != VK_SUCCESS)
                 VK_RES_ERR("failed to create color image view");
+
+            res.vendor = tex_data;
+            
+            TextureDatabase* db = TextureDatabase::GetInstance();
+
+            if (m_color_resolve_image_id == UINT32_MAX) {
+                m_color_resolve_image_id = db->AddResource(res);
+            } else {
+                db->GetResource(m_color_resolve_image_id) = res;
+            }
         }
 
 
         void Framebuffer::_CreateDepthResources() {
             const VkDevice device = m_instance_creator.GetDevice();
             const VkPhysicalDevice gpu = m_instance_creator.GetPhysicalDevice();
-            const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
 
+            Vulkan::TextureData tex_data = {};
+            TextureResource res;
+            res.width = m_extent.x;
+            res.height = m_extent.y;
+            res.bit_depth = 1;
+            res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
+            res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
+            
             VkMemoryRequirements mem_req = Vulkan::_CreateImage(
                 device, 
-                m_depth_image, 
-                fb_draw.extent.x, 
-                fb_draw.extent.y, 
+                tex_data.image,
+                m_extent.x, 
+                m_extent.y, 
                 1,
                 1,
                 VK_FORMAT_D32_SFLOAT, 
@@ -139,13 +166,13 @@ namespace DENG {
                 m_sample_count,
                 0);
 
-            Vulkan::_AllocateMemory(device, gpu, mem_req.size, m_depth_image_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            vkBindImageMemory(device, m_depth_image, m_depth_image_memory, 0);
+            Vulkan::_AllocateMemory(device, gpu, mem_req.size, tex_data.memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            vkBindImageMemory(device, tex_data.image, tex_data.memory, 0);
 
             // create image view info
             VkImageViewCreateInfo image_view_info = {};
             image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            image_view_info.image = m_depth_image;
+            image_view_info.image = tex_data.image;
             image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             image_view_info.format = VK_FORMAT_D32_SFLOAT;
 
@@ -155,20 +182,33 @@ namespace DENG {
             image_view_info.subresourceRange.baseArrayLayer = 0;
             image_view_info.subresourceRange.layerCount = 1;
 
-            if(vkCreateImageView(device, &image_view_info, NULL, &m_depth_image_view) != VK_SUCCESS)
+            if(vkCreateImageView(device, &image_view_info, NULL, &tex_data.image_view) != VK_SUCCESS)
                 VK_RES_ERR("failed to create color image view");
+            
+            res.vendor = tex_data;
+
+            TextureDatabase* db = TextureDatabase::GetInstance();
+
+            if (m_depth_image_id == UINT32_MAX) {
+                m_depth_image_id = db->AddResource(res);
+            } else {
+                db->GetResource(m_depth_image_id) = res;
+            }
         }
 
 
         void Framebuffer::_CreateFramebuffers() {
-            const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
-            m_framebuffers.resize(m_framebuffer_images.size());
+            m_framebuffers.resize(m_framebuffer_image_ids.size());
             std::array<VkImageView, 2> attachments;
 
-            for(size_t i = 0; i < m_framebuffer_images.size(); i++) {
+            TextureDatabase* db = TextureDatabase::GetInstance();
+            Vulkan::TextureData depth_img_data = std::get<Vulkan::TextureData>(db->GetResource(m_depth_image_id).vendor);
+
+            for(size_t i = 0; i < m_framebuffer_image_ids.size(); i++) {
+                Vulkan::TextureData fb_img_data = std::get<Vulkan::TextureData>(db->GetResource(m_framebuffer_image_ids[i]).vendor);
                 attachments = { 
-                    m_framebuffer_images[i].image_view,
-                    m_depth_image_view
+                    fb_img_data.image_view,
+                    depth_img_data.image_view
                 };
 
                 VkFramebufferCreateInfo framebuffer_createinfo = {};
@@ -176,8 +216,8 @@ namespace DENG {
                 framebuffer_createinfo.renderPass = m_renderpass;
                 framebuffer_createinfo.attachmentCount = static_cast<uint32_t>(attachments.size());
                 framebuffer_createinfo.pAttachments = attachments.data();
-                framebuffer_createinfo.width = fb_draw.extent.x;
-                framebuffer_createinfo.height = fb_draw.extent.y;
+                framebuffer_createinfo.width = m_extent.x;
+                framebuffer_createinfo.height = m_extent.y;
                 framebuffer_createinfo.layers = 1;
 
                 if(vkCreateFramebuffer(m_instance_creator.GetDevice(), &framebuffer_createinfo, NULL, &m_framebuffers[i]) != VK_SUCCESS) {
@@ -189,6 +229,52 @@ namespace DENG {
         }
 
 
+        void Framebuffer::_CreateFramebufferImage() {
+            // create a framebuffer image
+            TextureResource res;
+            res.width = m_extent.x;
+            res.height = m_extent.y;
+            res.bit_depth = 4;
+            res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
+            res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
+
+            Vulkan::TextureData data;
+            VkMemoryRequirements mem_req = Vulkan::_CreateImage(
+                m_instance_creator.GetDevice(),
+                data.image,
+                m_extent.x,
+                m_extent.y,
+                1,
+                1,
+                VK_FORMAT_DEFAULT_IMAGE,
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                VK_SAMPLE_COUNT_1_BIT,
+                0);
+
+            Vulkan::_AllocateMemory(
+                m_instance_creator.GetDevice(),
+                m_instance_creator.GetPhysicalDevice(),
+                mem_req.size,
+                data.memory,
+                mem_req.memoryTypeBits,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            vkBindImageMemory(m_instance_creator.GetDevice(), data.image, data.memory, 0);
+
+            // create image view
+            VkImageViewCreateInfo image_view_info = Vulkan::_GetImageViewInfo(data.image, VK_FORMAT_DEFAULT_IMAGE, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
+            if (vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &data.image_view) != VK_SUCCESS)
+                VK_RES_ERR("Failed to create a framebuffer image.");
+
+            // image sampler
+            data.sampler = Vulkan::_CreateTextureSampler(m_instance_creator.GetDevice(), m_instance_creator.GetMaxSamplerAnisotropy(), 1);
+            res.vendor = data;
+
+            TextureDatabase* db = TextureDatabase::GetInstance();
+            m_framebuffer_image_ids.push_back(db->AddResource(res));
+        }
+
+
         void Framebuffer::_CleanPipelineResources() {
             // free all allocated descriptor sets and pools
             m_shader_desc_allocators.clear();
@@ -196,7 +282,8 @@ namespace DENG {
 
             // destroy pipelines and descriptor set layouts
             m_pipeline_creators.clear();
-            m_descriptor_set_layout_creators.clear();
+            m_shader_descriptor_set_layout_creators.clear();
+            m_mesh_descriptor_set_layout_creators.clear();
         }
 
 
@@ -231,11 +318,11 @@ namespace DENG {
         void Framebuffer::_CreateSynchronisationPrimitives() {
             // swapchain image acquisition and presentation semaphores
             if(!m_no_swapchain) {
-                m_image_available_semaphores.resize(m_framebuffer_images.size());
-                m_render_finished_semaphores.resize(m_framebuffer_images.size());
+                m_image_available_semaphores.resize(m_framebuffer_image_ids.size());
+                m_render_finished_semaphores.resize(m_framebuffer_image_ids.size());
             }
 
-            m_flight_fences.resize(m_framebuffer_images.size());
+            m_flight_fences.resize(m_framebuffer_image_ids.size());
             VkSemaphoreCreateInfo semaphore_info = {};
             semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -243,7 +330,7 @@ namespace DENG {
             fence_createinfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
             fence_createinfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-            for(size_t i = 0; i < m_framebuffer_images.size(); i++) {
+            for(size_t i = 0; i < m_framebuffer_image_ids.size(); i++) {
                 const VkDevice device = m_instance_creator.GetDevice();
                 if(!m_no_swapchain) {
                     if(vkCreateSemaphore(device, &semaphore_info, nullptr, &m_image_available_semaphores[i]) != VK_SUCCESS) {
@@ -257,202 +344,241 @@ namespace DENG {
                     VK_DRAWCMD_ERR("Failed to create frame rendering fence");
             }
 
-            LOG("Successfully created synchronisation primitives for framebuffer " + m_framebuffer_name);
+            LOG("Successfully created synchronisation primitives for framebuffer");
         }
 
 
-        void Framebuffer::_RecordCommandBuffers(const TRS::Vector4<float> _clear_color, uint32_t _imgi) {
-            const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
-            // Record each command buffer
-            VkCommandBufferBeginInfo cmd_buf_info = {};
-            cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            cmd_buf_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+        void Framebuffer::_CheckAndCreateShaderDescriptors(const MeshReference& _ref, const std::vector<ShaderModule*>& _modules) {
+            // check if requested shader module descriptors are not present
+            if (_ref.shader_module_id >= static_cast<uint32_t>(m_pipeline_index_table.size()) || m_pipeline_index_table[_ref.shader_module_id] == UINT32_MAX) {
+                if (_ref.shader_module_id >= static_cast<uint32_t>(m_pipeline_index_table.size()))
+                    m_pipeline_index_table.resize(_ref.shader_module_id + 1, UINT32_MAX);
 
-            // complete pool transfer whenever possible
-            for(auto it = m_shader_desc_allocators.begin(); it != m_shader_desc_allocators.end(); it++)
-                it->CompletePoolTransfer();
+                m_pipeline_index_table[_ref.shader_module_id] = static_cast<uint32_t>(m_pipeline_creators.size());
 
-            // Begin recording command buffer
-            if(vkBeginCommandBuffer(m_command_buffers[m_current_frame], &cmd_buf_info) != VK_SUCCESS)
-                VK_DRAWCMD_ERR("failed to begin recording command buffers");
+                auto& shader_ubo_layouts = _modules[_ref.shader_module_id]->ubo_data_layouts;
+                auto& mesh_ubo_layouts = _ref.ubo_data_layouts;
+                if (shader_ubo_layouts.size())
+                    m_shader_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), _modules[_ref.shader_module_id]->ubo_data_layouts);
+                if (_ref.ubo_data_layouts.size())
+                    m_mesh_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), _ref.ubo_data_layouts);
 
-            // set up renderpass begin info
-            VkRenderPassBeginInfo renderpass_begininfo = {};
-            renderpass_begininfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderpass_begininfo.renderPass = m_renderpass;
-            renderpass_begininfo.framebuffer = m_framebuffers[_imgi];
-            renderpass_begininfo.renderArea.offset = { 0, 0 };
-            const VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
-            renderpass_begininfo.renderArea.extent = ext;
+                std::array<VkDescriptorSetLayout, 2> layouts;
+                if (_modules[_ref.shader_module_id]->ubo_data_layouts.size())
+                    layouts[0] = m_shader_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
+                if (_ref.ubo_data_layouts.size())
+                    layouts[1] = m_mesh_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
 
-            // set up clear values
-            std::array<VkClearValue, 2> clear_values;
-            clear_values[0].color = {{ 
-                _clear_color.first, 
-                _clear_color.second,
-                _clear_color.third, 
-                _clear_color.fourth
-            }};
-            clear_values[1].depthStencil = { 1.0f, 0 };
+                m_pipeline_creators.emplace_back(
+                    m_instance_creator.GetDevice(),
+                    m_renderpass,
+                    VkExtent2D{ m_extent.x, m_extent.y },
+                    m_sample_count,
+                    layouts,
+                    *_modules[_ref.shader_module_id]
+                );
 
-            // add clear values to renderpass begin info
-            renderpass_begininfo.clearValueCount = static_cast<uint32_t>(clear_values.size());
-            renderpass_begininfo.pClearValues = clear_values.data();
+                // create descriptor sets for shader usage
+                if (_modules[_ref.shader_module_id]->ubo_data_layouts.size()) {
+                    m_shader_desc_allocators.emplace_back(
+                        m_instance_creator.GetDevice(),
+                        m_uniform,
+                        layouts[0],
+                        _modules[_ref.shader_module_id]->ubo_data_layouts,
+                        m_missing_2d,
+                        m_missing_3d,
+                        static_cast<uint32_t>(m_framebuffer_image_ids.size()));
 
-            // start a new render pass for recording asset draw commands
-            vkCmdBeginRenderPass(m_command_buffers[m_current_frame], &renderpass_begininfo, VK_SUBPASS_CONTENTS_INLINE);
-
-                // Iterate through every mesh, bind resources and issue a draw call to commandbuffer
-                for(auto mesh_it = fb_draw.meshes.begin(); mesh_it != fb_draw.meshes.end(); mesh_it++) {
-                    if (!mesh_it->first.enable)
-                        continue;
-
-                    const uint32_t shader_id = mesh_it->first.shader_module_id;
-                    const uint32_t mesh_id = static_cast<uint32_t>(mesh_it - fb_draw.meshes.begin());
-                    const ShaderModule &shader = fb_draw.shaders[shader_id].first;
-
-                    // set the viewport
-                    VkViewport vp = {};
-                    if(shader.enable_custom_viewport) {
-                        vp.x = static_cast<float>(shader.viewport.x);
-                        vp.y = static_cast<float>(shader.viewport.height) + static_cast<float>(shader.viewport.y);
-                        vp.width = static_cast<float>(shader.viewport.width);
-                        vp.height = -static_cast<float>(shader.viewport.height);
-                        vp.minDepth = 0.0f;
-                        vp.maxDepth = 1.0f;
-                        vkCmdSetViewport(m_command_buffers[m_current_frame], 0, 1, &vp);
-                    }
-
-                    for(auto cmd_it = mesh_it->first.commands.begin(); cmd_it != mesh_it->first.commands.end(); cmd_it++) {
-                        vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipeline());
-                        VkDeviceSize offset = 0;
-
-                        // bind all attribute bindings
-                        DENG_ASSERT(shader.attributes.size() == cmd_it->attribute_offsets.size());
-                        DENG_ASSERT(shader.attributes.size() == shader.attribute_strides.size());
-                        std::vector<VkBuffer> buffers(shader.attributes.size(), m_main_buffer);
-                        vkCmdBindVertexBuffers(m_command_buffers[m_current_frame], 0, static_cast<uint32_t>(shader.attributes.size()), buffers.data(), cmd_it->attribute_offsets.data());
-
-                        // check if descriptor sets should be bound
-                        std::vector<VkDescriptorSet> desc_sets;
-
-                        // per shader descriptor sets
-                        if(shader.ubo_data_layouts.size()) {
-                            if(shader.enable_2d_textures || shader.enable_3d_textures) {
-                                std::vector<std::string> names;
-                                std::vector<Vulkan::TextureData> textures;
-                                names.reserve(cmd_it->texture_names.size());
-                                textures.reserve(cmd_it->texture_names.size());
-
-                                for(auto tex_it = cmd_it->texture_names.begin(); tex_it != cmd_it->texture_names.end(); tex_it++) {
-                                    DENG_ASSERT(m_misc_textures.find(*tex_it) != m_misc_textures.end());
-                                    names.push_back(*tex_it);
-                                    textures.push_back(m_misc_textures.find(*tex_it)->second);
-                                }
-
-                                Vulkan::DescriptorAllocator &alloc = m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]];
-                                const uint32_t request_size = static_cast<uint32_t>((alloc.Get2DSamplerCount() + alloc.Get3DSamplerCount()) * m_misc_textures.size() - alloc.GetBoundTextureCount());
-                                desc_sets.push_back(alloc.RequestDescriptorSetByTextures(names, textures, m_current_frame, request_size));
-                            } else {
-                                desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[shader_id]].RequestDescriptorSetByFrame(m_current_frame));
-                            }
-                        }
-
-                        // per mesh descriptor sets
-                        if(mesh_it->first.ubo_blocks.size()) {
-                            desc_sets.push_back(m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[mesh_id]].RequestDescriptorSetByFrame(m_current_frame));
-                        }
-
-                        if(desc_sets.size())
-                            vkCmdBindDescriptorSets(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[shader_id].GetPipelineLayout(), 0, static_cast<uint32_t>(desc_sets.size()), desc_sets.data(), 0, nullptr);
-
-                        // check if scissor technique should be used
-                        if(fb_draw.shaders[shader_id].first.enable_scissor) {
-                            VkRect2D rect = {};
-                            rect.offset = VkOffset2D { cmd_it->scissor.offset.x, cmd_it->scissor.offset.y };
-                            rect.extent = VkExtent2D { cmd_it->scissor.ext.x, cmd_it->scissor.ext.y };
-                            vkCmdSetScissor(m_command_buffers[m_current_frame], 0, 1, &rect);
-                        }
-
-                        // check if indexed draw is required
-                        if(fb_draw.shaders[shader_id].first.enable_indexing) {
-                            offset = cmd_it->indices_offset;
-                            vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, offset, VK_INDEX_TYPE_UINT32);
-                            vkCmdDrawIndexed(m_command_buffers[m_current_frame], cmd_it->draw_count, 1, 0, 0, 0);
-                        } else {
-                            vkCmdDraw(m_command_buffers[m_current_frame], cmd_it->draw_count, 1, 0, 0);
-                        }
-                    }
+                    // check if index table needs to be resized
+                    if (_ref.shader_module_id >= (uint32_t)m_shader_descriptor_set_index_table.size())
+                        m_shader_descriptor_set_index_table.resize(_ref.shader_module_id + 1, UINT32_MAX);
+                    m_shader_descriptor_set_index_table[_ref.shader_module_id] = static_cast<uint32_t>(m_shader_desc_allocators.size() - 1);
                 }
+            }
+        }
 
-            // End render pass
-            vkCmdEndRenderPass(m_command_buffers[m_current_frame]);
+
+        void Framebuffer::_CheckAndCreateMeshDescriptors(const MeshReference& _ref, uint32_t _mesh_id) {
+            // check if mesh descriptor sets are not present
+            if (_ref.ubo_data_layouts.size() && (_mesh_id >= (uint32_t)m_mesh_descriptor_set_index_table.size() || m_mesh_descriptor_set_index_table[_mesh_id] == UINT32_MAX)) {
+                // create descriptor set layout for mesh
+                m_mesh_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), _ref.ubo_data_layouts);
+
+                // create descriptor sets for mesh
+                m_mesh_desc_allocators.emplace_back(
+                    m_instance_creator.GetDevice(),
+                    m_uniform,
+                    m_mesh_descriptor_set_layout_creators.back().GetDescriptorSetLayout(),
+                    _ref.ubo_data_layouts,
+                    m_missing_2d,
+                    m_missing_3d,
+                    static_cast<uint32_t>(m_framebuffer_image_ids.size()));
+
+                // check if index table needs to be resized
+                if (_mesh_id >= (uint32_t)m_mesh_descriptor_set_index_table.size())
+                    m_mesh_descriptor_set_index_table.resize(_mesh_id + 1, UINT32_MAX);
+                m_mesh_descriptor_set_index_table[_mesh_id] = static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1);
+            }
+        }
+
+
+        void Framebuffer::StartCommandBufferRecording(TRS::Vector4<float> _clear_color) {
+            vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
+            vkResetFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame]);
+            vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
             
-            // Stop recording commandbuffer
-            if(vkEndCommandBuffer(m_command_buffers[m_current_frame]) != VK_SUCCESS)
-                VK_DRAWCMD_ERR("failed to end recording command buffer");
+            VkCommandBufferBeginInfo cmd_beg_info = {};
+            cmd_beg_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            cmd_beg_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+            if (vkBeginCommandBuffer(m_command_buffers[m_current_frame], &cmd_beg_info) != VK_SUCCESS)
+                VK_DRAWCMD_ERR("Failed to begin command buffer recording.");
+
+            VkRenderPassBeginInfo rp_beg_info = {};
+            rp_beg_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            rp_beg_info.renderPass = m_renderpass;
+            rp_beg_info.framebuffer = m_framebuffers[m_current_frame];
+            rp_beg_info.renderArea.offset = { 0, 0 };
+            rp_beg_info.renderArea.extent = { m_extent.x, m_extent.y };
+
+            std::array<VkClearValue, 2> clear_values;
+            clear_values[0].color = { {
+                _clear_color.first,
+                _clear_color.second,
+                _clear_color.third,
+                _clear_color.fourth
+            } };
+            clear_values[1].depthStencil = { 1.f, 0 };
+
+            rp_beg_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
+            rp_beg_info.pClearValues = clear_values.data();
+
+            vkCmdBeginRenderPass(m_command_buffers[m_current_frame], &rp_beg_info, VK_SUBPASS_CONTENTS_INLINE);
+            m_command_buffer_recording_bit = true;
         }
 
 
-        void Framebuffer::LoadData() {
-            FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
-            m_shader_desc_allocators.reserve(fb_draw.shaders.size());
-            m_descriptor_set_layout_creators.reserve(fb_draw.shaders.size());
-            m_pipeline_creators.reserve(fb_draw.shaders.size());
-
-            // reserve memory for mesh descriptor set creators 
-            m_mesh_desc_allocators.reserve(fb_draw.meshes.size());
-            auto& missing_2d = m_misc_textures.find(MISSING_TEXTURE_NAME)->second;
-            auto& missing_3d = m_misc_textures.find(MISSING_3D_TEXTURE_NAME)->second;
-            const uint32_t fb_img_count = static_cast<uint32_t>(m_framebuffer_images.size());
-
-            // for each shader create pipelines
-            for(auto it = fb_draw.shaders.begin(); it != fb_draw.shaders.end(); it++) {
-                // is new shader?
-                if(it->second == RESOURCE_ADDED) {
-                    m_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), it->first);
-
-                    // construct a temporary array containing all descriptor set layouts [ per shader, per mesh ]
-                    std::array<VkDescriptorSetLayout, 2> layouts = { 
-                        m_descriptor_set_layout_creators.back().GetPerShaderDescriptorSetLayout(), 
-                        m_descriptor_set_layout_creators.back().GetPerMeshDescriptorSetLayout() 
-                    };
-
-                    {
-                        VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
-                        m_pipeline_creators.emplace_back(m_instance_creator.GetDevice(), m_renderpass, ext, m_sample_count, layouts, it->first);
-                    }
-
-                    if(it->first.ubo_data_layouts.size()) {
-                        // check if per shader descriptor set layout is present
-                        if(layouts[0] != VK_NULL_HANDLE) {
-                            const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
-                            m_shader_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layouts[0], it->first.ubo_data_layouts, fb_img_count, missing_2d, missing_3d, pool_cap);
-                            m_shader_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_shader_desc_allocators.size() - 1));
-                        } else {
-                            m_shader_descriptor_set_index_table.push_back(UINT32_MAX);
-                        }
-                    }
-                    it->second = RESOURCE_LOADED;
-                }
+        void Framebuffer::Draw(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules) {
+            _CheckAndCreateShaderDescriptors(_ref, _modules);
+            _CheckAndCreateMeshDescriptors(_ref, _mesh_id);
+            
+            // check if custom viewport should be respected
+            if (_modules[_ref.shader_module_id]->enable_custom_viewport) {
+                VkViewport vp = {};
+                vp.x = static_cast<float>(_modules[_ref.shader_module_id]->viewport.x);
+                vp.y = static_cast<float>(_modules[_ref.shader_module_id]->viewport.y);
+                vp.width = static_cast<float>(_modules[_ref.shader_module_id]->viewport.width);
+                vp.height = static_cast<float>(_modules[_ref.shader_module_id]->viewport.height);
+                vp.minDepth = 0.f;
+                vp.maxDepth = 1.f;
+                vkCmdSetViewport(m_command_buffers[m_current_frame], 0, 1, &vp);
             }
 
-            // for each mesh create descriptor sets if required
-            for(auto it = fb_draw.meshes.begin(); it != fb_draw.meshes.end(); it++) {
-                // is new mesh?
-                if(it->second == RESOURCE_ADDED) {
-                    if(it->first.ubo_blocks.size()) {
-                        const uint32_t pool_cap = static_cast<uint32_t>(m_misc_textures.size()) > 0 ? static_cast<uint32_t>(m_misc_textures.size()) : 1;
+            // submit each draw command in mesh
+            for (auto cmd_it = _ref.commands.begin(); cmd_it != _ref.commands.end(); cmd_it++) {
+                vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_pipeline_index_table[_ref.shader_module_id]].GetPipeline());
+                std::vector<VkBuffer> buffers(_modules[_ref.shader_module_id]->attributes.size(), m_main_buffer);
+                vkCmdBindVertexBuffers(
+                    m_command_buffers[m_current_frame], 
+                    0, 
+                    static_cast<uint32_t>(buffers.size()),
+                    buffers.data(),
+                    cmd_it->attribute_offsets.data());
 
-                        const VkDescriptorSetLayout layout = m_descriptor_set_layout_creators[it->first.shader_module_id].GetPerMeshDescriptorSetLayout();
-                        m_mesh_desc_allocators.emplace_back(m_instance_creator.GetDevice(), m_uniform, layout, it->first.ubo_blocks, fb_img_count, missing_2d, missing_3d, pool_cap);
-                        m_mesh_descriptor_set_index_table.push_back(static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1));
-                    } else {
-                        m_mesh_descriptor_set_index_table.push_back(UINT32_MAX);
-                    }
-                    it->second = RESOURCE_LOADED;
+                // check if textures should be bound
+                if (cmd_it->texture_ids.size() && (_modules[_ref.shader_module_id]->enable_2d_textures || _modules[_ref.shader_module_id]->enable_3d_textures)) {
+                    m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[_mesh_id]].UpdateDescriptorSets(cmd_it->texture_ids);
                 }
+
+
+                // bind descriptor sets if necessary
+                if (_modules[_ref.shader_module_id]->ubo_data_layouts.size() || _ref.ubo_data_layouts.size()) {
+                    std::vector<VkDescriptorSet> desc_sets;
+                    desc_sets.reserve(2);
+
+                    // per shader descriptor sets
+                    if (_modules[_ref.shader_module_id]->ubo_data_layouts.size())
+                        desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[_ref.shader_module_id]].RequestDescriptorSetByFrame(m_current_frame));
+                    // per mesh descriptor sets
+                    if (_ref.ubo_data_layouts.size())
+                        desc_sets.push_back(m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[_mesh_id]].RequestDescriptorSetByFrame(m_current_frame));
+                
+                    
+                    vkCmdBindDescriptorSets(
+                        m_command_buffers[m_current_frame],
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        m_pipeline_creators[m_pipeline_index_table[_ref.shader_module_id]].GetPipelineLayout(),
+                        0,
+                        static_cast<uint32_t>(desc_sets.size()),
+                        desc_sets.data(),
+                        0,
+                        nullptr);
+                }
+
+                // check if scissor technique should be used
+                if (_modules[_ref.shader_module_id]->enable_scissor) {
+                    VkRect2D rect = {};
+                    rect.offset = VkOffset2D{ cmd_it->scissor.offset.x, cmd_it->scissor.offset.y };
+                    rect.extent = VkExtent2D{ cmd_it->scissor.ext.x, cmd_it->scissor.ext.y };
+                    vkCmdSetScissor(m_command_buffers[m_current_frame], 0, 1, &rect);
+                }
+
+                // check if indexed or unindexed draw call should be submitted
+                if (_modules[_ref.shader_module_id]->enable_indexing) {
+                    vkCmdBindIndexBuffer(m_command_buffers[m_current_frame], m_main_buffer, static_cast<VkDeviceSize>(cmd_it->indices_offset), VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(m_command_buffers[m_current_frame], cmd_it->draw_count, 1, 0, 0, 0);
+                } else {
+                    vkCmdDraw(m_command_buffers[m_current_frame], cmd_it->draw_count, 1, 0, 0);
+                }
+           }
+        }
+
+
+        void Framebuffer::EndCommandBufferRecording() {
+            vkCmdEndRenderPass(m_command_buffers[m_current_frame]);
+            if (vkEndCommandBuffer(m_command_buffers[m_current_frame]) != VK_SUCCESS)
+                VK_DRAWCMD_ERR("Failed to end command buffer recording.");
+
+            m_command_buffer_recording_bit = false;
+        }
+
+
+        void Framebuffer::Render() {
+            VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+            VkSubmitInfo submit_info = {};
+            submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            if (!m_no_swapchain) {
+                submit_info.waitSemaphoreCount = 1;
+                submit_info.pWaitSemaphores = &m_image_available_semaphores[m_current_frame];
+                submit_info.pWaitDstStageMask = wait_stages;
+                submit_info.signalSemaphoreCount = 1;
+                submit_info.pSignalSemaphores = &m_render_finished_semaphores[m_current_frame];
             }
+            submit_info.commandBufferCount = 1;
+            submit_info.pCommandBuffers = &m_command_buffers[m_current_frame];
+
+            // submit the graphics queue
+            VkResult res;
+            if ((res = vkQueueSubmit(m_instance_creator.GetGraphicsQueue(), 1, &submit_info, m_flight_fences[m_current_frame])) != VK_SUCCESS) {
+                VK_FRAME_ERR("Failed to submit graphics queue; error code: " + std::to_string(res));
+            }
+
+            m_current_frame = (m_current_frame + 1) % static_cast<uint32_t>(m_framebuffer_image_ids.size());
+        }
+
+
+        VkResult Framebuffer::Present() {
+            VkPresentInfoKHR present_info = {};
+            present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            present_info.waitSemaphoreCount = 1;
+            present_info.pWaitSemaphores = &m_render_finished_semaphores[m_current_frame];
+            present_info.swapchainCount = 1;
+            present_info.pImageIndices = &m_current_frame;
+            present_info.pSwapchains = &m_swapchain_creator->GetSwapchain();
+
+            m_current_frame = (m_current_frame + 1) % static_cast<uint32_t>(m_framebuffer_image_ids.size());
+            return vkQueuePresentKHR(m_instance_creator.GetPresentationQueue(), &present_info);
         }
 
 
@@ -464,95 +590,80 @@ namespace DENG {
 
         void Framebuffer::RecreateDescriptorSets() {
             for(auto &alloc : m_shader_desc_allocators)
-                alloc.RecreateDescriptorSets(m_uniform);
+                alloc.RecreateDescriptorSets(m_uniform, {});
 
             for(auto &alloc : m_mesh_desc_allocators)
-                alloc.RecreateDescriptorSets(m_uniform);
+                alloc.RecreateDescriptorSets(m_uniform, {});
         }
 
         
         void Framebuffer::RecreateFramebuffer() {
             _CreateColorResources();
             _CreateDepthResources();
-            const FramebufferDrawData &fb_draw = m_framebuffer_draws.find(m_framebuffer_name)->second;
+
+            if (m_no_swapchain && m_framebuffer_image_ids.empty()) {
+                _CreateFramebufferImage();
+            }
+
             if(m_no_swapchain) {
-                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, VK_SAMPLE_COUNT_1_BIT);
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), VK_FORMAT_DEFAULT_IMAGE, VK_SAMPLE_COUNT_1_BIT);
             } else {
-                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), m_format, m_sample_count);
+                m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), VK_FORMAT_DEFAULT_IMAGE, m_sample_count);
             }
             _CreateFramebuffers();
             for(auto &pc : m_pipeline_creators) {
-                const VkExtent2D ext = { fb_draw.extent.x, fb_draw.extent.y };
+                const VkExtent2D ext = { m_extent.x, m_extent.y };
                 pc.RecreatePipeline(m_renderpass, ext);
             }
         }
 
 
-        void Framebuffer::DestroyFramebuffer() {
-            vkDestroyImageView(m_instance_creator.GetDevice(), m_color_resolve_image_view, nullptr);
-            vkDestroyImage(m_instance_creator.GetDevice(), m_color_resolve_image, nullptr);
-            vkFreeMemory(m_instance_creator.GetDevice(), m_color_resolve_image_memory, nullptr);
+        void Framebuffer::DestroyFramebuffer(bool _remove_from_registry) {
+            TextureDatabase* db = TextureDatabase::GetInstance();
+            
+            // destroy color resolve image resources
+            Vulkan::TextureData data = std::get<Vulkan::TextureData>(db->GetResource(m_color_resolve_image_id).vendor);
+            vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
+            vkDestroyImage(m_instance_creator.GetDevice(), data.image, nullptr);
+            vkFreeMemory(m_instance_creator.GetDevice(), data.memory, nullptr);
 
-            vkDestroyImageView(m_instance_creator.GetDevice(), m_depth_image_view, nullptr);
-            vkDestroyImage(m_instance_creator.GetDevice(), m_depth_image, nullptr);
-            vkFreeMemory(m_instance_creator.GetDevice(), m_depth_image_memory, nullptr);
+            // destroy depth image resources
+            data = std::get<Vulkan::TextureData>(db->GetResource(m_depth_image_id).vendor);
+            vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
+            vkDestroyImage(m_instance_creator.GetDevice(), data.image, nullptr);
+            vkFreeMemory(m_instance_creator.GetDevice(), data.memory, nullptr);
 
+            // destroy command pool, framebuffers and pipelines
             vkResetCommandPool(m_instance_creator.GetDevice(), m_command_pool, 0);
             for(auto &fb : m_framebuffers)
                 vkDestroyFramebuffer(m_instance_creator.GetDevice(), fb, nullptr);
             for(auto &pc : m_pipeline_creators)
                 pc.DestroyPipelineData();
-        }
 
-
-        void Framebuffer::Render(const TRS::Vector4<float> _clear_color, uint32_t _imgi) {
-            const VkDevice device = m_instance_creator.GetDevice();
-            const VkQueue graphics_queue = m_instance_creator.GetGraphicsQueue();
-
-            vkWaitForFences(device, 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
-            vkResetFences(device, 1, &m_flight_fences[m_current_frame]);
-            vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
-
-            if(!m_no_swapchain) _RecordCommandBuffers(_clear_color, _imgi);
-            else _RecordCommandBuffers(_clear_color, m_current_frame);
-
-            VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-            VkSubmitInfo submit_info = {};
-            submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            if(!m_no_swapchain) {
-                submit_info.waitSemaphoreCount = 1;
-                submit_info.pWaitSemaphores = &m_image_available_semaphores[m_current_frame];
-                submit_info.pWaitDstStageMask = wait_stages;
-                submit_info.signalSemaphoreCount = 1;
-                submit_info.pSignalSemaphores = &m_render_finished_semaphores[m_current_frame];
-            } 
-            submit_info.commandBufferCount = 1;
-            submit_info.pCommandBuffers = &m_command_buffers[m_current_frame];
-
-            // submit the graphics queue
-            VkResult res;
-            if((res = vkQueueSubmit(graphics_queue, 1, &submit_info, m_flight_fences[m_current_frame])) != VK_SUCCESS) {
-                VK_FRAME_ERR("Failed to submit graphics queue; error code: " + std::to_string(res));
+            // destroy framebuffer images if possible
+            if (!m_no_swapchain) {
+                for (size_t i = 0; i < m_framebuffer_image_ids.size(); i++) {
+                    data = std::get<Vulkan::TextureData>(db->GetResource(m_framebuffer_image_ids[i]).vendor);
+                    vkDestroySampler(m_instance_creator.GetDevice(), data.sampler, nullptr);
+                    vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
+                    vkDestroyImage(m_instance_creator.GetDevice(), data.image, nullptr);
+                    vkFreeMemory(m_instance_creator.GetDevice(), data.memory, nullptr);
+                }
             }
 
-            if(m_no_swapchain) {
-                m_current_frame = (m_current_frame + 1) % static_cast<uint32_t>(m_framebuffer_images.size());
+            // check if registry removal is required
+            if (_remove_from_registry) {
+                db->DeleteResource(m_color_resolve_image_id);
+                db->DeleteResource(m_depth_image_id);
+
+                for (auto it = m_framebuffer_image_ids.begin(); it != m_framebuffer_image_ids.end(); it++) {
+                    db->DeleteResource(*it);
+                }
+
+                m_color_resolve_image_id = UINT32_MAX;
+                m_depth_image_id = UINT32_MAX;
+                m_framebuffer_image_ids.clear();
             }
-        }
-
-
-        VkResult Framebuffer::Present(VkSwapchainKHR &_swapchain, uint32_t _imgi) {
-            VkPresentInfoKHR present_info = {};
-            present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-            present_info.waitSemaphoreCount = 1;
-            present_info.pWaitSemaphores = &m_render_finished_semaphores[m_current_frame];
-            present_info.swapchainCount = 1;
-            present_info.pImageIndices = &_imgi;
-            present_info.pSwapchains = &_swapchain;
-
-            m_current_frame = (m_current_frame + 1) % static_cast<uint32_t>(m_framebuffer_images.size());
-            return vkQueuePresentKHR(m_instance_creator.GetPresentationQueue(), &present_info);
         }
     }
 }

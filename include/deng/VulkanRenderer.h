@@ -11,14 +11,15 @@
     #include <string>
     #include <vector>
     #include <array>
-    #include <thread>
     #include <chrono>
     #include <cstring>
     #include <variant>
     #include <cmath>
-    #include <unordered_map>
+    #include <queue>
+    #include <list>
     #include <utility>
     #include <memory>
+    #include <thread>
     
     #define NOMINMAX
     #include <algorithm>
@@ -48,6 +49,7 @@
     #include "deng/Renderer.h"
     #include "deng/RenderState.h"
     #include "deng/GPUMemoryManager.h"
+    #include "deng/TextureDatabase.h"
 
     #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
 #endif
@@ -72,13 +74,9 @@ namespace DENG {
             TRS::Point2D<uint32_t> m_previous_canvas;
             const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_1_BIT;
             Vulkan::InstanceCreator m_instance_creator;
-            Vulkan::SwapchainCreator m_swapchain_creator;
-
-            // texture handles
-            std::unordered_map<std::string, Vulkan::TextureData> m_vulkan_texture_handles;
 
             // framebuffers
-            std::unordered_map<std::string, std::shared_ptr<Vulkan::Framebuffer>> m_framebuffers;
+            std::vector<Vulkan::Framebuffer*> m_framebuffers;
             
             // locally managed vulkan resources
             VkDeviceSize m_uniform_size = DEFAULT_UNIFORM_SIZE;
@@ -93,6 +91,9 @@ namespace DENG {
             VkBuffer m_uniform_buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_uniform_memory = VK_NULL_HANDLE;
             uint32_t m_current_frame = 0;
+
+            uint32_t m_missing_2d = 0;
+            uint32_t m_missing_3d = 0;
             bool m_is_init = false;
 
         private:
@@ -104,23 +105,22 @@ namespace DENG {
             void _CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels);
             void _Resize();
 
+            void _CreateVendorTextureImages(uint32_t _id);
+            
+            void _CheckAndCopyTextures();
+            void _CheckAndDeleteTextures();
+            void _CheckAndDeleteMeshes();
+            void _CheckAndRemoveShaders();
+
 
         public:
             VulkanRenderer(const RendererConfig &_conf);
             ~VulkanRenderer();
 
-            virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;
-            virtual void PushTextureFromFile(const std::string &_name, const std::string &_file_name) override;
-            virtual void PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
-            virtual void PushCubemapFromMemory(const std::string& _name, std::array<Libdas::TextureReader, 6>& _readers) override;
-            virtual void GetTexturePointer(const std::string& _name, RawTextureData &_data) override;
-            virtual void RemoveTexture(const std::string &_name) override;
-
+            virtual FramebufferIndices AddFramebuffer(TRS::Point2D<uint32_t> _extent) override;
             virtual std::vector<std::string> GetTextureNames() override;
 
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void LoadShaders() override;
-            virtual void ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer = MAIN_FRAMEBUFFER_NAME) override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

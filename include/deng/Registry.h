@@ -1,6 +1,6 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: Registry.h - Game entity and component registry
+// file: Registry.h - Game entity and component registry class header
 // author: Karl-Mihkel Ott
 
 #ifndef REGISTRY_H

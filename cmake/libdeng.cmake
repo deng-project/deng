@@ -60,6 +60,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/SkeletonLoader.h
 	include/deng/Skybox.h
 	include/deng/SphereGenerator.h
+	include/deng/TextureDatabase.h
     include/deng/ThirdPersonCamera.h
     include/deng/Version.h
 	include/deng/VertexNormalVisualizer.h
@@ -103,6 +104,7 @@ set(DENG_COMPLETE_SOURCES
     src/SkeletonLoader.cpp
 	src/Skybox.cpp
 	src/SphereGenerator.cpp
+	src/TextureDatabase.cpp
     src/ThirdPersonCamera.cpp
 	src/VertexNormalVisualizer.cpp
     src/VulkanDescriptorAllocator.cpp

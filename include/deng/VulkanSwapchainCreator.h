@@ -11,8 +11,10 @@
     #include <vector>
     #include <cstring>
     #include <array>
+    #include <queue>
     #include <vulkan/vulkan.h>
     #include <string>
+    #include <variant>
     #include <unordered_map>
 #ifdef __DEBUG
     #include <iostream>
@@ -33,6 +35,7 @@
     #include "deng/Window.h"
     #include "deng/HardwareInfo.h"
     #include "deng/ShaderDefinitions.h"
+    #include "deng/TextureDatabase.h"
     #include "deng/Renderer.h"
     #include "deng/VulkanInstanceCreator.h"
     #include "deng/VulkanHelpers.h"
@@ -49,14 +52,11 @@ namespace DENG {
                 TRS::Point2D<uint32_t> m_window_size;
 
                 VkSwapchainKHR m_swapchain;
-                std::vector<TextureData> m_swapchain_images;
+                std::vector<uint32_t> m_swapchain_image_ids;
                 VkSurfaceFormatKHR m_selected_surface_format;
                 VkPresentModeKHR m_selected_present_mode;
-                VkExtent2D m_extent;
                 VkSampleCountFlagBits m_sample_c;
 
-                const RendererConfig &m_config;
-            
             private:
                 void _ConfigureSwapchainSettings();
                 void _CreateSwapchain();
@@ -65,7 +65,7 @@ namespace DENG {
             public:
                 static VkRenderPass CreateRenderPass(VkDevice _dev, VkFormat _format, VkSampleCountFlagBits _sample_c, bool _use_non_default_fb = false);
 
-                SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<uint32_t> _win_size, VkSampleCountFlagBits _sample_c, const RendererConfig &_conf);
+                SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<uint32_t> _win_size, VkSampleCountFlagBits _sample_c);
                 ~SwapchainCreator();
 
                 /**
@@ -74,10 +74,10 @@ namespace DENG {
                  **/
                 void RecreateSwapchain(TRS::Point2D<uint32_t> _new_win_size);
 
+                inline std::vector<uint32_t>& GetSwapchainImageIds() { return m_swapchain_image_ids; }
                 inline VkSwapchainKHR &GetSwapchain() { return m_swapchain; }
                 inline VkFormat GetSwapchainFormat() const { return m_selected_surface_format.format; }
-                inline VkExtent2D GetExtent() const { return m_extent; }
-                inline std::vector<TextureData> &GetSwapchainImages() { return m_swapchain_images; }
+                inline TRS::Point2D<uint32_t> GetExtent() const { return m_window_size; }
         };  
     }
 }

@@ -7,14 +7,11 @@
 #include "deng/VulkanSwapchainCreator.h"
 
 namespace DENG {
-    
     namespace Vulkan {
-
-        SwapchainCreator::SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<uint32_t> _win_size, VkSampleCountFlagBits _sample_c, const RendererConfig &_conf) : 
+        SwapchainCreator::SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<uint32_t> _win_size, VkSampleCountFlagBits _sample_c) : 
             m_instance_creator(_ic), 
             m_window_size(_win_size), 
-            m_sample_c(_sample_c),
-            m_config(_conf)
+            m_sample_c(_sample_c)
         {
             _ConfigureSwapchainSettings();
             _CreateSwapchain();
@@ -23,8 +20,11 @@ namespace DENG {
 
 
         SwapchainCreator::~SwapchainCreator() {
-            for(auto it = m_swapchain_images.begin(); it != m_swapchain_images.end(); it++)
-                vkDestroyImageView(m_instance_creator.GetDevice(), it->image_view, nullptr);
+            for (auto it = m_swapchain_image_ids.begin(); it != m_swapchain_image_ids.end(); it++) {
+                TextureDatabase* db = TextureDatabase::GetInstance();
+                Vulkan::TextureData tex_data = std::get<Vulkan::TextureData>(db->GetResource(*it).vendor);
+                vkDestroyImageView(m_instance_creator.GetDevice(), tex_data.image_view, nullptr);
+            }
 
             vkDestroySwapchainKHR(m_instance_creator.GetDevice(), m_swapchain, nullptr);
         }
@@ -136,8 +136,13 @@ namespace DENG {
             m_window_size = _new_win_size;
 
             // cleanup the previous swapchain
-            for(auto it = m_swapchain_images.begin(); it != m_swapchain_images.end(); it++)
-                vkDestroyImageView(m_instance_creator.GetDevice(), it->image_view, nullptr);
+            TextureDatabase* db = TextureDatabase::GetInstance();
+            for (auto it = m_swapchain_image_ids.begin(); it != m_swapchain_image_ids.end(); it++) {
+                Vulkan::TextureData& data = std::get<Vulkan::TextureData>(db->GetResource(*it).vendor);
+                vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
+
+                db->DeleteResource(*it);
+            }
 
             vkDestroySwapchainKHR(device, m_swapchain, nullptr);
 
@@ -205,13 +210,9 @@ namespace DENG {
                 }
             }
 
-            if(m_config.enable_vsync && !found_vsync) {
-                VK_SWAPCHAIN_ERR("Vsync requested but no VK_PRESENT_MODE_FIFO_KHR was found");
-            } else if(m_config.enable_vsync) {
-                m_selected_present_mode = VK_PRESENT_MODE_FIFO_KHR;
-            } else if(!found_presentation_mode) {
+            if(!found_presentation_mode) {
                 m_selected_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-            }
+            } 
         }
 
 
@@ -238,7 +239,7 @@ namespace DENG {
                 swapchain_createinfo.imageExtent.height = m_window_size.y;
             }
 
-            m_extent = { swapchain_createinfo.imageExtent.width, swapchain_createinfo.imageExtent.height };
+            ext = { swapchain_createinfo.imageExtent.width, swapchain_createinfo.imageExtent.height };
             swapchain_createinfo.imageArrayLayers = 1;
             swapchain_createinfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -274,21 +275,39 @@ namespace DENG {
 
             uint32_t image_count = UINT32_MAX;
             vkGetSwapchainImagesKHR(m_instance_creator.GetDevice(), m_swapchain, &image_count, nullptr);
-            m_swapchain_images.resize(image_count);
+            m_swapchain_image_ids.resize(image_count);
             std::vector<VkImage> images(image_count);
             vkGetSwapchainImagesKHR(m_instance_creator.GetDevice(), m_swapchain, &image_count, images.data());
 
-            // copy images to m_swapchain_images
-            for(size_t i = 0; i < images.size(); i++)
-                m_swapchain_images[i].image = images[i];
+            // copy images to TextureDatabase
+            m_swapchain_image_ids.resize(image_count);
+            for (size_t i = 0; i < images.size(); i++) {
+                Vulkan::TextureData tex_data;
+                tex_data.image = images[i];
+
+                TextureResource res;
+                res.width = ext.width;
+                res.height = ext.height;
+                res.bit_depth = 4;
+                res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
+                res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
+                res.vendor = tex_data;
+
+                TextureDatabase* db = TextureDatabase::GetInstance();
+                m_swapchain_image_ids[i] = db->AddResource(res);
+            }
         }
 
 
         void SwapchainCreator::_CreateSwapchainImageViews() {
-            for(uint32_t i = 0; i < static_cast<uint32_t>(m_swapchain_images.size()); i++) {
+            TextureDatabase* db = TextureDatabase::GetInstance();
+
+            for(uint32_t i = 0; i < static_cast<uint32_t>(m_swapchain_image_ids.size()); i++) {
+                Vulkan::TextureData &data = std::get<Vulkan::TextureData>(db->GetResource(m_swapchain_image_ids[i]).vendor);
+
                 VkImageViewCreateInfo image_view_info = {};
                 image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                image_view_info.image = m_swapchain_images[i].image;
+                image_view_info.image = data.image;
                 image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
                 image_view_info.format = m_selected_surface_format.format;
                 
@@ -298,7 +317,7 @@ namespace DENG {
                 image_view_info.subresourceRange.baseArrayLayer = 0;
                 image_view_info.subresourceRange.layerCount = 1;
 
-                if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &m_swapchain_images[i].image_view) != VK_SUCCESS)
+                if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &data.image_view) != VK_SUCCESS)
                     VK_SWAPCHAIN_ERR("failed to create image views!");
             }
         }
