@@ -12,6 +12,7 @@
 	#include <string>
 	#include <unordered_map>
 	#include <chrono>
+	#include <queue>
 	#include <fstream>
 	#include <any>
 
@@ -71,7 +72,7 @@ namespace DENG {
 
 		public:
 			CubeGenerator(TRS::Point3D<float> _min, TRS::Point3D<float> _max, bool _normals = false);
-			ModelLoader ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_mesh_name = "");
+			ModelLoader ToModelLoader(Entity *_parent, Renderer &_rend, const std::string &_mesh_name = "");
 	};
 }
 

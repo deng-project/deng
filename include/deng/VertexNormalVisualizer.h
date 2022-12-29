@@ -12,6 +12,7 @@
 	#include <string>
 	#include <array>
 	#include <unordered_map>
+	#include <queue>
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -62,25 +63,25 @@ namespace DENG {
 
 			Renderer& m_renderer;
 			uint32_t m_mesh_id = 0;
-			const std::string m_framebuffer_name;
+			std::vector<uint32_t> m_bound_framebuffers;
 
 		private:
 			uint32_t _CheckAndCreateShaderModule(bool _index);
 
 		public:
 			VertexNormalVisualizer(
-				Entity *_parent, 
-				const std::string &_name, 
-				Renderer &_rend, 
-				uint32_t _vertex_offset, 
-				uint32_t _normal_offset, 
+				Entity* _parent,
+				const std::string& _name,
+				Renderer& _rend,
+				uint32_t _vertex_offset,
+				uint32_t _normal_offset,
 				uint32_t _index_offset,
 				uint32_t _draw_count,
-				const std::string &_framebuffer_name = MAIN_FRAMEBUFFER_NAME
+				const std::vector<uint32_t>& _framebuffers = { 0 }
 			);
 
 			inline void Toggle(bool _enable) {
-				m_renderer.GetMesh(m_mesh_id, m_framebuffer_name).enable = _enable;
+				m_renderer.GetMesh(m_mesh_id).enable = _enable;
 			}
 
 			static void SetColor(TRS::Vector4<float> _color);

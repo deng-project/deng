@@ -92,8 +92,6 @@ namespace DENG {
             VkDeviceMemory m_uniform_memory = VK_NULL_HANDLE;
             uint32_t m_current_frame = 0;
 
-            uint32_t m_missing_2d = 0;
-            uint32_t m_missing_3d = 0;
             bool m_is_init = false;
 
         private:
@@ -102,15 +100,14 @@ namespace DENG {
             void _ReallocateBufferResources(VkDeviceSize _old_size);
             void _ReallocateUniformBuffer();
             void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels, uint32_t _array_count);
-            void _CreateTextureSampler(Vulkan::TextureData &_tex, uint32_t _mip_levels);
             void _Resize();
 
             void _CreateVendorTextureImages(uint32_t _id);
             
             void _CheckAndCopyTextures();
             void _CheckAndDeleteTextures();
-            void _CheckAndDeleteMeshes();
             void _CheckAndRemoveShaders();
+            void _CheckAndRemoveMeshes();
 
 
         public:
@@ -118,8 +115,6 @@ namespace DENG {
             ~VulkanRenderer();
 
             virtual FramebufferIndices AddFramebuffer(TRS::Point2D<uint32_t> _extent) override;
-            virtual std::vector<std::string> GetTextureNames() override;
-
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;

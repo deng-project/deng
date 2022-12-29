@@ -15,10 +15,11 @@
 	#include <algorithm>
 	#include <fstream>
 	#include <any>
+	#include <queue>
 	
-	#ifdef _WIN32
+#ifdef _WIN32
 	#include <Windows.h>
-	#endif
+#endif
 	
 		// trs
 	#include "trs/Points.h"
@@ -93,7 +94,7 @@ namespace DENG {
 
 		public:
 			SphereGenerator(float _radius, uint32_t _subdiv, bool _use_normals = false);
-			ModelLoader ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _mesh_name = "");
+			ModelLoader ToModelLoader(Entity* _parent, Renderer& _rend, const std::string& _mesh_name = "");
 	};
 }
 

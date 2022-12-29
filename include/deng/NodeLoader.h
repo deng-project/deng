@@ -20,6 +20,7 @@
     #include <fstream>
     #include <unordered_map>
     #include <any>
+    #include <queue>
     #include <algorithm>
 
     #include "trs/Points.h"
@@ -79,7 +80,7 @@ namespace DENG {
 
             float *m_morph_weights = nullptr;
             uint32_t m_max_node = 0;
-            const std::string m_framebuffer_id;
+            std::vector<uint32_t> m_framebuffers;
 
         private:
             void _CreateBoundElementLoaders(std::vector<Animation> &_animations, const std::vector<uint32_t> &_main_buffer_offsets, uint32_t _camera_offset);
@@ -96,7 +97,7 @@ namespace DENG {
                 const std::vector<uint32_t> &_main_buffer_offsets, 
                 uint32_t _camera_offset, 
                 std::vector<Animation> &_animations, 
-                const std::string &_framebuffer_id,
+                const std::vector<uint32_t>& _framebuffer_ids,
                 const TRS::Matrix4<float> &_parent_matrix
             );
             NodeLoader(const NodeLoader &) = delete;

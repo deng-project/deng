@@ -18,13 +18,15 @@
     #include <variant>
     #include <stack>
     #include <any>
+    #include <queue>
 #ifdef DENG_EDITOR
     #include <algorithm>
 #endif
 #ifdef __DEBUG
     #include <iostream>
 #endif
-
+    
+    #include <vulkan/vulkan.h>
     #include <python3.10/pyconfig.h>
     #include <pybind11/embed.h>
 
@@ -58,6 +60,7 @@
     #include "deng/Entity.h"
     #include "deng/ScriptableEntity.h"
     #include "deng/Camera3D.h"
+    #include "deng/TextureDatabase.h"
 
     #include "deng/VertexNormalVisualizer.h"
     #include "deng/MeshLoader.h"
@@ -81,10 +84,10 @@ namespace DENG {
             std::vector<SceneLoader> m_scene_loaders;
             static uint32_t m_model_index;
             static uint32_t m_animation_index;
-            std::vector<std::string> m_texture_names;
+            std::vector<uint32_t> m_texture_ids;
             std::vector<uint32_t> m_buffer_offsets;
             uint32_t m_camera_id = UINT32_MAX;
-            const std::string m_framebuffer_id;
+            std::vector<uint32_t> m_framebuffer_ids;
 
         private:
             void _AttachBuffersAndTextures();
@@ -94,7 +97,7 @@ namespace DENG {
                 Entity *_parent,
                 const Libdas::DasModel &_model, 
                 Renderer &_rend,
-                const std::string &_framebuffer = MAIN_FRAMEBUFFER_NAME
+                const std::vector<uint32_t>& _framebuffers = { 0 }
             );
             ModelLoader(const ModelLoader &_ld) = delete;
             ModelLoader(ModelLoader&& _ld) noexcept;
@@ -107,8 +110,8 @@ namespace DENG {
             void Attach();
             void Update();
 
-            inline std::vector<std::string> &GetAttachedTextures() {
-                return m_texture_names;
+            inline std::vector<uint32_t> &GetAttachedTextures() {
+                return m_texture_ids;
             }
 
             inline std::vector<SceneLoader> &GetScenes() {

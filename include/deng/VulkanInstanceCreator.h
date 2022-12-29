@@ -14,9 +14,11 @@
     #include <array>
     #include <vector>
     #include <map>
+    #include <queue>
+    #include <variant>
     #include <unordered_map>
     #include <vulkan/vulkan.h>
-#ifdef _WIN32    
+#ifdef _WIN32
     #include <wtypes.h>
     #include <vulkan/vulkan_win32.h>
 #else

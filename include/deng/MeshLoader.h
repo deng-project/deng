@@ -19,6 +19,7 @@
     #include <cmath>
     #include <array>
     #include <unordered_map>
+    #include <queue>
     #include <vulkan/vulkan.h>
 
     #include "trs/Vector.h"
@@ -80,11 +81,11 @@ namespace DENG {
             // Uniform node data
             TRS::Vector4<float> m_color = { 0.2f, 1.0f, 0.2f, 1.0f };
 
-            // framebuffer id
-            std::string m_framebuffer_id;
+            // framebuffer ids
+            std::vector<uint32_t> m_framebuffer_ids;
 
             // mesh properties
-            std::string m_environment_map = MISSING_3D_TEXTURE_NAME;
+            uint32_t m_environment_map = 0;
             bool m_is_colored = true;
             bool m_use_environment_mapping = false;
 
@@ -95,21 +96,21 @@ namespace DENG {
 
         public:
             MeshLoader(
-                Entity *_parent,
-                const Libdas::DasMesh &_mesh, 
-                Libdas::DasModel *_model, 
-                Renderer &_renderer, 
-                const std::vector<uint32_t> &_main_buffer_offsets, 
-                uint32_t _camera_offset, 
+                Entity* _parent,
+                const Libdas::DasMesh& _mesh,
+                Libdas::DasModel* _model,
+                Renderer& _renderer,
+                const std::vector<uint32_t>& _main_buffer_offsets,
+                uint32_t _camera_offset,
                 uint32_t _skeleton_joint_count,
-                const std::string &_framebuffer_name
+                const std::vector<uint32_t>& _framebuffers
             );
             MeshLoader(const MeshLoader &_ml) = delete;
             MeshLoader(MeshLoader&& _ml) noexcept;
             ~MeshLoader();
 
             void Attach();
-            void UseTextures(const std::vector<std::string> &_names);
+            void UseTextures(const std::vector<uint32_t>& _handles);
             void UpdateJointMatrices(const std::vector<TRS::Matrix4<float>> &_matrices);
 
             inline std::array<float, MAX_MORPH_TARGETS> &GetMorphWeights() {
@@ -160,7 +161,7 @@ namespace DENG {
                 m_use_environment_mapping = _use_env;
             }
 
-            void SetEnvironmentMap(const std::string& _texture);
+            void SetEnvironmentMap(uint32_t _handle);
 
             inline bool GetDisableJointTransforms() const {
                 return m_disable_joint_transforms;

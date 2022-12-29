@@ -98,11 +98,11 @@ namespace DENG {
 				Libdas::DasParser parser(path);
 				parser.Parse();
 
-				editor->GetModelLoaders().emplace_back(nullptr, parser.GetModel(), *editor->GetViewport()->GetRenderer(), editor->GetCamera()->GetId());
+				editor->GetModelLoaders().emplace_back(nullptr, parser.GetModel(), *editor->GetViewport()->GetRenderer());
+				editor->GetModelLoaders().back().BindCamera(editor->GetCamera()->GetId());
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->AppendModelToHierarchy();
-				editor->GetViewport()->GetRenderer()->LoadShaders();
 			}
 		}
 
@@ -122,12 +122,10 @@ namespace DENG {
 			if (dialog.ShowModal() == wxID_OK) {
 				const auto& tx = dialog.GetTextures();
 				editor->SetSkybox(new Skybox(nullptr, *editor->GetViewport()->GetRenderer(),
-											 editor->GetCamera()->GetId(),
 											 tx[3], tx[1], tx[0], tx[4], tx[5], tx[2]));
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->GetSkybox()->SetScale(dialog.GetScale());
-				editor->GetViewport()->GetRenderer()->LoadShaders();
 			}
 		}
 
@@ -140,12 +138,11 @@ namespace DENG {
 			GameEditor* editor = (GameEditor*)GetParent();
 			if (dialog.ShowModal() == wxID_OK) {
 				CubeGenerator gen = dialog.ConstructCube();
-				editor->GetModelLoaders().emplace_back(std::move(gen.ToModelLoader(nullptr, *editor->GetViewport()->GetRenderer(), 
-																 editor->GetCamera()->GetId())));
+				editor->GetModelLoaders().emplace_back(std::move(gen.ToModelLoader(nullptr, *editor->GetViewport()->GetRenderer())));
+				editor->GetModelLoaders().back().BindCamera(editor->GetCamera()->GetId());
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->AppendModelToHierarchy();
-				editor->GetViewport()->GetRenderer()->LoadShaders();
 			}
 		}
 
@@ -155,12 +152,11 @@ namespace DENG {
 			GameEditor* editor = (GameEditor*)GetParent();
 			if (dialog.ShowModal() == wxID_OK) {
 				SphereGenerator gen(std::move(dialog.ConstructSphere()));
-				editor->GetModelLoaders().emplace_back(std::move(gen.ToModelLoader(nullptr, *editor->GetViewport()->GetRenderer(), 
-																 editor->GetCamera()->GetId())));
+				editor->GetModelLoaders().emplace_back(std::move(gen.ToModelLoader(nullptr, *editor->GetViewport()->GetRenderer())));
+				editor->GetModelLoaders().back().BindCamera(editor->GetCamera()->GetId());
 				Registry* reg = Registry::GetInstance();
 				reg->AttachEntities();
 				editor->AppendModelToHierarchy();
-				editor->GetViewport()->GetRenderer()->LoadShaders();
 			}
 		}
 

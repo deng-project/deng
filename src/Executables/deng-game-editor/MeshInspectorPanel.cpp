@@ -14,13 +14,13 @@ namespace DENG {
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_USE_TEXTURE, TextureWidget::_OnCheckBoxClick)
 		wxEND_EVENT_TABLE()
 		
-		TextureWidget::TextureWidget(wxWindow* _parent, MeshLoader *_mesh, RawTextureData &_data, uint32_t _id) :
+		TextureWidget::TextureWidget(wxWindow* _parent, MeshLoader *_mesh, TextureResource& _data, uint32_t _id) :
 			wxWindow(_parent, wxID_ANY, wxDefaultPosition, wxSize(96, 96)),
 			m_mesh(_mesh),
 			m_data(_data),
 			m_id(_id)
 		{
-			wxImage img = wxImage(wxSize(_data.width, _data.height), _data.raw);
+			wxImage img = wxImage(wxSize(_data.width, _data.height), _data.rgba_data);
 			img.Rescale(64, 64);
 			m_image = wxBitmap(img);
 
@@ -43,7 +43,6 @@ namespace DENG {
 			}
 		}
 
-
 		wxBEGIN_EVENT_TABLE(TexturePicker, wxDialog)
 			EVT_BUTTON(ID_EDITOR_MESH_PANEL_TEXTURE_PICKER_OK, TexturePicker::_OnOk)
 		wxEND_EVENT_TABLE()
@@ -61,14 +60,15 @@ namespace DENG {
 			m_sizer->Add(m_grid, 0, wxALIGN_CENTER, 10);
 			m_sizer->Add(m_ok, 0, wxALIGN_RIGHT, 20);
 
-			auto texture_names = _rend->GetTextureNames();
-
-			for (auto it = texture_names.begin(); it != texture_names.end(); it++) {
-				RawTextureData data;
-				_rend->GetTexturePointer(*it, data);
-				m_widgets.push_back(new TextureWidget(this, m_mesh, data, m_widgets.size()));
-				m_grid->Add(m_widgets.back(), 0, wxALIGN_CENTER);
-				m_picked_textures.push_back(false);
+			TextureDatabase* db = TextureDatabase::GetInstance();
+			auto& resources = db->GetAllResources();
+			
+			for (size_t i = 0; i < resources.size(); i++) {
+				if (resources[i] && resources[i]->resource_type == TEXTURE_RESOURCE_2D_IMAGE) {
+					m_widgets.push_back(new TextureWidget(this, m_mesh, *resources[i], (uint32_t)m_widgets.size()));
+					m_grid->Add(m_widgets.back(), 0, wxALIGN_CENTER);
+					m_picked_textures.push_back(false);
+				}
 			}
 
 			SetSizerAndFit(m_sizer);
@@ -186,15 +186,17 @@ namespace DENG {
 		void MeshInspectorPanel::_OnPickTexturesClick(wxCommandEvent& _evt) {
 			TexturePicker* picker = new TexturePicker(this, m_mesh, m_renderer);
 			if (picker->ShowModal() == wxID_OK) {
-				std::vector<std::string> names;
-				names.reserve(m_renderer->GetTextureNames().size());
-				for (size_t i = 0; i < m_renderer->GetTextureNames().size(); i++) {
+				TextureDatabase* db = TextureDatabase::GetInstance();
+				std::vector<uint32_t> ids;
+
+				ids.reserve(db->GetAllResources().size());
+				for (size_t i = 0; i < db->GetAllResources().size(); i++) {
 					if (picker->GetPickedTextures()[i]) {
-						names.push_back(m_renderer->GetTextureNames()[i]);
+						ids.push_back((uint32_t)i);
 					}
 				}
 
-				m_mesh->UseTextures(names);
+				m_mesh->UseTextures(ids);
 				m_mesh->SetUseColorBit(false);
 			} 
 		}
@@ -209,7 +211,6 @@ namespace DENG {
 				m_renderer->GetShaderModule(m_mesh->GetShaderId()).vertex_shader_src = viewer->GetVertexSource();
 				m_renderer->GetShaderModule(m_mesh->GetShaderId()).geometry_shader_src = viewer->GetGeometrySource();
 				m_renderer->GetShaderModule(m_mesh->GetShaderId()).fragment_shader_src = viewer->GetFragmentSource();
-				m_renderer->ReloadShaderModule(m_mesh->GetShaderId());
 			}
 		}
 
@@ -222,7 +223,7 @@ namespace DENG {
 				Registry* reg = Registry::GetInstance();
 				Entity *ent = reg->GetFirstEntityByType(ENTITY_TYPE_SKYBOX);
 				if (reg->GetFirstEntityByType(ENTITY_TYPE_SKYBOX)) {
-					m_mesh->SetEnvironmentMap(((Skybox*)ent)->GetTextureName());
+					m_mesh->SetEnvironmentMap(((Skybox*)ent)->GetTextureId());
 				}
 			}
 		}

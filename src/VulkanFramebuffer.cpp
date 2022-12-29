@@ -348,39 +348,54 @@ namespace DENG {
         }
 
 
-        void Framebuffer::_CheckAndCreateShaderDescriptors(const MeshReference& _ref, const std::vector<ShaderModule*>& _modules) {
-            // check if requested shader module descriptors are not present
-            if (_ref.shader_module_id >= static_cast<uint32_t>(m_pipeline_index_table.size()) || m_pipeline_index_table[_ref.shader_module_id] == UINT32_MAX) {
-                if (_ref.shader_module_id >= static_cast<uint32_t>(m_pipeline_index_table.size()))
-                    m_pipeline_index_table.resize(_ref.shader_module_id + 1, UINT32_MAX);
+        void Framebuffer::_CheckAndCreatePipeline(const MeshReference& _ref, uint32_t _mesh_id, const std::vector<ShaderModule*>& _modules) {
+            // check if referenced shader module is valid
+            if (!_modules[_ref.shader_module_id]) {
+                throw std::runtime_error("Invalid shader module id for mesh " + std::to_string(_mesh_id) + ".");
+            }
 
-                m_pipeline_index_table[_ref.shader_module_id] = static_cast<uint32_t>(m_pipeline_creators.size());
+            // check if requested shader module descriptors are not present
+            if (_ref.shader_module_id >= static_cast<uint32_t>(m_pipeline_creators.size()) || !m_pipeline_creators[_ref.shader_module_id]) {
+                // resize vectors if necessary
+                if (_ref.shader_module_id >= static_cast<uint32_t>(m_pipeline_creators.size())) {
+                    m_pipeline_creators.resize(_ref.shader_module_id + 1, nullptr);
+                    m_shader_descriptor_set_layout_creators.resize(_ref.shader_module_id + 1, nullptr);
+                    m_mesh_descriptor_set_layout_creators.resize(_ref.shader_module_id + 1, nullptr);
+                    m_shader_desc_allocators.resize(_ref.shader_module_id + 1, nullptr);
+                }
 
                 auto& shader_ubo_layouts = _modules[_ref.shader_module_id]->ubo_data_layouts;
                 auto& mesh_ubo_layouts = _ref.ubo_data_layouts;
+                if (shader_ubo_layouts.size()) {
+                    m_shader_descriptor_set_layout_creators[_ref.shader_module_id] = new DescriptorSetLayoutCreator(
+                        m_instance_creator.GetDevice(), 
+                        _modules[_ref.shader_module_id]->ubo_data_layouts);
+                }
+                if (mesh_ubo_layouts.size()) {
+                    m_mesh_descriptor_set_layout_creators[_ref.shader_module_id] = new DescriptorSetLayoutCreator(
+                        m_instance_creator.GetDevice(), 
+                        mesh_ubo_layouts);
+                }
+
+
+                std::array<VkDescriptorSetLayout, 2> layouts = { VK_NULL_HANDLE, VK_NULL_HANDLE };
                 if (shader_ubo_layouts.size())
-                    m_shader_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), _modules[_ref.shader_module_id]->ubo_data_layouts);
-                if (_ref.ubo_data_layouts.size())
-                    m_mesh_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), _ref.ubo_data_layouts);
+                    layouts[0] = m_shader_descriptor_set_layout_creators[_ref.shader_module_id]->GetDescriptorSetLayout();
+                if (mesh_ubo_layouts.size())
+                    layouts[1] = m_mesh_descriptor_set_layout_creators[_ref.shader_module_id]->GetDescriptorSetLayout();
 
-                std::array<VkDescriptorSetLayout, 2> layouts;
-                if (_modules[_ref.shader_module_id]->ubo_data_layouts.size())
-                    layouts[0] = m_shader_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
-                if (_ref.ubo_data_layouts.size())
-                    layouts[1] = m_mesh_descriptor_set_layout_creators.back().GetDescriptorSetLayout();
-
-                m_pipeline_creators.emplace_back(
+                m_pipeline_creators.push_back(new PipelineCreator(
                     m_instance_creator.GetDevice(),
                     m_renderpass,
                     VkExtent2D{ m_extent.x, m_extent.y },
                     m_sample_count,
                     layouts,
                     *_modules[_ref.shader_module_id]
-                );
+                ));
 
                 // create descriptor sets for shader usage
-                if (_modules[_ref.shader_module_id]->ubo_data_layouts.size()) {
-                    m_shader_desc_allocators.emplace_back(
+                if (shader_ubo_layouts.size()) {
+                    m_shader_desc_allocators[_ref.shader_module_id] = new DescriptorAllocator(
                         m_instance_creator.GetDevice(),
                         m_uniform,
                         layouts[0],
@@ -388,11 +403,6 @@ namespace DENG {
                         m_missing_2d,
                         m_missing_3d,
                         static_cast<uint32_t>(m_framebuffer_image_ids.size()));
-
-                    // check if index table needs to be resized
-                    if (_ref.shader_module_id >= (uint32_t)m_shader_descriptor_set_index_table.size())
-                        m_shader_descriptor_set_index_table.resize(_ref.shader_module_id + 1, UINT32_MAX);
-                    m_shader_descriptor_set_index_table[_ref.shader_module_id] = static_cast<uint32_t>(m_shader_desc_allocators.size() - 1);
                 }
             }
         }
@@ -400,24 +410,19 @@ namespace DENG {
 
         void Framebuffer::_CheckAndCreateMeshDescriptors(const MeshReference& _ref, uint32_t _mesh_id) {
             // check if mesh descriptor sets are not present
-            if (_ref.ubo_data_layouts.size() && (_mesh_id >= (uint32_t)m_mesh_descriptor_set_index_table.size() || m_mesh_descriptor_set_index_table[_mesh_id] == UINT32_MAX)) {
-                // create descriptor set layout for mesh
-                m_mesh_descriptor_set_layout_creators.emplace_back(m_instance_creator.GetDevice(), _ref.ubo_data_layouts);
-
+            if (_ref.ubo_data_layouts.size() && (_mesh_id >= (uint32_t)m_mesh_desc_allocators.size() || !m_mesh_desc_allocators[_mesh_id])) {
+                if (_mesh_id >= (uint32_t)m_mesh_desc_allocators.size())
+                    m_mesh_desc_allocators.resize(_mesh_id + 1, nullptr);
+                
                 // create descriptor sets for mesh
-                m_mesh_desc_allocators.emplace_back(
+                m_mesh_desc_allocators[_mesh_id] = new DescriptorAllocator(
                     m_instance_creator.GetDevice(),
                     m_uniform,
-                    m_mesh_descriptor_set_layout_creators.back().GetDescriptorSetLayout(),
+                    m_mesh_descriptor_set_layout_creators[_ref.shader_module_id]->GetDescriptorSetLayout(),
                     _ref.ubo_data_layouts,
                     m_missing_2d,
                     m_missing_3d,
                     static_cast<uint32_t>(m_framebuffer_image_ids.size()));
-
-                // check if index table needs to be resized
-                if (_mesh_id >= (uint32_t)m_mesh_descriptor_set_index_table.size())
-                    m_mesh_descriptor_set_index_table.resize(_mesh_id + 1, UINT32_MAX);
-                m_mesh_descriptor_set_index_table[_mesh_id] = static_cast<uint32_t>(m_mesh_desc_allocators.size() - 1);
             }
         }
 
@@ -459,7 +464,7 @@ namespace DENG {
 
 
         void Framebuffer::Draw(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules) {
-            _CheckAndCreateShaderDescriptors(_ref, _modules);
+            _CheckAndCreatePipeline(_ref, _mesh_id, _modules);
             _CheckAndCreateMeshDescriptors(_ref, _mesh_id);
             
             // check if custom viewport should be respected
@@ -476,7 +481,7 @@ namespace DENG {
 
             // submit each draw command in mesh
             for (auto cmd_it = _ref.commands.begin(); cmd_it != _ref.commands.end(); cmd_it++) {
-                vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[m_pipeline_index_table[_ref.shader_module_id]].GetPipeline());
+                vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[_ref.shader_module_id]->GetPipeline());
                 std::vector<VkBuffer> buffers(_modules[_ref.shader_module_id]->attributes.size(), m_main_buffer);
                 vkCmdBindVertexBuffers(
                     m_command_buffers[m_current_frame], 
@@ -487,7 +492,7 @@ namespace DENG {
 
                 // check if textures should be bound
                 if (cmd_it->texture_ids.size() && (_modules[_ref.shader_module_id]->enable_2d_textures || _modules[_ref.shader_module_id]->enable_3d_textures)) {
-                    m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[_mesh_id]].UpdateDescriptorSets(cmd_it->texture_ids);
+                    m_mesh_desc_allocators[_mesh_id]->UpdateDescriptorSets(cmd_it->texture_ids);
                 }
 
 
@@ -498,16 +503,16 @@ namespace DENG {
 
                     // per shader descriptor sets
                     if (_modules[_ref.shader_module_id]->ubo_data_layouts.size())
-                        desc_sets.push_back(m_shader_desc_allocators[m_shader_descriptor_set_index_table[_ref.shader_module_id]].RequestDescriptorSetByFrame(m_current_frame));
+                        desc_sets.push_back(m_shader_desc_allocators[_ref.shader_module_id]->RequestDescriptorSetByFrame(m_current_frame));
                     // per mesh descriptor sets
                     if (_ref.ubo_data_layouts.size())
-                        desc_sets.push_back(m_mesh_desc_allocators[m_mesh_descriptor_set_index_table[_mesh_id]].RequestDescriptorSetByFrame(m_current_frame));
+                        desc_sets.push_back(m_mesh_desc_allocators[_mesh_id]->RequestDescriptorSetByFrame(m_current_frame));
                 
                     
                     vkCmdBindDescriptorSets(
                         m_command_buffers[m_current_frame],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipeline_creators[m_pipeline_index_table[_ref.shader_module_id]].GetPipelineLayout(),
+                        m_pipeline_creators[_ref.shader_module_id]->GetPipelineLayout(),
                         0,
                         static_cast<uint32_t>(desc_sets.size()),
                         desc_sets.data(),
@@ -582,18 +587,14 @@ namespace DENG {
         }
 
 
-        void Framebuffer::ReloadResources() {
-            _CleanPipelineResources();
-            LoadData();
-        }
-
-
         void Framebuffer::RecreateDescriptorSets() {
-            for(auto &alloc : m_shader_desc_allocators)
-                alloc.RecreateDescriptorSets(m_uniform, {});
+            for (auto alloc : m_shader_desc_allocators) {
+                if (alloc) alloc->RecreateDescriptorSets(m_uniform, {});
+            }
 
-            for(auto &alloc : m_mesh_desc_allocators)
-                alloc.RecreateDescriptorSets(m_uniform, {});
+            for (auto alloc : m_mesh_desc_allocators) {
+                if (alloc) alloc->RecreateDescriptorSets(m_uniform, {});
+            }
         }
 
         
@@ -611,9 +612,10 @@ namespace DENG {
                 m_renderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_instance_creator.GetDevice(), VK_FORMAT_DEFAULT_IMAGE, m_sample_count);
             }
             _CreateFramebuffers();
-            for(auto &pc : m_pipeline_creators) {
+            for(auto pc : m_pipeline_creators) {
                 const VkExtent2D ext = { m_extent.x, m_extent.y };
-                pc.RecreatePipeline(m_renderpass, ext);
+
+                if (pc) pc->RecreatePipeline(m_renderpass, ext);
             }
         }
 
@@ -637,8 +639,8 @@ namespace DENG {
             vkResetCommandPool(m_instance_creator.GetDevice(), m_command_pool, 0);
             for(auto &fb : m_framebuffers)
                 vkDestroyFramebuffer(m_instance_creator.GetDevice(), fb, nullptr);
-            for(auto &pc : m_pipeline_creators)
-                pc.DestroyPipelineData();
+            for(auto pc : m_pipeline_creators)
+                pc->DestroyPipelineData();
 
             // destroy framebuffer images if possible
             if (!m_no_swapchain) {
@@ -663,6 +665,28 @@ namespace DENG {
                 m_color_resolve_image_id = UINT32_MAX;
                 m_depth_image_id = UINT32_MAX;
                 m_framebuffer_image_ids.clear();
+            }
+        }
+
+
+        void Framebuffer::ClearShaderResources(uint32_t _id) {
+            if (_id < (uint32_t)m_pipeline_creators.size()) {
+                delete m_pipeline_creators[_id];
+                m_pipeline_creators[_id] = nullptr;
+                delete m_shader_desc_allocators[_id];
+                m_shader_desc_allocators[_id] = nullptr;
+                delete m_shader_descriptor_set_layout_creators[_id];
+                m_shader_descriptor_set_layout_creators[_id] = nullptr;
+                delete m_mesh_descriptor_set_layout_creators[_id];
+                m_mesh_descriptor_set_layout_creators[_id] = nullptr;
+            }
+        }
+
+
+        void Framebuffer::ClearMeshResources(uint32_t _id) {
+            if (_id < (uint32_t)m_mesh_desc_allocators.size()) {
+                delete m_mesh_desc_allocators[_id];
+                m_mesh_desc_allocators[_id] = nullptr;
             }
         }
     }

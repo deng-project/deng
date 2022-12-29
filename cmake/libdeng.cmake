@@ -30,7 +30,6 @@ set(DENG_COMPLETE_HEADERS
     include/deng/EditorCamera.h
 	include/deng/Entity.h
     include/deng/ErrorDefinitions.h
-    include/deng/FilePicker.h
     include/deng/FirstPersonCamera.h
     include/deng/GPUMemoryManager.h
     include/deng/GridGenerator.h
@@ -81,7 +80,6 @@ set(DENG_COMPLETE_SOURCES
 	src/CubeGenerator.cpp
     src/EditorCamera.cpp
 	src/Entity.cpp
-    src/FilePicker.cpp
     src/FirstPersonCamera.cpp
     src/GPUMemoryManager.cpp
     src/GridGenerator.cpp
@@ -154,9 +152,9 @@ target_link_libraries(${DENG_COMPLETE_TARGET}
 	PRIVATE Vulkan::Headers Vulkan::Registry
     PRIVATE unofficial::shaderc::shaderc
 	PRIVATE ODE::ODE
-	PRIVATE pybind11::lto
-	PRIVATE pybind11::embed
-	PRIVATE pybind11::module
+	PUBLIC pybind11::lto
+	PUBLIC pybind11::embed
+	PUBLIC pybind11::module
 	PRIVATE cryptopp::cryptopp
 	PUBLIC das-static
 	PUBLIC dxml

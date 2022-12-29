@@ -18,7 +18,7 @@ namespace DENG {
         const std::vector<uint32_t> &_main_buffer_offsets, 
         uint32_t _camera_offset, 
         std::vector<Animation> &_animations, 
-        const std::string &_framebuffer_id,
+        const std::vector<uint32_t>& _framebuffer_ids,
         const TRS::Matrix4<float> &_parent_matrix
     ) :
         Entity(_parent, "", ENTITY_TYPE_NODE),
@@ -26,7 +26,7 @@ namespace DENG {
         m_node(_node),
         mp_model(_model),
         m_parent_matrix(_parent_matrix),
-        m_framebuffer_id(_framebuffer_id)
+        m_framebuffers(_framebuffer_ids)
     {
         // give node a name if possible
         std::string name = "Unnamed node";;
@@ -52,7 +52,7 @@ namespace DENG {
             m_child_nodes.reserve(m_node.children_count);
             for(uint32_t i = 0; i < m_node.children_count; i++) {
                 const Libdas::DasNode &node = mp_model->nodes[m_node.children[i]];
-                m_child_nodes.emplace_back(this, m_renderer, node, mp_model, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, m_transform);
+                m_child_nodes.emplace_back(this, m_renderer, node, mp_model, _main_buffer_offsets, _camera_offset, _animations, m_framebuffers, m_transform);
             }
         }
 
@@ -79,7 +79,7 @@ namespace DENG {
         m_transform(_node.m_transform),
         m_morph_weights(_node.m_morph_weights),
         m_max_node(_node.m_max_node),
-        m_framebuffer_id(_node.m_framebuffer_id)
+        m_framebuffers(std::move(_node.m_framebuffers))
     {
         mp_skeleton = nullptr;
         mp_mesh_loader = nullptr;
@@ -106,9 +106,9 @@ namespace DENG {
             const Libdas::DasMesh &mesh = mp_model->meshes[m_node.mesh];
             if(mp_skeleton) {
                 const uint32_t joint_count = static_cast<uint32_t>(mp_skeleton->GetJointMatrices().size());
-                mp_mesh_loader = new MeshLoader(this, mesh, mp_model, m_renderer, _main_buffer_offsets, _camera_offset, joint_count, m_framebuffer_id);
+                mp_mesh_loader = new MeshLoader(this, mesh, mp_model, m_renderer, _main_buffer_offsets, _camera_offset, joint_count, m_framebuffers);
             }
-            else mp_mesh_loader = new MeshLoader(this, mesh, mp_model, m_renderer, _main_buffer_offsets, _camera_offset, 0, m_framebuffer_id);
+            else mp_mesh_loader = new MeshLoader(this, mesh, mp_model, m_renderer, _main_buffer_offsets, _camera_offset, 0, m_framebuffers);
             mp_mesh_loader->Attach();
             m_morph_weights = mp_mesh_loader->GetMorphWeights().data();
         }

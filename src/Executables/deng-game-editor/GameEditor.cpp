@@ -86,7 +86,6 @@ namespace DENG {
 
 			Registry* reg = Registry::GetInstance();
 			reg->AttachEntities();
-			rend->LoadShaders();
 			m_viewport->Update();
 		}
 

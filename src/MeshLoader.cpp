@@ -18,7 +18,7 @@ namespace DENG {
         const std::vector<uint32_t> &_main_buffer_offsets, 
         uint32_t _camera_offset, 
         uint32_t _skeleton_joint_count,
-        const std::string &_framebuffer_id
+        const std::vector<uint32_t>& _framebuffers
     ) : 
         Entity(_parent, "", ENTITY_TYPE_MESH),
         mp_model(_model),
@@ -26,7 +26,7 @@ namespace DENG {
         m_renderer(_renderer),
         m_mesh_buffer_offsets(_main_buffer_offsets),
         m_skeleton_joint_count(_skeleton_joint_count),
-        m_framebuffer_id(_framebuffer_id)
+        m_framebuffer_ids(_framebuffers)
     {
         std::string name = "Unnamed mesh";
         if(m_mesh.name != "") {
@@ -39,7 +39,7 @@ namespace DENG {
         // request shader id to use for current mesh
         _CheckMeshPrimitives();
         mp_prim = &mp_model->mesh_primitives[m_mesh.primitives[0]];
-        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, *mp_model, *mp_prim, _camera_offset, m_skeleton_joint_count, m_framebuffer_id);
+        m_shader_id = ModelShaderManager::RequestShaderModule(m_renderer, *mp_model, *mp_prim, _camera_offset, m_skeleton_joint_count);
 
         for(uint32_t i = 0; i < mp_prim->morph_target_count; i++)
             m_morph_weights[i] = mp_prim->morph_weights[i];
@@ -63,7 +63,7 @@ namespace DENG {
         m_supported_texture_count(_ml.m_supported_texture_count),
         m_morph_weights(std::move(_ml.m_morph_weights)),
         m_color(_ml.m_color),
-        m_framebuffer_id(_ml.m_framebuffer_id),
+        m_framebuffer_ids(std::move(_ml.m_framebuffer_ids)),
         m_is_colored(_ml.m_is_colored) {}
 
 
@@ -131,6 +131,8 @@ namespace DENG {
 
 
     void MeshLoader::Attach() {
+        m_environment_map = m_renderer.GetMissing3DTextureHandle();
+
         MeshReference mesh;
         mesh.name = m_mesh.name;
         mesh.shader_module_id = m_shader_id;
@@ -138,22 +140,23 @@ namespace DENG {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
 
         uint32_t binding_id = 1;
-        mesh.ubo_blocks.reserve(3);
-        mesh.ubo_blocks.emplace_back();
-        mesh.ubo_blocks.back().binding = binding_id++;
-        mesh.ubo_blocks.back().size = static_cast<uint32_t>(sizeof(ModelUbo));
-        mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelUbo)));
-        m_mesh_ubo_offset = mesh.ubo_blocks.back().offset;
-        m_renderer.UpdateUniform(nullptr, static_cast<uint32_t>(sizeof(ModelUbo)), mesh.ubo_blocks.back().offset);
+        // model ubo
+        mesh.ubo_data_layouts.reserve(3);
+        mesh.ubo_data_layouts.emplace_back();
+        mesh.ubo_data_layouts.back().block.binding = binding_id++;
+        mesh.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(ModelUbo));
+        mesh.ubo_data_layouts.back().block.offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelUbo)));
+        m_mesh_ubo_offset = mesh.ubo_data_layouts.back().block.offset;
+        m_renderer.UpdateUniform(nullptr, static_cast<uint32_t>(sizeof(ModelUbo)), mesh.ubo_data_layouts.back().block.offset);
 
         // check if joint matrix ubos should be created
         if(mp_model->mesh_primitives[m_mesh.primitives[0]].joint_set_count) {
-            mesh.ubo_blocks.emplace_back();
-            mesh.ubo_blocks.back().binding = binding_id++;
-            mesh.ubo_blocks.back().size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>));
-            mesh.ubo_blocks.back().offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)));
-            m_mesh_joints_ubo_offset = mesh.ubo_blocks.back().offset;
-            m_renderer.UpdateUniform(nullptr, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)), mesh.ubo_blocks.back().offset);
+            mesh.ubo_data_layouts.emplace_back();
+            mesh.ubo_data_layouts.back().block.binding = binding_id++;
+            mesh.ubo_data_layouts.back().block.size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>));
+            mesh.ubo_data_layouts.back().block.offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)));
+            m_mesh_joints_ubo_offset = mesh.ubo_data_layouts.back().block.offset;
+            m_renderer.UpdateUniform(nullptr, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)), mesh.ubo_data_layouts.back().block.offset);
         }
 
         // create mesh draw commands
@@ -180,7 +183,7 @@ namespace DENG {
                 abs = m_mesh_buffer_offsets[prim.vertex_normal_buffer_id] + prim.vertex_normal_buffer_offset;
                 uint32_t noff = abs;
                 mesh.commands.back().attribute_offsets.push_back(abs);
-                m_normal_visualizers.emplace_back(this, "__nviz__", m_renderer, voff, noff, ioff, prim.draw_count, m_framebuffer_id);
+                m_normal_visualizers.emplace_back(this, "__nviz__", m_renderer, voff, noff, ioff, prim.draw_count, m_framebuffer_ids);
             }
             if(prim.vertex_tangent_buffer_id != UINT32_MAX) {
                 abs = m_mesh_buffer_offsets[prim.vertex_tangent_buffer_id] + prim.vertex_tangent_buffer_offset;
@@ -189,9 +192,9 @@ namespace DENG {
             for(uint32_t j = 0; j < prim.texture_count; j++) {
                 abs = m_mesh_buffer_offsets[prim.uv_buffer_ids[j]] + prim.uv_buffer_offsets[j];
                 mesh.commands.back().attribute_offsets.push_back(abs);
-                mesh.commands.back().texture_names.push_back(MISSING_TEXTURE_NAME);
+                mesh.commands.back().texture_ids.push_back(m_renderer.GetMissing2DTextureHandle());
             }
-            mesh.commands.back().texture_names.push_back(MISSING_3D_TEXTURE_NAME);
+            mesh.commands.back().texture_ids.push_back(m_renderer.GetMissing3DTextureHandle());
             for(uint32_t j = 0; j < prim.color_mul_count; j++) {
                 abs = m_mesh_buffer_offsets[prim.color_mul_buffer_ids[j]] + prim.color_mul_buffer_offsets[j];
                 mesh.commands.back().attribute_offsets.push_back(abs);
@@ -228,26 +231,26 @@ namespace DENG {
             }
         }
 
-        m_mesh_ref_id = m_renderer.PushMeshReference(mesh, m_framebuffer_id);
+        m_mesh_ref_id = m_renderer.PushMeshReference(mesh);
     }
 
 
-    void MeshLoader::UseTextures(const std::vector<std::string> &_names) {
-        MeshReference &mesh = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
+    void MeshLoader::UseTextures(const std::vector<uint32_t>& _handles) {
+        MeshReference &mesh = m_renderer.GetMesh(m_mesh_ref_id);
 
         for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++) {
-            cmd->texture_names = _names;
-            cmd->texture_names.push_back(m_environment_map);
+            cmd->texture_ids = _handles;
+            cmd->texture_ids.push_back(m_environment_map);
         }
     }
 
 
-    void MeshLoader::SetEnvironmentMap(const std::string& _texture) {
-        m_environment_map = _texture;
-        MeshReference& ref = m_renderer.GetMesh(m_mesh_ref_id, m_framebuffer_id);
+    void MeshLoader::SetEnvironmentMap(uint32_t _handle) {
+        m_environment_map = _handle;
+        MeshReference& ref = m_renderer.GetMesh(m_mesh_ref_id);
 
         for (auto it = ref.commands.begin(); it != ref.commands.end(); it++) {
-            it->texture_names.back() = m_environment_map;
+            it->texture_ids.back() = m_environment_map;
         }
     }
 

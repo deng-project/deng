@@ -95,7 +95,7 @@ namespace DENG {
 		}
 	}
 
-	ModelLoader CubeGenerator::ToModelLoader(Entity *_parent, Renderer &_rend, uint32_t _camera_id, const std::string &_mesh_name) {
+	ModelLoader CubeGenerator::ToModelLoader(Entity *_parent, Renderer &_rend, const std::string &_mesh_name) {
 		// NOTE: There is a bug regarding the buffer deletion after the cube is successfully loaded from cached file
 		// See DasParser.cpp:195
 		const std::string* p_name = nullptr;

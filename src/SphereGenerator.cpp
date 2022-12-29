@@ -114,7 +114,7 @@ namespace DENG {
 	}
 
 
-	ModelLoader SphereGenerator::ToModelLoader(Entity* _parent, Renderer& _rend, uint32_t _camera_id, const std::string& _mesh_name) {
+	ModelLoader SphereGenerator::ToModelLoader(Entity* _parent, Renderer& _rend, const std::string& _mesh_name) {
 		const std::string* p_name = nullptr;
 		if (_mesh_name == "")
 			p_name = &m_sphere_name;

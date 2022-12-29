@@ -15,12 +15,12 @@ namespace DENG {
         Entity *_parent,
         const Libdas::DasModel &_model, 
         Renderer &_rend,
-        const std::string &_framebuffer
+        const std::vector<uint32_t>& _framebuffers
     ) : 
         ScriptableEntity(_parent, "", ENTITY_TYPE_MODEL),
         m_model(_model), 
         m_renderer(_rend),
-        m_framebuffer_id(_framebuffer)
+        m_framebuffer_ids(_framebuffers)
     {
         std::string name = "Unnamed model";
         if(m_model.props.model != "")
@@ -37,10 +37,10 @@ namespace DENG {
         m_renderer(_ld.m_renderer),
         m_animations(std::move(_ld.m_animations)),
         m_scene_loaders(std::move(_ld.m_scene_loaders)),
-        m_texture_names(std::move(_ld.m_texture_names)),
+        m_texture_ids(std::move(_ld.m_texture_ids)),
         m_buffer_offsets(std::move(_ld.m_buffer_offsets)),
         m_camera_id(_ld.m_camera_id),
-        m_framebuffer_id(_ld.m_framebuffer_id) 
+        m_framebuffer_ids(std::move(_ld.m_framebuffer_ids)) 
     {
         if (GetAttachedBit()) {
             for (auto it = m_scene_loaders.begin(); it != m_scene_loaders.end(); it++) {
@@ -71,9 +71,6 @@ namespace DENG {
                                             LIBDAS_BUFFER_TYPE_TEXTURE_RAW;
 
             if(buffer.type & texture_mask) {
-                const std::string texture_name = "{" + GetName() + "}" + "_TEX" + std::to_string(m_texture_names.size());
-                m_texture_names.push_back(texture_name);
-
                 // raw texture data
                 if(buffer.type & LIBDAS_BUFFER_TYPE_TEXTURE_RAW) {
                     const char *data = buffer.data_ptrs.back().first;
@@ -84,7 +81,8 @@ namespace DENG {
                     uint8_t bit_depth = *reinterpret_cast<const uint8_t*>(data);
                     data += sizeof(uint8_t);
 
-                    m_renderer.PushTextureFromMemory(texture_name, data, width, height, static_cast<uint32_t>(bit_depth));
+                    TextureDatabase* db = TextureDatabase::GetInstance();
+                    m_texture_ids.push_back(db->AddResource(data, width, height, bit_depth));
                 }
             } else {
                 GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
@@ -130,7 +128,7 @@ namespace DENG {
         // load each scene in the model
         m_scene_loaders.reserve(m_model.scenes.size());
         for (auto it = m_model.scenes.begin(); it != m_model.scenes.end(); it++) {
-            m_scene_loaders.emplace_back(this, m_renderer, m_model, *it, m_buffer_offsets, offset, m_animations, m_framebuffer_id);
+            m_scene_loaders.emplace_back(this, m_renderer, m_model, *it, m_buffer_offsets, offset, m_animations, m_framebuffer_ids);
         }
 
         SetAttachedBit(true);

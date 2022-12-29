@@ -13,6 +13,7 @@
     #include <vector>
     #include <array>
     #include <unordered_map>
+    #include <queue>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -61,7 +62,7 @@ namespace DENG {
             uint32_t m_main_offset = 0;
             Renderer& m_renderer;
             TRS::Vector4<float> m_color = { 0.0f, 1.0f, 0.0f, 1.0f };
-            const std::string m_framebuffer_id;
+            std::vector<uint32_t> m_framebuffer_ids;
 
         private:
             void _GenerateVertices(Renderer &_rend);
@@ -76,14 +77,14 @@ namespace DENG {
                 float _margin_x,
                 float _margin_y,
                 uint32_t _camera_id,
-                const std::string &_framebuffer_id = MAIN_FRAMEBUFFER_NAME
+                const std::vector<uint32_t>& _framebuffers = { 0 }
             );
             GridGenerator(const GridGenerator& _ge) = delete;
             GridGenerator(GridGenerator&& _ge) noexcept;
             ~GridGenerator();
 
             inline void Show(bool _show) {
-                m_renderer.GetMesh(m_mesh_id, m_framebuffer_id).enable = _show;
+                m_renderer.GetMesh(m_mesh_id).enable = _show;
             }
 
             void Attach();

@@ -18,7 +18,7 @@ namespace DENG {
         const std::vector<uint32_t> &_main_buffer_offsets, 
         uint32_t _camera_offset,
         std::vector<Animation> &_animations,
-        const std::string &_framebuffer_id
+        const std::vector<uint32_t> &_framebuffer_ids
     ) : Entity(_parent, "", ENTITY_TYPE_SCENE) 
     {
         // give the scene a name if possible
@@ -32,7 +32,7 @@ namespace DENG {
         m_root_node_loaders.reserve(_scene.node_count);
         for (uint32_t i = 0; i < _scene.node_count; i++) {
             const Libdas::DasNode& node = _model.nodes[_scene.nodes[i]];
-            m_root_node_loaders.emplace_back(this, _rend, node, &_model, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_id, TRS::Matrix4<float>());
+            m_root_node_loaders.emplace_back(this, _rend, node, &_model, _main_buffer_offsets, _camera_offset, _animations, _framebuffer_ids, TRS::Matrix4<float>());
         }
     }
 

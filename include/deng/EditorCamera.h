@@ -15,6 +15,7 @@
     #include <variant>
     #include <chrono>
     #include <array>
+    #include <queue>
     #include <cmath>
     #include <unordered_map>
 #ifdef __DEBUG

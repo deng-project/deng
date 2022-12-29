@@ -14,9 +14,12 @@
     #include <array>
     #include <chrono>
     #include <unordered_map>
+    #include <queue>
+    #include <variant>
 #ifdef __DEBUG
     #include <iostream>
 #endif
+    #include <vulkan/vulkan.h>
 
     #include "trs/Points.h"
     #include "trs/Vector.h"
@@ -33,6 +36,8 @@
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
     #include "deng/GPUMemoryManager.h"
+    #include "deng/TextureDatabase.h"
+    
     #define MESH_NAME       "ImGui windows"
     #define TEXTURE_NAME    "ImGui texture atlas"
 
@@ -63,8 +68,6 @@
                             "void main() {\n" \
                             "    color = col_mul * texture(tex_sampler, uv);\n" \
                             "}\n"
-
-    #define IMGUI_TEXTURE_NAME "__imgui__"
 #endif
 
 #define IMGUI_CONTEXT_WINDOW_FLAGS ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground
@@ -87,15 +90,17 @@ namespace DENG {
             uint32_t m_mesh_id = UINT32_MAX;
             uint32_t m_shader_id = UINT32_MAX;
             void *m_user_data = nullptr;
+
             uint32_t m_ubo_offset = UINT32_MAX;
             uint32_t m_main_offset = UINT32_MAX;
+            uint32_t m_texture_id = 0;
+            
             TRS::Point2D<float> m_ubo;
             float m_delta_time = 1.0f;
             std::chrono::time_point<std::chrono::system_clock> m_beg;
             std::chrono::time_point<std::chrono::system_clock> m_end;
-            const std::string m_gui_texture_name;
             std::pair<uint32_t, uint32_t> m_main_region = std::make_pair(UINT32_MAX, UINT32_MAX);
-            const std::string m_framebuffer_name;
+            std::vector<uint32_t> m_framebuffer_ids;
 
         private:
             uint32_t _CalculateUsedMemory(ImDrawData *_draw_data);
@@ -104,7 +109,7 @@ namespace DENG {
             void _UpdateIO();
 
         public:
-            ImGuiLayer(const std::string &_framebuffer_name = MAIN_FRAMEBUFFER_NAME);
+            ImGuiLayer(const std::vector<uint32_t>& _framebuffers = { 0 });
             ~ImGuiLayer();
             void Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data);
             void Update();

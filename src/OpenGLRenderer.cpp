@@ -63,9 +63,6 @@ namespace DENG {
     OpenGLRenderer::OpenGLRenderer(const RendererConfig &_conf) : 
         Renderer(_conf)
     {
-        RenderState *rs = RenderState::GetInstance();
-        m_id = rs->RegisterRenderer(RENDERER_TYPE_OPENGL, time(NULL));
-
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
@@ -74,246 +71,54 @@ namespace DENG {
         glErrorCheck("glTexParameteri");
 
         // load missing texture
+        TextureDatabase* db = TextureDatabase::GetInstance();
         int x, y, size;
         char *data = GetMissingTextureRGBA(x, y, size);
-        PushTextureFromMemory(MISSING_TEXTURE_NAME, data, x, y, 4);
-        
+        m_missing_2d = db->AddResource(data, (uint32_t)x, (uint32_t)y, 4);
+        _CreateVendorTextureResource(m_missing_2d);
+
         // push a missing cubemap
-        std::array<Libdas::TextureReader, 6> readers = {
-            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
-            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
-            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
-            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
-            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false)),
-            std::move(Libdas::TextureReader(std::make_pair(data, size), 64, 64, false))
-        };
-        PushCubemapFromMemory(MISSING_3D_TEXTURE_NAME, readers);
+        m_missing_3d = db->AddResource((uint32_t)x, (uint32_t)y, 4, data, data, data, data, data, data);
+        _CreateVendorTextureResource(m_missing_3d);
 
-        // create main framebuffer instance
-        m_framebuffer_draws.insert({
-            MAIN_FRAMEBUFFER_NAME,
-            {
-                MAIN_FRAMEBUFFER_NAME,
-                {}, {},
-                {
-                    m_conf.canvas_size.x,
-                    m_conf.canvas_size.y
-                }
-            }
-        });
-
-        m_framebuffers.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(MAIN_FRAMEBUFFER_NAME),
-            std::forward_as_tuple(std::make_shared<OpenGL::Framebuffer>(
-                MAIN_FRAMEBUFFER_NAME,
-                m_framebuffer_draws,
-                m_opengl_textures,
-                m_buffer_loader.GetBufferData(),
-                0,
-                true
-            ))
-        );
+        m_framebuffers.push_back(new OpenGL::Framebuffer(
+            m_buffer_loader.GetBufferData(), 
+            m_conf.canvas_size, 
+            m_missing_2d, 
+            m_missing_3d, 
+            true));
     }
 
 
     OpenGLRenderer::~OpenGLRenderer() {
-        RenderState *rs = RenderState::GetInstance();
-        rs->RemoveRenderer(m_id);
-
         // delete texture objects
-        for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
-            glDeleteTextures(1, &it->second.texture);
-    }
+        TextureDatabase* db = TextureDatabase::GetInstance();
+        db->DeleteAll();
 
-
-    void OpenGLRenderer::PushFramebuffer(const FramebufferDrawData &_fb) {
-        DENG_ASSERT(m_framebuffer_draws.find(_fb.image_name) == m_framebuffer_draws.end());
-        DENG_ASSERT(m_framebuffers.find(_fb.image_name) == m_framebuffers.end());
-        DENG_ASSERT(m_opengl_textures.find(_fb.image_name) == m_opengl_textures.end());
-
-        // submit framebuffer draw to hashmap
-        m_framebuffer_draws.insert(std::make_pair(_fb.image_name, _fb));
-
-        OpenGL::TextureData texture;
-        texture.width = _fb.extent.x;
-        texture.height = _fb.extent.y;
-        texture.depth = 3;
-
-        glGenTextures(1, &texture.texture);
-        glErrorCheck("glGenTextures");
-
-        glBindTexture(GL_TEXTURE_2D, texture.texture);
-        glErrorCheck("glBindTextures");
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei) _fb.extent.x, (GLsizei) _fb.extent.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-        glErrorCheck("glTexImage2D");
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        m_opengl_textures.insert(std::make_pair(_fb.image_name, texture));
-        m_framebuffers.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(_fb.image_name),
-            std::forward_as_tuple(std::make_shared<OpenGL::Framebuffer>(
-                _fb.image_name,
-                m_framebuffer_draws,
-                m_opengl_textures,
-                m_buffer_loader.GetBufferData(),
-                texture.texture,
-                false
-            ))
-        );
-    }
-
-
-    void OpenGLRenderer::PushTextureFromFile(const std::string &_name, const std::string &_file_name) {
-        Libdas::TextureReader reader(Libdas::Algorithm::RelativePathToAbsolute(_file_name));
-        size_t len;
-        int x, y;
-        const char *buf = reader.GetRawBuffer(x, y, len);
-        PushTextureFromMemory(_name, buf, static_cast<uint32_t>(x), static_cast<uint32_t>(x), 4);
-    }
-
-
-    void OpenGLRenderer::PushTextureFromMemory(const std::string &_name, const char *_raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) {
-        // check if the named texture already exists in texture map
-        if(m_opengl_textures.find(_name) != m_opengl_textures.end()) {
-            std::cerr << "Texture with name '" << _name << "' already exists in texture map" << std::endl;
-            DENG_ASSERT(false);
-            return;
+        while (!db->GetDeletedEventQueue().empty()) {
+            auto res = db->GetDeletedEventQueue().front();
+            db->GetDeletedEventQueue().pop();
+            delete[] res.rgba_data;
+            GLuint handle = std::get<GLuint>(res.vendor);
+            glDeleteTextures(1, &handle);
         }
-
-        // check if there are any texture units available
-        GLint max_units;
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_units);
-
-        if(static_cast<GLint>(m_opengl_textures.size() + 1) >= max_units) {
-            std::cerr << "Current texture exceeds the maximum texture capacity\n"\
-                         "Requested " << m_opengl_textures.size() + 1 << ", avalilable" << max_units << std::endl;
-            std::exit(1);
-        }
-
-        OpenGL::TextureData tex;
-        tex.width = _width;
-        tex.height = _height;
-        tex.depth = _bit_depth;
-        glGenTextures(1, &tex.texture);
-        glErrorCheck("glGenTextures");
-
-        glBindTexture(GL_TEXTURE_2D, tex.texture);
-        glErrorCheck("glBindTexture");
-
-        switch(_bit_depth) {
-            case 3:
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, static_cast<GLsizei>(_width), static_cast<GLsizei>(_height), 0, GL_RGB, GL_UNSIGNED_BYTE, _raw_data);
-                break;
-
-            case 4:
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(_width), static_cast<GLsizei>(_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, _raw_data);
-                break;
-
-            default:
-                DENG_ASSERT(false);
-                break;
-        }
-
-        glErrorCheck("glTexImage2D");
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glErrorCheck("glGenerateMipmap");
-        
-        m_opengl_textures[_name] = tex;
-    }
-
-    void OpenGLRenderer::PushCubemapFromMemory(
-        const std::string& _name,
-        std::array<Libdas::TextureReader, 6> &_readers
-    ) {
-        DENG_ASSERT(m_opengl_textures.find(_name) == m_opengl_textures.end());
-        OpenGL::TextureData data;
-        glGenTextures(1, &data.texture);
-        glErrorCheck("glGenTextures");
-        glBindTexture(GL_TEXTURE_CUBE_MAP, data.texture);
-        glErrorCheck("glBindTexture");
-
-
-        // load each texture into cubemap
-        int prev_x = 0, prev_y = 0;
-        for (uint32_t i = 0; i < (uint32_t)_readers.size(); i++) {
-            int x, y;
-            size_t len;
-            char* data = _readers[i].GetRawBuffer(x, y, len);
-            
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                         0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        }
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-        data.width = prev_x;
-        data.height = prev_y;
-        data.depth = 4;
-
-        m_opengl_textures[_name] = data;
     }
 
 
+    FramebufferIndices OpenGLRenderer::AddFramebuffer(TRS::Point2D<uint32_t> _extent) {
+        m_framebuffers.emplace_back(new OpenGL::Framebuffer(
+            m_buffer_loader.GetBufferData(),
+            _extent,
+            m_missing_2d,
+            m_missing_3d
+        ));
 
-    void OpenGLRenderer::GetTexturePointer(const std::string& _name, RawTextureData& _out_data) {
-        auto it = m_opengl_textures.find(_name);
-        DENG_ASSERT(it != m_opengl_textures.end());
-
-        _out_data.width = it->second.width;
-        _out_data.height = it->second.height;
-        _out_data.depth = it->second.depth;
-        const uint32_t size = _out_data.width * _out_data.height * _out_data.depth;
-        _out_data.raw = new unsigned char[size];
-        glGetTextureImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<GLsizei>(size), _out_data.raw);
+        return FramebufferIndices(m_framebuffers.back()->GetFramebufferImageId(), static_cast<uint32_t>(m_framebuffers.size() - 1));
     }
 
-
-    void OpenGLRenderer::RemoveTexture(const std::string &_name) {
-        // check if texture does not exist in current hash map
-        if(m_opengl_textures.find(_name) == m_opengl_textures.end()) {
-            std::cerr << "Requested texture with name '" << _name << "' does not exist for removal" << std::endl;
-            DENG_ASSERT(false);
-            return;
-        }
-
-        glDeleteTextures(1, &m_opengl_textures[_name].texture);
-    }
-
-
-    std::vector<std::string> OpenGLRenderer::GetTextureNames() {
-        std::vector<std::string> names;
-
-        for(auto it = m_opengl_textures.begin(); it != m_opengl_textures.end(); it++)
-            names.push_back(it->first);
-
-        return names;
-    }
-
-
+    
     uint32_t OpenGLRenderer::AlignUniformBufferOffset(uint32_t _req) {
         return AlignData(_req, m_buffer_loader.GetUniformBufferOffsetAlignment());
-    }
-
-
-    void OpenGLRenderer::LoadShaders() {
-        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-            it->second->LoadData();
-        }
-    }
-
-
-    void OpenGLRenderer::ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer) {
-
     }
 
 
@@ -344,26 +149,138 @@ namespace DENG {
         glViewport(0, 0, static_cast<GLsizei>(m_conf.canvas_size.x), static_cast<GLsizei>(m_conf.canvas_size.y));
         glErrorCheck("glViewport");
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->ClearFrame(m_conf.clear_color);
-        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-            it->second->ClearFrame(m_conf.clear_color);
+        m_framebuffers[0]->ClearFrame(m_conf.clear_color);
+        for (size_t i = 1; i < m_framebuffers.size(); i++) {
+            if (m_framebuffers[i]) {
+                m_framebuffers[i]->ClearFrame(m_conf.clear_color);
+            }
         }
     }
 
 
     void OpenGLRenderer::RenderFrame() {
-        // update all non-default framebuffers
-        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-            if(it->first == MAIN_FRAMEBUFFER_NAME)
-                continue;
-            it->second->Render();
+        // check if any resources were pushed or removed
+        _CheckAndCopyTextures();
+        _CheckAndDeleteTextures();
+        _CheckAndRemoveShaders();
+
+        // clear frames
+        for (size_t i = 0; i < m_framebuffers.size(); i++) {
+            if (m_framebuffers[i]) {
+                m_framebuffers[i]->ClearFrame(m_conf.clear_color);
+            }
         }
 
-        m_framebuffer_draws.find(MAIN_FRAMEBUFFER_NAME)->second.extent = {
-            m_conf.canvas_size.x,
-            m_conf.canvas_size.y
-        };
+        for (size_t i = 0; i < m_meshes.size(); i++) {
+            if (m_meshes[i]) {
+                for (auto fb_it = m_meshes[i]->framebuffer_ids.begin(); fb_it != m_meshes[i]->framebuffer_ids.end(); fb_it++) {
+                    if (!m_framebuffers[*fb_it]) {
+                        throw std::runtime_error("Cannot draw to framebuffer " + std::to_string(i) + ". Framebuffer deleted.");
+                    }
 
-        m_framebuffers.find(MAIN_FRAMEBUFFER_NAME)->second->Render();
+                    m_framebuffers[*fb_it]->Draw(*m_meshes[i], (uint32_t)i, m_shader_modules);
+                }
+            }
+        }
+    }
+
+
+    void OpenGLRenderer::_CreateVendorTextureResource(uint32_t _id) {
+        TextureDatabase* db = TextureDatabase::GetInstance();
+        TextureResource& res = db->GetResource(_id);
+
+        GLuint handle = 0;
+        glGenTextures(1, &handle);
+        glErrorCheck("glGenTextures");
+
+        switch (res.resource_type) {
+            case TEXTURE_RESOURCE_2D_IMAGE:
+                glBindTexture(GL_TEXTURE_2D, handle);
+                glErrorCheck("glBindTexture");
+
+                if (res.bit_depth == 4) {
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)res.width, (GLsizei)res.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, res.rgba_data);
+                    glErrorCheck("glTexImage2D");
+                } else if (res.bit_depth == 3) {
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)res.width, (GLsizei)res.height, 0, GL_RGB, GL_UNSIGNED_BYTE, res.rgba_data);
+                    glErrorCheck("glTexImage2D");
+                }
+
+                glGenerateMipmap(GL_TEXTURE_2D);
+                glErrorCheck("glGenerateMipmap");
+                break;
+
+            case TEXTURE_RESOURCE_3D_IMAGE:
+                {
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
+                    glErrorCheck("glBindTexture");
+
+                    uint32_t offset = 0;
+                    for (uint32_t i = 0; i < 6; i++) {
+                        if (res.bit_depth == 4) {
+                            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, (GLsizei)res.width, (GLsizei)res.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, res.rgba_data + offset);
+                            glErrorCheck("glTexImage2D");
+                        } else if (res.bit_depth == 3) {
+                            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, (GLsizei)res.width, (GLsizei)res.height, 0, GL_RGB, GL_UNSIGNED_BYTE, res.rgba_data + offset);
+                            glErrorCheck("glTexImage2D");
+                        }
+
+                        offset += res.width * res.height * res.bit_depth;
+                    }
+
+                    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+                    glErrorCheck("glGenerateMipmap");
+                }
+                break;
+        }
+
+        res.vendor = handle;
+    }
+
+
+    void OpenGLRenderer::_CheckAndCopyTextures() {
+        TextureDatabase* db = TextureDatabase::GetInstance();
+
+        while (!db->GetAddedEventQueue().empty()) {
+            uint32_t id = db->GetAddedEventQueue().front();
+            db->GetAddedEventQueue().pop();
+
+            TextureResource& res = db->GetResource(id);
+            if (!res.rgba_data) {
+                throw std::runtime_error("Texture " + std::to_string(id) + " submitted without RGBA data.");
+            }
+
+            _CreateVendorTextureResource(id);
+            delete[] res.rgba_data;
+            res.rgba_data = nullptr;
+        }
+    }
+
+
+    void OpenGLRenderer::_CheckAndDeleteTextures() {
+        TextureDatabase* db = TextureDatabase::GetInstance();
+
+        while (!db->GetDeletedEventQueue().empty()) {
+            TextureResource& res = db->GetDeletedEventQueue().front();
+            db->GetDeletedEventQueue().pop();
+
+            GLuint handle = std::get<GLuint>(res.vendor);
+            glDeleteTextures(1, &handle);
+
+            delete[] res.rgba_data;
+        }
+    }
+
+
+    void OpenGLRenderer::_CheckAndRemoveShaders() {
+        while (!m_removed_shader_queue.empty()) {
+            uint32_t id = m_removed_shader_queue.front();
+
+            for (size_t i = 0; i < m_framebuffers.size(); i++) {
+                if (m_framebuffers[i]) {
+                    m_framebuffers[i]->ClearShaderResource(id);
+                }
+            }
+        }
     }
 }

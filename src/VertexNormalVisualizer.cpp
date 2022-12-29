@@ -21,10 +21,10 @@ namespace DENG {
 		uint32_t _normal_offset,
 		uint32_t _index_offset,
 		uint32_t _draw_count,
-		const std::string &_framebuffer_name
+		const std::vector<uint32_t>& _framebuffers
 	) : Entity(_parent, _name, ENTITY_TYPE_VERTEX_NORMAL_VISUALIZER),
 		m_renderer(_rend),
-		m_framebuffer_name(_framebuffer_name)
+		m_bound_framebuffers(_framebuffers)
 	{
 		uint32_t id = _CheckAndCreateShaderModule(_index_offset != UINT32_MAX);
 		MeshReference mesh;
@@ -35,8 +35,9 @@ namespace DENG {
 		mesh.commands.back().indices_offset = _index_offset;
 		mesh.enable = false;
 		mesh.shader_module_id = id;
+		mesh.framebuffer_ids = m_bound_framebuffers;
 
-		m_mesh_id = m_renderer.PushMeshReference(mesh, m_framebuffer_name);
+		m_mesh_id = m_renderer.PushMeshReference(mesh);
 	}
 
 
@@ -192,7 +193,7 @@ namespace DENG {
 			module.enable_depth_testing = true;
 			module.enable_indexing = _index;
 
-			const uint32_t id = m_renderer.PushShader(module, m_framebuffer_name);
+			const uint32_t id = m_renderer.PushShaderModule(module);
 			if (_index) m_indexed_shader_id = id;
 			else m_unindexed_shader_id = id;
 

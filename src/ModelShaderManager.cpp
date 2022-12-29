@@ -12,8 +12,7 @@ namespace DENG {
     uint32_t ModelShaderManager::_GenerateShaderModule(
         Renderer &_rend, 
         const MeshPrimitiveAttributeDescriptor &_mesh_attr_desc, 
-        uint32_t _camera_offset,
-        const std::string &_framebuffer_id
+        uint32_t _camera_offset
     ) {
         ShaderModule module;
         module.enable_depth_testing = true;
@@ -124,7 +123,7 @@ namespace DENG {
 
         module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(_mesh_attr_desc);
         module.fragment_shader_src = ModelShaderGenerator::GenerateFragmentShaderSource(_mesh_attr_desc);
-        return _rend.PushShader(module, _framebuffer_id);
+        return _rend.PushShaderModule(module);
     }
 
 
@@ -133,8 +132,7 @@ namespace DENG {
         Libdas::DasModel &_model, 
         const Libdas::DasMeshPrimitive &_prim,
         uint32_t _camera_offset, 
-        uint32_t _skeleton_joint_count,
-        const std::string &_framebuffer_id
+        uint32_t _skeleton_joint_count
     ) {
         // assemble MeshPrimitiveAttributeDescriptor object
         MeshPrimitiveAttributeDescriptor attr_desc;
@@ -157,7 +155,7 @@ namespace DENG {
         
         // check if current MeshPrimitiveAttributeDescriptor object is present
         if(m_shader_map.find(attr_desc) == m_shader_map.end()) {
-            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _camera_offset, _framebuffer_id);
+            m_shader_map[attr_desc] = _GenerateShaderModule(_rend, attr_desc, _camera_offset);
         }
 
         return m_shader_map[attr_desc];

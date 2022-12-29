@@ -17,6 +17,7 @@
     #include <cmath>
     #include <cstring>
     #include <algorithm>
+    #include <queue>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -73,7 +74,7 @@ namespace DENG {
                 const std::vector<uint32_t> &_main_buffer_offsets, 
                 uint32_t _camera_offset, 
                 std::vector<Animation> &_animations,
-                const std::string &_framebuffer_id
+                const std::vector<uint32_t> &_framebuffer_ids
             );
             SceneLoader(const SceneLoader &_sl) = delete;
             SceneLoader(SceneLoader&& _sl) noexcept;

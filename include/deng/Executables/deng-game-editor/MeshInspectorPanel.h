@@ -23,7 +23,7 @@ namespace DENG {
 		class TextureWidget : public wxWindow {
 			private:
 				MeshLoader* m_mesh = nullptr;
-				RawTextureData m_data;
+				TextureResource m_data;
 				wxBitmap m_image;
 				wxCheckBox* m_use = nullptr;
 				uint32_t m_id = 0;
@@ -34,7 +34,7 @@ namespace DENG {
 				wxDECLARE_EVENT_TABLE();
 
 			public:
-				TextureWidget(wxWindow* _parent, MeshLoader *_mesh, RawTextureData &_data, uint32_t _id);
+				TextureWidget(wxWindow* _parent, MeshLoader *_mesh, TextureResource &_data, uint32_t _id);
 		};
 
 

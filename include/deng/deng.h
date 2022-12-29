@@ -16,6 +16,7 @@
 #include <fstream>
 #include <stack>
 #include <array>
+#include <queue>
 
 // platform specific includes
 #ifdef _WIN32
@@ -101,5 +102,6 @@
 // registries
 #include "deng/InputRegistry.h"
 #include "deng/Registry.h"
+#include "deng/TextureDatabase.h"
 
 #endif

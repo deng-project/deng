@@ -13,7 +13,9 @@
     #include <cstring>
     #include <fstream>
     #include <memory>
+    #include <queue>
     #include <cmath>
+    #include <variant>
     #include <unordered_map>
     #include <algorithm>
 #ifdef _DEBUG
@@ -24,6 +26,7 @@
     #include <Windows.h>
 #endif
     #include <string>
+    #include <vulkan/vulkan.h>
 
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
@@ -45,6 +48,7 @@
     #include "deng/Renderer.h"
     #include "deng/RenderState.h"
     #include "deng/GPUMemoryManager.h"
+    #include "deng/TextureDatabase.h"
 #endif
 
 #ifndef DEBUG_ONLY
@@ -74,31 +78,21 @@ namespace DENG {
             OpenGL::BufferLoader m_buffer_loader;
             std::vector<std::vector<uint32_t>> m_ubo_offsets;
 
-            // texture handles
-            std::unordered_map<std::string, OpenGL::TextureData> m_opengl_textures;
-
             // framebuffers
-            // using shared_ptr is a bad solution and it is prefarable to just keep the OpenGL::Framebuffer instance 
-            // inside the unordered_map
-            std::unordered_map<std::string, std::shared_ptr<OpenGL::Framebuffer>> m_framebuffers;
+            std::vector<OpenGL::Framebuffer*> m_framebuffers;
+
+        private:
+            void _CreateVendorTextureResource(uint32_t _id);
+            void _CheckAndCopyTextures();
+            void _CheckAndDeleteTextures();
+            void _CheckAndRemoveShaders();
 
         public:
             OpenGLRenderer(const RendererConfig &_conf);
             ~OpenGLRenderer();
             
-            virtual void PushFramebuffer(const FramebufferDrawData &_fb) override;
-            virtual void PushTextureFromFile(const std::string &_name, const std::string& _file_name) override;
-            virtual void PushTextureFromMemory(const std::string &_name, const char* _raw_data, uint32_t _width, uint32_t _height, uint32_t _bit_depth) override;
-            virtual void PushCubemapFromMemory(const std::string& _name, std::array<Libdas::TextureReader, 6>& _readers) override;
-            virtual void GetTexturePointer(const std::string& _name, RawTextureData& _out_data) override;
-            virtual void RemoveTexture(const std::string &_name) override;
-
-            // slow
-            virtual std::vector<std::string> GetTextureNames() override;
-
+            virtual FramebufferIndices AddFramebuffer(TRS::Point2D<uint32_t> _extent) override;
             virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void LoadShaders() override;
-            virtual void ReloadShaderModule(uint32_t _shader_id, const std::string& _framebuffer) override;
             virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
             virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
             virtual void ClearFrame() override;

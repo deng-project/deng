@@ -20,6 +20,7 @@
 	#include <nwin/glad/glad.h>
 
 	#include "das/stb_image.h"
+	#include "deng/Api.h"
 #endif
 
 namespace DENG {
@@ -67,7 +68,7 @@ namespace DENG {
 		std::variant<Vulkan::TextureData, GLuint> vendor;
 	};
 
-	class TextureDatabase {
+	class DENG_API TextureDatabase {
 		private:
 			static TextureDatabase* m_instance;
 			std::vector<TextureResource*> m_resources;
@@ -129,6 +130,10 @@ namespace DENG {
 					throw std::runtime_error("Cannot retrieve deleted texture with id " + std::to_string(_id));
 
 				return *m_resources[_id];
+			}
+
+			inline std::vector<TextureResource*>& GetAllResources() {
+				return m_resources;
 			}
 
 			void DeleteAll();

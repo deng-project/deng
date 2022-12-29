@@ -10,9 +10,13 @@
     #include <string>   
     #include <unordered_map>
     #include <vector>
+    #include <variant>
     #include <cstring>
     #include <cmath>
     #include <array>
+    #include <queue>
+    #include <stdexcept>
+    #include <vulkan/vulkan.h>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -28,6 +32,7 @@
 
     #include "deng/Api.h"
     #include "deng/Window.h"
+    #include "deng/TextureDatabase.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Renderer.h"
@@ -46,38 +51,42 @@ namespace DENG {
         class Framebuffer {
             private:
                 static uint32_t m_color_attachment_counter;
-                const std::string m_framebuffer_name;
-                std::unordered_map<std::string, FramebufferDrawData> &m_framebuffer_draws;
-                const std::unordered_map<std::string, TextureData> &m_textures;
-                const BufferData m_buffer_data;
-                const GLuint m_image;
-                const bool m_is_default_framebuffer;
+                BufferData m_buffer_data;
+                bool m_is_default_framebuffer;
 
                 ShaderLoader m_shader_loader;
+                TRS::Point2D<uint32_t> m_extent;
 
                 GLuint m_framebuffer = 0;
                 GLuint m_rbo = 0;
                 GLenum m_color_attachment_id = 0;
+                uint32_t m_framebuffer_image_id = 0;
+
+                uint32_t m_missing_2d = 0;
+                uint32_t m_missing_3d = 0;
 
             private:
                 void _SetRenderState(const ShaderModule &_module);
-                void _BindVertexAttributes(const DrawCommand &_cmd, uint32_t _shader_id);
+                void _BindVertexAttributes(const DrawCommand &_cmd, ShaderModule* _module);
                 void _UnbindVertexAttributes(const ShaderModule &_module);
 
             public:
                 Framebuffer(
-                    const std::string &_fb_name,
-                    std::unordered_map<std::string, FramebufferDrawData> &_fb_draws,
-                    const std::unordered_map<std::string, TextureData> &_misc_textures,
-                    const BufferData &_bd,
-                    const GLuint _image,
+                    const BufferData& _bd,
+                    TRS::Point2D<uint32_t> _extent,
+                    uint32_t _missing_2d,
+                    uint32_t _missing_3d,
                     const bool _is_default = false
                 );
                 Framebuffer(Framebuffer &&_fb) noexcept = default;
 
                 void ClearFrame(const TRS::Vector4<float> _clear_color);
-                void LoadData();
-                void Render();
+                void Draw(const MeshReference& _ref, uint32_t _mesh_id, const std::vector<ShaderModule*>& _modules);
+                void ClearShaderResource(uint32_t _id);
+
+                inline uint32_t GetFramebufferImageId() {
+                    return m_framebuffer_image_id;
+                }
         };
     }
 }

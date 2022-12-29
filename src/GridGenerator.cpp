@@ -17,7 +17,7 @@ namespace DENG {
         float _margin_x, 
         float _margin_y, 
         uint32_t _camera_id,
-        const std::string &_framebuffer_id
+        const std::vector<uint32_t>& _framebuffers
     ) :
         Entity(_parent, _name, ENTITY_TYPE_GRID_MESH),
         m_width(_width),
@@ -26,7 +26,7 @@ namespace DENG {
         m_margin_y(_margin_y),
         m_camera_id(_camera_id),
         m_renderer(_rend),
-        m_framebuffer_id(_framebuffer_id) {}
+        m_framebuffer_ids(_framebuffers) {}
 
 
     GridGenerator::GridGenerator(GridGenerator &&_ge) noexcept :
@@ -44,7 +44,7 @@ namespace DENG {
         m_main_offset(_ge.m_main_offset),
         m_renderer(_ge.m_renderer),
         m_color(_ge.m_color),
-        m_framebuffer_id(std::move(_ge.m_framebuffer_id)) {}
+        m_framebuffer_ids(std::move(_ge.m_framebuffer_ids)) {}
 
 
     GridGenerator::~GridGenerator() {
@@ -150,17 +150,18 @@ namespace DENG {
         module.prim_mode = PRIMITIVE_MODE_LINES;
 
         // push the shader module
-        m_shader_id = m_renderer.PushShader(module, m_framebuffer_id);
+        m_shader_id = m_renderer.PushShaderModule(module);
         _GenerateVertices(m_renderer);
 
         // generate mesh and draw command to submit to renderer
-        m_mesh_id = m_renderer.PushMeshReference(MeshReference(), m_framebuffer_id);
-        MeshReference& ref = m_renderer.GetMesh(m_mesh_id, m_framebuffer_id);
+        m_mesh_id = m_renderer.NewMeshReference();
+        MeshReference& ref = m_renderer.GetMesh(m_mesh_id);
         ref.name = "__grid__";
         ref.shader_module_id = m_shader_id;
         ref.commands.emplace_back();
         ref.commands.back().draw_count = m_vert_count;
         ref.commands.back().attribute_offsets.push_back(m_main_offset);
+        ref.framebuffer_ids = m_framebuffer_ids;
         SetAttachedBit(true);
     }
 

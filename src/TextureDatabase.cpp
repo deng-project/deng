@@ -52,7 +52,7 @@ namespace DENG {
 		res.load_type = GetResourceType(_file_name);
 		res.resource_type = TEXTURE_RESOURCE_2D_IMAGE;
 
-		m_resources.emplace_back(res);
+		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
 		return static_cast<uint32_t>(m_resources.size() - 1);
 	}
@@ -65,8 +65,10 @@ namespace DENG {
 		res.bit_depth = _bit_depth;
 		res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
 		res.resource_type = TEXTURE_RESOURCE_2D_IMAGE;
+		res.rgba_data = new char[_width * _height * _bit_depth]{};
+		std::memcpy(res.rgba_data, _data, static_cast<size_t>(_width * _height * _bit_depth));
 
-		m_resources.emplace_back(res);
+		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
 		return m_added_event_queue.front();
 	}
@@ -104,7 +106,7 @@ namespace DENG {
 		for (uint32_t i = 0; i < 6; i++)
 			std::memcpy(res.rgba_data + i * res.width * res.height * res.bit_depth, data_ptrs[i], res.width * res.height * res.bit_depth);
 		
-		m_resources.emplace_back(res);
+		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
 		return m_added_event_queue.front();
 	}
@@ -130,8 +132,17 @@ namespace DENG {
 		for (uint32_t i = 0; i < 6; i++)
 			std::memcpy(res.rgba_data + i * res.width * res.height * res.bit_depth, data_ptrs[i], res.width * res.height * res.bit_depth);
 
-		m_resources.emplace_back(res);
+		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
 		return m_added_event_queue.front();
+	}
+
+
+	void TextureDatabase::DeleteAll() {
+		for (size_t i = 0; i < m_resources.size(); i++) {
+			if (m_resources[i]) {
+				DeleteResource((uint32_t)i);
+			}
+		}
 	}
 }

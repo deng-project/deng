@@ -57,24 +57,19 @@ namespace DENG {
     Skybox::Skybox(
         Entity* _parent,
         Renderer& _rend,
-        uint32_t _camera_id,
         const std::string& _right,
         const std::string& _left,
         const std::string &_top,
         const std::string &_bottom,
         const std::string &_back,
         const std::string &_front,
-        const std::string& _framebuffer
-    ) : Entity(_parent, m_name_prefix, ENTITY_TYPE_SKYBOX),
+        const std::vector<uint32_t>& _framebuffers
+    ) : Entity(_parent, m_name_prefix + std::to_string(m_skybox_counter), ENTITY_TYPE_SKYBOX),
         m_renderer(_rend),
-        m_framebuffer(_framebuffer)
+        m_framebuffer_ids(_framebuffers)
     {
-        m_renderer.PushCubemapFromFiles(m_name_prefix + "TEX" + std::to_string(m_skybox_counter),
-                                        _right, _left, _top, _bottom, _back, _front);
-
-        Registry* reg = Registry::GetInstance();
-        Entity *ent = reg->GetEntityById(_camera_id);
-        m_camera_offset = ((Camera3D*)ent)->GetUboOffset();
+        TextureDatabase* db = TextureDatabase::GetInstance();
+        m_texture_id = db->AddResource(_right, _left, _top, _bottom, _front, _back, 4);
     }
 
 
@@ -137,25 +132,24 @@ namespace DENG {
         module.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX;
         module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
         module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
-
-        module.ubo_data_layouts.emplace_back();
-        module.ubo_data_layouts.back().block.binding = 2;
-        module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
-        module.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER;
-        module.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_SHADER;
-        uint32_t shader_id = m_renderer.PushShader(module, m_framebuffer);
+        uint32_t shader_id = m_renderer.PushShaderModule(module);
         
-        m_texture_name = m_name_prefix + "TEX" + std::to_string(m_skybox_counter);
-
         MeshReference mesh;
         mesh.shader_module_id = shader_id;
         mesh.name = m_name_prefix + std::to_string(m_skybox_counter);
+        mesh.framebuffer_ids = m_framebuffer_ids;
+        mesh.ubo_data_layouts.emplace_back();
+        mesh.ubo_data_layouts.back().block.binding = 2;
+        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
+        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER;
+        mesh.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
+
         DrawCommand cmd;
         cmd.attribute_offsets.push_back(offset);
-        cmd.texture_names.push_back(m_texture_name);
+        cmd.texture_ids.push_back(m_texture_id);
         cmd.draw_count = 36;
         mesh.commands.emplace_back(std::move(cmd));
-        m_renderer.PushMeshReference(mesh, m_framebuffer);
+        m_renderer.PushMeshReference(mesh);
         m_skybox_counter++;
 
         SetAttachedBit(true);
@@ -164,5 +158,24 @@ namespace DENG {
 
     void Skybox::Update() {
         m_renderer.UpdateUniform(reinterpret_cast<const char*>(&m_ubo), (uint32_t)sizeof(TRS::Vector4<float>), m_ubo_offset);
+    }
+
+
+    void Skybox::BindCamera(uint32_t _id) {
+        Registry* reg = Registry::GetInstance();
+        Entity* ent = reg->GetEntityById(_id);
+
+        switch (ent->GetType()) {
+        case ENTITY_TYPE_EDITOR_CAMERA:
+        case ENTITY_TYPE_FIRST_PERSON_CAMERA:
+        case ENTITY_TYPE_THIRD_PERSON_CAMERA:
+            m_camera_offset = ((Camera3D*)ent)->GetUboOffset();
+            break;
+
+        default:
+            throw std::runtime_error("Cannot bind entity with id " + std::to_string(_id) + ".\n"\
+                "Entity type must be ENTITY_TYPE_EDITOR, ENTITY_TYPE_FIRST_PERSON_CAMERA or ENTITY_TYPE_THIRD_PERSON_CAMERA.");
+            break;
+        }
     }
 }

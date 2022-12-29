@@ -8,10 +8,9 @@
 
 namespace DENG {
 
-    ImGuiLayer::ImGuiLayer(const std::string &_framebuffer_name) : 
-        m_gui_texture_name(IMGUI_TEXTURE_NAME),
-        m_framebuffer_name(_framebuffer_name)
-    { m_beg = std::chrono::system_clock::now(); }
+    ImGuiLayer::ImGuiLayer(const std::vector<uint32_t>& _framebuffers) : m_framebuffer_ids(_framebuffers) { 
+        m_beg = std::chrono::system_clock::now(); 
+    }
 
 
     ImGuiLayer::~ImGuiLayer() {
@@ -349,9 +348,7 @@ namespace DENG {
 
     
     void ImGuiLayer::_CreateDrawCommands(ImDrawData *_draw_data) {
-        DENG::MeshReference &mesh = mp_renderer->GetMesh(m_mesh_id, m_framebuffer_name);
-        mesh.name = "__imgui__";
-        mesh.shader_module_id = m_shader_id;
+        DENG::MeshReference &mesh = mp_renderer->GetMesh(m_mesh_id);
         mesh.commands.clear();
 
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
@@ -408,7 +405,7 @@ namespace DENG {
                     mesh.commands.back().attribute_offsets.push_back(base_vertex_offset + offsetof(ImDrawVert, col));
                     mesh.commands.back().indices_offset = cmd_idx_offset + pcmd->IdxOffset * sizeof(ImDrawIdx);
                     mesh.commands.back().draw_count = pcmd->ElemCount;
-                    mesh.commands.back().texture_names.push_back(std::string(reinterpret_cast<char*>(pcmd->TextureId)));
+                    mesh.commands.back().texture_ids.push_back(m_texture_id);
                     mesh.commands.back().scissor.offset = { static_cast<int32_t>(clip.x), static_cast<int32_t>(clip.y) };
                     mesh.commands.back().scissor.ext = { static_cast<uint32_t>(clip.z - clip.x), static_cast<uint32_t>(clip.w - clip.y) };
                     mesh.commands.back().scissor.enabled = true;
@@ -475,11 +472,6 @@ namespace DENG {
         ImGui::SetCurrentContext(m_context);
         m_io = &ImGui::GetIO();
 
-        // retrieve texture atlas data
-        unsigned char *pix;
-        int width, height;
-        m_io->Fonts->GetTexDataAsRGBA32(&pix, &width, &height);
-
         DENG::ShaderModule module;
         module.fragment_shader_src = FRAG_SHADER_SRC;
         module.vertex_shader_src = VERT_SHADER_SRC;
@@ -507,11 +499,21 @@ namespace DENG {
         module.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
         module.ubo_data_layouts.back().type = DENG::UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
 
-        m_shader_id = mp_renderer->PushShader(module, m_framebuffer_name);
+        m_shader_id = mp_renderer->PushShaderModule(module);
+        m_mesh_id = mp_renderer->NewMeshReference();
+        MeshReference& ref = mp_renderer->GetMesh(m_mesh_id);
+        ref.name = "__imgui__";
+        ref.shader_module_id = m_shader_id;
+        ref.framebuffer_ids = m_framebuffer_ids;
 
-        m_mesh_id = mp_renderer->PushMeshReference(DENG::MeshReference(), m_framebuffer_name);
-        mp_renderer->PushTextureFromMemory(IMGUI_TEXTURE_NAME, reinterpret_cast<const char*>(pix), static_cast<uint32_t>(width), static_cast<uint32_t>(height), 4);
-        m_io->Fonts->SetTexID(const_cast<char*>(m_gui_texture_name.c_str()));
+        // retrieve texture atlas data
+        unsigned char* pix;
+        int width, height;
+        m_io->Fonts->GetTexDataAsRGBA32(&pix, &width, &height);
+
+        TextureDatabase* db = TextureDatabase::GetInstance();
+        m_texture_id = db->AddResource((char*)pix, (uint32_t)width, (uint32_t)height, 4u);
+        m_io->Fonts->SetTexID(&m_texture_id);
     }
 
 

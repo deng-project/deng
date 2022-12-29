@@ -16,6 +16,7 @@
     #include <cmath>
     #include <array>
     #include <algorithm>
+    #include <queue>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -52,6 +53,7 @@ namespace DENG {
         class ShaderLoader {
             private:
                 std::vector<GLuint> m_programs;
+                std::vector<uint32_t> m_program_table;
                 std::vector<std::pair<std::string, GLuint>> m_ubo_name_list;
 
             private:
@@ -60,7 +62,13 @@ namespace DENG {
                 void _CheckLinkingStatus(uint32_t _program_id);
 
             public:
-                void CompileShaderToProgram(const ShaderModule &_module);
+                void CompileShaderToProgram(const ShaderModule& _module, uint32_t _id);
+                void DeleteShaderProgram(uint32_t _id);
+                inline bool IsShaderCompiled(uint32_t _id) {
+                    if (_id >= static_cast<uint32_t>(m_program_table.size()) || m_program_table[_id] == UINT32_MAX)
+                        return false;
+                    else return true;
+                }
 
                 inline GLuint &GetShaderProgramById(uint32_t _id) {
                     DENG_ASSERT(static_cast<size_t>(_id) < m_programs.size());

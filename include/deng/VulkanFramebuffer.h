@@ -53,18 +53,15 @@ namespace DENG {
                 VkBuffer &m_main_buffer;
                 VkSampleCountFlagBits m_sample_count;
                 
-                std::vector<Vulkan::PipelineCreator> m_pipeline_creators;
-                std::vector<uint32_t> m_pipeline_index_table;
-                std::vector<Vulkan::DescriptorSetLayoutCreator> m_shader_descriptor_set_layout_creators;
-                std::vector<Vulkan::DescriptorSetLayoutCreator> m_mesh_descriptor_set_layout_creators;
+                std::vector<Vulkan::PipelineCreator*> m_pipeline_creators;
+                std::vector<Vulkan::DescriptorSetLayoutCreator*> m_shader_descriptor_set_layout_creators;
+                std::vector<Vulkan::DescriptorSetLayoutCreator*> m_mesh_descriptor_set_layout_creators;
 
                 // per shader descriptor pools / sets creators
-                std::vector<Vulkan::DescriptorAllocator> m_shader_desc_allocators;
-                std::vector<uint32_t> m_shader_descriptor_set_index_table;
+                std::vector<Vulkan::DescriptorAllocator*> m_shader_desc_allocators;
 
                 // per mesh descriptor pools / sets creators
-                std::vector<Vulkan::DescriptorAllocator> m_mesh_desc_allocators;
-                std::vector<uint32_t> m_mesh_descriptor_set_index_table;
+                std::vector<Vulkan::DescriptorAllocator*> m_mesh_desc_allocators;
 
                 VkCommandPool m_command_pool;
                 std::vector<VkCommandBuffer> m_command_buffers;
@@ -100,7 +97,7 @@ namespace DENG {
                 void _AllocateCommandBuffers();
                 void _CreateSynchronisationPrimitives();
 
-                void _CheckAndCreateShaderDescriptors(const MeshReference &_ref, const std::vector<ShaderModule*>& _modules);
+                void _CheckAndCreatePipeline(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*>& _modules);
                 void _CheckAndCreateMeshDescriptors(const MeshReference& _ref, uint32_t _mesh_id);
 
             public:
@@ -117,8 +114,6 @@ namespace DENG {
                 Framebuffer(Framebuffer &&_fb) noexcept = default;
                 ~Framebuffer();
 
-                void LoadData();
-                void ReloadResources();
                 void RecreateDescriptorSets();
                 void RecreateFramebuffer();
                 void DestroyFramebuffer(bool _remove_from_registry = true);
@@ -126,6 +121,8 @@ namespace DENG {
                 inline void ClearFrame() {
                     vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
                 }
+                void ClearShaderResources(uint32_t _id);
+                void ClearMeshResources(uint32_t _id);
                 void StartCommandBufferRecording(TRS::Vector4<float> _clear_color);
                 void Draw(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules);
                 void EndCommandBufferRecording();
@@ -161,7 +158,8 @@ namespace DENG {
 
                 inline PipelineCreator& GetPipelineCreator(uint32_t _id) {
                     DENG_ASSERT(_id < static_cast<uint32_t>(m_pipeline_creators.size()));
-                    return m_pipeline_creators[_id];
+                    DENG_ASSERT(m_pipeline_creators[_id] != nullptr);
+                    return *m_pipeline_creators[_id];
                 }
 
                 inline VkSemaphore GetSwapchainImageAcquisitionSemaphore() {

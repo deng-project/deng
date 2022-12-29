@@ -17,6 +17,7 @@
     #include <variant>
     #include <unordered_map>
     #include <array>
+    #include <queue>
 #ifdef __DEBUG
     #include <iostream>
 #endif

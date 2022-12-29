@@ -15,6 +15,7 @@
 	#include <filesystem>
 	#include <unordered_map>
     #include <cmath>
+	#include <queue>
 
 #ifdef _WIN32
 	#include <Windows.h>

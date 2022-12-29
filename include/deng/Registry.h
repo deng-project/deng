@@ -14,6 +14,7 @@
 	#include <fstream>
 	#include <unordered_map>
 	#include <array>
+	#include <queue>
 	
 	#include <python3.10/pyconfig.h>
 	#include <pybind11/embed.h>
