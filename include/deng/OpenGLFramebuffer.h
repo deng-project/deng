@@ -84,6 +84,10 @@ namespace DENG {
                 void Draw(const MeshReference& _ref, uint32_t _mesh_id, const std::vector<ShaderModule*>& _modules);
                 void ClearShaderResource(uint32_t _id);
 
+                inline void SetExtent(TRS::Point2D<uint32_t> _ext) {
+                    m_extent = _ext;
+                }
+
                 inline uint32_t GetFramebufferImageId() {
                     return m_framebuffer_image_id;
                 }

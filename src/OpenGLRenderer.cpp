@@ -164,6 +164,8 @@ namespace DENG {
         _CheckAndDeleteTextures();
         _CheckAndRemoveShaders();
 
+        m_framebuffers[0]->SetExtent(m_conf.canvas_size);
+
         // clear frames
         for (size_t i = 0; i < m_framebuffers.size(); i++) {
             if (m_framebuffers[i]) {

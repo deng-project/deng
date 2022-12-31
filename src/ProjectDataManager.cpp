@@ -173,6 +173,7 @@ namespace DENG {
 
 	void ProjectDataManager::Repair() {
 		// Game\Python
+		std::cout << Libdas::Algorithm::GetProgramPath() + "\\Python to " << m_project_path + "\\Python" << std::endl;
 		std::filesystem::copy(
 			std::filesystem::path(Libdas::Algorithm::GetProgramPath() + "\\Python"),
 			std::filesystem::path(m_project_path + "\\Python"),
