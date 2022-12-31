@@ -27,13 +27,15 @@ namespace DENG {
 
         wxBEGIN_EVENT_TABLE(ProjectManager, wxFrame)
             // Project manager callbacks
+            EVT_CLOSE(ProjectManager::_OnClose)
             EVT_BUTTON(ID_PROJECT_MANAGER_NEW, ProjectManager::_OnNewProject)
             EVT_BUTTON(ID_PROJECT_MANAGER_OPEN, ProjectManager::_OnOpenProject)
+            EVT_BUTTON(ID_PROJECT_MANAGER_REPAIR, ProjectManager::_OnRepairProject)
         wxEND_EVENT_TABLE()
 
 
         ProjectManager::ProjectManager()
-            : wxFrame(NULL, wxID_ANY, "DENG project manager", wxDefaultPosition, wxDefaultSize, wxMINIMIZE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLOSE_BOX | wxCLIP_CHILDREN)
+            : wxFrame(NULL, ID_PROJECT_MANAGER, "DENG project manager", wxDefaultPosition, wxDefaultSize, wxMINIMIZE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLOSE_BOX | wxCLIP_CHILDREN)
         {
             m_panel = new wxPanel(this);
             m_sizer = new wxBoxSizer(wxVERTICAL);
@@ -48,6 +50,8 @@ namespace DENG {
             prj_btn_sizer->Add(new wxButton(m_panel, ID_PROJECT_MANAGER_NEW, "New project", wxDefaultPosition, PROJECT_BTN_SIZE),
                                0, wxALL, 10);
             prj_btn_sizer->Add(new wxButton(m_panel, ID_PROJECT_MANAGER_OPEN, "Open project", wxDefaultPosition, PROJECT_BTN_SIZE),
+                               0, wxALL, 10);
+            prj_btn_sizer->Add(new wxButton(m_panel, ID_PROJECT_MANAGER_REPAIR, "Repair", wxDefaultPosition, PROJECT_BTN_SIZE),
                                0, wxALL, 10);
 
             // Main sizer with image, text and previously defined buttons
@@ -65,6 +69,13 @@ namespace DENG {
             SetSizerAndFit(m_sizer);
         }
 
+
+        ProjectManager::~ProjectManager() {
+            if (m_project_owner_bit)
+                delete m_project;
+        }
+
+
         // Event handler callbacks for ProjectManager
         void ProjectManager::_OnNewProject(wxCommandEvent& _ev) {
             NewProjectWizard* wiz = new NewProjectWizard(this);
@@ -76,9 +87,9 @@ namespace DENG {
                 }
 
                 if (wiz->GetUseXMLBit())
-                    m_project = new ProjectDataManager("game.xml", wiz->GetRootDir() + "\\" + project_dir, false);
+                    m_project = new ProjectDataManager(wiz->GetRootDir() + "\\" + project_dir, false, "game.xml");
                 else 
-                    m_project = new ProjectDataManager("game.dat", wiz->GetRootDir() + "\\" + project_dir, false);
+                    m_project = new ProjectDataManager(wiz->GetRootDir() + "\\" + project_dir, false, "game.dat");
                 Close(true);
             }
         }
@@ -88,20 +99,46 @@ namespace DENG {
             if (dir.ShowModal() == wxID_OK) {
                 std::string project_path = dir.GetPath();
                 std::string data_file_name;
-
-                if (std::filesystem::exists(project_path + "\\game.xml"))
-                    data_file_name = "game.xml";
-                else if (std::filesystem::exists(project_path + "\\game.dat"))
-                    data_file_name = "game.dat";
-                else {
-                    wxMessageBox(wxT("Invalid project directory."), wxT("Data file not found"), wxOK | wxICON_ERROR, this);
+                
+                m_project = new ProjectDataManager(project_path, true, data_file_name);
+                if (m_project->GetFailBit()) {
+                    wxMessageBox(wxT("Invalid project directory " + project_path), wxT("Error opening project"), wxICON_ERROR | wxOK, this);
                     _ev.Skip();
                     return;
                 }
-
-                m_project = new ProjectDataManager(data_file_name, project_path, true);
                 Close(true);
             }
+            _ev.Skip();
+        }
+
+
+        void ProjectManager::_OnRepairProject(wxCommandEvent& _ev) {
+            wxDirDialog dir(this, wxT("Select a project directory"));
+            if (dir.ShowModal() == wxID_OK) {
+                std::string project_path = dir.GetPath();
+                m_project = new ProjectDataManager(project_path);
+                if (m_project->GetFailBit()) {
+                    wxMessageBox(wxT("Invalid project directory " + project_path), wxT("Error repairing project"), wxICON_ERROR | wxOK, this);
+                    _ev.Skip();
+                    return;
+                }
+                m_project->Repair();
+                m_project->CalculateAndWriteChecksum();
+                wxMessageBox(wxT("Project repair done.\nYou can try to reopen this project."), wxT("Repair done"), wxICON_INFORMATION | wxOK, this);
+            }
+
+            _ev.Skip();
+        }
+
+
+        void ProjectManager::_OnClose(wxCloseEvent& _ev) {
+            if (m_project) {
+                m_project = nullptr;
+                m_project_owner_bit = false;
+                GameEditor* ed = new GameEditor(m_project);
+                ed->Show(true);
+            }
+
             _ev.Skip();
         }
 	}

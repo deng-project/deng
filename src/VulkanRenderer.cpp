@@ -23,22 +23,14 @@ namespace DENG {
         m_instance_creator(m_conf)
     {
         m_previous_canvas = m_conf.canvas_size;
-
-        // push a missing 2D texture
         TextureDatabase* db = TextureDatabase::GetInstance();
         int x, y, size;
         char* data = GetMissingTextureRGBA(x, y, size);
-        m_missing_2d = db->AddResource(data, (uint32_t)x, (uint32_t)y, 4);
-        _CreateVendorTextureImages(m_missing_2d);
-
-
-        // push a missing 3D texture
-        m_missing_3d = db->AddResource((uint32_t)x, (uint32_t)y, 4, data, data, data, data, data, data);
-        _CreateVendorTextureImages(m_missing_3d);
 
         // create main swapchain framebuffer
         VkExtent2D ext = m_instance_creator.GetSurfaceCapabilities().currentExtent;
         _AllocateBufferResources();
+        _AllocateUniformBuffer();
 
         m_framebuffers.emplace_back(new Vulkan::Framebuffer(
             m_instance_creator,
@@ -49,6 +41,15 @@ namespace DENG {
             m_missing_2d,
             m_missing_3d
         ));
+
+        // push a missing 2D texture
+        m_missing_2d = db->AddResource(data, (uint32_t)x, (uint32_t)y, 4);
+        _CreateVendorTextureImages(m_missing_2d);
+
+
+        // push a missing 3D texture
+        m_missing_3d = db->AddResource((uint32_t)x, (uint32_t)y, 4, data, data, data, data, data, data);
+        _CreateVendorTextureImages(m_missing_3d);
     }
 
 
@@ -171,13 +172,17 @@ namespace DENG {
 
         // acquire next images to draw
         VkSemaphore swapchain_image_semaphore = m_framebuffers[0]->GetSwapchainImageAcquisitionSemaphore();
+        VkFence& fence = m_framebuffers[0]->GetCurrentFlightFence();
+
+        vkWaitForFences(m_instance_creator.GetDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+
         uint32_t imgi;
         VkResult res = vkAcquireNextImageKHR(
-            m_instance_creator.GetDevice(), 
+            m_instance_creator.GetDevice(),
             m_framebuffers[0]->GetSwapchainCreator()->GetSwapchain(), 
-            UINT64_MAX, 
+            UINT64_MAX,
             swapchain_image_semaphore, 
-            VK_NULL_HANDLE, 
+            VK_NULL_HANDLE,
             &imgi);
 
         if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
@@ -186,8 +191,9 @@ namespace DENG {
         } else if(res != VK_SUCCESS) {
             VK_FRAME_ERR("Failed to acquire next swapchain image");
         }
-
         
+        vkResetFences(m_instance_creator.GetDevice(), 1, &fence);
+
         // draw each mesh
         for (auto mesh_it = m_meshes.begin(); mesh_it != m_meshes.end(); mesh_it++) {
             if (*mesh_it) {
@@ -196,8 +202,10 @@ namespace DENG {
                         throw std::runtime_error("Cannot draw to framebuffer " + std::to_string(fb_it - (*mesh_it)->framebuffer_ids.begin()) + ". Framebuffer deleted.");
                     }
 
-                    if (!m_framebuffers[*fb_it]->GetCommandBufferRecordingBit())
+                    if (!m_framebuffers[*fb_it]->GetCommandBufferRecordingBit() && *fb_it != 0)
                         m_framebuffers[*fb_it]->StartCommandBufferRecording(m_conf.clear_color);
+                    else if (!m_framebuffers[*fb_it]->GetCommandBufferRecordingBit() && *fb_it == 0)
+                        m_framebuffers[*fb_it]->StartCommandBufferRecording(m_conf.clear_color, imgi);
                     
                     m_framebuffers[*fb_it]->Draw(**mesh_it, static_cast<uint32_t>(mesh_it - m_meshes.begin()), m_shader_modules);
                 }
@@ -205,7 +213,7 @@ namespace DENG {
         }
 
         // end command buffer recordings for each framebuffer that got draw commands submitted
-        for (size_t i = 0; i < m_framebuffers.size(); i++) {
+        for (size_t i = 1; i < m_framebuffers.size(); i++) {
             if (!m_framebuffers[i])
                 continue;
 
@@ -216,7 +224,11 @@ namespace DENG {
         }
 
         // present the swapchain framebuffer
-       res = m_framebuffers[0]->Present();
+        if (m_framebuffers[0]->GetCommandBufferRecordingBit())
+            m_framebuffers[0]->EndCommandBufferRecording();
+        
+        m_framebuffers[0]->Render();
+        res = m_framebuffers[0]->Present(imgi);
  
         if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
             _Resize();
@@ -292,7 +304,7 @@ namespace DENG {
         // OPTIONAL:
         // check if image format supports linear blitting
         VkFormatProperties format_props;
-        vkGetPhysicalDeviceFormatProperties(m_instance_creator.GetPhysicalDevice(), VK_FORMAT_R8G8B8A8_SRGB, &format_props);
+        vkGetPhysicalDeviceFormatProperties(m_instance_creator.GetPhysicalDevice(), VK_FORMAT_DEFAULT_IMAGE, &format_props);
         DENG_ASSERT(format_props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 
         VkCommandBuffer cmd_buf = VK_NULL_HANDLE;
@@ -371,13 +383,13 @@ namespace DENG {
         vkDeviceWaitIdle(m_instance_creator.GetDevice());
 
         Vulkan::Framebuffer &fb = *m_framebuffers[0];
-        fb.DestroyFramebuffer();
+        fb.DestroyFramebuffer(false);
+        fb.DestroySynchronisationPrimitives();
         fb.SetExtent(m_conf.canvas_size);
 
         fb.GetSwapchainCreator()->RecreateSwapchain(m_conf.canvas_size);
         fb.RecreateFramebuffer();
-
-        vkDeviceWaitIdle(m_instance_creator.GetDevice());
+        fb.CreateSynchronisationPrimitives();
     }
 
 
@@ -421,7 +433,7 @@ namespace DENG {
             m_instance_creator.GetPhysicalDevice(), 
             mem_req.size, 
             staging_memory, 
-            mem_req.memoryTypeBits, 
+            mem_req.memoryTypeBits,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0lu);
 
@@ -475,17 +487,6 @@ namespace DENG {
             res.height,
             array_count);
 
-        // transition image layout to final shader read only layout
-        Vulkan::_TransitionImageLayout(
-            m_instance_creator.GetDevice(),
-            data.image,
-            pool,
-            m_instance_creator.GetGraphicsQueue(),
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            mip_levels,
-            array_count);
-
         // create mipmaps
         _CreateMipmaps(data.image, res.width, res.height, mip_levels, array_count);
         
@@ -522,13 +523,16 @@ namespace DENG {
             db->GetAddedEventQueue().pop();
 
             TextureResource& res = db->GetResource(id);
-            if (!res.rgba_data) {
-                throw std::runtime_error("Texture " + std::to_string(id) + " submitted without RGBA data.");
-            }
 
-            _CreateVendorTextureImages(id);
-            delete[] res.rgba_data;
-            res.rgba_data = nullptr;
+            if (res.resource_type == TEXTURE_RESOURCE_2D_IMAGE || res.resource_type == TEXTURE_RESOURCE_3D_IMAGE) {
+                if (!res.rgba_data) {
+                    throw std::runtime_error("Texture " + std::to_string(id) + " submitted without RGBA data.");
+                }
+
+                _CreateVendorTextureImages(id);
+                delete[] res.rgba_data;
+                res.rgba_data = nullptr;
+            }
         }
     }
 

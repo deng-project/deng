@@ -95,7 +95,6 @@ namespace DENG {
                 void _CleanPipelineResources();
                 void _CreateCommandPool();
                 void _AllocateCommandBuffers();
-                void _CreateSynchronisationPrimitives();
 
                 void _CheckAndCreatePipeline(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*>& _modules);
                 void _CheckAndCreateMeshDescriptors(const MeshReference& _ref, uint32_t _mesh_id);
@@ -116,20 +115,26 @@ namespace DENG {
 
                 void RecreateDescriptorSets();
                 void RecreateFramebuffer();
+                void CreateSynchronisationPrimitives();
                 void DestroyFramebuffer(bool _remove_from_registry = true);
+                void DestroySynchronisationPrimitives();
 
                 inline void ClearFrame() {
                     vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
                 }
+
+                inline void SetCurrentFrame(uint32_t _id) {
+                    m_current_frame = _id;
+                }
                 void ClearShaderResources(uint32_t _id);
                 void ClearMeshResources(uint32_t _id);
-                void StartCommandBufferRecording(TRS::Vector4<float> _clear_color);
+                void StartCommandBufferRecording(TRS::Vector4<float> _clear_color, uint32_t _image_id = 0);
                 void Draw(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules);
                 void EndCommandBufferRecording();
                 void Render();
 
                 // only call this function if using swapchain images ! ! !
-                VkResult Present();
+                VkResult Present(uint32_t _image_id);
 
                 inline bool GetCommandBufferRecordingBit() {
                     return m_command_buffer_recording_bit;
@@ -160,6 +165,10 @@ namespace DENG {
                     DENG_ASSERT(_id < static_cast<uint32_t>(m_pipeline_creators.size()));
                     DENG_ASSERT(m_pipeline_creators[_id] != nullptr);
                     return *m_pipeline_creators[_id];
+                }
+
+                inline VkFence& GetCurrentFlightFence() {
+                    return m_flight_fences[m_current_frame];
                 }
 
                 inline VkSemaphore GetSwapchainImageAcquisitionSemaphore() {

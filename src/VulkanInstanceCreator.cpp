@@ -219,9 +219,20 @@ namespace DENG {
 
 
         VKAPI_ATTR VkBool32 VKAPI_CALL InstanceCreator::_DebugCallback(SeverityFlags _severity, MessageTypeFlags _type, const CallbackData* _callback_data, void* _user) {
-            VK_VAL_LAYER(_callback_data->pMessage);
-            //if ((_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) || (_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))
-            //    throw std::runtime_error(_callback_data->pMessage);
+            HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+            if (_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+                SetConsoleTextAttribute(console, FOREGROUND_RED);
+                std::cout << "[ValidationLayerError] " << _callback_data->pMessage << std::endl;
+            }
+            else if (_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+                SetConsoleTextAttribute(console, FOREGROUND_RED | FOREGROUND_GREEN);
+                std::cout << "[ValidationLayerWarning] " << _callback_data->pMessage << std::endl;
+            }
+            else if (_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+                std::cout << "[ValidationLayerInfo] " << _callback_data->pMessage << std::endl;
+            }
+
+            SetConsoleTextAttribute(console, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             return VK_FALSE;
         }
 #endif

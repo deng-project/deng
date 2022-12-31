@@ -54,15 +54,7 @@ void SetupSysPath() {
 
 // Runtime class
 Runtime::Runtime() {
-	// check for game.xml or game.dat file
-	if (std::filesystem::exists(GetProgramPath() + "\\game.xml"))
-		m_data = new DENG::ProjectDataManager("game.xml", GetProgramPath(), true);
-	else if (std::filesystem::exists(GetProgramPath() + "\\game.dat"))
-		m_data = new DENG::ProjectDataManager("game.dat", GetProgramPath(), true);
-	else {
-		MessageBoxA(NULL, "Game data file is missing.\nYour game installation might be corrupted.", "Error", MB_ICONERROR | MB_OK);
-		std::exit(0);
-	}
+	m_data = new DENG::ProjectDataManager(GetProgramPath(), true);
 
 	auto& conf = m_data->GetConfiguration();
 	auto& meta = m_data->GetMetadata();

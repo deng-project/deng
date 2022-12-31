@@ -19,6 +19,7 @@
     #include <wx/aui/aui.h>
     #include "deng/deng.h"
 
+    #include "deng/Executables/deng-game-editor/GuiIds.h"
     #include "deng/Executables/deng-game-editor/ProjectManager.h"
     #include "deng/Executables/deng-game-editor/StaticResources.h"
     #include "deng/Executables/deng-game-editor/OpenGLLoader.h"
@@ -44,6 +45,9 @@ namespace DENG {
             private:
                 GameEditor* m_editor = nullptr;
                 ProjectManager* m_frame = nullptr;
+
+            private:
+                void _OnProjectManagerClose(wxWindowDestroyEvent& _ev);
 
             public:
                 virtual bool OnInit() override;

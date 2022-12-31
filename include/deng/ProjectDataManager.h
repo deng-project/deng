@@ -30,6 +30,10 @@
 	#include <pybind11/pybind11.h>
 	namespace py = pybind11;
 
+	#include <cryptopp/hex.h>
+	#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+	#include <cryptopp/md5.h>
+
 	#include "mar/AsciiStreamReader.h"
 	#include "mar/AsciiLineReader.h"
 	
@@ -38,6 +42,7 @@
 	#include "dxml/XMLWriter.h"
 	#include "dxml/XMLParser.h"
 	#include "dxml/GameXMLReader.h"
+	#include "dxml/GameXMLWriter.h"
 
 	#include "das/Api.h"
 	#include "das/Algorithm.h"
@@ -59,14 +64,22 @@ namespace DENG {
 			const bool m_read_bit;
 
 			// filename and parent directory to consider
-			const std::string m_file_name;
-			const std::string m_parent_dir;
+			std::string m_file_name;
+			const std::string m_project_path;
+
+			bool m_fail_bit = false;
+
+			// 0 - checksums match
+			// 1 - checksums do not match
+			// 2 - checksum file not present
+			int m_checksum_flag = 2;
 
 		private:
 			void _CreateNewProject();
+			std::string _CalculateChecksum();
 
 		public:
-			ProjectDataManager(const std::string &_file_name, const std::string& _parent_dir = ".", bool _read_bit = true);
+			ProjectDataManager(const std::string& _path, bool _read_bit = true, const std::string& _data_file_name = "");
 			ProjectDataManager(const ProjectDataManager& _pdm) = default;
 
 			inline void SetMetadata(const DXML::GameMetadata& _meta) {
@@ -108,10 +121,21 @@ namespace DENG {
 			}
 
 			void Load();
+			void Repair();
 			void Save();
+			void VerifyFiles();
+			void CalculateAndWriteChecksum();
 
 			inline bool GetSaveBit() {
 				return m_save_bit;
+			}
+
+			inline bool GetFailBit() {
+				return m_fail_bit;
+			}
+
+			inline int GetChecksumFlag() {
+				return m_checksum_flag;
 			}
 	};
 }

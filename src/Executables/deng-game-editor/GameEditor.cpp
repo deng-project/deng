@@ -15,9 +15,10 @@ namespace DENG {
 			EVT_TREE_ITEM_ACTIVATED(ID_EDITOR_HIERARCHY_PANEL, GameEditor::_OnHierarchyItemClick)
 		wxEND_EVENT_TABLE()
 
-		GameEditor::GameEditor() :
+		GameEditor::GameEditor(ProjectDataManager *_data_man) :
 			wxFrame(NULL, wxID_ANY, "DENG game editor", wxDefaultPosition, wxSize(1880, 1020)),
-			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING)
+			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING),
+			m_project(_data_man)
 		{
 			m_menubar = new EditorMenubar;
 			SetMenuBar(m_menubar);

@@ -43,7 +43,7 @@ namespace DENG {
             _CreateFramebuffers();
             _CreateCommandPool();
             _AllocateCommandBuffers();
-            _CreateSynchronisationPrimitives();
+            CreateSynchronisationPrimitives();
         }
 
 
@@ -75,13 +75,7 @@ namespace DENG {
             _CleanPipelineResources();
 
             // destroy semaphores and fences
-            for(size_t i = 0; i < m_render_finished_semaphores.size(); i++) {
-                if(!m_no_swapchain) {
-                    vkDestroySemaphore(device, m_render_finished_semaphores[i], nullptr);
-                    vkDestroySemaphore(device, m_image_available_semaphores[i], nullptr);
-                }
-                vkDestroyFence(device, m_flight_fences[i], nullptr);
-            }
+            DestroySynchronisationPrimitives();
         }
 
 
@@ -118,7 +112,7 @@ namespace DENG {
             image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             image_view_info.image = tex_data.image;
             image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+            image_view_info.format = VK_FORMAT_DEFAULT_IMAGE;
             
             image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             image_view_info.subresourceRange.baseMipLevel = 0;
@@ -315,7 +309,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::_CreateSynchronisationPrimitives() {
+        void Framebuffer::CreateSynchronisationPrimitives() {
             // swapchain image acquisition and presentation semaphores
             if(!m_no_swapchain) {
                 m_image_available_semaphores.resize(m_framebuffer_image_ids.size());
@@ -384,14 +378,14 @@ namespace DENG {
                 if (mesh_ubo_layouts.size())
                     layouts[1] = m_mesh_descriptor_set_layout_creators[_ref.shader_module_id]->GetDescriptorSetLayout();
 
-                m_pipeline_creators.push_back(new PipelineCreator(
+                m_pipeline_creators[_ref.shader_module_id] = new PipelineCreator(
                     m_instance_creator.GetDevice(),
                     m_renderpass,
                     VkExtent2D{ m_extent.x, m_extent.y },
                     m_sample_count,
                     layouts,
                     *_modules[_ref.shader_module_id]
-                ));
+                );
 
                 // create descriptor sets for shader usage
                 if (shader_ubo_layouts.size()) {
@@ -427,9 +421,12 @@ namespace DENG {
         }
 
 
-        void Framebuffer::StartCommandBufferRecording(TRS::Vector4<float> _clear_color) {
-            vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
-            vkResetFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame]);
+        void Framebuffer::StartCommandBufferRecording(TRS::Vector4<float> _clear_color, uint32_t _image_id) {
+            if (m_no_swapchain) {
+                vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
+                vkResetFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame]);
+            }
+
             vkResetCommandBuffer(m_command_buffers[m_current_frame], 0);
             
             VkCommandBufferBeginInfo cmd_beg_info = {};
@@ -442,7 +439,7 @@ namespace DENG {
             VkRenderPassBeginInfo rp_beg_info = {};
             rp_beg_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             rp_beg_info.renderPass = m_renderpass;
-            rp_beg_info.framebuffer = m_framebuffers[m_current_frame];
+            rp_beg_info.framebuffer = m_framebuffers[_image_id];
             rp_beg_info.renderArea.offset = { 0, 0 };
             rp_beg_info.renderArea.extent = { m_extent.x, m_extent.y };
 
@@ -484,8 +481,8 @@ namespace DENG {
                 vkCmdBindPipeline(m_command_buffers[m_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_creators[_ref.shader_module_id]->GetPipeline());
                 std::vector<VkBuffer> buffers(_modules[_ref.shader_module_id]->attributes.size(), m_main_buffer);
                 vkCmdBindVertexBuffers(
-                    m_command_buffers[m_current_frame], 
-                    0, 
+                    m_command_buffers[m_current_frame],
+                    0,
                     static_cast<uint32_t>(buffers.size()),
                     buffers.data(),
                     cmd_it->attribute_offsets.data());
@@ -564,22 +561,19 @@ namespace DENG {
             submit_info.pCommandBuffers = &m_command_buffers[m_current_frame];
 
             // submit the graphics queue
-            VkResult res;
-            if ((res = vkQueueSubmit(m_instance_creator.GetGraphicsQueue(), 1, &submit_info, m_flight_fences[m_current_frame])) != VK_SUCCESS) {
-                VK_FRAME_ERR("Failed to submit graphics queue; error code: " + std::to_string(res));
+            if (vkQueueSubmit(m_instance_creator.GetGraphicsQueue(), 1, &submit_info, m_flight_fences[m_current_frame]) != VK_SUCCESS) {
+                VK_FRAME_ERR("Failed to submit graphics queue.");
             }
-
-            m_current_frame = (m_current_frame + 1) % static_cast<uint32_t>(m_framebuffer_image_ids.size());
         }
 
 
-        VkResult Framebuffer::Present() {
+        VkResult Framebuffer::Present(uint32_t _image_id) {
             VkPresentInfoKHR present_info = {};
             present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
             present_info.waitSemaphoreCount = 1;
             present_info.pWaitSemaphores = &m_render_finished_semaphores[m_current_frame];
             present_info.swapchainCount = 1;
-            present_info.pImageIndices = &m_current_frame;
+            present_info.pImageIndices = &_image_id;
             present_info.pSwapchains = &m_swapchain_creator->GetSwapchain();
 
             m_current_frame = (m_current_frame + 1) % static_cast<uint32_t>(m_framebuffer_image_ids.size());
@@ -643,7 +637,7 @@ namespace DENG {
                 pc->DestroyPipelineData();
 
             // destroy framebuffer images if possible
-            if (!m_no_swapchain) {
+            if (m_no_swapchain) {
                 for (size_t i = 0; i < m_framebuffer_image_ids.size(); i++) {
                     data = std::get<Vulkan::TextureData>(db->GetResource(m_framebuffer_image_ids[i]).vendor);
                     vkDestroySampler(m_instance_creator.GetDevice(), data.sampler, nullptr);
@@ -651,22 +645,39 @@ namespace DENG {
                     vkDestroyImage(m_instance_creator.GetDevice(), data.image, nullptr);
                     vkFreeMemory(m_instance_creator.GetDevice(), data.memory, nullptr);
                 }
-            }
 
-            // check if registry removal is required
-            if (_remove_from_registry) {
-                db->DeleteResource(m_color_resolve_image_id);
-                db->DeleteResource(m_depth_image_id);
+                // check if registry removal is required
+                if (_remove_from_registry) {
+                    db->DeleteResource(m_color_resolve_image_id);
+                    db->DeleteResource(m_depth_image_id);
 
-                for (auto it = m_framebuffer_image_ids.begin(); it != m_framebuffer_image_ids.end(); it++) {
-                    db->DeleteResource(*it);
+                    for (auto it = m_framebuffer_image_ids.begin(); it != m_framebuffer_image_ids.end(); it++) {
+                        db->DeleteResource(*it);
+                    }
+
+                    m_color_resolve_image_id = UINT32_MAX;
+                    m_depth_image_id = UINT32_MAX;
+                    m_framebuffer_image_ids.clear();
                 }
-
-                m_color_resolve_image_id = UINT32_MAX;
-                m_depth_image_id = UINT32_MAX;
-                m_framebuffer_image_ids.clear();
             }
         }
+
+        
+        void Framebuffer::DestroySynchronisationPrimitives() {
+            // destroy semaphores and fences
+            for (size_t i = 0; i < m_framebuffer_image_ids.size(); i++) {
+                if (!m_no_swapchain) {
+                    vkDestroySemaphore(m_instance_creator.GetDevice(), m_render_finished_semaphores[i], nullptr);
+                    vkDestroySemaphore(m_instance_creator.GetDevice(), m_image_available_semaphores[i], nullptr);
+                }
+                vkDestroyFence(m_instance_creator.GetDevice(), m_flight_fences[i], nullptr);
+            }
+
+            m_render_finished_semaphores.clear();
+            m_image_available_semaphores.clear();
+            m_flight_fences.clear();
+        }
+
 
 
         void Framebuffer::ClearShaderResources(uint32_t _id) {

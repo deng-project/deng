@@ -113,7 +113,7 @@ namespace DENG {
 								 const char* _back);
 			
 			inline void DeleteResource(uint32_t _id) {
-				if (_id < static_cast<uint32_t>(m_resources.size()))
+				if (_id >= static_cast<uint32_t>(m_resources.size()))
 					throw std::runtime_error("Invalid texture resource id (index out of bounds)");
 				else if (m_resources[_id] == nullptr)
 					throw std::runtime_error("Texture resource with id " + std::to_string(_id) + " is already deleted");
@@ -124,7 +124,7 @@ namespace DENG {
 			}
 
 			inline TextureResource& GetResource(uint32_t _id) {
-				if (_id < static_cast<uint32_t>(m_resources.size()))
+				if (_id >= static_cast<uint32_t>(m_resources.size()))
 					throw std::runtime_error("Invalid texture resource id (index out of bounds)");
 				else if (m_resources[_id] == nullptr)
 					throw std::runtime_error("Cannot retrieve deleted texture with id " + std::to_string(_id));

@@ -17,8 +17,6 @@ namespace DENG {
             wxInitAllImageHandlers();
             ProjectManager* frame = new ProjectManager();
             frame->Show(true);
-            //m_editor = new GameEditor();
-            //m_editor->Show(true);
 
             return true;
         }

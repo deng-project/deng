@@ -72,6 +72,7 @@ namespace DENG {
 			std::vector<Entity*> m_entities;
 			DXML::GraphicsBackend m_backend = DXML::GRAPHICS_BACKEND_UNKNOWN;
 			uint32_t m_msaa = 1;
+			pybind11::scoped_interpreter m_py_guard;
 			pybind11::dict m_custom_data;
 
 			static Registry* m_instance;

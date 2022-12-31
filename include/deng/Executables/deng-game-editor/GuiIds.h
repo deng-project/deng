@@ -12,8 +12,10 @@ namespace DENG {
 		enum GuiIDs {
 			/** Project management **/
 			// Project management ids
+			ID_PROJECT_MANAGER,
 			ID_PROJECT_MANAGER_NEW,
 			ID_PROJECT_MANAGER_OPEN,
+			ID_PROJECT_MANAGER_REPAIR,
 
 			// Website stuff ids
 			ID_PROJECT_MANAGER_DENG_WEBSITE,

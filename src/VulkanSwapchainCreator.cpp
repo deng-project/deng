@@ -140,8 +140,6 @@ namespace DENG {
             for (auto it = m_swapchain_image_ids.begin(); it != m_swapchain_image_ids.end(); it++) {
                 Vulkan::TextureData& data = std::get<Vulkan::TextureData>(db->GetResource(*it).vendor);
                 vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
-
-                db->DeleteResource(*it);
             }
 
             vkDestroySwapchainKHR(device, m_swapchain, nullptr);
@@ -157,7 +155,7 @@ namespace DENG {
 
             // check if found surface formats support SRGB coloring and nonlinear color space
             for(const VkSurfaceFormatKHR &sformat : m_instance_creator.GetSurfaceFormats()) {
-                if(sformat.format == VK_FORMAT_B8G8R8A8_UNORM && sformat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                if(sformat.format == VK_FORMAT_DEFAULT_IMAGE && sformat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                     m_selected_surface_format = sformat;
                     found_suitable_format = true;
                     break;
@@ -275,26 +273,33 @@ namespace DENG {
 
             uint32_t image_count = UINT32_MAX;
             vkGetSwapchainImagesKHR(m_instance_creator.GetDevice(), m_swapchain, &image_count, nullptr);
-            m_swapchain_image_ids.resize(image_count);
             std::vector<VkImage> images(image_count);
             vkGetSwapchainImagesKHR(m_instance_creator.GetDevice(), m_swapchain, &image_count, images.data());
 
             // copy images to TextureDatabase
-            m_swapchain_image_ids.resize(image_count);
-            for (size_t i = 0; i < images.size(); i++) {
-                Vulkan::TextureData tex_data;
-                tex_data.image = images[i];
+            TextureDatabase* db = TextureDatabase::GetInstance();
+            if (m_swapchain_image_ids.size() != image_count) {
+                m_swapchain_image_ids.resize(image_count);
+                for (size_t i = 0; i < images.size(); i++) {
+                    Vulkan::TextureData tex_data;
+                    tex_data.image = images[i];
 
-                TextureResource res;
-                res.width = ext.width;
-                res.height = ext.height;
-                res.bit_depth = 4;
-                res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-                res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
-                res.vendor = tex_data;
+                    TextureResource res;
+                    res.width = ext.width;
+                    res.height = ext.height;
+                    res.bit_depth = 4;
+                    res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
+                    res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
+                    res.vendor = tex_data;
 
-                TextureDatabase* db = TextureDatabase::GetInstance();
-                m_swapchain_image_ids[i] = db->AddResource(res);
+                    m_swapchain_image_ids[i] = db->AddResource(res);
+                }
+            }
+            else {
+                for (size_t i = 0; i < images.size(); i++) {
+                    Vulkan::TextureData& data = std::get<Vulkan::TextureData>(db->GetResource(m_swapchain_image_ids[i]).vendor);
+                    data.image = images[i];
+                }
             }
         }
 
