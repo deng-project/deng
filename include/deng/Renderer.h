@@ -34,6 +34,7 @@ namespace DENG {
         uint32_t draw_count = 0; // if used with indices, this property specifies index count, otherwise it describes attribute count
         std::vector<uint32_t> texture_ids;
         std::vector<std::size_t> attribute_offsets;
+        bool swap_textures_bit = true;
 
         struct {
             TRS::Point2D<int32_t> offset = { INT32_MAX, INT32_MAX };

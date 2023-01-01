@@ -140,12 +140,14 @@ namespace DENG {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
 
         uint32_t binding_id = 1;
+
         // model ubo
         mesh.ubo_data_layouts.reserve(3);
         mesh.ubo_data_layouts.emplace_back();
         mesh.ubo_data_layouts.back().block.binding = binding_id++;
         mesh.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(ModelUbo));
         mesh.ubo_data_layouts.back().block.offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelUbo)));
+        mesh.enable = true;
         m_mesh_ubo_offset = mesh.ubo_data_layouts.back().block.offset;
         m_renderer.UpdateUniform(nullptr, static_cast<uint32_t>(sizeof(ModelUbo)), mesh.ubo_data_layouts.back().block.offset);
 
@@ -162,6 +164,7 @@ namespace DENG {
         // create mesh draw commands
         mesh.commands.reserve(m_mesh.primitive_count);
         m_normal_visualizers.reserve(m_mesh.primitive_count);
+        
         for(uint32_t i = 0; i < m_mesh.primitive_count; i++) {
             mesh.commands.emplace_back();
             const Libdas::DasMeshPrimitive &prim = mp_model->mesh_primitives[m_mesh.primitives[i]];

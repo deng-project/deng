@@ -133,10 +133,10 @@ namespace DENG {
 
         void ProjectManager::_OnClose(wxCloseEvent& _ev) {
             if (m_project) {
-                m_project = nullptr;
-                m_project_owner_bit = false;
                 GameEditor* ed = new GameEditor(m_project);
                 ed->Show(true);
+                m_project = nullptr;
+                m_project_owner_bit = false;
             }
 
             _ev.Skip();

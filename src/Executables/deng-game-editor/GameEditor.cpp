@@ -20,6 +20,7 @@ namespace DENG {
 			m_mgr(this, wxAUI_MGR_ALLOW_ACTIVE_PANE | wxAUI_MGR_ALLOW_FLOATING),
 			m_project(_data_man)
 		{
+			DENG_ASSERT(m_project);
 			m_menubar = new EditorMenubar;
 			SetMenuBar(m_menubar);
 			
@@ -56,7 +57,7 @@ namespace DENG {
 		void GameEditor::_CreateEditorLayout() {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
 			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxSize(200, 600), wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
-			m_viewport = new RendererViewport(this, DXML::GRAPHICS_BACKEND_OPENGL);
+			m_viewport = new RendererViewport(this, m_project->GetConfiguration().graphicsBackend);
 			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(600, 200), wxNO_BORDER | wxTE_MULTILINE);
 			m_status = new wxStatusBar(this, wxID_ANY);
 			SetStatusBar(m_status);

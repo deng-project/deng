@@ -460,7 +460,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Draw(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules) {
+        void Framebuffer::Draw(MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules) {
             _CheckAndCreatePipeline(_ref, _mesh_id, _modules);
             _CheckAndCreateMeshDescriptors(_ref, _mesh_id);
             
@@ -488,8 +488,9 @@ namespace DENG {
                     cmd_it->attribute_offsets.data());
 
                 // check if textures should be bound
-                if (cmd_it->texture_ids.size() && (_modules[_ref.shader_module_id]->enable_2d_textures || _modules[_ref.shader_module_id]->enable_3d_textures)) {
+                if (cmd_it->texture_ids.size() && (_modules[_ref.shader_module_id]->enable_2d_textures || _modules[_ref.shader_module_id]->enable_3d_textures) && cmd_it->swap_textures_bit) {
                     m_mesh_desc_allocators[_mesh_id]->UpdateDescriptorSets(cmd_it->texture_ids);
+                    cmd_it->swap_textures_bit = false;
                 }
 
 

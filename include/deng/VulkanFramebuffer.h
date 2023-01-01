@@ -76,8 +76,8 @@ namespace DENG {
                 std::vector<uint32_t> m_framebuffer_image_ids;
 
                 // missing resources
-                const uint32_t m_missing_2d;
-                const uint32_t m_missing_3d;
+                uint32_t m_missing_2d;
+                uint32_t m_missing_3d;
 
                 VkRenderPass m_renderpass;
                 bool m_no_swapchain;
@@ -129,7 +129,7 @@ namespace DENG {
                 void ClearShaderResources(uint32_t _id);
                 void ClearMeshResources(uint32_t _id);
                 void StartCommandBufferRecording(TRS::Vector4<float> _clear_color, uint32_t _image_id = 0);
-                void Draw(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules);
+                void Draw(MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules);
                 void EndCommandBufferRecording();
                 void Render();
 
@@ -177,6 +177,14 @@ namespace DENG {
 
                 inline VkSemaphore GetRenderFinishedSemaphore() {
                     return m_render_finished_semaphores[m_current_frame];
+                }
+
+                inline void SetMissing2DTextureHandle(uint32_t _handle) {
+                    m_missing_2d = _handle;
+                }
+
+                inline void SetMissing3DTextureHandle(uint32_t _handle) {
+                    m_missing_3d = _handle;
                 }
 
                 inline void SetExtent(TRS::Point2D<uint32_t> _ext) {

@@ -88,11 +88,11 @@ namespace DENG {
         module.vertex_shader_src =
             "#version 450\n"\
             "#extension GL_ARB_separate_shader_objects : enable\n"\
-            "layout(std140, binding=0) uniform CameraUbo {\n"\
+            "layout(std140, set = 0, binding=0) uniform CameraUbo {\n"\
             "   mat4 projection;\n"\
             "   mat4 view;\n"\
             "} camera;\n"\
-            "layout(std140, binding=1) uniform ScaleUbo {\n"\
+            "layout(std140, set = 0, binding=1) uniform ScaleUbo {\n"\
             "   vec4 scale;\n"\
             "} scale;\n"\
             "layout(location = 0) in vec3 in_vert;\n"\
@@ -108,7 +108,7 @@ namespace DENG {
             "#extension GL_ARB_separate_shader_objects : enable\n"\
             "layout(location = 1) in vec3 in_uv;\n"\
             "layout(location = 0) out vec4 out_frag;\n"\
-            "layout(binding = 2) uniform samplerCube skybox;\n"\
+            "layout(set = 1, binding = 2) uniform samplerCube skybox;\n"\
             "void main() {\n"\
             "   out_frag = texture(skybox, in_uv);\n"\
             "}\n";

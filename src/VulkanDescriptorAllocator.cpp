@@ -141,6 +141,10 @@ namespace DENG {
                             db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_3D_IMAGE)) {
                             img_infos.back().sampler = missing_3d_data.sampler;
                             img_infos.back().imageView = missing_3d_data.image_view;
+                        } else {
+                            Vulkan::TextureData data = std::get<Vulkan::TextureData>(db->GetResource(_textures[texture_count]).vendor);
+                            img_infos.back().sampler = data.sampler;
+                            img_infos.back().imageView = data.image_view;
                         }
                         break;
                     }

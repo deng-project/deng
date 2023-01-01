@@ -37,7 +37,8 @@ namespace DENG {
 #endif
 
 				std::chrono::time_point<std::chrono::high_resolution_clock> m_beg_time = std::chrono::high_resolution_clock::now();
-			std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time = std::chrono::high_resolution_clock::now();
+				std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time = std::chrono::high_resolution_clock::now();
+				float m_frame = 0.f;
 
 				struct {
 					bool enabled = false;

@@ -48,7 +48,7 @@ namespace DENG {
 		char *data = (char*)stbi_load(_file_name.c_str(), &x, &y, &depth, (int)_desired_depth);
 		res.width = static_cast<uint32_t>(x);
 		res.height = static_cast<uint32_t>(y);
-		res.bit_depth = depth;
+		res.bit_depth = _desired_depth;
 		res.load_type = GetResourceType(_file_name);
 		res.resource_type = TEXTURE_RESOURCE_2D_IMAGE;
 
@@ -70,7 +70,7 @@ namespace DENG {
 
 		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
-		return m_added_event_queue.front();
+		return static_cast<uint32_t>(m_resources.size() - 1);
 	}
 
 
@@ -95,6 +95,7 @@ namespace DENG {
 			else {
 				res.width = static_cast<uint32_t>(x);
 				res.height = static_cast<uint32_t>(y);
+				res.bit_depth = _desired_depth;
 			}
 			
 			res.load_type = static_cast<TextureResourceLoadType>(static_cast<int>(res.load_type) | static_cast<int>(GetResourceType(*it)));
@@ -108,7 +109,7 @@ namespace DENG {
 		
 		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
-		return m_added_event_queue.front();
+		return static_cast<uint32_t>(m_resources.size() - 1);
 	}
 
 
@@ -134,7 +135,7 @@ namespace DENG {
 
 		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
-		return m_added_event_queue.front();
+		return static_cast<uint32_t>(m_resources.size() - 1);
 	}
 
 

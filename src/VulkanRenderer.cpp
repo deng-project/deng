@@ -50,6 +50,9 @@ namespace DENG {
         // push a missing 3D texture
         m_missing_3d = db->AddResource((uint32_t)x, (uint32_t)y, 4, data, data, data, data, data, data);
         _CreateVendorTextureImages(m_missing_3d);
+
+        m_framebuffers[0]->SetMissing2DTextureHandle(m_missing_2d);
+        m_framebuffers[0]->SetMissing3DTextureHandle(m_missing_3d);
     }
 
 
@@ -196,7 +199,7 @@ namespace DENG {
 
         // draw each mesh
         for (auto mesh_it = m_meshes.begin(); mesh_it != m_meshes.end(); mesh_it++) {
-            if (*mesh_it) {
+            if (*mesh_it && (*mesh_it)->enable) {
                 for (auto fb_it = (*mesh_it)->framebuffer_ids.begin(); fb_it != (*mesh_it)->framebuffer_ids.end(); fb_it++) {
                     if (!m_framebuffers[*fb_it]) {
                         throw std::runtime_error("Cannot draw to framebuffer " + std::to_string(fb_it - (*mesh_it)->framebuffer_ids.begin()) + ". Framebuffer deleted.");
@@ -402,8 +405,12 @@ namespace DENG {
         VkDeviceMemory staging_memory = VK_NULL_HANDLE;
         VkMemoryRequirements mem_req = {};
         VkImageCreateFlagBits img_bits = (VkImageCreateFlagBits)0;
+        VkFormat format = VK_FORMAT_DEFAULT_IMAGE;
+        if (res.bit_depth == 3)
+            format = VK_FORMAT_R8G8B8_UNORM;
+
         VkDeviceSize size = 0;
-        uint32_t mip_levels = CALC_MIPLVL(res.width, res.height);
+        uint32_t mip_levels = 1;
         uint32_t array_count = 0;
 
         switch (res.resource_type) {
@@ -449,7 +456,7 @@ namespace DENG {
             res.height,
             mip_levels,
             array_count,
-            VK_FORMAT_DEFAULT_IMAGE,
+            format,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
             VK_SAMPLE_COUNT_1_BIT,
@@ -473,7 +480,7 @@ namespace DENG {
             m_instance_creator.GetGraphicsQueue(),
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            mip_levels, 
+            1, 
             array_count);
 
         // copy data from staging buffer memory to image memory
@@ -487,8 +494,20 @@ namespace DENG {
             res.height,
             array_count);
 
+
+        Vulkan::_TransitionImageLayout(
+            m_instance_creator.GetDevice(),
+            data.image,
+            pool,
+            m_instance_creator.GetGraphicsQueue(),
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            mip_levels,
+            array_count
+        );
+
         // create mipmaps
-        _CreateMipmaps(data.image, res.width, res.height, mip_levels, array_count);
+        //_CreateMipmaps(data.image, res.width, res.height, mip_levels, array_count);
         
         // destroy staging buffer resources
         vkDestroyBuffer(m_instance_creator.GetDevice(), staging_buffer, nullptr);
@@ -501,7 +520,7 @@ namespace DENG {
         if (res.resource_type == TEXTURE_RESOURCE_2D_IMAGE)
             img_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
         else img_view_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-        img_view_info.format = VK_FORMAT_DEFAULT_IMAGE;
+        img_view_info.format = format;
         img_view_info.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
         img_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         img_view_info.subresourceRange.baseMipLevel = 0;
@@ -518,6 +537,7 @@ namespace DENG {
 
     void VulkanRenderer::_CheckAndCopyTextures() {
         TextureDatabase* db = TextureDatabase::GetInstance();
+
         while (!db->GetAddedEventQueue().empty()) {
             uint32_t id = db->GetAddedEventQueue().front();
             db->GetAddedEventQueue().pop();

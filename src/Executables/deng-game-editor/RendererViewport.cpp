@@ -84,7 +84,6 @@ namespace DENG {
 		void RendererViewport::_OnPaint(wxPaintEvent &_ev) {
 			if (mp_renderer) {
 				mp_renderer->ClearFrame();
-				m_beg_time = std::chrono::high_resolution_clock::now();
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
 				m_input.FlushReleased();
@@ -95,9 +94,16 @@ namespace DENG {
 
 
 				m_end_time = std::chrono::high_resolution_clock::now();
-				auto fps = 1.0e6f / std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_beg_time).count();
-				GameEditor* ed = (GameEditor*)GetParent();
-				ed->SetStatusText("FPS: " + std::to_string(fps));
+				auto time = std::chrono::duration_cast<std::chrono::microseconds>(m_end_time - m_beg_time).count();
+				
+				if (time >= 1e6f) {
+					m_beg_time = std::chrono::high_resolution_clock::now();
+					GameEditor* ed = (GameEditor*)GetParent();
+					ed->SetStatusText("FPS: " + std::to_string(static_cast<uint32_t>(m_frame * 1e6f / time)));
+					m_frame = 0.f;
+				}
+
+				m_frame++;
 			}
 			_ev.Skip();
 		}
@@ -116,7 +122,6 @@ namespace DENG {
 		void RendererViewport::_OnIdle(wxIdleEvent& _ev) {
 			if (mp_renderer) {
 				mp_renderer->ClearFrame();
-				m_beg_time = std::chrono::high_resolution_clock::now();
 				Registry* reg = Registry::GetInstance();
 				reg->Update();
 				m_input.FlushReleased();
@@ -128,9 +133,16 @@ namespace DENG {
 				_ev.RequestMore();
 
 				m_end_time = std::chrono::high_resolution_clock::now();
-				auto fps = 1.0e6f / std::chrono::duration_cast<std::chrono::microseconds>(m_end_time - m_beg_time).count();
-				GameEditor* ed = (GameEditor*)GetParent();
-				ed->SetStatusText("FPS: " + std::to_string(fps));
+				auto time = std::chrono::duration_cast<std::chrono::microseconds>(m_end_time - m_beg_time).count();
+				
+				if (time >= 1e6f) {
+					m_beg_time = std::chrono::high_resolution_clock::now();
+					GameEditor* ed = (GameEditor*)GetParent();
+					ed->SetStatusText("FPS: " + std::to_string(static_cast<uint32_t>(m_frame * 1e6f / time)));
+					m_frame = 0.f;
+				}
+
+				m_frame++;
 			}
 		}
 
