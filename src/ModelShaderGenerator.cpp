@@ -194,32 +194,10 @@ namespace DENG {
         for (uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 uv" + std::to_string(i) + ";\n";
             const std::string id = std::to_string(i);
-            switch (rs->GetPrimary()) {
-                case RENDERER_TYPE_VULKAN:
-                    _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
-                    break;
-
-                case RENDERER_TYPE_OPENGL:
-                    _shader += "layout(binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
-                    break;
-
-                default:
-                    break;
-            }
+            _shader += "layout(${SET} binding = " + std::to_string(m_binding_id++) + ") uniform sampler2D smp" + id + ";\n";
         }
 
-        switch (rs->GetPrimary()) {
-            case RENDERER_TYPE_VULKAN:
-                _shader += "layout(set = 0, binding = " + std::to_string(m_binding_id++) + ") uniform samplerCube env;\n";
-                break;
-
-            case RENDERER_TYPE_OPENGL:
-                _shader += "layout(binding = " + std::to_string(m_binding_id++) + ") uniform samplerCube env;\n";
-                break;
-
-            default:
-                break;
-        }
+        _shader += "layout(${SET} binding = " + std::to_string(m_binding_id++) + ") uniform samplerCube env;\n";
 
         for(uint32_t i = 0; i < _mesh_attr_desc.color_mul_count; i++)
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 col" + std::to_string(i) + ";\n";
@@ -332,7 +310,29 @@ namespace DENG {
         m_out_id = 0;
         m_binding_id = _mesh_attr_desc.joint_set_count ? 3 : 2;
         std::string shader = SHADER_HEADING;  
-        
+
+        std::string body = 
+            "void main() {\n"\
+            "\tif(model.is_color != 0 && model.use_environment_map == 0)\n"\
+            "\t\tout_color = model.color;\n"\
+            "\telse if (model.use_environment_map == 0) {\n"\
+            "${CUSTOM_CODE}"\
+            "\t}\n"\
+            "\telse {\n"\
+            "${CUSTOM_CODE}\n"\
+            "\t}\n"\
+            "}";
+        std::string custom_code = "";
+
+        shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_pos;\n";
+        if(_mesh_attr_desc.normal)
+            shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_norm;\n";
+        if(_mesh_attr_desc.tangent)
+            shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 in_tang;\n";
+        shader += "layout(location = 0) out vec4 out_color;\n";
+
+        _MixTextures(_mesh_attr_desc, shader, custom_code);
+
         // ${SET} variable configuration
         {
             std::size_t pos = 0, fpos = 0, i = 0;
@@ -360,28 +360,6 @@ namespace DENG {
                 pos = fpos;
             }
         }
-
-        std::string body = 
-            "void main() {\n"\
-            "\tif(model.is_color != 0 && model.use_environment_map == 0)\n"\
-            "\t\tout_color = model.color;\n"\
-            "\telse if (model.use_environment_map == 0) {\n"\
-            "${CUSTOM_CODE}"\
-            "\t}\n"\
-            "\telse {\n"\
-            "${CUSTOM_CODE}\n"\
-            "\t}\n"\
-            "}";
-        std::string custom_code = "";
-
-        shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_pos;\n";
-        if(_mesh_attr_desc.normal)
-            shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_norm;\n";
-        if(_mesh_attr_desc.tangent)
-            shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec4 in_tang;\n";
-        shader += "layout(location = 0) out vec4 out_color;\n";
-
-        _MixTextures(_mesh_attr_desc, shader, custom_code);
 
         auto pos = body.find("${CUSTOM_CODE}");
         std::string mod_body = body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);

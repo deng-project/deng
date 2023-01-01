@@ -93,17 +93,7 @@ namespace DENG {
 					_SwapBuffers();
 
 
-				m_end_time = std::chrono::high_resolution_clock::now();
-				auto time = std::chrono::duration_cast<std::chrono::microseconds>(m_end_time - m_beg_time).count();
-				
-				if (time >= 1e6f) {
-					m_beg_time = std::chrono::high_resolution_clock::now();
-					GameEditor* ed = (GameEditor*)GetParent();
-					ed->SetStatusText("FPS: " + std::to_string(static_cast<uint32_t>(m_frame * 1e6f / time)));
-					m_frame = 0.f;
-				}
-
-				m_frame++;
+				_CalculateAndShowFPS();
 			}
 			_ev.Skip();
 		}
@@ -130,19 +120,8 @@ namespace DENG {
 				if(m_backend == DXML::GRAPHICS_BACKEND_OPENGL)
 					_SwapBuffers();
 
+				_CalculateAndShowFPS();
 				_ev.RequestMore();
-
-				m_end_time = std::chrono::high_resolution_clock::now();
-				auto time = std::chrono::duration_cast<std::chrono::microseconds>(m_end_time - m_beg_time).count();
-				
-				if (time >= 1e6f) {
-					m_beg_time = std::chrono::high_resolution_clock::now();
-					GameEditor* ed = (GameEditor*)GetParent();
-					ed->SetStatusText("FPS: " + std::to_string(static_cast<uint32_t>(m_frame * 1e6f / time)));
-					m_frame = 0.f;
-				}
-
-				m_frame++;
 			}
 		}
 
@@ -215,6 +194,21 @@ namespace DENG {
 #ifdef _WIN32
 			SwapBuffers(m_dc);
 #endif
+		}
+
+
+		void RendererViewport::_CalculateAndShowFPS() {
+			m_end_time = std::chrono::high_resolution_clock::now();
+			auto time = std::chrono::duration_cast<std::chrono::microseconds>(m_end_time - m_beg_time).count();
+
+			if (time >= 5e5f) {
+				m_beg_time = std::chrono::high_resolution_clock::now();
+				GameEditor* ed = (GameEditor*)GetParent();
+				ed->SetStatusText("FPS: " + std::to_string(static_cast<uint32_t>(m_frame * 1e6f / time)));
+				m_frame = 0.f;
+			}
+
+			m_frame++;
 		}
 	}
 }

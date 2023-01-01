@@ -140,13 +140,18 @@ namespace DENG {
         GPUMemoryManager *mem_manager = GPUMemoryManager::GetInstance();
 
         uint32_t binding_id = 1;
-
-        // model ubo
         mesh.ubo_data_layouts.reserve(3);
+
+        // ModelUbo
         mesh.ubo_data_layouts.emplace_back();
         mesh.ubo_data_layouts.back().block.binding = binding_id++;
         mesh.ubo_data_layouts.back().block.size = static_cast<uint32_t>(sizeof(ModelUbo));
         mesh.ubo_data_layouts.back().block.offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, static_cast<uint32_t>(sizeof(ModelUbo)));
+        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX | SHADER_STAGE_GEOMETRY | SHADER_STAGE_FRAGMENT;
+        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+        mesh.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
+
+        mesh.framebuffer_ids.push_back(0);
         mesh.enable = true;
         m_mesh_ubo_offset = mesh.ubo_data_layouts.back().block.offset;
         m_renderer.UpdateUniform(nullptr, static_cast<uint32_t>(sizeof(ModelUbo)), mesh.ubo_data_layouts.back().block.offset);
@@ -157,9 +162,29 @@ namespace DENG {
             mesh.ubo_data_layouts.back().block.binding = binding_id++;
             mesh.ubo_data_layouts.back().block.size = m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>));
             mesh.ubo_data_layouts.back().block.offset = mem_manager->RequestUniformMemoryLocationP(m_renderer, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)));
+            mesh.ubo_data_layouts.back().stage = SHADER_STAGE_VERTEX | SHADER_STAGE_GEOMETRY | SHADER_STAGE_FRAGMENT;
+            mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_BUFFER;
+            mesh.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
+
             m_mesh_joints_ubo_offset = mesh.ubo_data_layouts.back().block.offset;
             m_renderer.UpdateUniform(nullptr, m_skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>)), mesh.ubo_data_layouts.back().block.offset);
         }
+
+        // 2D texture samplers
+        for (uint32_t i = 0; i < mp_model->mesh_primitives[m_mesh.primitives[0]].texture_count; i++) {
+            mesh.ubo_data_layouts.emplace_back();
+            mesh.ubo_data_layouts.back().block.binding = binding_id++;
+            mesh.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
+            mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
+            mesh.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
+        }
+
+        // 3D texture sampler
+        mesh.ubo_data_layouts.emplace_back();
+        mesh.ubo_data_layouts.back().block.binding = binding_id++;
+        mesh.ubo_data_layouts.back().stage = SHADER_STAGE_FRAGMENT;
+        mesh.ubo_data_layouts.back().type = UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER;
+        mesh.ubo_data_layouts.back().usage = UNIFORM_USAGE_PER_MESH;
 
         // create mesh draw commands
         mesh.commands.reserve(m_mesh.primitive_count);

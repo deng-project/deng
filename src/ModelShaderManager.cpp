@@ -29,12 +29,14 @@ namespace DENG {
             UNIFORM_USAGE_PER_SHADER
         });
 
-        module.ubo_data_layouts.push_back({
-            { binding_id++, static_cast<uint32_t>(sizeof(ModelUbo)), 0 },
-            UNIFORM_DATA_TYPE_BUFFER,
-            SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT | SHADER_STAGE_FRAGMENT,
-            UNIFORM_USAGE_PER_MESH
-        });
+        // ModelUbo
+        binding_id++;
+        //module.ubo_data_layouts.push_back({
+        //    { binding_id++, static_cast<uint32_t>(sizeof(ModelUbo)), 0 },
+        //    UNIFORM_DATA_TYPE_BUFFER,
+        //    SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT | SHADER_STAGE_FRAGMENT,
+        //    UNIFORM_USAGE_PER_MESH
+        //});
 
         module.attributes.reserve(3 + _mesh_attr_desc.texture_2d_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
         module.attribute_strides.reserve(3 + _mesh_attr_desc.texture_2d_count + _mesh_attr_desc.color_mul_count + 2 * _mesh_attr_desc.joint_set_count);
@@ -61,14 +63,6 @@ namespace DENG {
         }
 
         if(_mesh_attr_desc.joint_set_count) {
-            const uint32_t size = _mesh_attr_desc.skeleton_joint_count * static_cast<uint32_t>(sizeof(TRS::Matrix4<float>));
-            module.ubo_data_layouts.push_back({
-                { binding_id++, size, 0 },
-                UNIFORM_DATA_TYPE_BUFFER,
-                SHADER_STAGE_VERTEX,
-                UNIFORM_USAGE_PER_MESH
-            });
-
             for(uint32_t i = 0; i < _mesh_attr_desc.joint_set_count; i++) {
                 module.attributes.push_back(ATTRIBUTE_TYPE_VEC4_USHORT);
                 module.attribute_strides.push_back(sizeof(TRS::Vector4<uint16_t>));
@@ -101,26 +95,8 @@ namespace DENG {
             }
         }
 
-        if(_mesh_attr_desc.texture_2d_count) {
-            module.enable_2d_textures = true;
-            for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
-                module.ubo_data_layouts.push_back({
-                    { binding_id++, 0, 0 },
-                    UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER,
-                    SHADER_STAGE_FRAGMENT,
-                    UNIFORM_USAGE_PER_SHADER
-                });
-            }
-        }
-
+        module.enable_2d_textures = _mesh_attr_desc.texture_2d_count > 0;
         module.enable_3d_textures = true;
-        module.ubo_data_layouts.push_back({
-            { binding_id++, 0, 0 },
-            UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER,
-            SHADER_STAGE_FRAGMENT,
-            UNIFORM_USAGE_PER_SHADER
-        });
-
         module.vertex_shader_src = ModelShaderGenerator::GenerateVertexShaderSource(_mesh_attr_desc);
         module.fragment_shader_src = ModelShaderGenerator::GenerateFragmentShaderSource(_mesh_attr_desc);
         return _rend.PushShaderModule(module);

@@ -21,6 +21,12 @@ namespace DENG {
 			m_project(_data_man)
 		{
 			DENG_ASSERT(m_project);
+
+			wxIcon icon;
+			wxBitmap bmp = wxBitmap::NewFromPNGData(GetLogoIcon32x32(), GetLogoIcon32x32Size());
+			icon.CopyFromBitmap(bmp);
+			SetIcon(icon);
+
 			m_menubar = new EditorMenubar;
 			SetMenuBar(m_menubar);
 			

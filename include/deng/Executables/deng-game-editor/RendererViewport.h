@@ -60,6 +60,7 @@ namespace DENG {
 				void _OnMouseMotion(wxMouseEvent& _ev);
 				void _OnMouseWheel(wxMouseEvent& _ev);
 				
+				void _CalculateAndShowFPS();
 				void _SwapBuffers();
 
 			public:
