@@ -18,11 +18,11 @@ namespace DENG {
             ProjectManager* frame = new ProjectManager();
             frame->Show(true);
 
+            _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
             return true;
         }
 
         int GameEditorApp::OnExit() {
-            _CrtDumpMemoryLeaks();
             return 0;
         }
 

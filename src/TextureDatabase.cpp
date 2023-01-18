@@ -84,7 +84,7 @@ namespace DENG {
 	{
 		TextureResource res;
 		std::array<std::string, 6> files = { _right, _left, _top, _bottom, _front, _back };
-		std::array<const char*, 6> data_ptrs;
+		std::array<char*, 6> data_ptrs;
 
 		for (auto it = files.begin(); it != files.end(); it++) {
 			int x, y, depth;
@@ -107,6 +107,9 @@ namespace DENG {
 		for (uint32_t i = 0; i < 6; i++)
 			std::memcpy(res.rgba_data + i * res.width * res.height * res.bit_depth, data_ptrs[i], res.width * res.height * res.bit_depth);
 		
+		for (auto ptr : data_ptrs)
+			stbi_image_free(ptr);
+
 		m_resources.emplace_back(new TextureResource(res));
 		m_added_event_queue.push(static_cast<uint32_t>(m_resources.size() - 1));
 		return static_cast<uint32_t>(m_resources.size() - 1);

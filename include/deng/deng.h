@@ -17,6 +17,7 @@
 #include <stack>
 #include <array>
 #include <queue>
+#include <filesystem>
 
 // platform specific includes
 #ifdef _WIN32

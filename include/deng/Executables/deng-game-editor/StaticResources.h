@@ -19,6 +19,24 @@ namespace DENG {
         size_t GetLogoIcon32x32Size();
 		const unsigned char *GetRunIcon16x16();
 		size_t GetRunIcon16x16Size();
+		
+		// asset panel icons
+		const unsigned char *GetAssetAudioIconPng();
+		size_t GetAssetAudioIconPngSize();
+		const unsigned char *GetAssetConfigIconPng();
+		size_t GetAssetConfigIconPngSize();
+		const unsigned char* GetAssetImageIconPng();
+		size_t GetAssetImageIconPngSize();
+		const unsigned char *GetAssetModelIconPng();
+		size_t GetAssetModelIconPngSize();
+		const unsigned char *GetAssetPlaybackIconPng();
+		size_t GetAssetPlaybackIconPngSize();
+		const unsigned char *GetAssetPyScriptIconPng();
+		size_t GetAssetPyScriptIconPngSize();
+		const unsigned char *GetAssetUnknownIconPng();
+		size_t GetAssetUnknownIconPngSize();
+		const unsigned char *GetAssetXMLDocumentIconPng();
+		size_t GetAssetXMLDocumentIconPngSize();
 	}
 }
 

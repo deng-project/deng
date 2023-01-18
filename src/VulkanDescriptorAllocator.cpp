@@ -120,7 +120,8 @@ namespace DENG {
                     {
                         img_infos.emplace_back();
                         img_infos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        if (texture_count >= _textures.size() || (db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_2D_IMAGE &&
+                        if (texture_count >= _textures.size() || _textures[texture_count] == UINT32_MAX || 
+                            (db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_2D_IMAGE &&
                             db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE)) {
                             img_infos.back().sampler = missing_2d_data.sampler;
                             img_infos.back().imageView = missing_2d_data.image_view;
@@ -137,7 +138,8 @@ namespace DENG {
                     {
                         img_infos.emplace_back();
                         img_infos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        if (texture_count >= _textures.size() || (db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_3D_IMAGE &&
+                        if (texture_count >= _textures.size() || _textures[texture_count] == UINT32_MAX ||
+                            (db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_3D_IMAGE &&
                             db->GetResource(_textures[texture_count]).resource_type != TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_3D_IMAGE)) {
                             img_infos.back().sampler = missing_3d_data.sampler;
                             img_infos.back().imageView = missing_3d_data.image_view;

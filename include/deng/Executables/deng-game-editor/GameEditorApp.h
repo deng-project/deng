@@ -9,6 +9,7 @@
 #ifdef GAME_EDITOR_APP_CPP
     #include <any>
 #ifdef _DEBUG
+    #include <stdlib.h>
     #include <crtdbg.h>
 #endif
     #include <wx/wx.h>

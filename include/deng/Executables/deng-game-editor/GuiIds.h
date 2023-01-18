@@ -115,6 +115,11 @@ namespace DENG {
 			ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS,
 			/** End of mesh inspector panel **/
 
+			/** Asset panel **/
+			ID_ASSET_PANEL,
+			ID_ASSET_PANEL_DIR_CTRL,
+			/** End of asset panel **/
+
 			/** Shader viewer dialog **/
 			ID_SHADER_VIEWER_EDIT_VERT_SHADER,
 			ID_SHADER_VIEWER_EDIT_GEOM_SHADER,

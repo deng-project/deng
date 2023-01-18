@@ -43,6 +43,7 @@ namespace DENG {
 		GameEditor::~GameEditor() {
 			delete m_grid;
 			delete m_camera;
+			delete m_skybox;
 			
 			Destroy();
 
@@ -64,7 +65,7 @@ namespace DENG {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
 			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxSize(200, 600), wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
 			m_viewport = new RendererViewport(this, m_project->GetConfiguration().graphicsBackend);
-			m_assets = new wxTextCtrl(this, wxID_ANY, "Assets panel", wxDefaultPosition, wxSize(600, 200), wxNO_BORDER | wxTE_MULTILINE);
+			m_assets = new AssetPanel(this, m_project->GetPath());
 			m_status = new wxStatusBar(this, wxID_ANY);
 			SetStatusBar(m_status);
 

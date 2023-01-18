@@ -6,6 +6,7 @@
 set(DENG_GAME_EDITOR_TARGET deng-game-editor)
 set(DENG_GAME_EDITOR_HEADERS 
 	include/deng/Executables/deng-game-editor/AnimationInspectorPanel.h
+	include/deng/Executables/deng-game-editor/AssetPanel.h
 	include/deng/Executables/deng-game-editor/CubeGeneratorDialog.h
 	include/deng/Executables/deng-game-editor/EditorCameraController.h
 	include/deng/Executables/deng-game-editor/EditorMenubar.h
@@ -28,6 +29,7 @@ set(DENG_GAME_EDITOR_HEADERS
 	
 set(DENG_GAME_EDITOR_SOURCES
 	src/Executables/deng-game-editor/AnimationInspectorPanel.cpp
+	src/Executables/deng-game-editor/AssetPanel.cpp
 	src/Executables/deng-game-editor/CubeGeneratorDialog.cpp
 	src/Executables/deng-game-editor/EditorCameraController.cpp
 	src/Executables/deng-game-editor/EditorMenubar.cpp

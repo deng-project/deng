@@ -269,6 +269,7 @@ namespace DENG {
         for(auto cmd = mesh.commands.begin(); cmd != mesh.commands.end(); cmd++) {
             cmd->texture_ids = _handles;
             cmd->texture_ids.push_back(m_environment_map);
+            cmd->swap_textures_bit = true;
         }
     }
 
@@ -278,7 +279,11 @@ namespace DENG {
         MeshReference& ref = m_renderer.GetMesh(m_mesh_ref_id);
 
         for (auto it = ref.commands.begin(); it != ref.commands.end(); it++) {
+            if (mp_prim->texture_count > it->texture_ids.size()) {
+                it->texture_ids.resize(mp_prim->texture_count + 1, UINT32_MAX);
+            }
             it->texture_ids.back() = m_environment_map;
+            it->swap_textures_bit = true;
         }
     }
 

@@ -126,6 +126,10 @@ namespace DENG {
 			void VerifyFiles();
 			void CalculateAndWriteChecksum();
 
+			inline const std::string GetPath() {
+				return m_project_path;
+			}
+
 			inline bool GetSaveBit() {
 				return m_save_bit;
 			}

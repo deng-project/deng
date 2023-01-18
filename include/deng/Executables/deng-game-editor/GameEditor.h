@@ -10,11 +10,13 @@
     #include <queue>
     #include <list>
     #include <wx/wx.h>
+    #include <wx/splitter.h>
     #include <wx/clrpicker.h>
     #include <wx/valnum.h>
     #include <wx/collpane.h>
     #include <wx/treectrl.h>
     #include <wx/aui/aui.h>
+    #include <wx/dirctrl.h>
 
     #include "deng/deng.h"
 
@@ -31,6 +33,7 @@
     #include "deng/Executables/deng-game-editor/SphereGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/SkyboxGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/EditorMenubar.h"
+    #include "deng/Executables/deng-game-editor/AssetPanel.h"
 #else
     // forward declarations
     namespace DENG {
@@ -38,6 +41,7 @@
             class EditorMenubar;
             class RendererViewport;
             class InspectorPanel;
+            class AssetPanel;
         }
 
         class EditorCamera;
@@ -59,7 +63,7 @@ namespace DENG {
                 wxTreeCtrl* m_hierarchy = nullptr;
                 wxTreeItemId m_root;
                 RendererViewport* m_viewport = nullptr;
-                wxTextCtrl* m_assets = nullptr;
+                AssetPanel* m_assets = nullptr;
 
                 EditorMenubar* m_menubar = nullptr;
                 InspectorPanel *m_inspector_panel = nullptr;
