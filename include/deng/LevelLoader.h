@@ -9,6 +9,7 @@
 #ifdef LEVEL_LOADER_CPP
 	#include <string>
 	#include <vector>
+	#include <queue>
 	#include <unordered_map>
 	#include <chrono>
 	#include <array>

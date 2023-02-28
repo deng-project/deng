@@ -27,8 +27,8 @@ namespace Pydeng {
 			}
 
 			inline void SetCustomData(pybind11::dict& _dict) {
-				DENG::Registry* reg = DENG::Registry::GetInstance();
-				reg->SetCustomData(_dict);
+				//DENG::Registry* reg = DENG::Registry::GetInstance();
+				//reg->SetCustomData(_dict);
 			}
 
 			inline void Save() {

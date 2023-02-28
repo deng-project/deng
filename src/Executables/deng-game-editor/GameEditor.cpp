@@ -65,7 +65,7 @@ namespace DENG {
 			m_toolbar = new wxToolBar(this, wxID_ANY, wxDefaultPosition, wxSize(300, 0));
 			m_hierarchy = new wxTreeCtrl(this, ID_EDITOR_HIERARCHY_PANEL, wxDefaultPosition, wxSize(200, 600), wxTR_HIDE_ROOT | wxTR_EDIT_LABELS | wxTR_HAS_BUTTONS);
 			m_viewport = new RendererViewport(this, m_project->GetConfiguration().graphicsBackend);
-			m_assets = new AssetPanel(this, m_project->GetPath());
+			m_assets = new FileController(this, m_project->GetPath());
 			m_status = new wxStatusBar(this, wxID_ANY);
 			SetStatusBar(m_status);
 
@@ -78,7 +78,7 @@ namespace DENG {
 			m_mgr.AddPane(m_toolbar, wxTOP, "Toolbar");
 			m_mgr.AddPane(m_hierarchy, wxLEFT, "Scene hierarchy");
 			m_mgr.AddPane(m_viewport, wxCENTER, "Viewport");
-			m_mgr.AddPane(m_assets, wxBOTTOM, "Assets");
+			m_mgr.AddPane(m_assets, wxLEFT, "Assets");
 			m_mgr.AddPane(m_inspector_panel, wxRIGHT, "Inspector");
 			m_mgr.Update();
 		}
@@ -146,11 +146,6 @@ namespace DENG {
 
 
 		void GameEditor::_LoadProject() {
-			// set the title accordingly
-
-			
-			// for(auto it = game.rt.levels.)
-
 		}
 
 

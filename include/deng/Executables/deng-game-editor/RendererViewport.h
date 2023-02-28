@@ -14,6 +14,7 @@
 	#include <wx/collpane.h>
 	#include <wx/treectrl.h>
 	#include <wx/aui/aui.h>
+	#include <wx/dirctrl.h>
 
 	#include "deng/deng.h"
 	#include "deng/Executables/deng-game-editor/OpenGLLoader.h"

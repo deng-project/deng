@@ -72,8 +72,8 @@ namespace DENG {
 			std::vector<Entity*> m_entities;
 			DXML::GraphicsBackend m_backend = DXML::GRAPHICS_BACKEND_UNKNOWN;
 			uint32_t m_msaa = 1;
-			pybind11::scoped_interpreter m_py_guard;
-			pybind11::dict m_custom_data;
+			//pybind11::scoped_interpreter m_py_guard;
+			//pybind11::dict m_custom_data;
 
 			static Registry* m_instance;
 
@@ -116,9 +116,9 @@ namespace DENG {
 				m_msaa = _msaa;
 			}
 
-			inline void SetCustomData(const pybind11::dict& _data) {
-				m_custom_data = _data;
-			}
+			//inline void SetCustomData(const pybind11::dict& _data) {
+			//	m_custom_data = _data;
+			//}
 
 			inline DXML::GraphicsBackend GetGraphicsBackend() {
 				return m_backend;
@@ -128,9 +128,9 @@ namespace DENG {
 				return m_msaa;
 			}
 
-			inline pybind11::dict& GetCustomData() {
-				return m_custom_data;
-			}
+			//inline pybind11::dict& GetCustomData() {
+			//	return m_custom_data;
+			//}
 	};
 }
 

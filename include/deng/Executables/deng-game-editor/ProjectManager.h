@@ -13,6 +13,7 @@
     #include <wx/valnum.h>
     #include <wx/collpane.h>
     #include <wx/treectrl.h>
+    #include <wx/dirctrl.h>
     #include <wx/aui/aui.h>    
     #include "deng/deng.h"
     

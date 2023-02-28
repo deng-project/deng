@@ -19,10 +19,6 @@ namespace DENG {
 		else if (m_file_name == "" && std::filesystem::exists(m_project_path + "\\game.dat")) {
 			m_file_name = "game.dat";
 		}
-		else {
-			m_fail_bit = true;
-			return;
-		}
 
 		// is read bit specified
 		if (m_read_bit) {

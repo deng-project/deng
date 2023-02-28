@@ -33,7 +33,7 @@
     #include "deng/Executables/deng-game-editor/SphereGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/SkyboxGeneratorDialog.h"
     #include "deng/Executables/deng-game-editor/EditorMenubar.h"
-    #include "deng/Executables/deng-game-editor/AssetPanel.h"
+    #include "deng/Executables/deng-game-editor/FileController.h"
 #else
     // forward declarations
     namespace DENG {
@@ -63,7 +63,7 @@ namespace DENG {
                 wxTreeCtrl* m_hierarchy = nullptr;
                 wxTreeItemId m_root;
                 RendererViewport* m_viewport = nullptr;
-                AssetPanel* m_assets = nullptr;
+                wxGenericDirCtrl* m_assets = nullptr;
 
                 EditorMenubar* m_menubar = nullptr;
                 InspectorPanel *m_inspector_panel = nullptr;

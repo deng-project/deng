@@ -36,6 +36,8 @@ set(DENG_COMPLETE_HEADERS
     include/deng/HardwareInfo.h
     include/deng/ImGuiLayer.h
 	include/deng/InputRegistry.h
+	include/deng/LevelContext.h
+	include/deng/LevelLoader.h
     include/deng/MeshLoader.h
     include/deng/Missing.h
     include/deng/ModelLoader.h
@@ -84,6 +86,8 @@ set(DENG_COMPLETE_SOURCES
     src/GPUMemoryManager.cpp
     src/GridGenerator.cpp
     src/ImGuiLayer.cpp
+	src/LevelContext.cpp
+	src/LevelLoader.cpp
     src/MeshLoader.cpp
     src/Missing.cpp
     src/ModelLoader.cpp
@@ -142,7 +146,7 @@ target_include_directories(${DENG_COMPLETE_TARGET}
 )
 
 target_link_directories(${DENG_COMPLETE_TARGET}
-	PUBLIC C:/VulkanSDK/1.3.236.0/Lib)
+	PUBLIC C:/VulkanSDK/1.3.239.0/Lib)
 
 
 # Linking
