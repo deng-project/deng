@@ -48,6 +48,7 @@ namespace DENG {
 
 
 		wxBEGIN_EVENT_TABLE(FileController, wxGenericDirCtrl)
+			EVT_DIRCTRL_FILEACTIVATED(ID_FILE_CONTROLLER, FileController::_OnDirCtrlActivate)
 			EVT_MENU(ID_FILE_CONTROLLER_MENU_OPEN, FileController::_OnMenu_Open)
 			EVT_MENU(ID_FILE_CONTROLLER_MENU_OPEN_WITH, FileController::_OnMenu_OpenWith)
 			EVT_MENU(ID_FILE_CONTROLLER_MENU_ADD_FILE, FileController::_OnMenu_AddFile)
@@ -108,16 +109,36 @@ namespace DENG {
 			}
 		}
 
+		void FileController::_OnDirCtrlActivate(wxTreeEvent& _ev) {
+			const std::string sfpth = GetPath();
+			if (GetFilePath() != "") {
+				int needed_size = MultiByteToWideChar(CP_UTF8, 0, sfpth.c_str(), (int)sfpth.size(), NULL, 0);
+				std::wstring wpth(needed_size, 0);
+				MultiByteToWideChar(CP_UTF8, 0, sfpth.c_str(), (int)sfpth.size(), wpth.data(), needed_size);
+
+				SHELLEXECUTEINFO info = {};
+				info.cbSize = sizeof(info);
+				info.lpFile = wpth.c_str();
+				info.nShow = SW_SHOW;
+				info.fMask = SEE_MASK_INVOKEIDLIST;
+				info.lpVerb = L"open";
+				ShellExecuteEx(&info);
+			}
+			else {
+				ExpandPath(sfpth);
+			}
+		}
+
 		void FileController::_OnMenu_Open(wxCommandEvent& _ev) {
 			wxString fpth = GetFilePath();
 			if (fpth != "") {
 				int needed_size = MultiByteToWideChar(CP_UTF8, 0, fpth.c_str(), (int)fpth.size(), NULL, 0);
 				std::wstring wpth(needed_size, 0);
-				MultiByteToWideChar(CP_UTF8, 0, fpth.c_str(), needed_size, wpth.data(), needed_size);
+				MultiByteToWideChar(CP_UTF8, 0, fpth.c_str(), (int)fpth.size(), wpth.data(), needed_size);
 
 				SHELLEXECUTEINFO info = {};
 				info.cbSize = sizeof(info);
-				info.lpFile = fpth.c_str();
+				info.lpFile = wpth.c_str();
 				info.nShow = SW_SHOW;
 				info.fMask = SEE_MASK_INVOKEIDLIST;
 				info.lpVerb = L"open";

@@ -48,7 +48,8 @@ namespace DENG {
 
 			private:
 				void _OnDirCtrlRightClick(wxTreeEvent& _ev);
-				
+				void _OnDirCtrlActivate(wxTreeEvent& _ev);
+
 				// menu options
 				void _OnMenu_Open(wxCommandEvent& _ev);
 				void _OnMenu_OpenWith(wxCommandEvent& _ev);
