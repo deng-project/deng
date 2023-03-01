@@ -17,15 +17,23 @@ namespace DENG {
 
 			m_description = new wxStaticText(this, wxID_ANY, wxString("Enter a new filename"));
 			m_name_ctrl = new wxTextCtrl(this, ID_RENAME_DIALOG_CTRL, _fname, wxDefaultPosition, wxSize(200, 20));
-			m_general_sizer->Add(m_description);
-			m_general_sizer->Add(m_name_ctrl);
+			m_general_sizer->Add(m_description, 0, wxLEFT, 5);
+			m_general_sizer->Add(m_name_ctrl, 0, wxLEFT, 5);
 
 			m_ok = new wxButton(this, ID_RENAME_DIALOG_OK, wxT("Ok"));
 			m_cancel = new wxButton(this, ID_RENAME_DIALOG_CANCEL, wxT("Cancel"));
 			m_btn_sizer->Add(m_ok);
 			m_btn_sizer->Add(m_cancel);
-			m_general_sizer->Add(m_btn_sizer, 0, 10, wxALIGN_RIGHT);
+			m_general_sizer->Add(m_btn_sizer, 0, wxALIGN_RIGHT | wxTOP, 10);
 
+
+			// make accelerator table
+			wxAcceleratorEntry entries[2];
+			entries[0].Set(wxACCEL_NORMAL, WXK_RETURN, ID_RENAME_DIALOG_OK);
+			entries[1].Set(wxACCEL_NORMAL, WXK_ESCAPE, ID_RENAME_DIALOG_CANCEL);
+
+			wxAcceleratorTable accel(2, entries);
+			SetAcceleratorTable(accel);
 			SetSizerAndFit(m_general_sizer);
 		}
 
@@ -77,6 +85,15 @@ namespace DENG {
 
 			m_menu.Append(ID_FILE_CONTROLLER_MENU_DOS_SHELL, wxT("&DOS Shell"));
 			m_menu.Append(ID_FILE_CONTROLLER_MENU_PROPERTIES, wxT("&Properties"));
+
+			wxAcceleratorEntry entries[4];
+			entries[0].Set(wxACCEL_CTRL, (int)'C', ID_FILE_CONTROLLER_MENU_COPY);
+			entries[1].Set(wxACCEL_CTRL, (int)'X', ID_FILE_CONTROLLER_MENU_CUT);
+			entries[2].Set(wxACCEL_CTRL, (int)'V', ID_FILE_CONTROLLER_MENU_PASTE);
+			entries[3].Set(wxACCEL_NORMAL, WXK_DELETE, ID_FILE_CONTROLLER_MENU_DELETE);
+
+			wxAcceleratorTable table(4, entries);
+			SetAcceleratorTable(table);
 		}
 
 
@@ -204,8 +221,9 @@ namespace DENG {
 					auto& fnames = data.GetFilenames();
 					for (auto& f : fnames) {
 						const std::string stdf = f;
+						const std::string fname = std::filesystem::path(stdf).filename().u8string();
 						if (std::filesystem::exists(stdf)) {
-							std::filesystem::copy(stdf, pth, std::filesystem::copy_options::recursive);
+							std::filesystem::copy(stdf, pth + '/' + fname, std::filesystem::copy_options::recursive);
 						}
 					}
 
