@@ -4,6 +4,14 @@
 // NOTE: This geometry shader generates vertex normals from scratch or from vertex tangents
 // Avoid using meshes without vertex normals if smooth shading is important
 
+// macros for controlling different features of the shader are following:
+//   UV_COORDINATES=<N> - uv coordinate attribute location
+//		UV_ATTRIB_COUNT=<N> - amount of UV attributes
+//		OUTPUT_UV_COORDINATES=<N> - UV coordinates output attribute location (default: UV_COORDINATES)
+//	 COLOR_MULTIPLIERS=<N> - color multiplier attributes' location
+//		COLOR_MULTIPLIER_ATTRIB_COUNT=<N> - amount of color multiplier attributes
+//		OUTPUT_COLOR_MULTIPLIERS=<N> - color multiplier attributes' output location
+
 layout(triangles) in;
 layout(triangle_strip, max_vertices=3) out;
 
