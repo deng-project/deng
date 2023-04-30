@@ -177,7 +177,8 @@ namespace DENG {
 				};
 				m_virtual.delta = pos - m_virtual.center;
 			} else {
-				m_cursor_pos = pos;
+				m_cursorPos = pos;
+				m_delta = pos - m_cursorPos;
 			}
 		}
 

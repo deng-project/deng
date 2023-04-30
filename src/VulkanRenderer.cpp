@@ -1,4 +1,3 @@
-// DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
 // file: VulkanRenderer.cpp - Vulkan renderer class implementation
 // author: Karl-Mihkel Ott

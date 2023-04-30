@@ -41,12 +41,15 @@ namespace DENG {
 				std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time = std::chrono::high_resolution_clock::now();
 				float m_frame = 0.f;
 
+				//TRS::Vector
 				struct {
 					bool enabled = false;
 					TRS::Vector2<int64_t> center;
 					TRS::Vector2<int64_t> delta;
 				} m_virtual;
-				TRS::Vector2<int64_t> m_cursor_pos;
+
+				TRS::Vector2<int64_t> m_delta;
+				TRS::Vector2<int64_t> m_cursorPos;
 
 			private:
 				void _OnPaint(wxPaintEvent& _ev);

@@ -29,7 +29,7 @@ namespace DENG {
             _custom_code += "\tvec4 tang = in_tang;\n";
         }
 
-        // texture samplers
+        // texture coordinates
         for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
             _shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec2 in_uv" + std::to_string(i) + ";\n";
             _shader += "layout(location = " + std::to_string(m_out_id++) + ") out vec2 out_uv" + std::to_string(i) + ";\n"; 
@@ -205,7 +205,7 @@ namespace DENG {
         if(_mesh_attr_desc.texture_2d_count) {
             _custom_code += "\t\tfloat tex_alpha = " + std::to_string(1.0f / static_cast<float>(_mesh_attr_desc.texture_2d_count)) + ";\n";
             for(uint32_t i = 0; i < _mesh_attr_desc.texture_2d_count; i++) {
-                if(_mesh_attr_desc.color_mul_count)
+                if(i < _mesh_attr_desc.color_mul_count)
                     _custom_code += "\t\tvec4 tcol" + std::to_string(i) + " = col" + std::to_string(i) + " * texture(smp" + std::to_string(i) + ", uv" + std::to_string(i) + ");\n";
                 else _custom_code += "\t\tvec4 tcol" + std::to_string(i) + " = texture(smp" + std::to_string(i) + ", uv" + std::to_string(i) + ");\n";
             }
@@ -311,17 +311,27 @@ namespace DENG {
         m_binding_id = _mesh_attr_desc.joint_set_count ? 3 : 2;
         std::string shader = SHADER_HEADING;  
 
-        std::string body = 
-            "void main() {\n"\
-            "\tif(model.is_color != 0 && model.use_environment_map == 0)\n"\
-            "\t\tout_color = model.color;\n"\
-            "\telse if (model.use_environment_map == 0) {\n"\
-            "${CUSTOM_CODE}"\
-            "\t}\n"\
-            "\telse {\n"\
-            "${CUSTOM_CODE}\n"\
-            "\t}\n"\
-            "}";
+        std::string body;
+        if (_mesh_attr_desc.normal) {
+            body = "void main() {\n"\
+                   "\tif(model.is_color != 0 && model.use_environment_map == 0)\n"\
+                   "\t\tout_color = model.color;\n"\
+                   "\telse if (model.use_environment_map == 0) {\n"\
+                   "${CUSTOM_CODE}"\
+                   "\t}\n"\
+                   "\telse {\n"\
+                   "${CUSTOM_CODE}\n"\
+                   "\t}\n"\
+                   "}";
+        } else {
+            body = "void main() {\n"\
+                   "\tif(model.is_color != 0)\n"\
+                   "\t\tout_color = model.color;\n"\
+                   "\telse {\n"\
+                   "${CUSTOM_CODE}\n"\
+                   "\t}\n"\
+                   "}";
+        }
         std::string custom_code = "";
 
         shader += "layout(location = " + std::to_string(m_in_id++) + ") in vec3 in_pos;\n";
@@ -364,12 +374,14 @@ namespace DENG {
         auto pos = body.find("${CUSTOM_CODE}");
         std::string mod_body = body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
 
-        custom_code =
-            "\t\tvec3 I = normalize(in_pos - camera.pos.xyz);\n"\
-            "\t\tvec3 R = reflect(I, normalize(in_norm));\n"\
-            "\t\tout_color = vec4(texture(env, R).rgb, 1.f);\n";
-        pos = body.find("${CUSTOM_CODE}");
-        mod_body = mod_body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
+        if (_mesh_attr_desc.normal) {
+            custom_code =
+                "\t\tvec3 I = normalize(in_pos - camera.pos.xyz);\n"\
+                "\t\tvec3 R = reflect(I, normalize(in_norm));\n"\
+                "\t\tout_color = vec4(texture(env, R).rgb, 1.f);\n";
+            pos = body.find("${CUSTOM_CODE}");
+            mod_body = mod_body.replace(pos, std::strlen("${CUSTOM_CODE}"), custom_code);
+        }
         shader += mod_body;
         return shader;
     }

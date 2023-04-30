@@ -113,6 +113,7 @@ namespace DENG {
 
 			ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING,
 			ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS,
+			ID_EDITOR_MESH_PANEL_VISUALIZE_MESH,
 			/** End of mesh inspector panel **/
 
 			/** RenameDialog **/

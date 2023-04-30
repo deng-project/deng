@@ -8,12 +8,4 @@
 
 namespace DENG {
 
-	LevelLoader::LevelLoader(DXML::Level& _lvl, Renderer &_rend) : 
-		m_renderer(_rend) 
-	{
-	}
-
-	void LevelLoader::Update(DXML::Level& _lvl) {
-
-	}
 }

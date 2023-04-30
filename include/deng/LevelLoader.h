@@ -51,8 +51,8 @@ namespace DENG {
 			std::vector<Entity*> m_loaded_entities;
 
 		public:
-			LevelLoader(DXML::Level& _level, Renderer &_rend);
-			void Update(DXML::Level& _level);
+			//LevelLoader(DXML::Level& _level, Renderer &_rend);
+			//void Update(DXML::Level& _level);
 	};
 }
 

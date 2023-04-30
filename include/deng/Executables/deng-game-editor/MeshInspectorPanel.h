@@ -98,6 +98,7 @@ namespace DENG {
 
 				wxCheckBox* m_use_environment_mapping = nullptr;
 				wxCheckBox* m_visualize_vertex_normals = nullptr;
+				wxCheckBox* m_pVisualizeMesh = nullptr;
 
 				wxGenericCollapsiblePane* m_texture_names = nullptr;
 				wxButton* m_pick_textures = nullptr;
@@ -111,6 +112,7 @@ namespace DENG {
 
 				void _OnUseEnvironmentMapping(wxCommandEvent& _evt);
 				void _OnVisualizeVertexNormals(wxCommandEvent& _evt);
+				void _OnVisualizeMesh(wxCommandEvent& _evt);
 				wxDECLARE_EVENT_TABLE();
 
 			public:

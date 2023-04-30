@@ -22,11 +22,17 @@ namespace DENG {
 		void EditorCameraController::OnUpdate() {
 			auto& ir = m_viewport->GetInputRegistry();
 			
-			if (ir.IsKeyActive(NEKO_MOUSE_BTN_2)) {
+			if (ir.IsKeyActive(NEKO_MOUSE_BTN_2) && !ir.IsKeyActive(NEKO_KEY_LEFT_CTRL)) {
 				m_viewport->SetVirtualCursor();
 				((EditorCamera*)m_scriptable_entity)->Rotate(m_viewport->GetVirtualCursorDelta());
-			} else {
+			}
+			//else if (ir.IsKeyActive(NEKO_MOUSE_BTN_2) && ir.IsKeyActive(NEKO_KEY_LEFT_CTRL)) {
+				//m_viewport->UnsetVirtualCursor();
+				//((EditorCamera*)m_scriptable_entity)->SetOrigin();
+			//}
+			else {
 				m_viewport->UnsetVirtualCursor();
+
 				if (ir.IsKeyActive(NEKO_MOUSE_SCROLL_DOWN)) {
 					((EditorCamera*)m_scriptable_entity)->ZoomOut();
 				}

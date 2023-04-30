@@ -10,6 +10,12 @@ project(deng)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if (NOT DEFINED VULKAN_VERSION)
+	set(VULKAN_VERSION "1.3.243.0")
+endif()
+
+set(VULKAN_SDK_PATH "C:/VulkanSDK/${VULKAN_VERSION}")
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 option(DENG_BUILD_TESTS "Build DENG testing applications" ON)

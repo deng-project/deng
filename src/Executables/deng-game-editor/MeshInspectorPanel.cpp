@@ -107,6 +107,7 @@ namespace DENG {
 			
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, MeshInspectorPanel::_OnUseEnvironmentMapping)
 			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS, MeshInspectorPanel::_OnVisualizeVertexNormals)
+			EVT_CHECKBOX(ID_EDITOR_MESH_PANEL_VISUALIZE_MESH, MeshInspectorPanel::_OnVisualizeMesh)
 		wxEND_EVENT_TABLE()
 
 		MeshInspectorPanel::MeshInspectorPanel(wxWindow *_parent, Renderer *_rend) :
@@ -139,12 +140,14 @@ namespace DENG {
 
 			m_use_environment_mapping = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_USE_ENVIRONMENT_MAPPING, wxT("Use environment mapping"));
 			m_visualize_vertex_normals = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_VISUALIZE_VERTEX_NORMALS, wxT("Visualize vertex normals"));
+			m_pVisualizeMesh = new wxCheckBox(this, ID_EDITOR_MESH_PANEL_VISUALIZE_MESH, wxT("Visualize mesh"));
 
 			m_sizer->AddSpacer(10);
 			m_sizer->Add(m_shader_mod_title, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_edit_shaders, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_use_environment_mapping, 0, wxALIGN_LEFT);
 			m_sizer->Add(m_visualize_vertex_normals, 0, wxALIGN_LEFT);
+			m_sizer->Add(m_pVisualizeMesh, 0, wxALIGN_LEFT);
 			
 			SetSizerAndFit(m_sizer);
 		}
@@ -232,6 +235,15 @@ namespace DENG {
 			auto& viz = m_mesh->GetNormalVisualizers();
 			for (auto it = viz.begin(); it != viz.end(); it++)
 				it->Toggle(_evt.IsChecked());
+		}
+
+
+		void MeshInspectorPanel::_OnVisualizeMesh(wxCommandEvent& _evt) {
+			const uint32_t id = m_mesh->GetMeshReferenceId();
+			auto& mesh = m_renderer->GetMesh(id);
+
+			for (auto it = mesh.commands.begin(); it != mesh.commands.end(); it++)
+				it->wireframe = _evt.IsChecked();
 		}
 	}
 }

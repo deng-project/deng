@@ -35,6 +35,7 @@ namespace DENG {
         std::vector<uint32_t> texture_ids;
         std::vector<std::size_t> attribute_offsets;
         bool swap_textures_bit = true;
+        bool wireframe = false;
 
         struct {
             TRS::Point2D<int32_t> offset = { INT32_MAX, INT32_MAX };

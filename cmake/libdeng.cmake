@@ -50,6 +50,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/OpenGLRenderer.h
     include/deng/OpenGLShaderLoader.h
 	include/deng/OpenGLTextureData.h
+    include/deng/ProgramFilesManager.h
     include/deng/ProjectDataManager.h
     include/deng/PythonScriptExecutor.h
 	include/deng/Registry.h
@@ -98,6 +99,7 @@ set(DENG_COMPLETE_SOURCES
     src/OpenGLFramebuffer.cpp
     src/OpenGLRenderer.cpp
     src/OpenGLShaderLoader.cpp
+    src/ProgramFilesManager.cpp
     src/ProjectDataManager.cpp
 	src/Registry.cpp
     src/RenderState.cpp
@@ -146,14 +148,14 @@ target_include_directories(${DENG_COMPLETE_TARGET}
 )
 
 target_link_directories(${DENG_COMPLETE_TARGET}
-	PUBLIC C:/VulkanSDK/1.3.239.0/Lib)
+	PUBLIC ${VULKAN_SDK_PATH}/Lib)
 
 
 # Linking
 target_link_libraries(${DENG_COMPLETE_TARGET}
     PRIVATE mar
     PRIVATE nwin-static
-	PRIVATE Vulkan::Headers Vulkan::Registry
+	PRIVATE Vulkan::Headers
     PRIVATE unofficial::shaderc::shaderc
 	PRIVATE ODE::ODE
 	PUBLIC pybind11::lto
