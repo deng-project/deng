@@ -23,6 +23,8 @@ namespace DENG {
 
 		public:
 			ProgramFilesManager();
+			bool ExistsFile(const std::string& _sPath);
+			size_t FileSize(const std::string& _sPath);
 			std::vector<char> GetProgramFileContent(const std::string &_sPath);
 			void WriteProgramFile(const std::vector<char>& _bytes, const std::string& _sFilePath);
 			void WriteProgramFile(const char* _pBytes, size_t _uByteCount, const std::string& _sFilePath);

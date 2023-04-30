@@ -64,6 +64,7 @@ set(DENG_COMPLETE_HEADERS
 	include/deng/SphereGenerator.h
 	include/deng/TextureDatabase.h
     include/deng/ThirdPersonCamera.h
+	include/deng/UberShader.h
     include/deng/Version.h
 	include/deng/VertexNormalVisualizer.h
     include/deng/VulkanDescriptorAllocator.h
@@ -110,6 +111,7 @@ set(DENG_COMPLETE_SOURCES
 	src/SphereGenerator.cpp
 	src/TextureDatabase.cpp
     src/ThirdPersonCamera.cpp
+	src/UberShader.cpp
 	src/VertexNormalVisualizer.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp

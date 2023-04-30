@@ -23,14 +23,28 @@ namespace DENG {
 
 		m_sParentDirectory = filesystem::path(sFilePath).parent_path().u8string();
 
-#if !defined(DENG_WINDOWS_PACKAGE_CONFIGURATION) && !defined(DENG_PORTABLE)
+#if !defined(DENG_WINDOWS_PACKAGE_CONFIGURATION) && !defined(DENG_PORTABLE) && !defined(_DEBUG)
 		m_sParentDirectory += "..\\..";
+#elif defined(_DEBUG)
+		m_sParentDirectory += "..";
 #endif
 	}
 
-	vector<char> ProgramFilesManager::GetProgramFileContent(const string& _path) {
+	bool ProgramFilesManager::ExistsFile(const string& _sPath) {
+		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
+		return filesystem::exists(sAbsolutePath) && filesystem::is_regular_file(sAbsolutePath);
+	}
+
+
+	size_t ProgramFilesManager::FileSize(const string& _sPath) {
+		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
+		return filesystem::file_size(sAbsolutePath);
+	}
+
+
+	vector<char> ProgramFilesManager::GetProgramFileContent(const string& _sPath) {
 		vector<char> output;
-		const std::string sAbsolutePath = m_sParentDirectory + '\\' + _path;
+		const std::string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
 
 		if (filesystem::exists(sAbsolutePath) && filesystem::is_regular_file(sAbsolutePath)) {
 			ifstream stream(sAbsolutePath, ios_base::binary);

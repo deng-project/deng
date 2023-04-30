@@ -2,6 +2,7 @@
 // licence: Apache, see LICENCE file
 // file: ModelShaderGenerator.cpp - DAS model shader generation singleton class implementation
 // author: Karl-Mihkel Ott
+// status: legacy
 
 #define MODEL_SHADER_GENERATOR_CPP
 #include "deng/ModelShaderGenerator.h"

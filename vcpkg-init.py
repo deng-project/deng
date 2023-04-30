@@ -7,7 +7,7 @@ VCPKG_PACKAGES = [
     "vulkan-headers:x64-windows", 
     "spirv-tools:x64-windows",
     "shaderc:x64-windows",
-    "ode:x64-windows",
+    "bullet3:x64-windows",
     "python3:x64-windows",
     "pybind11:x64-windows",
     "cryptopp:x64-windows"

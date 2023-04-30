@@ -6,10 +6,8 @@
 //	 VERTEX_TANGENTS=<N> - vertex tangent attribute location
 //   UV_COORDINATES=<N> - uv coordinate attribute location
 //		UV_ATTRIB_COUNT=<N> - amount of UV attributes
-//		OUTPUT_UV_COORDINATES=<N> - UV coordinates output attribute location (default: UV_COORDINATES)
 //	 COLOR_MULTIPLIERS=<N> - color multiplier attributes' location
 //		COLOR_MULTIPLIER_ATTRIB_COUNT=<N> - amount of color multiplier attributes
-//		OUTPUT_COLOR_MULTIPLIERS=<N> - color multiplier attributes' output location
 
 #ifdef VULKAN
 layout (std140, set = 0, binding = 0) uniform CameraUbo {
