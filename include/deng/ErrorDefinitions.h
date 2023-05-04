@@ -10,6 +10,10 @@
 #include <cassert>
 #include <iostream>
 
+#ifdef ERROR_DEFINITIONS_CPP
+    #include <Windows.h>
+#endif
+
 // Debugging function type definition
 typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const uint32_t);
 #ifdef _DEBUG
@@ -27,6 +31,20 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const ui
     #define glErrorCheck(func_name)
     #define DENG_ASSERT(_val)
 #endif
+
+// Exception handling:
+// Severity levels should be used accordingly
+// CRITICAL: error is so severe, that the program must be terminated
+// NON_CRITICAL: the error doesn't require termination, but some functionality may be altered
+// WARNING: generic warning
+enum ErrorSeverity { CRITICAL, NON_CRITICAL, WARNING };
+
+namespace DENG {
+    void DispatchErrorToStdErr(const std::string& _sExceptionType, const std::string& _sWhat, ErrorSeverity _eSeverity);
+}
+
+#define DISPATCH_ERROR_MESSAGE(exception, what, severity) DENG::DispatchErrorToStdErr(exception, what, severity);
+
 
 
 // Runtime errors

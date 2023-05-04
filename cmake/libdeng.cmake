@@ -30,6 +30,7 @@ set(DENG_COMPLETE_HEADERS
     include/deng/EditorCamera.h
 	include/deng/Entity.h
     include/deng/ErrorDefinitions.h
+    include/deng/Exceptions.h
     include/deng/FirstPersonCamera.h
     include/deng/GPUMemoryManager.h
     include/deng/GridGenerator.h
@@ -58,13 +59,13 @@ set(DENG_COMPLETE_HEADERS
     include/deng/RenderState.h
     include/deng/SceneLoader.h
 	include/deng/ScriptableEntity.h
+	include/deng/Shader.h
     include/deng/ShaderDefinitions.h
     include/deng/SkeletonLoader.h
 	include/deng/Skybox.h
 	include/deng/SphereGenerator.h
 	include/deng/TextureDatabase.h
     include/deng/ThirdPersonCamera.h
-	include/deng/UberShader.h
     include/deng/Version.h
 	include/deng/VertexNormalVisualizer.h
     include/deng/VulkanDescriptorAllocator.h
@@ -84,6 +85,7 @@ set(DENG_COMPLETE_SOURCES
 	src/CubeGenerator.cpp
     src/EditorCamera.cpp
 	src/Entity.cpp
+    src/ErrorDefinitions.cpp
     src/FirstPersonCamera.cpp
     src/GPUMemoryManager.cpp
     src/GridGenerator.cpp
@@ -105,13 +107,13 @@ set(DENG_COMPLETE_SOURCES
 	src/Registry.cpp
     src/RenderState.cpp
     src/SceneLoader.cpp
+	src/Shader.cpp
     src/ShaderDefinitions.cpp
     src/SkeletonLoader.cpp
 	src/Skybox.cpp
 	src/SphereGenerator.cpp
 	src/TextureDatabase.cpp
     src/ThirdPersonCamera.cpp
-	src/UberShader.cpp
 	src/VertexNormalVisualizer.cpp
     src/VulkanDescriptorAllocator.cpp
     src/VulkanDescriptorSetLayoutCreator.cpp

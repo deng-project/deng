@@ -38,7 +38,32 @@ namespace DENG {
 
 	size_t ProgramFilesManager::FileSize(const string& _sPath) {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
-		return filesystem::file_size(sAbsolutePath);
+		size_t size = 0; 
+		try {
+			size = static_cast<size_t>(filesystem::file_size(sAbsolutePath));
+		}
+		catch (const filesystem::filesystem_error& e) {
+			throw IOException(e.what());
+			return 0;
+		}
+
+		return size;
+	}
+
+
+	time_t ProgramFilesManager::GetFileTimestamp(const string& _sPath) {
+		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
+		filesystem::file_time_type tTimestamp; 
+		
+		try {
+			tTimestamp = filesystem::last_write_time(sAbsolutePath);
+		}
+		catch (const filesystem::filesystem_error& e) {
+			throw IOException(e.what());
+			return 0;
+		}
+
+		return tTimestamp.time_since_epoch().count();
 	}
 
 
@@ -64,6 +89,17 @@ namespace DENG {
 
 	void ProgramFilesManager::WriteProgramFile(const vector<char>& _data, const string& _sFilePath) {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sFilePath;
+		const filesystem::path parentPath = filesystem::path(sAbsolutePath).parent_path();
+
+		if (!filesystem::exists(parentPath)) {
+			try {
+				filesystem::create_directories(parentPath);
+			}
+			catch (const filesystem::filesystem_error& e) {
+				throw IOException(e.what());
+				return;
+			}
+		}
 
 		ofstream stream(sAbsolutePath, ios_base::binary);
 		stream.write(_data.data(), _data.size());
@@ -73,6 +109,17 @@ namespace DENG {
 
 	void ProgramFilesManager::WriteProgramFile(const char* _pBytes, size_t _uByteCount, const string& _sFilePath) {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sFilePath;
+		const filesystem::path parentPath = filesystem::path(sAbsolutePath).parent_path();
+
+		if (!filesystem::exists(parentPath)) {
+			try {
+				filesystem::create_directories(parentPath);
+			}
+			catch (const filesystem::filesystem_error& e) {
+				throw IOException(e.what());
+				return;
+			}
+		}
 
 		ofstream stream(sAbsolutePath, ios_base::binary);
 		stream.write(_pBytes, _uByteCount);

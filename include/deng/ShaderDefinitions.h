@@ -11,6 +11,7 @@
     #include <cstdint>
     #include <vector>
     #include <string>
+    #include <variant>
 
     #include "deng/ErrorDefinitions.h"
 #endif
@@ -118,18 +119,20 @@ namespace DENG {
     };
 
 
+    struct SpirvData {
+        std::vector<uint32_t> vertexShader;
+        std::vector<uint32_t> geometryShader;
+        std::vector<uint32_t> fragmentShader;
+    };
+
+
     // this structure defines shaders that should be used in a pipeline
     // NOTE: geometry shaders are completely optional and not required
     struct ShaderModule {
         std::vector<AttributeType> attributes;
         std::vector<std::size_t> attribute_strides;
         std::vector<UniformDataLayout> ubo_data_layouts; // per shader uniforms
-        std::string vertex_shader_file = "";
-        std::string geometry_shader_file = "";
-        std::string fragment_shader_file = "";
-        std::string vertex_shader_src;
-        std::string geometry_shader_src;
-        std::string fragment_shader_src;
+        
         Viewport viewport;
         bool enable_custom_viewport = false;
         bool enable_2d_textures = false;
