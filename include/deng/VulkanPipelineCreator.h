@@ -16,7 +16,9 @@
     #include <shaderc/shaderc.hpp>
 
     #include "deng/ErrorDefinitions.h"
+    #include "deng/Exceptions.h"
     #include "deng/ShaderDefinitions.h"
+    #include "deng/VulkanHelpers.h"
 #endif
 
 
@@ -25,69 +27,65 @@ namespace DENG {
         
         class PipelineCreator {
             private:
-                VkDevice m_device = VK_NULL_HANDLE;
-                std::array<VkDescriptorSetLayout, 2> m_desc_set_layouts; // [ per shader, per mesh ]
+                VkDevice m_hDevice = VK_NULL_HANDLE;
                 VkViewport m_viewport = {};
                 VkRect2D m_scissor = {};
-                VkExtent2D m_ext = {};
-                VkSampleCountFlagBits m_samples = {};
+                VkExtent2D m_extent = {};
+                VkSampleCountFlagBits m_uSampleBits = {};
 
-                std::vector<VkPipelineShaderStageCreateInfo> m_shader_stage_create_infos;
-                std::vector<VkShaderModule> m_shader_modules;
-                std::vector<VkVertexInputBindingDescription> m_input_binding_descs;
-                std::vector<VkVertexInputAttributeDescription> m_input_attr_descs;
+                std::vector<VkPipelineShaderStageCreateInfo> m_shaderStageCreateInfos;
+                std::vector<VkShaderModule> m_shaderModules;
+                std::vector<VkVertexInputBindingDescription> m_vertexInputBindingDescriptions;
+                std::vector<VkVertexInputAttributeDescription> m_vertexInputAttributeDescriptions;
 
-                VkPipelineVertexInputStateCreateInfo    m_vert_input_create_info = {};
-                VkPipelineInputAssemblyStateCreateInfo  m_input_asm_create_info = {};
-                VkPipelineViewportStateCreateInfo       m_viewport_state_create_info = {};
-                VkPipelineRasterizationStateCreateInfo  m_rasterization_create_info = {};
-                VkPipelineMultisampleStateCreateInfo    m_multisample_create_info = {};
-                VkPipelineColorBlendAttachmentState     m_colorblend_attachment = {};
-                VkPipelineDepthStencilStateCreateInfo   m_depth_stencil = {};
-                VkPipelineColorBlendStateCreateInfo     m_colorblend_state_create_info = {};
+                VkPipelineVertexInputStateCreateInfo    m_vertexInputStateCreateInfo = {};
+                VkPipelineInputAssemblyStateCreateInfo  m_inputAssemblyStateCreateInfo = {};
+                VkPipelineViewportStateCreateInfo       m_viewportStateCreateInfo = {};
+                VkPipelineRasterizationStateCreateInfo  m_rasterizationStateCreateInfo = {};
+                VkPipelineMultisampleStateCreateInfo    m_multisampleStateCreateInfo = {};
+                VkPipelineColorBlendAttachmentState     m_colorBlendAttachmentState = {};
+                VkPipelineDepthStencilStateCreateInfo   m_depthStencilStateCreateInfo = {};
+                VkPipelineColorBlendStateCreateInfo     m_colorBlendStateCreateInfo = {};
 
-                VkPipelineDynamicStateCreateInfo        m_dynamic_state_create_info = {};
-                std::vector<VkDynamicState> m_dynamic_states;
-                ShaderModule m_module;
+                VkPipelineDynamicStateCreateInfo        m_dynamicStateCreateInfo = {};
+                std::vector<VkDynamicState> m_dynamicStates;
 
-                std::vector<uint32_t> m_vertex_bin;
-                std::vector<uint32_t> m_geometry_bin;
-                std::vector<uint32_t> m_fragment_bin;
+                VkDescriptorSetLayout m_hShaderDescriptorSetLayout = VK_NULL_HANDLE;
+                VkDescriptorSetLayout m_hMeshDescriptorSetLayout = VK_NULL_HANDLE;
+                VkPipelineLayout m_hPipelineLayout = VK_NULL_HANDLE;
+                VkPipeline m_hPipeline = VK_NULL_HANDLE;
+                VkRenderPass m_hRenderPass = VK_NULL_HANDLE;
 
-                VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
-                VkPipeline m_pipeline = VK_NULL_HANDLE;
-                VkRenderPass m_render_pass = VK_NULL_HANDLE;
+                VkPipelineCache m_hPipelineCache = VK_NULL_HANDLE;
 
             private:
-                void _FindInputBindingDescriptions(const ShaderModule &_module);
-                void _FindVertexInputAttributeDescriptions(const ShaderModule &_module);
+                void _FindInputBindingDescriptions(const PipelineModule& _pipeline);
+                void _FindVertexInputAttributeDescriptions(const PipelineModule& _module);
                 VkShaderModule _CreateShaderModule(std::vector<uint32_t> &_bin);
 
-                // avoid shaderc includes in redistributable library 
-#ifdef VULKAN_PIPELINE_CREATOR_CPP
-                static void _CompileShader(std::vector<uint32_t> &_target, const std::string &_src, const std::string &_file_name, shaderc_shader_kind _kind);
-#endif
-                void _CheckAndCompileShaderSources();
-                std::string _ReadShaderSource(const std::string &_file_name);
                 void _CreatePipelineLayout();
-                VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(bool _create_shader_modules = true);
+                VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(const PipelineModule& _pipeline, bool _bCreateShaderModules = true);
 
             public:
-                PipelineCreator(VkDevice _dev, VkRenderPass _render_pass, VkExtent2D _ext, VkSampleCountFlagBits _samples, std::array<VkDescriptorSetLayout, 2> _desc_set_layouts, const ShaderModule &_module);
+                PipelineCreator(
+                    VkDevice _hDevice, 
+                    VkRenderPass _hRenderPass,
+                    VkDescriptorSetLayout _hShaderDescriptorSetLayout,
+                    VkDescriptorSetLayout _hMeshDescriptorSetLayout,
+                    VkExtent2D _extent, 
+                    VkSampleCountFlagBits _uSampleBits,
+                    const PhysicalDeviceInformation& _info,
+                    const PipelineModule& _module);
                 PipelineCreator(PipelineCreator &&_pc) noexcept;
                 PipelineCreator(const PipelineCreator &_pc) = delete;
                 ~PipelineCreator() noexcept;
-                //PipelineCreator &operator=(PipelineCreator &&_pc) noexcept = default;
-
-                inline void SetShaderModule(const ShaderModule& _module) {
-                    m_module = _module;
-                }
 
                 void DestroyPipelineData();
-                void RecreatePipeline(VkRenderPass _render_pass, VkExtent2D _ext, bool _recompile = false);
+                void RecreatePipeline(const PipelineModule& _pipeline, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile = false);
 
-                inline VkPipelineLayout GetPipelineLayout() { return m_pipeline_layout; }
-                inline VkPipeline GetPipeline() { return m_pipeline; }
+                inline VkPipelineCache GetPipelineCache() { return m_hPipelineCache; }
+                inline VkPipelineLayout GetPipelineLayout() { return m_hPipelineLayout; }
+                inline VkPipeline GetPipeline() { return m_hPipeline; }
         };
     }
 }

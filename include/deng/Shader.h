@@ -6,9 +6,22 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+
+#include <string>
+#include <vector>
+#include <unordered_map>
+
+#include "trs/Points.h"
+#include "trs/Vector.h"
+#include "trs/Quaternion.h"
+#include "trs/Matrix.h"
+
+#include "das/DasStructures.h"
+
+#include "deng/Api.h"
+#include "deng/ProgramFilesManager.h"
+
 #ifdef SHADER_CPP
-	#include <string>
-	#include <vector>
 	#include <iomanip>
 	#include <iostream>
 	#include <sstream>
@@ -20,35 +33,37 @@
 
 	#include "shaderc/shaderc.hpp"
 
-	#include "trs/Points.h"
-	#include "trs/Vector.h"
-	#include "trs/Quaternion.h"
-	#include "trs/Matrix.h"
-
-	#include "das/DasStructures.h"
-
 	#include "deng/Api.h"
 	#include "deng/ErrorDefinitions.h"
-	#include "deng/ProgramFilesManager.h"
-	#include "deng/RenderState.h"
 	#include "deng/Exceptions.h"
 #endif
 
 namespace DENG {
 
-	enum PipelineCacheStatus { UNKNOWN, NO_CACHE, PARTIAL_SPIRV, SPIRV, CACHED_PIPELINE, VULKAN_CACHE, OPENGL_CACHE };
+	enum class RendererType { OPENGL, VULKAN, DIRECTX };
+
+	enum PipelineCacheStatus { 
+		UNKNOWN			=	0x0000, 
+		NO_CACHE		=	0x0001, 
+		PARTIAL_SPIRV	=	0x0002, 
+		SPIRV			=	0x0004,
+		VULKAN_CACHE	=	0x0008, 
+		OPENGL_CACHE	=	0x0010,
+		DIRECTX_CACHE	=	0x0020,
+		CACHED_PIPELINE	=	0x0038,
+		MAX_CACHE_ENUM	=	0xffff
+	};
 
 	class DENG_API Shader {
 		private:
+			static std::unordered_map<std::string, uint32_t> m_mShaderModuleIds;
+
 			const std::string m_csShaderSourcePath = "Shaders\\Source";
 			const std::string m_csSpirvBinaryPath = "Shaders\\Binary";
 			const std::string m_csPipelineCachePath = "Shaders\\PipelineCache";
 
-			const std::string m_csVertexShaderSourcePath;
-			const std::string m_csFragmentShaderSourcePath;
-			std::string m_sGeometryShaderSourcePath;
-
-			std::string m_sGenericShaderIdentifier;
+			const std::string m_csSourceIdentifier;
+			std::string m_sBinaryIdentifier;
 
 			ProgramFilesManager m_programFilesManager;
 
@@ -63,10 +78,7 @@ namespace DENG {
 
 		public:
 			// use relative source path, since ProgramFilesManager is used anyways
-			Shader(
-				const std::string& _sVertexShaderSourcePath,
-				const std::string& _sFragmentShaderSourcePath,
-				const std::string& _sGeometryShaderSourcePath = "");
+			Shader(const std::string& _sSourceIdentifier, const std::string& _sBinaryIdentifier = "");
 
 			std::vector<uint32_t> ReadVertexShaderSpirv();
 			std::vector<uint32_t> ReadGeometryShaderSpirv();
@@ -74,14 +86,13 @@ namespace DENG {
 
 			std::vector<char> GetPipelineCache(RendererType _eRendererType);
 			void CachePipeline(RendererType _eRendererType, const void* _pData, size_t _uLength);
-			PipelineCacheStatus GetPipelineCacheStatus();
+			uint16_t GetPipelineCacheStatus();
 
-			inline void SetGeometryShaderSourcePath(const std::string& _sPath) {
-				m_sGeometryShaderSourcePath = _sPath;
-			}
+			// RETURN: UINT32_MAX if shader module is not present, valid id otherwise
+			uint32_t FindExistingShaderModuleId();
 
-			inline void SetGenericShaderIdentifier(const std::string& _sIdentifier) {
-				m_sGenericShaderIdentifier = _sIdentifier;
+			inline void SetBinaryIdentifier(const std::string& _sBinaryIdentifier) {
+				m_sBinaryIdentifier = _sBinaryIdentifier;
 			}
 
 			inline void AddVertexShaderMacroDefinition(const std::string& _sDefinition) {
@@ -153,8 +164,6 @@ namespace DENG {
 	};
 
 	
-
-
 	class UberShader : public Shader {
 		private:
 			const std::string m_csPipelineCachePath = "Shaders\\PipelineCache\\GenericUberShader";

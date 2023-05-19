@@ -6,9 +6,11 @@
 #ifndef PROGRAM_FILES_MANAGER_H
 #define PROGRAM_FILES_MANAGER_H
 
+#include <string>
+#include <cstdint>
+#include <vector>
+
 #ifdef PROGRAM_FILES_MANAGER_CPP
-	#include <string>
-	#include <vector>
 	#include <filesystem>
 	#include <fstream>
 

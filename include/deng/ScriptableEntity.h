@@ -12,35 +12,6 @@
 
 namespace DENG {
 
-	// NOTE: Each scriptable entity can have one instance of ScriptComponent
-	class ScriptComponent {
-		protected:
-			Entity *m_scriptable_entity;
-		
-		public:
-			ScriptComponent(Entity *_scriptable_entity) :
-				m_scriptable_entity(_scriptable_entity) {}
-	};
-
-	template<typename T>
-	class TypeTest {
-		public:
-			template <typename U> static char TestOnAttach(decltype(&U::OnAttach));
-			template <typename U> static short TestOnAttach(...);
-
-			template <typename U> static char TestOnUpdate(decltype(&U::OnUpdate));
-			template <typename U> static short TestOnUpdate(...);
-
-			template <typename U> static char TestOnDestroy(decltype(&U::OnDestroy));
-			template <typename U> static short TestOnDestroy(...);
-
-			enum { 
-				HAS_ON_ATTACH = sizeof(TestOnAttach<T>(0)) == sizeof(char),
-				HAS_ON_UPDATE = sizeof(TestOnAttach<T>(0)) == sizeof(char),
-				HAS_ON_DESTROY = sizeof(TestOnDestroy<T>(0)) == sizeof(char)
-			};
-	};
-
 	class DENG_API ScriptableEntity : public Entity {
 		protected:
 			ScriptComponent* m_script = nullptr;

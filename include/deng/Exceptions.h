@@ -164,6 +164,23 @@ namespace DENG {
 				return m_szWhatMessage.c_str();
 			}
 	};
+
+
+	class WindowContextException : public std::exception {
+		private:
+			std::string m_szWhatMessage;
+
+		public:
+			WindowContextException(const std::string& _sWhat) {
+				if (_sWhat == "")
+					m_szWhatMessage = "Unknown exception";
+				else m_szWhatMessage = _sWhat;
+			}
+
+			const char* what() const override {
+				return m_szWhatMessage.c_str();
+			}
+	};
 }
 
 #endif

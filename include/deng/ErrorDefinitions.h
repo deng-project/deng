@@ -7,8 +7,12 @@
 #ifndef ERROR_DEFINITIONS_H
 #define ERROR_DEFINITIONS_H
 
+#include <string>
+#include <stdexcept>
 #include <cassert>
 #include <iostream>
+
+#include "deng/Api.h"
 
 #ifdef ERROR_DEFINITIONS_CPP
     #include <Windows.h>
@@ -17,9 +21,9 @@
 // Debugging function type definition
 typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const uint32_t);
 #ifdef _DEBUG
-    #define LOG(x) std::cout << "LOG: " << x << std::endl
+    #define LOG(x) std::cout << "[Log] " << x << std::endl
     #define MAT_LOG(mat, msg) mat.log(msg);
-    #define WARNME(x) std::cout << "WARNING: " << x << std::endl
+    #define WARNME(x) std::cout << "[Warning] " << x << std::endl
 
     // OpenGL error checking function, that is enabled during debug mode but disabled otherwise
 	#define glErrorCheck(func_name) lglErrorCheck(func_name, __FILE__, __LINE__ - 1)
@@ -40,7 +44,7 @@ typedef void (*PFNGLERRORCHECK)(const std::string&, const std::string&, const ui
 enum ErrorSeverity { CRITICAL, NON_CRITICAL, WARNING };
 
 namespace DENG {
-    void DispatchErrorToStdErr(const std::string& _sExceptionType, const std::string& _sWhat, ErrorSeverity _eSeverity);
+    void DENG_API DispatchErrorToStdErr(const std::string& _sExceptionType, const std::string& _sWhat, ErrorSeverity _eSeverity);
 }
 
 #define DISPATCH_ERROR_MESSAGE(exception, what, severity) DENG::DispatchErrorToStdErr(exception, what, severity);

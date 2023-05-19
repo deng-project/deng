@@ -17,7 +17,7 @@ namespace DENG {
 		DWORD result = 0x7a; // ERROR_INSUFFICIENT_BUFFER
 		while (result == 0x7a) {
 			sFilePath.reserve(sFilePath.capacity() + 256);
-			GetModuleFileNameW(NULL, sFilePath.data(), sFilePath.size());
+			GetModuleFileNameW(NULL, sFilePath.data(), sFilePath.capacity());
 			result = GetLastError();
 		}
 
@@ -117,7 +117,6 @@ namespace DENG {
 			}
 			catch (const filesystem::filesystem_error& e) {
 				throw IOException(e.what());
-				return;
 			}
 		}
 

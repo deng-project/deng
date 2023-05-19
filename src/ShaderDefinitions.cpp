@@ -8,7 +8,7 @@
 
 namespace DENG {
 
-    std::size_t CalculatePackedStride(const ShaderModule &_module) {
+    std::size_t CalculatePackedStride(const PipelineModule &_module) {
         std::size_t stride = 0;
         for(auto it = _module.attributes.begin(); it != _module.attributes.end(); it++) {
             switch(*it) {

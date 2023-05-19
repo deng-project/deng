@@ -34,40 +34,6 @@ namespace DENG {
 		};
 	};
 
-	enum TextureResourceType {
-		TEXTURE_RESOURCE_UNKNOWN,
-		TEXTURE_RESOURCE_1D_IMAGE,
-		TEXTURE_RESOURCE_2D_IMAGE,
-		TEXTURE_RESOURCE_3D_IMAGE,
-		TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE,
-		TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_3D_IMAGE,
-		TEXTURE_RESOURCE_SWAPCHAIN_IMAGE,
-	};
-
-	enum TextureResourceLoadType {
-		TEXTURE_RESOURCE_LOAD_TYPE_UNKNOWN = 0x00,
-		TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED = 0x01,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_JPEG = 0x02,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_PNG = 0x04,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_TIFF = 0x08,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_BMP = 0x10,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_TGA = 0x20,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_GIF = 0x40
-	};
-
-	struct TextureResource {
-		uint32_t width = 0;
-		uint32_t height = 0;
-		uint32_t bit_depth = 0;
-
-		TextureResourceType resource_type = TEXTURE_RESOURCE_UNKNOWN;
-		TextureResourceLoadType load_type = TEXTURE_RESOURCE_LOAD_TYPE_UNKNOWN;
-
-		// this data needs to be deleted manually
-		char* rgba_data = nullptr;
-		std::variant<Vulkan::TextureData, GLuint> vendor;
-	};
-
 	class DENG_API TextureDatabase {
 		private:
 			static TextureDatabase* m_instance;

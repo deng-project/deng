@@ -16,6 +16,8 @@
     #include <map>
     #include <queue>
     #include <variant>
+    #include <sstream>
+    #include <iomanip>
     #include <unordered_map>
     #include <vulkan/vulkan.h>
 #ifdef _WIN32
@@ -37,9 +39,10 @@
     #include "deng/Api.h"
     #include "deng/BaseTypes.h"
     #include "deng/ErrorDefinitions.h"
+    #include "deng/Exceptions.h"
     #include "deng/ShaderDefinitions.h"
-    #include "deng/Renderer.h"
-    #include "deng/HardwareInfo.h"
+    #include "deng/IWindowContext.h"
+    #include "deng/VulkanHelpers.h"
 #endif
 
 namespace DENG {
@@ -47,44 +50,36 @@ namespace DENG {
 
         class InstanceCreator {
             private:
-                const DENG::RendererConfig &m_config;
-
                 // vulkan stuff
-                VkDevice m_device = VK_NULL_HANDLE;
-                VkPhysicalDevice m_gpu = VK_NULL_HANDLE;
-                VkInstance m_instance = VK_NULL_HANDLE;
-                VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-                VkSurfaceCapabilitiesKHR m_surface_capabilities = {};
-                std::vector<std::string> m_required_extensions = {
+                VkDevice m_hDevice = VK_NULL_HANDLE;
+                VkPhysicalDevice m_hPhysicalDevice = VK_NULL_HANDLE;
+                VkInstance m_hInstance = VK_NULL_HANDLE;
+                VkSurfaceKHR m_hSurface = VK_NULL_HANDLE;
+                VkSurfaceCapabilitiesKHR m_surfaceCapabilities = {};
+                std::vector<const char*> m_requiredExtensions = {
                     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
                     "VK_KHR_maintenance1"
                 };
 
-                HardwareInfo m_gpu_info = {};
+                PhysicalDeviceInformation m_physicalDeviceInformation = {};
 
                 // queue family indices
-                uint32_t m_graphics_family_index = UINT32_MAX;
-                uint32_t m_presentation_family_index = UINT32_MAX;
-
-                // device limits
-                uint32_t m_minimal_uniform_buffer_alignment = 0;
-                float m_max_sampler_anisotropy = 0.0f;
+                uint32_t m_uGraphicsQueueFamilyIndex = UINT32_MAX;
+                uint32_t m_uPresentationQueueFamilyIndex = UINT32_MAX;
 
                 // vulkan queue handles
-                VkQueue m_graphics_queue;
-                VkQueue m_presentation_queue;
-#ifdef _DEBUG
-                const char *m_validation_layer = "VK_LAYER_KHRONOS_validation";
-                VkDebugUtilsMessengerEXT m_debug_messenger = {};
-#endif
+                VkQueue m_hGraphicsQueue = VK_NULL_HANDLE;
+                VkQueue m_hPresentationQueue = VK_NULL_HANDLE;
+                
+                const char *m_szValidationLayerName = "VK_LAYER_KHRONOS_validation";
+                VkDebugUtilsMessengerEXT m_hDebugUtilsMessenger = {};
 
                 // details needed for swapchain creation
-                std::vector<VkSurfaceFormatKHR> m_surface_formats;
-                std::vector<VkPresentModeKHR> m_present_modes;
+                std::vector<VkSurfaceFormatKHR> m_surfaceFormats;
+                std::vector<VkPresentModeKHR> m_presentModes;
 
             private:
-                void _CreateInstance();
-                VkResult _CreateNativeSurface();
+                void _CreateInstance(IWindowContext& _window);
 #ifdef _DEBUG
                 bool _CheckValidationLayerSupport();
                 void _CreateDebugMessenger();
@@ -95,7 +90,7 @@ namespace DENG {
                 typedef VkDebugUtilsMessengerCallbackDataEXT CallbackData;
                 static VKAPI_ATTR VkBool32 VKAPI_CALL _DebugCallback(SeverityFlags, MessageTypeFlags, const CallbackData*, void*);
 #endif
-                void _FindPhysicalDeviceSurfaceProperties(VkPhysicalDevice _gpu, bool _ignore_no_formats);
+                void _FindPhysicalDeviceSurfaceProperties(VkPhysicalDevice _hPhysicalDevice);
                 void _PickPhysicalDevice();
 
                 // returns true if necessary queue families were found, false otherwise
@@ -105,25 +100,21 @@ namespace DENG {
                 uint32_t _ScoreDevice(VkPhysicalDevice _gpu);
 
             public:
-                InstanceCreator(const RendererConfig &_conf);
-                ~InstanceCreator();
+                InstanceCreator(IWindowContext& _window);
 
-                // ~~inlined~~ non-inlined methods (temporary workaround)
-                VkDevice GetDevice() const;
-                VkPhysicalDevice GetPhysicalDevice() const;
-                VkSurfaceKHR GetSurface() const;
-                uint32_t GetGraphicsFamilyIndex() const;
-                uint32_t GetPresentationFamilyIndex() const;
-                VkQueue GetGraphicsQueue() const;
-                VkQueue GetPresentationQueue() const;
-                const std::vector<VkSurfaceFormatKHR> &GetSurfaceFormats() const;
-                const std::vector<VkPresentModeKHR> &GetPresentationModes() const;
-                void UpdateSurfaceProperties();
-                const VkSurfaceCapabilitiesKHR &GetSurfaceCapabilities() const;
-                uint32_t GetMinimalUniformBufferAlignment() const;
-                float GetMaxSamplerAnisotropy() const;
+                inline VkDevice GetDevice() const { return m_hDevice; }
+                inline VkPhysicalDevice GetPhysicalDevice() const { return m_hPhysicalDevice; }
+                inline VkSurfaceKHR GetSurface() const { return m_hSurface; }
+                inline uint32_t GetGraphicsFamilyIndex() const { return m_uGraphicsQueueFamilyIndex; };
+                inline uint32_t GetPresentationFamilyIndex() const { return m_uPresentationQueueFamilyIndex; }
+                inline VkQueue GetGraphicsQueue() const { return m_hGraphicsQueue; }
+                inline VkQueue GetPresentationQueue() const { return m_hPresentationQueue; }
+                inline const std::vector<VkSurfaceFormatKHR>& GetSurfaceFormats() const { return m_surfaceFormats; }
+                inline const std::vector<VkPresentModeKHR>& GetPresentationModes() const { return m_presentModes; }
+                inline void UpdateSurfaceProperties() { _FindPhysicalDeviceSurfaceProperties(m_hPhysicalDevice); }
+                inline const VkSurfaceCapabilitiesKHR& GetSurfaceCapabilities() const { return m_surfaceCapabilities; }
+                inline const PhysicalDeviceInformation& GetPhysicalDeviceInformation() const { return m_physicalDeviceInformation; }
         };
-
     }
 }
 #endif

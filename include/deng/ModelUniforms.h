@@ -6,6 +6,9 @@
 #ifndef MODEL_UNIFORMS_H
 #define MODEL_UNIFORMS_H
 
+#include "trs/Vector.h"
+#include "trs/Matrix.h"
+
 #define MAX_MORPH_TARGETS  16
 
 namespace DENG {

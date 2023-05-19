@@ -10,117 +10,82 @@
 #ifdef VULKAN_RENDERER_CPP
     #include <string>
     #include <vector>
-    #include <array>
-    #include <chrono>
     #include <cstring>
-    #include <variant>
-    #include <cmath>
     #include <queue>
     #include <list>
-    #include <utility>
-    #include <memory>
-    #include <thread>
-    
+    #include <unordered_map>
+
     #define NOMINMAX
     #include <algorithm>
-
+    
 #ifdef __DEBUG
     #include <iostream>
 #endif
     #include <vulkan/vulkan.h>
-    #include <shaderc/shaderc.hpp>
 
     #include "trs/Vector.h"
     #include "trs/Matrix.h"
     #include "trs/Points.h"
     #include "trs/Quaternion.h"
 
-    #include "das/Api.h"
-    #include "das/DasStructures.h"
-    #include "das/TextureReader.h"
-
     #include "deng/Api.h"
-    #include "deng/BaseTypes.h"
-    #include "deng/BufferAlignment.h"
-    #include "deng/Window.h"
+    #include "deng/Exceptions.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Missing.h"
-    #include "deng/Renderer.h"
-    #include "deng/RenderState.h"
-    #include "deng/GPUMemoryManager.h"
-    #include "deng/TextureDatabase.h"
 
     #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
 #endif
 
+#include "deng/IRenderer.h"
 #include "deng/VulkanHelpers.h"
 #include "deng/VulkanInstanceCreator.h"
 #include "deng/VulkanSwapchainCreator.h"
 #include "deng/VulkanPipelineCreator.h"
-#include "deng/VulkanDescriptorSetLayoutCreator.h"
 #include "deng/VulkanDescriptorAllocator.h"
 #include "deng/VulkanFramebuffer.h"
 
 
 namespace DENG {
 
-    namespace Vulkan {
-        void DENG_API Initialise();
-    }
-
-    class DENG_API VulkanRenderer : public Renderer {
+    class DENG_API VulkanRenderer : public IRenderer {
         private:
-            TRS::Point2D<uint32_t> m_previous_canvas;
-            const VkSampleCountFlagBits m_sample_count = VK_SAMPLE_COUNT_1_BIT;
-            Vulkan::InstanceCreator m_instance_creator;
+            const VkSampleCountFlagBits m_uSampleCountBits = VK_SAMPLE_COUNT_1_BIT;
 
-            // framebuffers
-            std::vector<Vulkan::Framebuffer*> m_framebuffers;
-            
+            Vulkan::InstanceCreator* m_pInstanceCreator = nullptr;
+            Vulkan::SwapchainCreator* m_pSwapchainCreator = nullptr;
+            std::unordered_map<std::list<PipelineModule>::iterator, Vulkan::DescriptorAllocator> m_pipelineDescriptorAllocators;
+
             // locally managed vulkan resources
-            VkDeviceSize m_uniform_size = DEFAULT_UNIFORM_SIZE;
-            VkDeviceSize m_buffer_size = DEFAULT_BUFFER_SIZE;
+            VkDeviceSize m_uBufferSize = DEFAULT_BUFFER_SIZE;
+            VkDeviceSize m_uStagingBufferSize = DEFAULT_STAGING_BUFFER_SIZE;
 
             //  Main memory is usually splitted into vertex regions and index regions, but not always
             //  [ [ VERTICES ] [ INDICES ] ]
-            VkBuffer m_main_buffer = VK_NULL_HANDLE;
-            VkDeviceMemory m_main_memory = VK_NULL_HANDLE;
+            VkBuffer m_hMainBuffer = VK_NULL_HANDLE;
+            VkDeviceMemory m_hMainBufferMemory = VK_NULL_HANDLE;
 
-            // uniform buffer
-            VkBuffer m_uniform_buffer = VK_NULL_HANDLE;
-            VkDeviceMemory m_uniform_memory = VK_NULL_HANDLE;
-            uint32_t m_current_frame = 0;
-
-            bool m_is_init = false;
+            VkBuffer m_hStagingBuffer = VK_NULL_HANDLE;
+            VkDeviceMemory m_hStagingBufferMemory = VK_NULL_HANDLE;
 
         private:
-            void _AllocateBufferResources();
-            void _AllocateUniformBuffer();
-            void _ReallocateBufferResources(VkDeviceSize _old_size);
-            void _ReallocateUniformBuffer();
-            void _CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels, uint32_t _array_count);
-            void _Resize();
-
-            void _CreateVendorTextureImages(uint32_t _id);
-            
-            void _CheckAndCopyTextures();
-            void _CheckAndDeleteTextures();
-            void _CheckAndRemoveShaders();
-            void _CheckAndRemoveMeshes();
+            void _CreateApiImageHandles(uint32_t _id);
+            void _CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset);
 
 
         public:
-            VulkanRenderer(const RendererConfig &_conf);
-            ~VulkanRenderer();
+            VulkanRenderer() = default;
+            VulkanRenderer(VulkanRenderer&&) noexcept = default;
+            virtual ~VulkanRenderer() override;
 
-            virtual FramebufferIndices AddFramebuffer(TRS::Point2D<uint32_t> _extent) override;
-            virtual uint32_t AlignUniformBufferOffset(uint32_t _req) override;
-            virtual void UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) override;
-            virtual void UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset = 0) override;
-            virtual void ClearFrame() override;
-            virtual void RenderFrame() override;
-
+            virtual uint32_t AddTextureResource(const TextureResource& _resource) override;
+            virtual std::list<PipelineModule>::iterator CreatePipeline(const PipelineModule& _pipeline) override;
+            virtual void DestroyPipeline(std::list<PipelineModule>::iterator _id) override;
+            virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
+            virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
+            virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
+            virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
+            virtual void DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
     };
 }
 

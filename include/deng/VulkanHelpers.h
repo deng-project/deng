@@ -22,11 +22,34 @@
 namespace DENG {
     namespace Vulkan {
 
+        enum PhysicalDeviceType { OTHER, INTEGRATED_GPU, DISCREATE_GPU, VIRTUAL_GPU, CPU };
 
-        struct HardwareInfo {
-            uint32_t driver_version;
-            uint32_t api_version;
-            char gpu_name[512] = {};
+        struct PhysicalDeviceInformation {
+            uint8_t pipelineCacheUUID[VK_UUID_SIZE] = {};
+
+            std::string sPhysicalDeviceName;
+            std::string sDriverVersion;
+
+            uint32_t uApiVersionMajor = 0;
+            uint32_t uApiVersionMinor = 0;
+            uint32_t uApiVersionPatch = 0;
+            uint32_t uApiVersionVariant = 0;
+
+            uint32_t uVendorId = 0;
+            uint32_t uDeviceId = 0;
+
+            uint32_t uMinimalUniformBufferAlignment = 0;
+            float fMaxSamplerAnisotropy = 0.f;
+
+            PhysicalDeviceType eDeviceType = PhysicalDeviceType::OTHER;
+        };
+
+
+        struct TextureData {
+            VkImage hImage = VK_NULL_HANDLE;
+            VkImageView hImageView = VK_NULL_HANDLE;
+            VkSampler hSampler = VK_NULL_HANDLE;
+            VkDeviceMemory hMemory = VK_NULL_HANDLE;
         };
         
 

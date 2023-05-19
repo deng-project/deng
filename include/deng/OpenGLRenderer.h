@@ -45,7 +45,7 @@
     #include "deng/Window.h"
     #include "deng/ShaderDefinitions.h"
     #include "deng/Missing.h"
-    #include "deng/Renderer.h"
+    #include "deng/IRenderer.h"
     #include "deng/RenderState.h"
     #include "deng/GPUMemoryManager.h"
     #include "deng/TextureDatabase.h"
@@ -73,7 +73,7 @@ namespace DENG {
     }
 #endif
 
-    class DENG_API OpenGLRenderer : public Renderer {
+    class DENG_API OpenGLRenderer : public IRenderer {
         private:
             OpenGL::BufferLoader m_buffer_loader;
             std::vector<std::vector<uint32_t>> m_ubo_offsets;

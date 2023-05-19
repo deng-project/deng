@@ -6,8 +6,6 @@
 #ifndef BASE_TYPES_H
 #define BASE_TYPES_H
 
-#include <cstdint>
-
 #define PI 3.14159f
 #define SQR(x) (x*x)
 #define CUBE(x) (x*x*x)

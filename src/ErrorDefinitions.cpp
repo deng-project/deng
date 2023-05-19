@@ -10,21 +10,22 @@ namespace DENG {
 		switch (_eSeverity) {
 			case CRITICAL:
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-				cerr << '[' << _sExceptionType << "] " << _sWhat << "\n\n";
-				exit(0);
+				cerr << '[' << _sExceptionType << "] " << _sWhat << '\n';
 				break;
 
 			case NON_CRITICAL:
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE);
-				cerr << '[' << _sExceptionType << "] " << _sWhat << "\n\n";
+				cerr << '[' << _sExceptionType << "] " << _sWhat << '\n';
 				break;
 
 			case WARNING:
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
-				cerr << '[' << _sExceptionType << "] " << _sWhat << "\n\n";
+				cerr << '[' << _sExceptionType << "] " << _sWhat << '\n';
 				break;
 		}
 
 		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		if (_eSeverity == CRITICAL)
+			exit(1);
 	}
 }

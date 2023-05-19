@@ -13,6 +13,9 @@
     #include <variant>
     #include <queue>
     #include <unordered_map>
+    #include <functional>
+    #include <sstream>
+    #include <iomanip>
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -29,166 +32,108 @@
 
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
+    #include "deng/Exceptions.h"
     #include "deng/ShaderDefinitions.h"
-    #include "deng/Window.h"
-    #include "deng/TextureDatabase.h"
-    #include "deng/Renderer.h"
+    #include "deng/IWindowContext.h"
     #include "deng/VulkanHelpers.h"
+    #include "deng/IRenderer.h"
     #include "deng/VulkanInstanceCreator.h"
     #include "deng/VulkanSwapchainCreator.h"
     #include "deng/VulkanPipelineCreator.h"
-    #include "deng/VulkanDescriptorSetLayoutCreator.h"
     #include "deng/VulkanDescriptorAllocator.h"
-    #include "deng/VulkanFramebuffer.h"
 #endif
 
 namespace DENG {
     namespace Vulkan {
 
-        class Framebuffer {
+        class Framebuffer : public IFramebuffer {
             private:
-                InstanceCreator &m_instance_creator;
-                SwapchainCreator* m_swapchain_creator = nullptr;
-                VkBuffer &m_uniform;
-                VkBuffer &m_main_buffer;
-                VkSampleCountFlagBits m_sample_count;
+                const InstanceCreator* m_pInstanceCreator = nullptr;
+                SwapchainCreator* m_pSwapchainCreator = nullptr;
+                std::unordered_map<uint32_t, TextureResource>& m_textureRegistry;
+                uint32_t(*m_pfnGetNewImageId)();
+
+                VkBuffer& m_hMainBuffer;
+                VkSampleCountFlagBits m_uSampleCountBits;
                 
-                std::vector<Vulkan::PipelineCreator*> m_pipeline_creators;
-                std::vector<Vulkan::DescriptorSetLayoutCreator*> m_shader_descriptor_set_layout_creators;
-                std::vector<Vulkan::DescriptorSetLayoutCreator*> m_mesh_descriptor_set_layout_creators;
+                std::unordered_map<std::list<PipelineModule>::iterator, PipelineCreator> m_pipelineCreators;
 
-                // per shader descriptor pools / sets creators
-                std::vector<Vulkan::DescriptorAllocator*> m_shader_desc_allocators;
-
-                // per mesh descriptor pools / sets creators
-                std::vector<Vulkan::DescriptorAllocator*> m_mesh_desc_allocators;
-
-                VkCommandPool m_command_pool;
-                std::vector<VkCommandBuffer> m_command_buffers;
-                std::vector<VkSemaphore> m_render_finished_semaphores;
-                std::vector<VkSemaphore> m_image_available_semaphores;
-                std::vector<VkFence> m_flight_fences;
+                VkCommandPool m_hCommandPool;
+                std::vector<VkCommandBuffer> m_commandBuffers;
+                std::vector<VkSemaphore> m_renderFinishedSemaphores;
+                std::vector<VkSemaphore> m_imageAvailableSemaphores;
+                std::vector<VkFence> m_flightFences;
                 std::vector<VkFramebuffer> m_framebuffers;
 
                 // color resolve and depth image resources
-                uint32_t m_color_resolve_image_id = UINT32_MAX;
-                uint32_t m_depth_image_id = UINT32_MAX;
-                std::vector<uint32_t> m_framebuffer_image_ids;
+                uint32_t m_uDepthImageId = UINT32_MAX;
+                std::vector<uint32_t> m_framebufferImageIds;
 
-                // missing resources
-                uint32_t m_missing_2d;
-                uint32_t m_missing_3d;
+                VkRenderPass m_hRenderpass;
 
-                VkRenderPass m_renderpass;
-                bool m_no_swapchain;
-                bool m_command_buffer_recording_bit = false;
-
-                TRS::Point2D<uint32_t> m_extent;
-
-                uint32_t m_current_frame;
+                uint32_t m_uCurrentSwapchainImageIndex = 0;
+                uint32_t m_uCurrentFrameIndex = 0;
 
             private:
-                void _CreateColorResources();
                 void _CreateDepthResources();
                 void _CreateFramebuffers();
                 void _CreateFramebufferImage();
-                void _CleanPipelineResources();
                 void _CreateCommandPool();
+                void _CreateSynchronisationPrimitives();
                 void _AllocateCommandBuffers();
-
-                void _CheckAndCreatePipeline(const MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*>& _modules);
-                void _CheckAndCreateMeshDescriptors(const MeshReference& _ref, uint32_t _mesh_id);
+                void _RecreateSwapchain();
+                void _DestroyFramebuffer(bool _bRemoveImageResources = true);
 
             public:
                 Framebuffer(
-                    InstanceCreator& _ic,
-                    VkBuffer &_uniform, 
-                    VkBuffer &_main, 
-                    VkSampleCountFlagBits _sample_c,
+                    const InstanceCreator* _pInstanceCreator,
+                    VkBuffer& _hMainBuffer,
+                    VkSampleCountFlagBits _uSampleCountBits,
                     TRS::Point2D<uint32_t> _extent,
-                    uint32_t _missing_2d,
-                    uint32_t _missing_3d,
-                    bool _no_swapchain = false
+                    std::unordered_map<uint32_t, TextureResource>& _textureRegistry,
+                    uint32_t(*_pfnGetNewImageId)(),
+                    bool _bIsSwapchain = false
                 );
                 Framebuffer(Framebuffer &&_fb) noexcept = default;
                 ~Framebuffer();
 
-                void RecreateDescriptorSets();
                 void RecreateFramebuffer();
-                void CreateSynchronisationPrimitives();
-                void DestroyFramebuffer(bool _remove_from_registry = true);
-                void DestroySynchronisationPrimitives();
 
-                inline void ClearFrame() {
-                    vkWaitForFences(m_instance_creator.GetDevice(), 1, &m_flight_fences[m_current_frame], VK_TRUE, UINT64_MAX);
+                inline void DestroyPipelineAllocator(std::list<PipelineModule>::iterator _itPipelineModule) {
+                    m_pipelineCreators.erase(_itPipelineModule);
                 }
 
-                inline void SetCurrentFrame(uint32_t _id) {
-                    m_current_frame = _id;
-                }
-                void ClearShaderResources(uint32_t _id);
-                void ClearMeshResources(uint32_t _id);
-                void StartCommandBufferRecording(TRS::Vector4<float> _clear_color, uint32_t _image_id = 0);
-                void Draw(MeshReference &_ref, uint32_t _mesh_id, const std::vector<ShaderModule*> &_modules);
-                void EndCommandBufferRecording();
-                void Render();
-
-                // only call this function if using swapchain images ! ! !
-                VkResult Present(uint32_t _image_id);
-
-                inline bool GetCommandBufferRecordingBit() {
-                    return m_command_buffer_recording_bit;
-                }
-
-                inline bool GetSwapchainBit() {
-                    return !m_no_swapchain;
-                }
+                virtual void BeginCommandBufferRecording(TRS::Vector4<float> _vClearColor) override;
+                void Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator& _descriptorAllocator, const std::vector<uint32_t>& _textureIds = {});
+                virtual void EndCommandBufferRecording() override;
+                virtual void RenderToFramebuffer() override;
 
                 inline SwapchainCreator* GetSwapchainCreator() {
-                    DENG_ASSERT(m_swapchain_creator);
-                    return m_swapchain_creator;
+                    return m_pSwapchainCreator;
                 }
 
                 inline VkCommandPool GetCommandPool() {
-                    return m_command_pool;
+                    return m_hCommandPool;
                 }
 
                 inline VkRenderPass GetRenderPass() {
-                    return m_renderpass;
+                    return m_hRenderpass;
                 }
 
                 inline const std::vector<uint32_t> &GetFramebufferImageIds() const {
-                    return m_framebuffer_image_ids;
-                }
-
-                inline PipelineCreator& GetPipelineCreator(uint32_t _id) {
-                    DENG_ASSERT(_id < static_cast<uint32_t>(m_pipeline_creators.size()));
-                    DENG_ASSERT(m_pipeline_creators[_id] != nullptr);
-                    return *m_pipeline_creators[_id];
+                    return m_framebufferImageIds;
                 }
 
                 inline VkFence& GetCurrentFlightFence() {
-                    return m_flight_fences[m_current_frame];
+                    return m_flightFences[m_uCurrentFrameIndex];
                 }
 
                 inline VkSemaphore GetSwapchainImageAcquisitionSemaphore() {
-                    return m_image_available_semaphores[m_current_frame];
+                    return m_imageAvailableSemaphores[m_uCurrentFrameIndex];
                 }
 
                 inline VkSemaphore GetRenderFinishedSemaphore() {
-                    return m_render_finished_semaphores[m_current_frame];
-                }
-
-                inline void SetMissing2DTextureHandle(uint32_t _handle) {
-                    m_missing_2d = _handle;
-                }
-
-                inline void SetMissing3DTextureHandle(uint32_t _handle) {
-                    m_missing_3d = _handle;
-                }
-
-                inline void SetExtent(TRS::Point2D<uint32_t> _ext) {
-                    m_extent = _ext;
+                    return m_renderFinishedSemaphores[m_uCurrentFrameIndex];
                 }
         };
     }

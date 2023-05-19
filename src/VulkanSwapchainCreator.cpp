@@ -8,39 +8,45 @@
 
 namespace DENG {
     namespace Vulkan {
-        SwapchainCreator::SwapchainCreator(InstanceCreator &_ic, TRS::Point2D<uint32_t> _win_size, VkSampleCountFlagBits _sample_c) : 
-            m_instance_creator(_ic), 
-            m_window_size(_win_size), 
-            m_sample_c(_sample_c)
+        SwapchainCreator::SwapchainCreator(const InstanceCreator* _pInstanceCreator, uint32_t _uWidth, uint32_t _uHeight, VkSampleCountFlagBits _uSampleCountBits) : 
+            m_pInstanceCreator(_pInstanceCreator), 
+            m_uSampleCountBits(_uSampleCountBits)
         {
-            _ConfigureSwapchainSettings();
-            _CreateSwapchain();
-            _CreateSwapchainImageViews();
+            DENG_ASSERT(m_pInstanceCreator);
+            try {
+                _ConfigureSwapchainSettings();
+                _CreateSwapchain(_uWidth, _uHeight);
+                _CreateSwapchainImageViews();
+            }
+            catch (const RendererException& e) {
+                DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
+            }
+            catch (const HardwareException& e) {
+                DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
+            }
         }
 
 
         SwapchainCreator::~SwapchainCreator() {
-            for (auto it = m_swapchain_image_ids.begin(); it != m_swapchain_image_ids.end(); it++) {
-                TextureDatabase* db = TextureDatabase::GetInstance();
-                Vulkan::TextureData tex_data = std::get<Vulkan::TextureData>(db->GetResource(*it).vendor);
-                vkDestroyImageView(m_instance_creator.GetDevice(), tex_data.image_view, nullptr);
+            for (auto it = m_swapchainImages.begin(); it != m_swapchainImages.end(); it++) {
+                vkDestroyImageView(m_pInstanceCreator->GetDevice(), it->hImageView, nullptr);
             }
 
-            vkDestroySwapchainKHR(m_instance_creator.GetDevice(), m_swapchain, nullptr);
+            vkDestroySwapchainKHR(m_pInstanceCreator->GetDevice(), m_hSwapchain, nullptr);
         }
 
 
-        VkRenderPass SwapchainCreator::CreateRenderPass(VkDevice _dev, VkFormat _format, VkSampleCountFlagBits _msaa_samples, bool _use_non_default_fb) {
+        VkRenderPass SwapchainCreator::CreateRenderPass(VkDevice _hDevice, VkFormat _eFormat, VkSampleCountFlagBits _uMSAASamples, bool _bUseNonDefaultFramebuffer) {
             std::array<VkAttachmentDescription, 2> attachments = {};
             // color attachment
-            attachments[0].format = _format;
-            attachments[0].samples = _msaa_samples;
+            attachments[0].format = _eFormat;
+            attachments[0].samples = _uMSAASamples;
             attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
             attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
             attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            if(!_use_non_default_fb) {
+            if(!_bUseNonDefaultFramebuffer) {
                 attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             } else {
                 attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -48,7 +54,7 @@ namespace DENG {
 
             // depth attachment
             attachments[1].format = VK_FORMAT_D32_SFLOAT;
-            attachments[1].samples = _msaa_samples;
+            attachments[1].samples = _uMSAASamples;
             attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
             attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -79,111 +85,111 @@ namespace DENG {
             //references[2].attachment = 2;
             //references[2].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-            VkSubpassDescription subpass_desc = {};
-            subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-            subpass_desc.colorAttachmentCount = 1;
-            subpass_desc.pColorAttachments = &references[0];
-            subpass_desc.pDepthStencilAttachment = &references[1];
-            //subpass_desc.pResolveAttachments = &references[2];
+            VkSubpassDescription subpassDescription = {};
+            subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpassDescription.colorAttachmentCount = 1;
+            subpassDescription.pColorAttachments = &references[0];
+            subpassDescription.pDepthStencilAttachment = &references[1];
+            //subpassDescription.pResolveAttachments = &references[2];
 
-            std::array<VkSubpassDependency, 2> subpass_dependencies = {};
-            if(_use_non_default_fb) {
+            std::array<VkSubpassDependency, 2> subpassDependencies = {};
+            if(_bUseNonDefaultFramebuffer) {
                 // transform the image into VK_PIPELINE_STAGE_COLOR_OUTPUT_ATTACHMENT_BIT since the original stage is VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-                subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-                subpass_dependencies[0].dstSubpass = 0;
-                subpass_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                subpass_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                subpass_dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                subpass_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                subpass_dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+                subpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+                subpassDependencies[0].dstSubpass = 0;
+                subpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                subpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                subpassDependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                subpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                subpassDependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
                 // transform the image back VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT so it could be used as a texture
-                subpass_dependencies[1].srcSubpass = 0;
-                subpass_dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-                subpass_dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                subpass_dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                subpass_dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                subpass_dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                subpassDependencies[1].srcSubpass = 0;
+                subpassDependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+                subpassDependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                subpassDependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                subpassDependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                subpassDependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             } else {
-                subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-                subpass_dependencies[0].dstSubpass = 0;
-                subpass_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-                subpass_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-                subpass_dependencies[0].srcAccessMask = 0;
-                subpass_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+                subpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+                subpassDependencies[0].dstSubpass = 0;
+                subpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                subpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                subpassDependencies[0].srcAccessMask = 0;
+                subpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
             }
 
-            VkRenderPassCreateInfo renderpass_createinfo = {};
-            renderpass_createinfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-            renderpass_createinfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-            renderpass_createinfo.pAttachments = attachments.data();
-            renderpass_createinfo.subpassCount = 1;
-            renderpass_createinfo.pSubpasses = &subpass_desc;
-            if(_use_non_default_fb) renderpass_createinfo.dependencyCount = 2;
-            else renderpass_createinfo.dependencyCount = 0;
-            renderpass_createinfo.pDependencies = subpass_dependencies.data();
+            VkRenderPassCreateInfo renderPassCreateInfo = {};
+            renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+            renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+            renderPassCreateInfo.pAttachments = attachments.data();
+            renderPassCreateInfo.subpassCount = 1;
+            renderPassCreateInfo.pSubpasses = &subpassDescription;
+            if(_bUseNonDefaultFramebuffer) 
+                renderPassCreateInfo.dependencyCount = 2;
+            else renderPassCreateInfo.dependencyCount = 0;
+            renderPassCreateInfo.pDependencies = subpassDependencies.data();
 
             VkRenderPass renderpass = VK_NULL_HANDLE;
-            if(vkCreateRenderPass(_dev, &renderpass_createinfo, nullptr, &renderpass) != VK_SUCCESS)
-                VK_SWAPCHAIN_ERR("failed to create render pass!");
+            if (vkCreateRenderPass(_hDevice, &renderPassCreateInfo, nullptr, &renderpass) != VK_SUCCESS)
+                throw RendererException("vkCreateRenderPass() could not create a render pass");
 
             return renderpass;
         }
 
 
-        void SwapchainCreator::RecreateSwapchain(TRS::Point2D<uint32_t> _new_win_size) {
-            const VkDevice device = m_instance_creator.GetDevice();
-            m_window_size = _new_win_size;
-
+        void SwapchainCreator::RecreateSwapchain(uint32_t _uWidth, uint32_t _uHeight) {
             // cleanup the previous swapchain
-            TextureDatabase* db = TextureDatabase::GetInstance();
-            for (auto it = m_swapchain_image_ids.begin(); it != m_swapchain_image_ids.end(); it++) {
-                Vulkan::TextureData& data = std::get<Vulkan::TextureData>(db->GetResource(*it).vendor);
-                vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
+            for (auto it = m_swapchainImages.begin(); it != m_swapchainImages.end(); it++) {
+                vkDestroyImageView(m_pInstanceCreator->GetDevice(), it->hImageView, nullptr);
             }
 
-            vkDestroySwapchainKHR(device, m_swapchain, nullptr);
+            vkDestroySwapchainKHR(m_pInstanceCreator->GetDevice(), m_hSwapchain, nullptr);
 
-            m_instance_creator.UpdateSurfaceProperties();
-            _CreateSwapchain();
+            _CreateSwapchain(_uWidth, _uHeight);
             _CreateSwapchainImageViews();
         }
 
 
         void SwapchainCreator::_ConfigureSwapchainSettings() {
-            bool found_suitable_format = false;
+            bool bFoundSuitableFormat = false;
 
             // check if found surface formats support SRGB coloring and nonlinear color space
-            for(const VkSurfaceFormatKHR &sformat : m_instance_creator.GetSurfaceFormats()) {
-                if(sformat.format == VK_FORMAT_DEFAULT_IMAGE && sformat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                    m_selected_surface_format = sformat;
-                    found_suitable_format = true;
+            for(const VkSurfaceFormatKHR &surfaceFormat : m_pInstanceCreator->GetSurfaceFormats()) {
+                if(surfaceFormat.format == VK_FORMAT_DEFAULT_IMAGE && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                    m_selectedSurfaceFormat = surfaceFormat;
+                    bFoundSuitableFormat = true;
                     break;
                 }
             }
 
-            if(!found_suitable_format) {
-                WARNME("Could not find suitable surface format! Trying to use first one available!");
-                m_selected_surface_format = m_instance_creator.GetSurfaceFormats()[0];
+            if(!bFoundSuitableFormat) {
+                WARNME("Could not find suitable surface format! Trying to use first one available");
+                if (!m_pInstanceCreator->GetSurfaceFormats().size())
+                    throw HardwareException("Physical device does not support any Vulkan surface formats");
+                
+                m_selectedSurfaceFormat = m_pInstanceCreator->GetSurfaceFormats()[0];
             }
 
 
-            bool found_presentation_mode = false;
-            bool found_vsync = false;
-            for(const VkPresentModeKHR presentation_mode : m_instance_creator.GetPresentationModes()) {
+            bool bFoundPresentationMode = false;
+            bool bFoundVsync = false;
+            for(const VkPresentModeKHR ePresentMode : m_pInstanceCreator->GetPresentationModes()) {
                 // Check which present modes are available
-                switch (presentation_mode) {
+                switch (ePresentMode) {
                     case VK_PRESENT_MODE_IMMEDIATE_KHR:
                         LOG("VK_PRESENT_MODE_IMMEDIATE_KHR is available!");
                         break;
 
                     case VK_PRESENT_MODE_MAILBOX_KHR:
                         LOG("VK_PRESENT_MODE_MAILBOX_KHR is available!");
+                        m_eSelectedPresentMode = ePresentMode;
+                        bFoundPresentationMode = true;
                         break;
 
                     case VK_PRESENT_MODE_FIFO_KHR:
                         LOG("VK_PRESENT_MODE_FIFO_KHR is available!");
-                        found_vsync = true;
+                        bFoundVsync = true;
                         break;
 
                     case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
@@ -201,129 +207,96 @@ namespace DENG {
                     default:
                         break;
                 }
-
-                if(presentation_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-                    m_selected_present_mode = presentation_mode;
-                    found_presentation_mode = true;
-                }
             }
 
-            if(!found_presentation_mode) {
-                m_selected_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            if(!bFoundPresentationMode) {
+                m_eSelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
             } 
         }
 
 
-        void SwapchainCreator::_CreateSwapchain() {
-            uint32_t min_image_count = m_instance_creator.GetSurfaceCapabilities().minImageCount + 1;
+        void SwapchainCreator::_CreateSwapchain(uint32_t _uWidth, uint32_t _uHeight) {
+            uint32_t uMinimumImageCount = m_pInstanceCreator->GetSurfaceCapabilities().minImageCount + 1;
 
             // Verify that the maximum image count is not exceeded
-            if(m_instance_creator.GetSurfaceCapabilities().maxImageCount > 0 && min_image_count > m_instance_creator.GetSurfaceCapabilities().maxImageCount) 
-                min_image_count = m_instance_creator.GetSurfaceCapabilities().maxImageCount;
+            if(m_pInstanceCreator->GetSurfaceCapabilities().maxImageCount > 0 && uMinimumImageCount > m_pInstanceCreator->GetSurfaceCapabilities().maxImageCount) 
+                uMinimumImageCount = m_pInstanceCreator->GetSurfaceCapabilities().maxImageCount;
 
 
-            VkSwapchainCreateInfoKHR swapchain_createinfo = {};
-            swapchain_createinfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-            swapchain_createinfo.surface = m_instance_creator.GetSurface();
-            swapchain_createinfo.minImageCount = min_image_count;
-            swapchain_createinfo.imageFormat = m_selected_surface_format.format;
-            swapchain_createinfo.imageColorSpace = m_selected_surface_format.colorSpace;
+            VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
+            swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+            swapchainCreateInfo.surface = m_pInstanceCreator->GetSurface();
+            swapchainCreateInfo.minImageCount = uMinimumImageCount;
+            swapchainCreateInfo.imageFormat = m_selectedSurfaceFormat.format;
+            swapchainCreateInfo.imageColorSpace = m_selectedSurfaceFormat.colorSpace;
 
-            VkExtent2D ext = m_instance_creator.GetSurfaceCapabilities().currentExtent;
-            if(ext.width != UINT32_MAX && ext.height != UINT32_MAX)
-                swapchain_createinfo.imageExtent = ext;
-            else {
-                swapchain_createinfo.imageExtent.width = m_window_size.x;
-                swapchain_createinfo.imageExtent.height = m_window_size.y;
-            }
+            swapchainCreateInfo.imageExtent.width = _uWidth;
+            swapchainCreateInfo.imageExtent.height = _uHeight;
 
-            ext = { swapchain_createinfo.imageExtent.width, swapchain_createinfo.imageExtent.height };
-            swapchain_createinfo.imageArrayLayers = 1;
-            swapchain_createinfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            swapchainCreateInfo.imageArrayLayers = 1;
+            swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
             // Check if present queue and graphics queue are the same and necessary synchronise the image sharing mode
-            std::array<uint32_t, 2> queue_families;
-            queue_families[0] = m_instance_creator.GetGraphicsFamilyIndex();
-            queue_families[1] = m_instance_creator.GetPresentationFamilyIndex();
-            if(queue_families[0] != queue_families[1]) {
-                swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-                swapchain_createinfo.queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size());
-                swapchain_createinfo.pQueueFamilyIndices = queue_families.data();
+            std::array<uint32_t, 2> queueFamilies;
+            queueFamilies[0] = m_pInstanceCreator->GetGraphicsFamilyIndex();
+            queueFamilies[1] = m_pInstanceCreator->GetPresentationFamilyIndex();
+            if(queueFamilies[0] != queueFamilies[1]) {
+                swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+                swapchainCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>(queueFamilies.size());
+                swapchainCreateInfo.pQueueFamilyIndices = queueFamilies.data();
             } else {
-                swapchain_createinfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             }
             
 
-            swapchain_createinfo.preTransform = m_instance_creator.GetSurfaceCapabilities().currentTransform;
+            swapchainCreateInfo.preTransform = m_pInstanceCreator->GetSurfaceCapabilities().currentTransform;
 
             // Check, which composite alpha mode is supported
-            if(m_instance_creator.GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) 
-                swapchain_createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
-            else if(m_instance_creator.GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
-                swapchain_createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
-            else if(m_instance_creator.GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
-                swapchain_createinfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-            else RUN_ERR("_CreateSwapchain", "Could not select correct VK_COMPOSITE_ALPHA_BIT that is supported by DENG");
-
-            swapchain_createinfo.presentMode = m_selected_present_mode;
-            swapchain_createinfo.clipped = VK_TRUE;
-
-            if(vkCreateSwapchainKHR(m_instance_creator.GetDevice(), &swapchain_createinfo, nullptr, &m_swapchain) != VK_SUCCESS)
-                VK_SWAPCHAIN_ERR("failed to create create a swap chain!");
-
-            uint32_t image_count = UINT32_MAX;
-            vkGetSwapchainImagesKHR(m_instance_creator.GetDevice(), m_swapchain, &image_count, nullptr);
-            std::vector<VkImage> images(image_count);
-            vkGetSwapchainImagesKHR(m_instance_creator.GetDevice(), m_swapchain, &image_count, images.data());
-
-            // copy images to TextureDatabase
-            TextureDatabase* db = TextureDatabase::GetInstance();
-            if (m_swapchain_image_ids.size() != image_count) {
-                m_swapchain_image_ids.resize(image_count);
-                for (size_t i = 0; i < images.size(); i++) {
-                    Vulkan::TextureData tex_data;
-                    tex_data.image = images[i];
-
-                    TextureResource res;
-                    res.width = ext.width;
-                    res.height = ext.height;
-                    res.bit_depth = 4;
-                    res.load_type = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-                    res.resource_type = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
-                    res.vendor = tex_data;
-
-                    m_swapchain_image_ids[i] = db->AddResource(res);
-                }
-            }
+            if(m_pInstanceCreator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) 
+                swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+            else if(m_pInstanceCreator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+                swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+            else if(m_pInstanceCreator->GetSurfaceCapabilities().supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+                swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
             else {
-                for (size_t i = 0; i < images.size(); i++) {
-                    Vulkan::TextureData& data = std::get<Vulkan::TextureData>(db->GetResource(m_swapchain_image_ids[i]).vendor);
-                    data.image = images[i];
-                }
+                throw HardwareException("Could not select valid VkCompositeAlphaFlagBitsKHR supported by DENG");
+            }
+
+            swapchainCreateInfo.presentMode = m_eSelectedPresentMode;
+            swapchainCreateInfo.clipped = VK_TRUE;
+
+            if (vkCreateSwapchainKHR(m_pInstanceCreator->GetDevice(), &swapchainCreateInfo, nullptr, &m_hSwapchain) != VK_SUCCESS)
+                throw RendererException("vkCreateSwapchainKHR() could not create a swapchain");
+
+            uint32_t uImageCount = 0;
+            vkGetSwapchainImagesKHR(m_pInstanceCreator->GetDevice(), m_hSwapchain, &uImageCount, nullptr);
+            std::vector<VkImage> images(uImageCount);
+            if (vkGetSwapchainImagesKHR(m_pInstanceCreator->GetDevice(), m_hSwapchain, &uImageCount, images.data()) != VK_SUCCESS)
+                throw RendererException("vkGetSwapchainImagesKHR() could not get swapchain images");
+
+            m_swapchainImages.resize(uImageCount);
+            for (size_t i = 0; i < m_swapchainImages.size(); i++) {
+                m_swapchainImages[i].hImage = images[i];
             }
         }
 
 
         void SwapchainCreator::_CreateSwapchainImageViews() {
-            TextureDatabase* db = TextureDatabase::GetInstance();
-
-            for(uint32_t i = 0; i < static_cast<uint32_t>(m_swapchain_image_ids.size()); i++) {
-                Vulkan::TextureData &data = std::get<Vulkan::TextureData>(db->GetResource(m_swapchain_image_ids[i]).vendor);
-
-                VkImageViewCreateInfo image_view_info = {};
-                image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                image_view_info.image = data.image;
-                image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-                image_view_info.format = m_selected_surface_format.format;
+            for(size_t i = 0; i < m_swapchainImages.size(); i++) {
+                VkImageViewCreateInfo imageViewCreateInfo = {};
+                imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                imageViewCreateInfo.image = m_swapchainImages[i].hImage;
+                imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                imageViewCreateInfo.format = m_selectedSurfaceFormat.format;
                 
-                image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                image_view_info.subresourceRange.baseMipLevel = 0;
-                image_view_info.subresourceRange.levelCount = 1;
-                image_view_info.subresourceRange.baseArrayLayer = 0;
-                image_view_info.subresourceRange.layerCount = 1;
+                imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+                imageViewCreateInfo.subresourceRange.levelCount = 1;
+                imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+                imageViewCreateInfo.subresourceRange.layerCount = 1;
 
-                if(vkCreateImageView(m_instance_creator.GetDevice(), &image_view_info, nullptr, &data.image_view) != VK_SUCCESS)
-                    VK_SWAPCHAIN_ERR("failed to create image views!");
+                if (vkCreateImageView(m_pInstanceCreator->GetDevice(), &imageViewCreateInfo, nullptr, &m_swapchainImages[i].hImageView) != VK_SUCCESS)
+                    throw RendererException("vkCreateImageView() could not create swapchain image view");
             }
         }
     }

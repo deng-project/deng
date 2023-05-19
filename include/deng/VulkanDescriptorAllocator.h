@@ -10,59 +10,85 @@
     #include <string>
     #include <vector>
     #include <queue>
+    #include <variant>
     #include <algorithm>
     #include <unordered_map>
     #include <variant>
-    #include <vulkan/vulkan.h>
-    #include "nwin/glad/glad.h"
 
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
+    #include "deng/Exceptions.h"
     #include "deng/ShaderDefinitions.h"
+    #include "deng/IRenderer.h"
     #include "deng/VulkanHelpers.h"
     #include "deng/Missing.h"
-    #include "deng/TextureDatabase.h"
 #endif
+
 
 namespace DENG {
     namespace Vulkan {
 
         class DescriptorAllocator {
             private:
-                const VkDevice m_device;
-                VkBuffer m_uniform_buffer;
-                const VkDescriptorSetLayout m_descriptor_set_layout;
-                const std::vector<UniformDataLayout> m_ubo_layouts;
-                uint32_t m_2d_missing;
-                uint32_t m_3d_missing;
-                VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
-                const uint32_t m_pool_capacity;
-                std::vector<VkDescriptorSet> m_descriptor_sets; 
+                VkDevice m_hDevice = VK_NULL_HANDLE;
+                const std::unordered_map<uint32_t, TextureResource>& m_textureRegistry;
+                const std::vector<UniformDataLayout>& m_uniformDataLayouts;
+                uint32_t m_u2DMissingTextureId;
+                uint32_t m_u3DMissingTextureId;
+
+                VkDescriptorPool m_hShaderDescriptorPool = VK_NULL_HANDLE;
+                std::vector<VkDescriptorSet> m_shaderDescriptorSets;
+
+                // first: descriptor pool handle
+                // second: descriptor pool size
+                std::vector<VkDescriptorPool> m_meshDescriptorPools;
+                std::vector<VkDescriptorSet> m_meshDescriptorSets;
+                uint32_t m_uMeshCounter = 0;
+                uint32_t m_uMeshMasterPoolCapacity = 100; // the real pool size is m_uMeshMasterPoolCapacity * m_uBufferingStageCount
+                uint32_t m_uBufferingStageCount = MAX_FRAMES_IN_FLIGHT;
+
+                VkDescriptorSetLayout m_hShaderDescriptorSetLayout = VK_NULL_HANDLE;
+                VkDescriptorSetLayout m_hMeshDescriptorSetLayout = VK_NULL_HANDLE;
 
             private:
-                void _AllocateDescriptorPool();
-                void _CreateDescriptorSets();
+                void _CreateDescriptorSetLayouts();
+                void _CreateShaderDescriptorPool();
+                void _AllocateNewMeshDescriptorPool();
+                void _AllocateShaderDescriptorSets();
 
             public:
                 DescriptorAllocator(
-                    VkDevice _dev, 
-                    VkBuffer _u_buffer, 
-                    VkDescriptorSetLayout _layout, 
-                    const std::vector<UniformDataLayout> &_ubo_layout, 
-                    uint32_t _missing_2d,
-                    uint32_t _missing_3d,
-                    uint32_t _pool_cap
-                );
-                DescriptorAllocator(DescriptorAllocator&& _da) noexcept = default;
-                DescriptorAllocator(const DescriptorAllocator&) = delete;
-                ~DescriptorAllocator();
+                    VkDevice _hDevice,
+                    VkBuffer _hMainBuffer,
+                    const std::unordered_map<uint32_t, TextureResource>& _textureRegistry,
+                    const std::vector<UniformDataLayout> &_uniformDataLayouts, 
+                    uint32_t _uFrameCount,
+                    uint32_t _uMissing2DTextureId,
+                    uint32_t _uMissing3DTextureId);
+                DescriptorAllocator(DescriptorAllocator&& _da) noexcept;
+                DescriptorAllocator(const DescriptorAllocator& _da) = delete;
+                ~DescriptorAllocator() noexcept;
 
                 // whenever new uniform buffer is allocated
-                void RecreateDescriptorSets(VkBuffer _new_ubo, const std::vector<uint32_t>& _textures);
-                void UpdateDescriptorSets(const std::vector<uint32_t>& _textures = {});
-                
-                inline VkDescriptorSet RequestDescriptorSetByFrame(uint32_t _current_frame) {
-                    return m_descriptor_sets[_current_frame];
+                VkDescriptorSet RequestMeshDescriptorSet();
+                void UpdateShaderDescriptorSets(VkBuffer _hMainBuffer, const std::vector<uint32_t>& _textures = {});
+                void UpdateMeshDescriptorSet(VkBuffer _hMainBuffer, VkDescriptorSet _hDescriptorSet, const std::vector<uint32_t>& _textures = {});
+                void MergeMeshDescriptorPools();
+
+                inline void ResetMeshCounter() {
+                    m_uMeshCounter = 0;
+                }
+
+                inline VkDescriptorSet RequestShaderDescriptorSet(uint32_t _uCurrentFrame) const {
+                    return m_shaderDescriptorSets[_uCurrentFrame];
+                }
+
+                inline VkDescriptorSetLayout GetShaderDescriptorSetLayout() const {
+                    return m_hShaderDescriptorSetLayout;
+                }
+
+                inline VkDescriptorSetLayout GetMeshDescriptorSetLayout() const {
+                    return m_hMeshDescriptorSetLayout;
                 }
         };
     }

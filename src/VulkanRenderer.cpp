@@ -8,607 +8,484 @@
 
 namespace DENG {
 
-    namespace Vulkan {
-        void Initialise() {
-            RenderState *rs = RenderState::GetInstance();
-            if(rs->GetPrimary() == RENDERER_TYPE_UNKNOWN)
-                rs->SetPrimary(RENDERER_TYPE_VULKAN);
-        }
-    }
-
-
-    VulkanRenderer::VulkanRenderer(const RendererConfig &_conf) : 
-        Renderer(_conf),
-        m_instance_creator(m_conf)
-    {
-        m_previous_canvas = m_conf.canvas_size;
-        TextureDatabase* db = TextureDatabase::GetInstance();
-        int x, y, size;
-        char* data = GetMissingTextureRGBA(x, y, size);
-
-        // create main swapchain framebuffer
-        VkExtent2D ext = m_instance_creator.GetSurfaceCapabilities().currentExtent;
-        _AllocateBufferResources();
-        _AllocateUniformBuffer();
-
-        m_framebuffers.emplace_back(new Vulkan::Framebuffer(
-            m_instance_creator,
-            m_uniform_buffer,
-            m_main_buffer,
-            m_sample_count,
-            TRS::Point2D<uint32_t>(ext.width, ext.height),
-            m_missing_2d,
-            m_missing_3d
-        ));
-
-        // push a missing 2D texture
-        m_missing_2d = db->AddResource(data, (uint32_t)x, (uint32_t)y, 4);
-        _CreateVendorTextureImages(m_missing_2d);
-
-
-        // push a missing 3D texture
-        m_missing_3d = db->AddResource((uint32_t)x, (uint32_t)y, 4, data, data, data, data, data, data);
-        _CreateVendorTextureImages(m_missing_3d);
-
-        m_framebuffers[0]->SetMissing2DTextureHandle(m_missing_2d);
-        m_framebuffers[0]->SetMissing3DTextureHandle(m_missing_3d);
-    }
-
+    uint32_t IRenderer::m_uImageCounter = 1;
 
     VulkanRenderer::~VulkanRenderer() {
-        vkDeviceWaitIdle(m_instance_creator.GetDevice());
+        if (m_pInstanceCreator) {
+            vkDeviceWaitIdle(m_pInstanceCreator->GetDevice());
 
-        // destroy all secondary framebuffers
-        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end();) {
-            it = m_framebuffers.erase(it);
-        }
-
-        TextureDatabase* db = TextureDatabase::GetInstance();
-        db->DeleteAll();
-
-        // destroy texture resources
-        while(!db->GetDeletedEventQueue().empty()) {
-            TextureResource res = db->GetDeletedEventQueue().front();
-            Vulkan::TextureData data = std::get<Vulkan::TextureData>(res.vendor);
-            db->GetDeletedEventQueue().pop();
-
-            if (res.resource_type == TEXTURE_RESOURCE_1D_IMAGE || res.resource_type == TEXTURE_RESOURCE_2D_IMAGE || res.resource_type == TEXTURE_RESOURCE_3D_IMAGE) {
-                vkDestroySampler(m_instance_creator.GetDevice(), data.sampler, nullptr);
-                vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
-                vkDestroyImage(m_instance_creator.GetDevice(), data.image, nullptr);
-                vkFreeMemory(m_instance_creator.GetDevice(), data.memory, nullptr);
-
-                if (res.rgba_data) delete[] res.rgba_data;
+            // destroy all framebuffers
+            for (auto it = m_framebuffers.begin(); it != m_framebuffers.end();) {
+                it = m_framebuffers.erase(it);
             }
-        }
 
-        // free main buffers
-        vkDestroyBuffer(m_instance_creator.GetDevice(), m_main_buffer, NULL);
-        vkFreeMemory(m_instance_creator.GetDevice(), m_main_memory, NULL);
+            // destroy all descriptor allocators
+            for (auto it = m_pipelineDescriptorAllocators.begin(); it != m_pipelineDescriptorAllocators.end();)
+                it = m_pipelineDescriptorAllocators.erase(it);
 
-        // free uniform buffers
-        vkDestroyBuffer(m_instance_creator.GetDevice(), m_uniform_buffer, nullptr);
-        vkFreeMemory(m_instance_creator.GetDevice(), m_uniform_memory, nullptr);
-    }
+            for (auto it = m_textureRegistry.begin(); it != m_textureRegistry.end(); it++) {
+                DeleteTextureResource(it->first);
+            }
 
+            // destroy texture resources
+            while (!m_deletedTextureResourceQueue.empty()) {
+                TextureResource textureResource = m_textureRegistry[m_deletedTextureResourceQueue.front()];
+                m_deletedTextureResourceQueue.pop();
+                Vulkan::TextureData vulkanHandles = std::get<0>(textureResource.apiTextureHandles);
 
-    FramebufferIndices VulkanRenderer::AddFramebuffer(TRS::Point2D<uint32_t> _extent) {
-        m_framebuffers.emplace_back(new Vulkan::Framebuffer(
-            m_instance_creator, 
-            m_uniform_buffer, 
-            m_main_buffer, 
-            m_sample_count, 
-            _extent,
-            m_missing_2d,
-            m_missing_3d,
-            true
-        ));
+                if (textureResource.eResourceType == TEXTURE_RESOURCE_1D_IMAGE ||
+                    textureResource.eResourceType == TEXTURE_RESOURCE_2D_IMAGE ||
+                    textureResource.eResourceType == TEXTURE_RESOURCE_3D_IMAGE)
+                {
+                    vkDestroySampler(m_pInstanceCreator->GetDevice(), vulkanHandles.hSampler, nullptr);
+                    vkDestroyImageView(m_pInstanceCreator->GetDevice(), vulkanHandles.hImageView, nullptr);
+                    vkDestroyImage(m_pInstanceCreator->GetDevice(), vulkanHandles.hImage, nullptr);
+                    vkFreeMemory(m_pInstanceCreator->GetDevice(), vulkanHandles.hMemory, nullptr);
 
-        return FramebufferIndices(
-            m_framebuffers.back()->GetFramebufferImageIds().front(), 
-            static_cast<uint32_t>(m_framebuffers.size() - 1)
-        );
-    }
-
-
-    uint32_t VulkanRenderer::AlignUniformBufferOffset(uint32_t _req) {
-        return AlignData(_req, m_instance_creator.GetMinimalUniformBufferAlignment());
-    }
-
-
-    void VulkanRenderer::UpdateUniform(const char *_raw_data, uint32_t _size, uint32_t _offset) {
-        // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_size + _offset) >= m_uniform_size) {
-            m_uniform_size = (_size + _offset) * 3 / 2;
-            _ReallocateUniformBuffer();
-
-            for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-                if (*it != nullptr) {
-                    (*it)->RecreateDescriptorSets();
+                    if (textureResource.bHeapAllocationFlag)
+                        delete[] textureResource.pRGBAData;
                 }
             }
+
+            // free main buffers
+            vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hMainBuffer, NULL);
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hMainBufferMemory, NULL);
+
+            // delete instance creator
+            delete m_pInstanceCreator;
+            m_pInstanceCreator = nullptr;
         }
-
-        if(_raw_data) {
-            Vulkan::_CopyToBufferMemory(m_instance_creator.GetDevice(), static_cast<VkDeviceSize>(_size), _raw_data, m_uniform_memory, static_cast<VkDeviceSize>(_offset));
-        }
     }
 
 
-    void VulkanRenderer::UpdateVertexDataBuffer(std::pair<const char*, uint32_t> _raw_data, uint32_t _offset) {
-        const VkCommandPool pool = m_framebuffers[0]->GetCommandPool();
+    void VulkanRenderer::_CreateApiImageHandles(uint32_t _id) {
+        DENG_ASSERT(m_textureRegistry.find(_id) != m_textureRegistry.end());
+        TextureResource& textureResource = m_textureRegistry[_id];
+        DENG_ASSERT(textureResource.pRGBAData);
+        Vulkan::TextureData vulkanTextureData;
 
-        // check if reallocation should occur
-        if(static_cast<VkDeviceSize>(_raw_data.second + _offset) >= m_buffer_size) {
-            VkDeviceSize old_size = m_buffer_size;
-            m_buffer_size = (_raw_data.second + _offset) * 3 / 2;
-            _ReallocateBufferResources(old_size);
-        }
+        VkFormat eFormat = VK_FORMAT_DEFAULT_IMAGE;
+        if (textureResource.uBitDepth == 3)
+            eFormat = VK_FORMAT_R8G8B8_UNORM;
 
-        Vulkan::_ImplicitDataToBufferCopy(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), pool, m_instance_creator.GetGraphicsQueue(), static_cast<VkDeviceSize>(_raw_data.second), 
-                                          reinterpret_cast<const void*>(_raw_data.first), m_main_buffer, static_cast<VkDeviceSize>(_offset));
-    }
+        VkDeviceSize uSize = 0;
+        VkImageCreateFlagBits bImageBits = (VkImageCreateFlagBits)0;
+        const uint32_t uMipLevels = 1; // temporary
+        uint32_t uArrayCount = 0;
 
-
-    void VulkanRenderer::ClearFrame() {
-        auto swpchn_fb = m_framebuffers.begin();
-        for(auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
-            if (*it == nullptr || (*it)->GetSwapchainBit())
-                continue;
-
-            if((*it)->GetSwapchainBit())
-                continue;
-
-            (*it)->ClearFrame();
-        }
-
-        (*swpchn_fb)->ClearFrame();
-    }
-
-
-    void VulkanRenderer::RenderFrame() {
-        _CheckAndCopyTextures();
-        _CheckAndDeleteTextures();
-        _CheckAndRemoveMeshes();
-        _CheckAndRemoveShaders();
-
-        // acquire next images to draw
-        VkSemaphore swapchain_image_semaphore = m_framebuffers[0]->GetSwapchainImageAcquisitionSemaphore();
-        VkFence& fence = m_framebuffers[0]->GetCurrentFlightFence();
-
-        vkWaitForFences(m_instance_creator.GetDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
-
-        uint32_t imgi;
-        VkResult res = vkAcquireNextImageKHR(
-            m_instance_creator.GetDevice(),
-            m_framebuffers[0]->GetSwapchainCreator()->GetSwapchain(), 
-            UINT64_MAX,
-            swapchain_image_semaphore, 
-            VK_NULL_HANDLE,
-            &imgi);
-
-        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
-            _Resize();
-            return;
-        } else if(res != VK_SUCCESS) {
-            VK_FRAME_ERR("Failed to acquire next swapchain image");
-        }
-        
-        vkResetFences(m_instance_creator.GetDevice(), 1, &fence);
-
-        // draw each mesh
-        for (auto mesh_it = m_meshes.begin(); mesh_it != m_meshes.end(); mesh_it++) {
-            if (*mesh_it && (*mesh_it)->enable) {
-                for (auto fb_it = (*mesh_it)->framebuffer_ids.begin(); fb_it != (*mesh_it)->framebuffer_ids.end(); fb_it++) {
-                    if (!m_framebuffers[*fb_it]) {
-                        throw std::runtime_error("Cannot draw to framebuffer " + std::to_string(fb_it - (*mesh_it)->framebuffer_ids.begin()) + ". Framebuffer deleted.");
-                    }
-
-                    if (!m_framebuffers[*fb_it]->GetCommandBufferRecordingBit() && *fb_it != 0)
-                        m_framebuffers[*fb_it]->StartCommandBufferRecording(m_conf.clear_color);
-                    else if (!m_framebuffers[*fb_it]->GetCommandBufferRecordingBit() && *fb_it == 0)
-                        m_framebuffers[*fb_it]->StartCommandBufferRecording(m_conf.clear_color, imgi);
-                    
-                    m_framebuffers[*fb_it]->Draw(**mesh_it, static_cast<uint32_t>(mesh_it - m_meshes.begin()), m_shader_modules);
-                }
-            }
-        }
-
-        // end command buffer recordings for each framebuffer that got draw commands submitted
-        for (size_t i = 1; i < m_framebuffers.size(); i++) {
-            if (!m_framebuffers[i])
-                continue;
-
-            if (m_framebuffers[i]->GetCommandBufferRecordingBit()) {
-                m_framebuffers[i]->EndCommandBufferRecording();
-                m_framebuffers[i]->Render();
-            }
-        }
-
-        // present the swapchain framebuffer
-        if (m_framebuffers[0]->GetCommandBufferRecordingBit())
-            m_framebuffers[0]->EndCommandBufferRecording();
-        
-        m_framebuffers[0]->Render();
-        res = m_framebuffers[0]->Present(imgi);
- 
-        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
-            _Resize();
-        else if(res != VK_SUCCESS)
-            VK_FRAME_ERR("Failed to present swapchain image");
-    }
-
-
-    void VulkanRenderer::_AllocateBufferResources() {
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), m_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
-                                                             VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_main_buffer);
-
-        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, m_main_memory, 
-                                mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        vkBindBufferMemory(m_instance_creator.GetDevice(), m_main_buffer, m_main_memory, 0);
-    }
-
-
-    void VulkanRenderer::_AllocateUniformBuffer() {
-        // find the maximum offset and size for uniform block
-        GPUMemoryManager *mem_man = GPUMemoryManager::GetInstance();
-        const uint32_t max_size = mem_man->GetMaxUniformOffset();
-
-        m_uniform_size = DEFAULT_UNIFORM_SIZE > max_size ? DEFAULT_UNIFORM_SIZE : max_size;
-
-        // create and allocate uniform buffer resourses
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
-        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        m_uniform_size = mem_req.size;
-        vkBindBufferMemory(m_instance_creator.GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
-    }
-
-
-    void VulkanRenderer::_ReallocateBufferResources(VkDeviceSize _old_size) {
-        const VkCommandPool pool = m_framebuffers[0]->GetCommandPool();
-
-        // step 1: create staging buffer
-        VkBuffer staging_buffer = VK_NULL_HANDLE;
-        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), _old_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, staging_buffer);
-        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, staging_memory, mem_req.memoryTypeBits, 
-                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0);
-
-        Vulkan::_CopyBufferToBuffer(m_instance_creator.GetDevice(), pool, m_instance_creator.GetGraphicsQueue(), m_main_buffer, staging_buffer, _old_size, 0, 0);
-
-        // step 2: free to old buffer instance and allocate new resources
-        // NOTE: new supported sizes must be calculated beforehand
-        vkFreeMemory(m_instance_creator.GetDevice(), m_main_memory, NULL);
-        vkDestroyBuffer(m_instance_creator.GetDevice(), m_main_buffer, NULL);
-        _AllocateBufferResources();
-
-        // step 3: copy data to new offsets in new buffer
-        Vulkan::_CopyBufferToBuffer(m_instance_creator.GetDevice(), pool, m_instance_creator.GetGraphicsQueue(), staging_buffer, m_main_buffer, _old_size, 0, 0);
-    }
-
-
-    void VulkanRenderer::_ReallocateUniformBuffer() {
-        // step 1: free all previous resources
-        vkFreeMemory(m_instance_creator.GetDevice(), m_uniform_memory, nullptr);
-        vkDestroyBuffer(m_instance_creator.GetDevice(), m_uniform_buffer, nullptr);
-
-        // step 2: allocate new uniform buffer
-        VkMemoryRequirements mem_req = Vulkan::_CreateBuffer(m_instance_creator.GetDevice(), m_uniform_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_uniform_buffer);
-        Vulkan::_AllocateMemory(m_instance_creator.GetDevice(), m_instance_creator.GetPhysicalDevice(), mem_req.size, m_uniform_memory, mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        m_uniform_size = mem_req.size;
-        vkBindBufferMemory(m_instance_creator.GetDevice(), m_uniform_buffer, m_uniform_memory, 0);
-    }
-
-
-    void VulkanRenderer::_CreateMipmaps(VkImage _img, uint32_t _width, uint32_t _height, uint32_t _mip_levels, uint32_t _array_count) {
-        const VkCommandPool pool = m_framebuffers[0]->GetCommandPool();
-        // OPTIONAL:
-        // check if image format supports linear blitting
-        VkFormatProperties format_props;
-        vkGetPhysicalDeviceFormatProperties(m_instance_creator.GetPhysicalDevice(), VK_FORMAT_DEFAULT_IMAGE, &format_props);
-        DENG_ASSERT(format_props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
-
-        VkCommandBuffer cmd_buf = VK_NULL_HANDLE;
-        Vulkan::_BeginCommandBufferSingleCommand(m_instance_creator.GetDevice(), pool, cmd_buf);
-
-        VkImageMemoryBarrier mem_barrier = {};
-        mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        mem_barrier.image = _img;
-        mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        mem_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        mem_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        mem_barrier.subresourceRange.baseArrayLayer = 0;
-        mem_barrier.subresourceRange.layerCount = _array_count;
-        mem_barrier.subresourceRange.baseMipLevel = 0;
-        mem_barrier.subresourceRange.levelCount = 1;
-
-        for(uint32_t i = 1; i < _mip_levels; i++) {
-            // set pipeline ready for transfer processing
-            mem_barrier.subresourceRange.baseMipLevel = i - 1;
-            mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            mem_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            mem_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
-            
-            // set up image blit structure
-            VkImageBlit blit = {};
-            blit.srcOffsets[0] = { 0, 0, 0 };
-            blit.srcOffsets[1] = { static_cast<int32_t>(_width), static_cast<int32_t>(_height), 1 };
-            blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            blit.srcSubresource.baseArrayLayer = 0;
-            blit.srcSubresource.mipLevel = i - 1;
-            blit.srcSubresource.layerCount = _array_count;
-            blit.dstOffsets[0] = { 0, 0, 0 };
-            blit.dstOffsets[1] = { 
-                static_cast<int32_t>(_width) > 1 ? static_cast<int32_t>(_width) / 2 : 1, 
-                static_cast<int32_t>(_height) > 1 ? static_cast<int32_t>(_height) / 2 : 1,
-                1
-            };
-            blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            blit.dstSubresource.baseArrayLayer = 0;
-            blit.dstSubresource.mipLevel = i;
-            blit.dstSubresource.layerCount = _array_count;
-
-            vkCmdBlitImage(cmd_buf, _img, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, _img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-
-            // set pipeline ready for final transfer into fragment shader
-            mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            mem_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
-
-            if(_width > 1) _width /= 2;
-            if(_height > 1) _height /= 2;
-        }
-
-        // final mip level transitioning
-        mem_barrier.subresourceRange.baseMipLevel = _mip_levels - 1;
-        mem_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        mem_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        mem_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &mem_barrier);
-
-        Vulkan::_EndCommandBufferSingleCommand(m_instance_creator.GetDevice(), m_instance_creator.GetGraphicsQueue(), pool, cmd_buf);
-    }
-
-
-    void VulkanRenderer::_Resize() {
-        while (m_previous_canvas != m_conf.canvas_size) {
-            m_previous_canvas = m_conf.canvas_size;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-
-        vkDeviceWaitIdle(m_instance_creator.GetDevice());
-
-        Vulkan::Framebuffer &fb = *m_framebuffers[0];
-        fb.DestroyFramebuffer(false);
-        fb.DestroySynchronisationPrimitives();
-        fb.SetExtent(m_conf.canvas_size);
-
-        fb.GetSwapchainCreator()->RecreateSwapchain(m_conf.canvas_size);
-        fb.RecreateFramebuffer();
-        fb.CreateSynchronisationPrimitives();
-    }
-
-
-    void VulkanRenderer::_CreateVendorTextureImages(uint32_t _id) {
-        TextureDatabase* db = TextureDatabase::GetInstance();
-        TextureResource& res = db->GetResource(_id);
-
-        // create staging buffer resources
-        VkBuffer staging_buffer = VK_NULL_HANDLE;
-        VkDeviceMemory staging_memory = VK_NULL_HANDLE;
-        VkMemoryRequirements mem_req = {};
-        VkImageCreateFlagBits img_bits = (VkImageCreateFlagBits)0;
-        VkFormat format = VK_FORMAT_DEFAULT_IMAGE;
-        if (res.bit_depth == 3)
-            format = VK_FORMAT_R8G8B8_UNORM;
-
-        VkDeviceSize size = 0;
-        uint32_t mip_levels = 1;
-        uint32_t array_count = 0;
-
-        switch (res.resource_type) {
+        switch (textureResource.eResourceType) {
             case TEXTURE_RESOURCE_2D_IMAGE:
-                size = static_cast<VkDeviceSize>(res.width * res.height * res.bit_depth);
-                array_count = 1;
+                uSize = static_cast<VkDeviceSize>(textureResource.uWidth * textureResource.uHeight * textureResource.uBitDepth);
+                uArrayCount = 1;
                 break;
 
             case TEXTURE_RESOURCE_3D_IMAGE:
-                size = static_cast<VkDeviceSize>(res.width * res.height * res.bit_depth * 6u);
-                array_count = 6;
-                img_bits = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+                uSize = static_cast<VkDeviceSize>(textureResource.uWidth * textureResource.uHeight * textureResource.uBitDepth * 6u);
+                uArrayCount = 6;
+                bImageBits = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
                 break;
 
             default:
                 return;
         }
 
-        mem_req = Vulkan::_CreateBuffer(
-            m_instance_creator.GetDevice(),
-            size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            staging_buffer);
-
-        Vulkan::_AllocateMemory(
-            m_instance_creator.GetDevice(),
-            m_instance_creator.GetPhysicalDevice(), 
-            mem_req.size, 
-            staging_memory, 
-            mem_req.memoryTypeBits,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        vkBindBufferMemory(m_instance_creator.GetDevice(), staging_buffer, staging_memory, 0lu);
-
-        // copy image pixel data to staging buffer
-        Vulkan::_CopyToBufferMemory(m_instance_creator.GetDevice(), size, res.rgba_data, staging_memory, 0);
-
-        // create vulkan resources
-        Vulkan::TextureData data;
-        mem_req = Vulkan::_CreateImage(
-            m_instance_creator.GetDevice(),
-            data.image,
-            res.width,
-            res.height,
-            mip_levels,
-            array_count,
-            format,
+        _CheckAndReallocateBufferResources(uSize, 0);
+        Vulkan::_CopyToBufferMemory(m_pInstanceCreator->GetDevice(), uSize, textureResource.pRGBAData, m_hStagingBufferMemory, 0);
+        
+        VkMemoryRequirements memoryRequirements = Vulkan::_CreateImage(
+            m_pInstanceCreator->GetDevice(),
+            vulkanTextureData.hImage,
+            textureResource.uWidth,
+            textureResource.uHeight,
+            uMipLevels,
+            uArrayCount,
+            eFormat,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
             VK_SAMPLE_COUNT_1_BIT,
-            img_bits);
+            bImageBits);
 
         Vulkan::_AllocateMemory(
-            m_instance_creator.GetDevice(),
-            m_instance_creator.GetPhysicalDevice(),
-            mem_req.size,
-            data.memory,
-            mem_req.memoryTypeBits,
+            m_pInstanceCreator->GetDevice(),
+            m_pInstanceCreator->GetPhysicalDevice(),
+            memoryRequirements.size,
+            vulkanTextureData.hMemory,
+            memoryRequirements.memoryTypeBits,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        vkBindImageMemory(m_instance_creator.GetDevice(), data.image, data.memory, 0);
-        
-        // transition the image layout for data copy from staging buffer
-        VkCommandPool pool = m_framebuffers[0]->GetCommandPool();
+
+        vkBindImageMemory(m_pInstanceCreator->GetDevice(), vulkanTextureData.hImage, vulkanTextureData.hMemory, 0);
+    
+        VkCommandPool hCommandPool = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0])->GetCommandPool();
         Vulkan::_TransitionImageLayout(
-            m_instance_creator.GetDevice(),
-            data.image,
-            pool,
-            m_instance_creator.GetGraphicsQueue(),
+            m_pInstanceCreator->GetDevice(),
+            vulkanTextureData.hImage,
+            hCommandPool,
+            m_pInstanceCreator->GetGraphicsQueue(),
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            1, 
-            array_count);
+            uMipLevels,
+            uArrayCount);
 
-        // copy data from staging buffer memory to image memory
+        // copy from staging buffer to image memory
         Vulkan::_CopyBufferToImage(
-            m_instance_creator.GetDevice(),
-            pool,
-            m_instance_creator.GetGraphicsQueue(),
-            staging_buffer,
-            data.image,
-            res.width,
-            res.height,
-            array_count);
-
+            m_pInstanceCreator->GetDevice(),
+            hCommandPool,
+            m_pInstanceCreator->GetGraphicsQueue(),
+            m_hStagingBuffer,
+            vulkanTextureData.hImage,
+            textureResource.uWidth,
+            textureResource.uHeight,
+            uArrayCount);
 
         Vulkan::_TransitionImageLayout(
-            m_instance_creator.GetDevice(),
-            data.image,
-            pool,
-            m_instance_creator.GetGraphicsQueue(),
+            m_pInstanceCreator->GetDevice(),
+            vulkanTextureData.hImage,
+            hCommandPool,
+            m_pInstanceCreator->GetGraphicsQueue(),
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            mip_levels,
-            array_count
-        );
-
-        // create mipmaps
-        //_CreateMipmaps(data.image, res.width, res.height, mip_levels, array_count);
-        
-        // destroy staging buffer resources
-        vkDestroyBuffer(m_instance_creator.GetDevice(), staging_buffer, nullptr);
-        vkFreeMemory(m_instance_creator.GetDevice(), staging_memory, nullptr);
+            uMipLevels,
+            uArrayCount);
 
         // create image view
-        VkImageViewCreateInfo img_view_info = {};
-        img_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        img_view_info.image = data.image;
-        if (res.resource_type == TEXTURE_RESOURCE_2D_IMAGE)
-            img_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        else img_view_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-        img_view_info.format = format;
-        img_view_info.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-        img_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        img_view_info.subresourceRange.baseMipLevel = 0;
-        img_view_info.subresourceRange.levelCount = mip_levels;
-        img_view_info.subresourceRange.baseArrayLayer = 0;
-        img_view_info.subresourceRange.layerCount = array_count;
-        if (vkCreateImageView(m_instance_creator.GetDevice(), &img_view_info, nullptr, &data.image_view) != VK_SUCCESS)
-            VK_RES_ERR("Cannot create VkImageView object.");
+        VkImageViewCreateInfo imageViewCreateInfo = {};
+        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewCreateInfo.image = vulkanTextureData.hImage;
+        if (textureResource.eResourceType == TEXTURE_RESOURCE_2D_IMAGE)
+            imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        else imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        imageViewCreateInfo.format = eFormat;
+        imageViewCreateInfo.components = {
+            VK_COMPONENT_SWIZZLE_R,
+            VK_COMPONENT_SWIZZLE_G,
+            VK_COMPONENT_SWIZZLE_B,
+            VK_COMPONENT_SWIZZLE_A
+        };
+        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        imageViewCreateInfo.subresourceRange.levelCount = uMipLevels;
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        imageViewCreateInfo.subresourceRange.layerCount = uArrayCount;
+        
+        if (vkCreateImageView(m_pInstanceCreator->GetDevice(), &imageViewCreateInfo, nullptr, &vulkanTextureData.hImageView) != VK_SUCCESS)
+            throw RendererException("Cannot create VkImageView object");
 
-        data.sampler = Vulkan::_CreateTextureSampler(m_instance_creator.GetDevice(), m_instance_creator.GetMaxSamplerAnisotropy(), mip_levels);
-        res.vendor = data;
+        vulkanTextureData.hSampler = Vulkan::_CreateTextureSampler(
+            m_pInstanceCreator->GetDevice(),
+            m_pInstanceCreator->GetPhysicalDeviceInformation().fMaxSamplerAnisotropy,
+            uMipLevels);
+
+        textureResource.apiTextureHandles = vulkanTextureData;
     }
 
 
-    void VulkanRenderer::_CheckAndCopyTextures() {
-        TextureDatabase* db = TextureDatabase::GetInstance();
+    void VulkanRenderer::_CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset) {
+        VkCommandPool hCommandPool = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0])->GetCommandPool();
 
-        while (!db->GetAddedEventQueue().empty()) {
-            uint32_t id = db->GetAddedEventQueue().front();
-            db->GetAddedEventQueue().pop();
+        // check if staging buffer reallocation is required
+        if (static_cast<VkDeviceSize>(_uSize) > m_uStagingBufferSize) {
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hStagingBufferMemory, nullptr);
+            vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hStagingBuffer, nullptr);
 
-            TextureResource& res = db->GetResource(id);
+            m_uStagingBufferSize = std::max((m_uStagingBufferSize * 3) >> 1, _uSize);
+            const VkDeviceSize uMinUniformBufferAlignment = static_cast<VkDeviceSize>(m_pInstanceCreator->GetPhysicalDeviceInformation().uMinimalUniformBufferAlignment);
 
-            if (res.resource_type == TEXTURE_RESOURCE_2D_IMAGE || res.resource_type == TEXTURE_RESOURCE_3D_IMAGE) {
-                if (!res.rgba_data) {
-                    throw std::runtime_error("Texture " + std::to_string(id) + " submitted without RGBA data.");
-                }
+            m_uStagingBufferSize = (m_uStagingBufferSize + uMinUniformBufferAlignment - 1) & ~(uMinUniformBufferAlignment - 1);
 
-                _CreateVendorTextureImages(id);
-                delete[] res.rgba_data;
-                res.rgba_data = nullptr;
-            }
+            VkMemoryRequirements memoryRequirements = Vulkan::_CreateBuffer(
+                m_pInstanceCreator->GetDevice(),
+                m_uStagingBufferSize,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                m_hStagingBuffer);
+
+            Vulkan::_AllocateMemory(
+                m_pInstanceCreator->GetDevice(),
+                m_pInstanceCreator->GetPhysicalDevice(),
+                memoryRequirements.size,
+                m_hStagingBufferMemory,
+                memoryRequirements.memoryTypeBits,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+            vkBindBufferMemory(m_pInstanceCreator->GetDevice(), m_hStagingBuffer, m_hStagingBufferMemory, 0);
+        }
+
+        // check if main buffer reallocation is required
+        if (static_cast<VkDeviceSize>(_uSize + _uOffset) > m_uBufferSize) {
+            // allocate a temporary memory buffer to hold data in
+            VkBuffer hTemporaryBuffer = VK_NULL_HANDLE;
+            VkDeviceMemory hTemporaryBufferMemory = VK_NULL_HANDLE;
+            const VkDeviceSize cuOldBufferSize = m_uBufferSize;
+
+            VkMemoryRequirements memoryRequirements = Vulkan::_CreateBuffer(
+                m_pInstanceCreator->GetDevice(),
+                m_uBufferSize,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                hTemporaryBuffer);
+
+            Vulkan::_AllocateMemory(
+                m_pInstanceCreator->GetDevice(),
+                m_pInstanceCreator->GetPhysicalDevice(),
+                memoryRequirements.size,
+                m_hStagingBufferMemory,
+                memoryRequirements.memoryTypeBits,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+            vkBindBufferMemory(m_pInstanceCreator->GetDevice(), hTemporaryBuffer, hTemporaryBufferMemory, 0);
+
+            // copy data from main buffer to temporary buffer
+            Vulkan::_CopyBufferToBuffer(
+                m_pInstanceCreator->GetDevice(),
+                hCommandPool,
+                m_pInstanceCreator->GetGraphicsQueue(),
+                m_hMainBuffer,
+                hTemporaryBuffer,
+                m_uBufferSize,
+                0, 0);
+
+            // free old main buffer resources and allocate new larger buffer
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hMainBufferMemory, nullptr);
+            vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hMainBuffer, nullptr);
+
+            m_uBufferSize = std::max(static_cast<VkDeviceSize>(_uSize + _uOffset), (m_uBufferSize * 3) >> 1);
+
+            memoryRequirements = Vulkan::_CreateBuffer(
+                m_pInstanceCreator->GetDevice(),
+                m_uBufferSize,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                m_hMainBuffer);
+
+            Vulkan::_AllocateMemory(
+                m_pInstanceCreator->GetDevice(),
+                m_pInstanceCreator->GetPhysicalDevice(),
+                memoryRequirements.size,
+                m_hMainBufferMemory,
+                memoryRequirements.memoryTypeBits,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+            vkBindBufferMemory(m_pInstanceCreator->GetDevice(), m_hMainBuffer, m_hMainBufferMemory, 0);
+
+            Vulkan::_CopyBufferToBuffer(
+                m_pInstanceCreator->GetDevice(),
+                hCommandPool,
+                m_pInstanceCreator->GetGraphicsQueue(),
+                hTemporaryBuffer,
+                m_hMainBuffer,
+                cuOldBufferSize,
+                0, 0);
         }
     }
 
 
-    void VulkanRenderer::_CheckAndDeleteTextures() {
-        TextureDatabase* db = TextureDatabase::GetInstance();
+    uint32_t VulkanRenderer::AddTextureResource(const TextureResource& _resource) {
+        DENG_ASSERT(m_pInstanceCreator);
+        uint32_t uImageId = m_uImageCounter++;
+        m_textureRegistry[uImageId] = _resource;
 
-        if (!db->GetDeletedEventQueue().empty())
-            vkDeviceWaitIdle(m_instance_creator.GetDevice());
-
-        while (!db->GetDeletedEventQueue().empty()) {
-            TextureResource res = db->GetDeletedEventQueue().front();
-            db->GetDeletedEventQueue().pop();
-
-            if (res.resource_type == TEXTURE_RESOURCE_1D_IMAGE || res.resource_type == TEXTURE_RESOURCE_2D_IMAGE || res.resource_type == TEXTURE_RESOURCE_3D_IMAGE) {
-                Vulkan::TextureData data = std::get<Vulkan::TextureData>(res.vendor);
-                vkDestroySampler(m_instance_creator.GetDevice(), data.sampler, nullptr);
-                vkDestroyImageView(m_instance_creator.GetDevice(), data.image_view, nullptr);
-                vkDestroyImage(m_instance_creator.GetDevice(), data.image, nullptr);
-                vkFreeMemory(m_instance_creator.GetDevice(), data.memory, nullptr);
-            }
-
-            delete[] res.rgba_data;
-        }
+        _CreateApiImageHandles(uImageId);
+        return uImageId;
     }
 
 
-    void VulkanRenderer::_CheckAndRemoveShaders() {
-        if (!m_removed_shader_queue.empty())
-            vkDeviceWaitIdle(m_instance_creator.GetDevice());
+    std::list<PipelineModule>::iterator VulkanRenderer::CreatePipeline(const PipelineModule& _pipeline) {
+        DENG_ASSERT(m_pInstanceCreator);
 
-        while (!m_removed_shader_queue.empty()) {
-            uint32_t id = m_removed_shader_queue.front();
-            m_removed_shader_queue.pop();
+        m_pipelineModules.emplace_back(_pipeline);
+        std::list<PipelineModule>::iterator itAddedModule = (--m_pipelineModules.end());
+        
+        DENG_ASSERT(itAddedModule != m_pipelineModules.end());
 
-            for (size_t i = 0; i < m_framebuffers.size(); i++) {
-                if (m_framebuffers[i]) {
-                    m_framebuffers[i]->ClearShaderResources(id);
-                }
-            }
-        }
+        Vulkan::Framebuffer* pSwapchainFramebuffer = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0]);
+
+        m_pipelineDescriptorAllocators.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(itAddedModule),
+            std::forward_as_tuple(
+                m_pInstanceCreator->GetDevice(),
+                m_hMainBuffer,
+                m_textureRegistry,
+                itAddedModule->uboDataLayouts,
+                static_cast<uint32_t>(pSwapchainFramebuffer->GetFramebufferImageIds().size()),
+                m_uMissing2DTextureId,
+                m_uMissing3DTextureId
+            ));
+
+        return itAddedModule;
     }
 
 
-    void VulkanRenderer::_CheckAndRemoveMeshes() {
-        if (!m_removed_mesh_queue.empty())
-            vkDeviceWaitIdle(m_instance_creator.GetDevice());
-
-        while (!m_removed_mesh_queue.empty()) {
-            uint32_t id = m_removed_mesh_queue.front();
-            m_removed_mesh_queue.pop();
-
-            for (size_t i = 0; i < m_framebuffers.size(); i++) {
-                if (m_framebuffers[i]) {
-                    m_framebuffers[i]->ClearMeshResources(id);
-                }
-            }
+    void VulkanRenderer::DestroyPipeline(std::list<PipelineModule>::iterator _itPipelineModule) {
+        m_pipelineDescriptorAllocators.erase(_itPipelineModule);
+        
+        for (IFramebuffer* pFramebuffer : m_framebuffers) {
+            Vulkan::Framebuffer* pVulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(pFramebuffer);
+            pVulkanFramebuffer->DestroyPipelineAllocator(_itPipelineModule);
         }
+
+        m_pipelineModules.erase(_itPipelineModule);
+    }
+
+    IFramebuffer* VulkanRenderer::CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) {
+        Vulkan::Framebuffer* pFramebuffer = new Vulkan::Framebuffer(
+            m_pInstanceCreator, 
+            m_hMainBuffer, 
+            m_uSampleCountBits, 
+            TRS::Point2D<uint32_t>(_uWidth, _uHeight),
+            m_textureRegistry,
+            []() { return m_uImageCounter++; },
+            false);
+
+        return pFramebuffer;
+    }
+
+    IFramebuffer* VulkanRenderer::CreateContext(IWindowContext* _pWindow) {
+        DENG_ASSERT(_pWindow);
+
+        m_pInstanceCreator = new Vulkan::InstanceCreator(*_pWindow);
+
+        // allocate staging buffer memory
+        VkMemoryRequirements memoryRequirements = Vulkan::_CreateBuffer(
+            m_pInstanceCreator->GetDevice(),
+            m_uStagingBufferSize,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            m_hStagingBuffer);
+
+        Vulkan::_AllocateMemory(
+            m_pInstanceCreator->GetDevice(),
+            m_pInstanceCreator->GetPhysicalDevice(),
+            memoryRequirements.size,
+            m_hStagingBufferMemory,
+            memoryRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        
+        vkBindBufferMemory(m_pInstanceCreator->GetDevice(), m_hStagingBuffer, m_hStagingBufferMemory, 0);
+
+        // allocate main buffer memory
+        memoryRequirements = Vulkan::_CreateBuffer(
+            m_pInstanceCreator->GetDevice(),
+            m_uBufferSize,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            m_hMainBuffer);
+
+        Vulkan::_AllocateMemory(
+            m_pInstanceCreator->GetDevice(),
+            m_pInstanceCreator->GetPhysicalDevice(),
+            memoryRequirements.size,
+            m_hMainBufferMemory,
+            memoryRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        vkBindBufferMemory(m_pInstanceCreator->GetDevice(), m_hMainBuffer, m_hMainBufferMemory, 0);
+
+        Vulkan::Framebuffer* pFramebuffer = new Vulkan::Framebuffer(
+            m_pInstanceCreator,
+            m_hMainBuffer,
+            m_uSampleCountBits,
+            TRS::Point2D<uint32_t>(_pWindow->GetWidth(), _pWindow->GetHeight()),
+            m_textureRegistry,
+            []() { return m_uImageCounter++; },
+            true);
+
+        m_framebuffers.push_back(pFramebuffer);
+
+        // add missing textures
+        m_uMissing2DTextureId = m_uImageCounter++;
+        m_uMissing3DTextureId = m_uImageCounter++;
+
+        int x, y, size;
+        char* data = GetMissingTextureRGBA(x, y, size);
+
+        TextureResource textureResource;
+        textureResource.eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
+        textureResource.eResourceType = TEXTURE_RESOURCE_2D_IMAGE;
+        textureResource.pRGBAData = data;
+        textureResource.uWidth = static_cast<uint32_t>(x);
+        textureResource.uHeight = static_cast<uint32_t>(y);
+        textureResource.uBitDepth = 4;
+
+        m_textureRegistry.insert(std::make_pair(m_uMissing2DTextureId, textureResource));
+        _CreateApiImageHandles(m_uMissing2DTextureId);
+
+        textureResource.eResourceType = TEXTURE_RESOURCE_3D_IMAGE;
+        textureResource.pRGBAData = new char[x * y * 24] {};
+        textureResource.bHeapAllocationFlag = true;
+        for (int i = 0; i < 6; i++)
+            std::memcpy(textureResource.pRGBAData + i * x * y * 4, data, x * y * 4);
+
+        m_textureRegistry.insert(std::make_pair(m_uMissing3DTextureId, textureResource));
+        _CreateApiImageHandles(m_uMissing3DTextureId);
+        return pFramebuffer;
+    }
+
+    size_t VulkanRenderer::AllocateMemory(size_t _uSize, BufferDataType _eType) {
+        DENG_ASSERT(m_pInstanceCreator);
+
+        switch (_eType) {
+            case BufferDataType::VERTEX:
+                return m_gpuMemoryAllocator.RequestMemory(
+                    static_cast<uint32_t>(_uSize),
+                    static_cast<uint32_t>(sizeof(float))).uOffset;
+
+            case BufferDataType::INDEX:
+                return m_gpuMemoryAllocator.RequestMemory(
+                    static_cast<uint32_t>(_uSize),
+                    static_cast<uint32_t>(sizeof(uint32_t))).uOffset;
+
+            case BufferDataType::UNIFORM:
+                return m_gpuMemoryAllocator.RequestMemory(
+                    static_cast<uint32_t>(_uSize),
+                    m_pInstanceCreator->GetPhysicalDeviceInformation().uMinimalUniformBufferAlignment).uOffset;
+        }
+        
+        return 0;
+    }
+
+
+    void VulkanRenderer::UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) {
+        DENG_ASSERT(m_pInstanceCreator);
+        _CheckAndReallocateBufferResources(_uSize, _uOffset);
+        VkCommandPool hCommandPool = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0])->GetCommandPool();
+
+        // staging
+        Vulkan::_CopyToBufferMemory(
+            m_pInstanceCreator->GetDevice(),
+            _uSize,
+            _pData,
+            m_hStagingBufferMemory, 0);
+
+        // staging to main
+        Vulkan::_CopyBufferToBuffer(
+            m_pInstanceCreator->GetDevice(),
+            hCommandPool,
+            m_pInstanceCreator->GetGraphicsQueue(),
+            m_hStagingBuffer,
+            m_hMainBuffer,
+            _uSize,
+            0, _uOffset);
+    }
+
+
+    void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds) {
+        DENG_ASSERT(_pFramebuffer);
+        Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
+        // descriptor allocators do not exist
+        if (m_pipelineDescriptorAllocators.find(_mesh.itShaderModule) == m_pipelineDescriptorAllocators.end()) {
+            m_pipelineDescriptorAllocators.emplace(
+                std::piecewise_construct,
+                std::forward_as_tuple(_mesh.itShaderModule),
+                std::forward_as_tuple(
+                    m_pInstanceCreator->GetDevice(),
+                    m_hMainBuffer,
+                    m_textureRegistry,
+                    _mesh.itShaderModule->uboDataLayouts,
+                    MAX_FRAMES_IN_FLIGHT,
+                    m_uMissing2DTextureId,
+                    m_uMissing3DTextureId));
+        }
+
+        auto itDescriptorAllocator = m_pipelineDescriptorAllocators.find(_mesh.itShaderModule);
+        itDescriptorAllocator->second.ResetMeshCounter();
+        vulkanFramebuffer->Draw(_mesh, _uMeshId, itDescriptorAllocator->second, _textureIds);
     }
 }
