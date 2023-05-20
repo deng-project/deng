@@ -51,7 +51,7 @@ find_package(cryptopp CONFIG REQUIRED)
 # Set appropriate compiler flags
 if(MSVC)
     add_compile_options(/W3 $<$<COMPILE_LANGUAGE:CXX>:/std:c++17> $<$<COMPILE_LANGUAGE:C>:/std:c17> /wd4251 /D_CRTDBG_MAP_ALLOC)
-	add_compile_definitions(_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH _CRT_SECURE_NO_WARNINGS)
+	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 
     # Set correct optimisation flags
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/Debug)

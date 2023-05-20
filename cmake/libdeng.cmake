@@ -226,13 +226,13 @@ set(DENG_MINIMAL_SOURCES
 	src/VulkanRenderer.cpp
 	src/VulkanSwapchainCreator.cpp)
 	
-add_library(${DENG_MINIMAL_TARGET} SHARED
+add_library(${DENG_MINIMAL_TARGET} STATIC
 			${DENG_MINIMAL_HEADERS}
 			${DENG_MINIMAL_SOURCES})
 			
 # Compile definitions
 target_compile_definitions(${DENG_MINIMAL_TARGET} 
-	PRIVATE DENG_COMPLETE_EXPORT_LIBRARY
+	PUBLIC DENG_STATIC
 	PUBLIC SDL_MAIN_HANDLED)
 
 # Include directories

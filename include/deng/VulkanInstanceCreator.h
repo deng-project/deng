@@ -101,6 +101,7 @@ namespace DENG {
 
             public:
                 InstanceCreator(IWindowContext& _window);
+                ~InstanceCreator();
 
                 inline VkDevice GetDevice() const { return m_hDevice; }
                 inline VkPhysicalDevice GetPhysicalDevice() const { return m_hPhysicalDevice; }

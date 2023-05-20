@@ -104,7 +104,7 @@ namespace DENG {
                 }
 
                 virtual void BeginCommandBufferRecording(TRS::Vector4<float> _vClearColor) override;
-                void Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator& _descriptorAllocator, const std::vector<uint32_t>& _textureIds = {});
+                void Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds = {});
                 virtual void EndCommandBufferRecording() override;
                 virtual void RenderToFramebuffer() override;
 

@@ -15,8 +15,8 @@ namespace DENG {
             vkDeviceWaitIdle(m_pInstanceCreator->GetDevice());
 
             // destroy all framebuffers
-            for (auto it = m_framebuffers.begin(); it != m_framebuffers.end();) {
-                it = m_framebuffers.erase(it);
+            for (auto it = m_framebuffers.begin(); it != m_framebuffers.end(); it++) {
+                delete *it;
             }
 
             // destroy all descriptor allocators
@@ -50,6 +50,10 @@ namespace DENG {
             // free main buffers
             vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hMainBuffer, NULL);
             vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hMainBufferMemory, NULL);
+
+            // free staging buffers
+            vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hStagingBuffer, nullptr);
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hStagingBufferMemory, nullptr);
 
             // delete instance creator
             delete m_pInstanceCreator;
@@ -176,6 +180,12 @@ namespace DENG {
             uMipLevels);
 
         textureResource.apiTextureHandles = vulkanTextureData;
+
+        if (textureResource.bHeapAllocationFlag) {
+            delete[] textureResource.pRGBAData;
+            textureResource.bHeapAllocationFlag = false;
+            textureResource.pRGBAData = nullptr;
+        }
     }
 
 
@@ -470,7 +480,7 @@ namespace DENG {
         DENG_ASSERT(_pFramebuffer);
         Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
         // descriptor allocators do not exist
-        if (m_pipelineDescriptorAllocators.find(_mesh.itShaderModule) == m_pipelineDescriptorAllocators.end()) {
+        if (_mesh.itShaderModule->uboDataLayouts.size() && m_pipelineDescriptorAllocators.find(_mesh.itShaderModule) == m_pipelineDescriptorAllocators.end()) {
             m_pipelineDescriptorAllocators.emplace(
                 std::piecewise_construct,
                 std::forward_as_tuple(_mesh.itShaderModule),
@@ -485,7 +495,10 @@ namespace DENG {
         }
 
         auto itDescriptorAllocator = m_pipelineDescriptorAllocators.find(_mesh.itShaderModule);
-        itDescriptorAllocator->second.ResetMeshCounter();
-        vulkanFramebuffer->Draw(_mesh, _uMeshId, itDescriptorAllocator->second, _textureIds);
+        
+        if (itDescriptorAllocator != m_pipelineDescriptorAllocators.end()) {
+            itDescriptorAllocator->second.ResetMeshCounter();
+            vulkanFramebuffer->Draw(_mesh, _uMeshId, &itDescriptorAllocator->second, _textureIds);
+        }
     }
 }

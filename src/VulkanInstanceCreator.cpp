@@ -30,6 +30,18 @@ namespace DENG {
         }
 
 
+        InstanceCreator::~InstanceCreator() {
+            vkDestroyDevice(m_hDevice, nullptr);
+            vkDestroySurfaceKHR(m_hInstance, m_hSurface, nullptr);
+#ifdef _DEBUG
+            PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = 
+                (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_hInstance, "vkDestroyDebugUtilsMessengerEXT");
+            vkDestroyDebugUtilsMessengerEXT(m_hInstance, m_hDebugUtilsMessenger, nullptr);
+#endif
+            vkDestroyInstance(m_hInstance, nullptr);
+        }
+
+
         void InstanceCreator::_CreateInstance(IWindowContext& _window) {
             // Set up Vulkan application info
             VkApplicationInfo appinfo = {};

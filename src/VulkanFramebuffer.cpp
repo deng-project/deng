@@ -75,9 +75,6 @@ namespace DENG {
             vkFreeCommandBuffers(hDevice, m_hCommandPool, static_cast<uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
             vkDestroyCommandPool(hDevice, m_hCommandPool, nullptr);
 
-            for (auto it = m_pipelineCreators.begin(); it != m_pipelineCreators.end();)
-                m_pipelineCreators.erase(it);
-
             // destroy synchronization primitives
             for (size_t i = 0; i < m_framebufferImageIds.size(); i++) {
                 if (m_pSwapchainCreator) {
@@ -86,6 +83,13 @@ namespace DENG {
                 }
 
                 vkDestroyFence(hDevice, m_flightFences[i], nullptr);
+            }
+
+            vkDestroyRenderPass(m_pInstanceCreator->GetDevice(), m_hRenderpass, nullptr);
+
+            if (m_pSwapchainCreator) {
+                delete m_pSwapchainCreator;
+                m_pSwapchainCreator = nullptr;
             }
         }
 
@@ -405,21 +409,37 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator& _descriptorAllocator, const std::vector<uint32_t>& _textureIds) {
+        void Framebuffer::Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds) {
             // check if pipeline creator exists for requested mesh
             if (m_pipelineCreators.find(_mesh.itShaderModule) == m_pipelineCreators.end()) {
-                m_pipelineCreators.emplace(
-                    std::piecewise_construct,
-                    std::forward_as_tuple(_mesh.itShaderModule),
-                    std::forward_as_tuple(
-                    m_pInstanceCreator->GetDevice(),
-                    m_hRenderpass,
-                    _descriptorAllocator.GetShaderDescriptorSetLayout(),
-                    _descriptorAllocator.GetMeshDescriptorSetLayout(),
-                    VkExtent2D{ m_uWidth, m_uHeight },
-                    m_uSampleCountBits,
-                    m_pInstanceCreator->GetPhysicalDeviceInformation(),
-                    *_mesh.itShaderModule));
+                if (_pDescriptorAllocator) {
+                    m_pipelineCreators.emplace(
+                        std::piecewise_construct,
+                        std::forward_as_tuple(_mesh.itShaderModule),
+                        std::forward_as_tuple(
+                            m_pInstanceCreator->GetDevice(),
+                            m_hRenderpass,
+                            _pDescriptorAllocator->GetShaderDescriptorSetLayout(),
+                            _pDescriptorAllocator->GetMeshDescriptorSetLayout(),
+                            VkExtent2D{ m_uWidth, m_uHeight },
+                            m_uSampleCountBits,
+                            m_pInstanceCreator->GetPhysicalDeviceInformation(),
+                            *_mesh.itShaderModule));
+                }
+                else {
+                    m_pipelineCreators.emplace(
+                        std::piecewise_construct,
+                        std::forward_as_tuple(_mesh.itShaderModule),
+                        std::forward_as_tuple(
+                            m_pInstanceCreator->GetDevice(),
+                            m_hRenderpass,
+                            VK_NULL_HANDLE,
+                            VK_NULL_HANDLE,
+                            VkExtent2D{ m_uWidth, m_uHeight },
+                            m_uSampleCountBits,
+                            m_pInstanceCreator->GetPhysicalDeviceInformation(),
+                            *_mesh.itShaderModule));
+                }
             }
 
             // check if custom viewport should be used
@@ -450,14 +470,15 @@ namespace DENG {
                     buffers.data(),
                     itCmd->attributeOffsets.data());
 
-                std::array<VkDescriptorSet, 2> descriptorSets = {
-                    _descriptorAllocator.RequestShaderDescriptorSet(m_uCurrentFrameIndex),
-                    _descriptorAllocator.RequestMeshDescriptorSet()
-                };
+                std::array<VkDescriptorSet, 2> descriptorSets = { VK_NULL_HANDLE, VK_NULL_HANDLE };
+                if (_pDescriptorAllocator) {
+                    descriptorSets[0] = _pDescriptorAllocator->RequestShaderDescriptorSet(m_uCurrentFrameIndex);
+                    descriptorSets[1] = _pDescriptorAllocator->RequestMeshDescriptorSet();
+                }
 
                 // check if textures should be bound
                 if (descriptorSets[1] && _textureIds.size() && (_mesh.itShaderModule->bEnable2DTextures || _mesh.itShaderModule->bEnable3DTextures)) {
-                    _descriptorAllocator.UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
+                    _pDescriptorAllocator->UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
                 }
 
                 // bind both descriptor sets

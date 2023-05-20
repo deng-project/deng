@@ -6,7 +6,7 @@
 #ifndef DENG_API_H
 #define DENG_API_H
 
-#ifdef _MSC_BUILD
+#if defined(_MSC_BUILD) && !defined(DENG_STATIC)
     #ifdef DENG_COMPLETE_EXPORT_LIBRARY
         #define DENG_API __declspec(dllexport)
     #else 

@@ -28,6 +28,7 @@ namespace DENG {
 
 	SDLWindowContext::~SDLWindowContext() {
 		SDL_DestroyWindow(m_pWindow);
+		SDL_Quit();
 	}
 
 

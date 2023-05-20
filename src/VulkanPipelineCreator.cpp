@@ -135,7 +135,9 @@ namespace DENG {
 
         void PipelineCreator::DestroyPipelineData() {
             vkDestroyPipeline(m_hDevice, m_hPipeline, nullptr);
+            m_hPipeline = VK_NULL_HANDLE;
             vkDestroyPipelineLayout(m_hDevice, m_hPipelineLayout, nullptr);
+            m_hPipelineLayout = VK_NULL_HANDLE;
         }
 
 
