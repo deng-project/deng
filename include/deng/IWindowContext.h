@@ -307,6 +307,8 @@ namespace DENG {
 				};
 			}
 
+			virtual void SetTextMode(bool _bEnable) = 0;
+
 			template<typename T, typename ...Args>
 			static HidMask MaskHidEvent(HidMask base, HidMask bits, T first, Args... args) {
 				base |= (static_cast<HidMask>(first) << bits);

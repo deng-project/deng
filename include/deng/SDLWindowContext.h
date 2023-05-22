@@ -41,6 +41,7 @@ namespace DENG {
 			~SDLWindowContext();
 
 			virtual std::vector<const char*> QueryRequiredVulkanExtensions() override;
+			virtual void SetTextMode(bool _bEnable) override;
 			virtual void Create(const std::string& _sTitle, uint32_t _uWidth, uint32_t _uHeight) override;
 			virtual void* CreateVulkanSurface(void* _pInstance) override;
 			virtual void Update() override;

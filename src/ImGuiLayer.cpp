@@ -122,6 +122,10 @@ namespace DENG {
 					m_pIO->AddKeyEvent(KEYLOOKUP(event.uDescription), false);
 					break;
 
+				case EventType::TEXT_INPUT:
+					m_pIO->AddInputCharactersUTF8(event.szEditedText);
+					break;
+
 				default:
 					break;
 			}

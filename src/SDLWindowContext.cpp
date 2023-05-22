@@ -468,6 +468,17 @@ namespace DENG {
 		return extensions;
 	}
 
+
+	void SDLWindowContext::SetTextMode(bool _bEnable) {
+		if (_bEnable) {
+			SDL_StartTextInput();
+		}
+		else {
+			SDL_StopTextInput();
+		}
+	}
+
+
 	void SDLWindowContext::Create(const std::string& _sTitle, uint32_t _uWidth, uint32_t _uHeight) {
 		m_sTitle = _sTitle;
 		m_uWidth = _uWidth;
