@@ -71,7 +71,7 @@ namespace DENG {
 
                 // whenever new uniform buffer is allocated
                 VkDescriptorSet RequestMeshDescriptorSet();
-                void UpdateShaderDescriptorSets(VkBuffer _hMainBuffer, const std::vector<uint32_t>& _textures = {});
+                void UpdateShaderDescriptorSet(VkBuffer _hMainBuffer, VkDescriptorSet _hDescriptorSet, const std::vector<uint32_t>& _textures = {});
                 void UpdateMeshDescriptorSet(VkBuffer _hMainBuffer, VkDescriptorSet _hDescriptorSet, const std::vector<uint32_t>& _textures = {});
                 void MergeMeshDescriptorPools();
 

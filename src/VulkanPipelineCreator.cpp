@@ -530,9 +530,15 @@ namespace DENG {
             m_dynamicStates.clear();
             m_dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
-            m_dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-            m_dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-            m_dynamicStateCreateInfo.dynamicStateCount = 2;
+            if (_pipeline.bEnableCustomViewport) {
+                m_dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+                m_dynamicStateCreateInfo.dynamicStateCount++;
+            }
+
+            if (_pipeline.bEnableScissor) {
+                m_dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+                m_dynamicStateCreateInfo.dynamicStateCount++;
+            }
             m_dynamicStateCreateInfo.pDynamicStates = m_dynamicStates.data();
 
             // Set up colorblend state create_info

@@ -1,127 +1,99 @@
 #include <iostream>
 #include <string>
-#include <thread>
 
 #include "deng/Api.h"
+#include "deng/App.h"
 #include "deng/SDLWindowContext.h"
-#include "deng/Exceptions.h"
-#include "deng/ErrorDefinitions.h"
 #include "deng/VulkanRenderer.h"
-
-using namespace DENG;
+#include "deng/ErrorDefinitions.h"
+#include "deng/Exceptions.h"
 
 #define WIDTH	1280
 #define HEIGHT	720
 
-static float s_TriangleVertices[] = {
-	-0.5, -0.5, 0.f,
-	1.0f, 0.f, 0.f, 1.f,
-	0.f, 0.5f, 0.f,
-	0.f, 1.f, 0.f, 1.f,
-	0.5f, -0.5f, 0.f,
-	0.f, 0.f, 1.f, 1.f
+class TriangleLayer : public DENG::ILayer {
+	private:
+		const float m_cTriangleVertices[21] = {
+			-0.5, -0.5, 0.f,
+			1.0f, 0.f, 0.f, 1.f,
+			0.f, 0.5f, 0.f,
+			0.f, 1.f, 0.f, 1.f,
+			0.5f, -0.5f, 0.f,
+			0.f, 0.f, 1.f, 1.f
+		};
+		DENG::MeshComponent m_meshComponent;
+
+	public:
+		virtual void Attach(DENG::IRenderer* _pRenderer, DENG::IWindowContext* _pWindowContext) override {
+			DENG::PipelineModule trianglePipelineModule;
+			trianglePipelineModule.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
+			trianglePipelineModule.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_FLOAT);
+			trianglePipelineModule.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
+			trianglePipelineModule.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
+			trianglePipelineModule.bEnableIndexing = false;
+			trianglePipelineModule.pShader = new DENG::Shader("Triangle", "Triangle");
+
+			size_t uOffset = _pRenderer->AllocateMemory(sizeof(m_cTriangleVertices), DENG::BufferDataType::VERTEX);
+			std::list<DENG::PipelineModule>::iterator refPipeline;
+
+			try {
+				_pRenderer->UpdateBuffer(m_cTriangleVertices, sizeof(m_cTriangleVertices), uOffset);
+				refPipeline = _pRenderer->CreatePipeline(trianglePipelineModule);
+			}
+			catch (const DENG::RendererException& e) {
+				DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
+			}
+			catch (const DENG::ShaderException& e) {
+				DISPATCH_ERROR_MESSAGE("ShaderException", e.what(), ErrorSeverity::CRITICAL);
+			}
+
+			m_meshComponent.itShaderModule = refPipeline;
+			m_meshComponent.drawCommands.emplace_back();
+			m_meshComponent.drawCommands.back().attributeOffsets.push_back(uOffset);
+			m_meshComponent.drawCommands.back().attributeOffsets.push_back(uOffset + sizeof(TRS::Vector3<float>));
+			m_meshComponent.drawCommands.back().uDrawCount = 3;
+		
+			m_pRenderer = _pRenderer;
+			m_pWindowContext = _pWindowContext;
+		}
+
+		virtual void Update(DENG::IFramebuffer* _pFramebuffer) override {
+			m_pRenderer->DrawMesh(m_meshComponent, 1, _pFramebuffer);
+		}
 };
 
-int main(void) {
-	std::cin.tie(0);
-	std::ios_base::sync_with_stdio(false);
-
-	SDLWindowContext windowContext;
-	windowContext.SetHints(WindowHints::SHOWN | WindowHints::VULKAN);
-	
-	try {
-		windowContext.Create("SDLTriangle example", WIDTH, HEIGHT);
-	}
-	catch (const WindowContextException& e) {
-		DISPATCH_ERROR_MESSAGE("WindowContextException", e.what(), ErrorSeverity::CRITICAL);
-	}
-
-	IRenderer* pRenderer = new VulkanRenderer;
-	IFramebuffer* pFramebuffer = nullptr;
-
-	try {
-		pFramebuffer = pRenderer->CreateContext(&windowContext);
-	}
-	catch (const HardwareException& e) {
-		DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
-	}
-	catch (const RendererException& e) {
-		DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
-	}
-
-	PipelineModule trianglePipelineModule;
-	trianglePipelineModule.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
-	trianglePipelineModule.attributes.push_back(ATTRIBUTE_TYPE_VEC4_FLOAT);
-	trianglePipelineModule.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
-	trianglePipelineModule.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
-	trianglePipelineModule.bEnableIndexing = false;
-	trianglePipelineModule.pShader = new Shader("Triangle", "Triangle");
-
-	size_t uOffset = pRenderer->AllocateMemory(sizeof(s_TriangleVertices), BufferDataType::VERTEX);
-	std::list<PipelineModule>::iterator refPipeline;
-
-	try {
-		pRenderer->UpdateBuffer(s_TriangleVertices, sizeof(s_TriangleVertices), uOffset);
-		refPipeline = pRenderer->CreatePipeline(trianglePipelineModule);
-	}
-	catch (const RendererException& e) {
-		DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
-	}
-	catch (const ShaderException& e) {
-		DISPATCH_ERROR_MESSAGE("ShaderException", e.what(), ErrorSeverity::CRITICAL);
-	}
-
-	MeshComponent mesh;
-	mesh.itShaderModule = refPipeline;
-	mesh.drawCommands.emplace_back();
-	mesh.drawCommands.back().attributeOffsets.push_back(uOffset);
-	mesh.drawCommands.back().attributeOffsets.push_back(uOffset + sizeof(TRS::Vector3<float>));
-	mesh.drawCommands.back().uDrawCount = 3;
-
-	while (windowContext.IsAlive()) {
-		try {
-			pFramebuffer->BeginCommandBufferRecording({ 0.f, 0.f, 0.f, 1.f });
-			pRenderer->DrawMesh(mesh, 1, pFramebuffer);
-			pFramebuffer->EndCommandBufferRecording();
-			pFramebuffer->RenderToFramebuffer();
-		}
-		catch (const RendererException& e) {
-			DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
-		}
-		catch (const ShaderException& e) {
-			DISPATCH_ERROR_MESSAGE("ShaderException", e.what(), ErrorSeverity::CRITICAL);
-		}
-
-		windowContext.Update();
-
-		auto& events = windowContext.GetEventQueue();
-		while (!events.empty()) {
-			Event event = events.front();
-			events.pop();
-
-			switch (event.eType) {
-				case EventType::WINDOW:
-					if (event.uDescription == (uint32_t)WindowEvent::RESIZED)
-						std::cout << "Window resized " << event.x << 'x' << event.y << '\n';
-					break;
-
-				case EventType::KEY_DOWN:
-				case EventType::MOUSE_BUTTON_DOWN:
-					std::cout << "Pressed key: " << event.uDescription << '\n';
-					break;
-
-				case EventType::KEY_UP:
-				case EventType::MOUSE_BUTTON_UP:
-					std::cout << "Released key: " << event.uDescription << '\n';
-					break;
-
-				default:
-					break;
+class SDLTriangleApp : public DENG::App {
+	public:
+		SDLTriangleApp() {
+			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext);
+			DENG::IRenderer* pVulkanRenderer = SetRenderer(new DENG::VulkanRenderer);
+		
+			pWindowContext->SetHints(DENG::WindowHints::SHOWN | DENG::WindowHints::VULKAN);
+			try {
+				pWindowContext->Create("SDLTriangle example", WIDTH, HEIGHT);
 			}
-		}
-	}
+			catch (const DENG::WindowContextException& e) {
+				DISPATCH_ERROR_MESSAGE("WindowContextException", e.what(), ErrorSeverity::CRITICAL);
+			}
 
-	delete pRenderer;
-	delete trianglePipelineModule.pShader;
-	return 0;
-}
+			DENG::IFramebuffer* pFramebuffer = nullptr;
+			try {
+				pFramebuffer = SetMainFramebuffer(pVulkanRenderer->CreateContext(pWindowContext));
+			}
+			catch (const DENG::HardwareException& e) {
+				DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
+			}
+			catch (const DENG::RendererException& e) {
+				DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
+			}
+
+			PushLayer<TriangleLayer>();
+			AttachLayers();
+		}
+
+		~SDLTriangleApp() {
+			std::cout << "Explosion..." << std::endl;
+		}
+};
+
+DENG_MAIN_DECLARATION(SDLTriangleApp);

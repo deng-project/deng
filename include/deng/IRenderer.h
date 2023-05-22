@@ -7,6 +7,7 @@
 #define IRENDERER_H
 
 #include <queue>
+#include <iostream>
 #include <vector>
 #include <list>
 #include <Windows.h>
@@ -93,7 +94,7 @@ namespace DENG {
 
         public:
             IRenderer() = default;
-            virtual ~IRenderer() {}
+			virtual ~IRenderer() {};
 
 			virtual uint32_t AddTextureResource(const TextureResource& _resource) = 0;
 			
@@ -106,6 +107,7 @@ namespace DENG {
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) = 0;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
+			virtual void DeallocateMemory(size_t _uOffset) = 0;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
             virtual void DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) = 0;
     };

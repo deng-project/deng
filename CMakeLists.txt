@@ -107,4 +107,5 @@ if(DENG_BUILD_TESTS)
 	set(MANUAL_TEST_DIR ManualTests)
 	
 	include(cmake/tests/TriangleApp.cmake)
+	include(cmake/tests/ImGuiApp.cmake)
 endif()

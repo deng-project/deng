@@ -82,10 +82,10 @@ namespace DENG {
 
     enum UniformDataType {
         UNIFORM_DATA_TYPE_BUFFER,
+        UNIFORM_DATA_TYPE_STORAGE_BUFFER,
         UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER,
         UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER
     };
-
 
     enum UniformUsage {
         UNIFORM_USAGE_PER_SHADER,
@@ -112,7 +112,7 @@ namespace DENG {
     #define SHADER_STAGE_GEOMETRY   0x02
     #define SHADER_STAGE_FRAGMENT   0x04
 
-    struct UniformBufferBlock {
+    struct StorageBlock {
         uint32_t uBinding = 0;
         uint32_t uSize = 0;
         uint32_t uOffset = 0;
@@ -120,12 +120,11 @@ namespace DENG {
 
     // Structure to be passed into the renderer
     struct UniformDataLayout {
-        UniformBufferBlock block = {};
+        StorageBlock block = {};
         UniformDataType eType = UNIFORM_DATA_TYPE_BUFFER;
-        ShaderStage iStage = SHADER_STAGE_NULL;
         UniformUsage eUsage = UNIFORM_USAGE_PER_SHADER;
+        ShaderStage iStage = SHADER_STAGE_NULL;
     };
-
 
     struct Viewport {
         uint32_t uX = 0;

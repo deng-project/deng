@@ -1,127 +1,70 @@
 // DENG: dynamic engine - small but powerful 2D and 3D game engine
 // licence: Apache, see LICENCE file
-// file: ImGuiLayer.h - ImGui gui abstraction class header
+// file: ImGuiLayer.h - ImGui layer class header
 // author: Karl-Mihkel Ott
 
 #ifndef IMGUI_LAYER_H
 #define IMGUI_LAYER_H
 
-#ifdef IMGUI_LAYER_CPP
-    #include <cstring>
-    #include <string>
-    #include <mutex>
-    #include <vector>
-    #include <array>
-    #include <chrono>
-    #include <unordered_map>
-    #include <queue>
-    #include <variant>
-#ifdef __DEBUG
-    #include <iostream>
-#endif
-    #include <vulkan/vulkan.h>
-
-    #include "trs/Points.h"
-    #include "trs/Vector.h"
-    #include "trs/Matrix.h"
-    #include "trs/Quaternion.h"
-
-    #include "das/Api.h"
-    #include "das/DasStructures.h"
-    #include "das/TextureReader.h"
-
-    #include "deng/Api.h"
-    #include "deng/Window.h"
-    #include "deng/ErrorDefinitions.h"
-    #include "deng/ShaderDefinitions.h"
-    #include "deng/Renderer.h"
-    #include "deng/GPUMemoryManager.h"
-    #include "deng/TextureDatabase.h"
-    
-    #define MESH_NAME       "ImGui windows"
-    #define TEXTURE_NAME    "ImGui texture atlas"
-
-    #define VERT_SHADER_SRC "#version 450\n" \
-                            "#extension GL_ARB_separate_shader_objects : enable\n" \
-                            "layout(location = 0) in vec2 i_pos;\n" \
-                            "layout(location = 1) in vec2 i_uv;\n" \
-                            "layout(location = 2) in vec4 i_mul;\n" \
-                            "layout(binding = 0) uniform UniformBufferData { \n" \
-                            "    vec2 size; \n" \
-                            "} ubo;\n" \
-                            "" \
-                            "layout(location = 0) out vec2 o_uv;\n" \
-                            "layout(location = 1) out vec4 o_mul;\n" \
-                            "" \
-                            "void main() {\n" \
-                            "    gl_Position = vec4((i_pos.x * 2 / ubo.size.x) - 1.0f, -(i_pos.y * 2 / ubo.size.y) + 1.0f, 0.0f, 1.0f);\n" \
-                            "    o_uv = i_uv;\n" \
-                            "    o_mul = i_mul;\n" \
-                            "}\n"
-
-    #define FRAG_SHADER_SRC "#version 450\n" \
-                            "#extension GL_ARB_separate_shader_objects : enable\n" \
-                            "layout(binding = 1) uniform sampler2D tex_sampler; \n" \
-                            "layout(location = 0) in vec2 uv;\n" \
-                            "layout(location = 1) in vec4 col_mul;\n" \
-                            "layout(location = 0) out vec4 color;\n" \
-                            "void main() {\n" \
-                            "    color = col_mul * texture(tex_sampler, uv);\n" \
-                            "}\n"
-#endif
-
-#define IMGUI_CONTEXT_WINDOW_FLAGS ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground
-
+#include <chrono>
 #include <imgui.h>
-#include <imgui_internal.h>
+#include "deng/Api.h"
+#include "deng/ILayer.h"
+
+#include "trs/Points.h"
+
+#ifdef IMGUI_LAYER_CPP
+	#include "deng/Exceptions.h"
+	#include "deng/ErrorDefinitions.h"
+
+	#define KEYLOOKUP(key) s_ImGuiKeyCodes[key - static_cast<uint32_t>(KeySymbol::KEY_UNKNOWN) - 1]
+	#define MOUSE_BTN_LOOKUP(btn) s_ImGuiMouseCodes[btn - static_cast<uint32_t>(MouseEvent::BTN_UNKNOWN) - 1]
+#endif
 
 namespace DENG {
 
-    typedef void(*PFN_ImGuiDrawCallback)(void *_user_data);
+	typedef void(*PFN_ImGuiDrawCallback)(void* _pUserData);
 
-    class DENG_API ImGuiLayer {
-        private:
-            Window *mp_window = nullptr;
-            Renderer *mp_renderer = nullptr;
-            ImGuiIO *m_io = nullptr;
-            ImGuiContext *m_context = nullptr;
+	class DENG_API ImGuiLayer : public ILayer {
+		private:
+			ImGuiIO* m_pIO = nullptr;
+			ImGuiContext* m_pImguiContext = nullptr;
+			
+			PFN_ImGuiDrawCallback _Callback = nullptr;
+			void* m_pUserData = nullptr;
 
-            PFN_ImGuiDrawCallback m_callback = nullptr;
-            uint32_t m_mesh_id = UINT32_MAX;
-            uint32_t m_shader_id = UINT32_MAX;
-            void *m_user_data = nullptr;
+			TRS::Point2D<float> m_uniform;
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_beginTimePoint =
+				std::chrono::high_resolution_clock::now();
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_endTimePoint =
+				std::chrono::high_resolution_clock::now();
 
-            uint32_t m_ubo_offset = UINT32_MAX;
-            uint32_t m_main_offset = UINT32_MAX;
-            uint32_t m_texture_id = 0;
-            
-            TRS::Point2D<float> m_ubo;
-            float m_delta_time = 1.0f;
-            std::chrono::time_point<std::chrono::system_clock> m_beg;
-            std::chrono::time_point<std::chrono::system_clock> m_end;
-            std::pair<uint32_t, uint32_t> m_main_region = std::make_pair(UINT32_MAX, UINT32_MAX);
-            std::vector<uint32_t> m_framebuffer_ids;
+			size_t m_uVertexRegionOffset = 0;
+			size_t m_uIndexRegionOffset = 0;
+			size_t m_uUniformRegionOffset = 0;
+			float m_fDeltaTime = 0.f;
 
-        private:
-            uint32_t _CalculateUsedMemory(ImDrawData *_draw_data);
-            ImGuiKey _TranslateKey(neko_HidEvent _key);
-            void _CreateDrawCommands(ImDrawData *_draw_data);
-            void _UpdateIO();
+			uint32_t m_uTextureHandle = 0;
+			MeshComponent m_meshComponent;
 
-        public:
-            ImGuiLayer(const std::vector<uint32_t>& _framebuffers = { 0 });
-            ~ImGuiLayer();
-            void Attach(Window &_win, Renderer &_rend, PFN_ImGuiDrawCallback _callback, void *_user_data);
-            void Update();
+			bool m_bIsInit = false;
 
-            inline ImGuiContext *GetContext() {
-                return m_context;
-            }
+		private:
+			// bunch of translation calls
 
-            inline void SetContext(ImGuiContext *_ctx) {
-                ImGui::SetCurrentContext(_ctx);
-            }
-    };
+			void _UpdateIO(IFramebuffer* _pFramebuffer);
+			void _CreateDrawCommands(ImDrawData* _pDrawData, IFramebuffer* _pFramebuffer);
+
+		public:
+			~ImGuiLayer();
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Update(IFramebuffer* _pFramebuffer) override;
+
+			inline void SetDrawCallback(PFN_ImGuiDrawCallback _pfnCallback, void* _pUserData) {
+				_Callback = _pfnCallback;
+				m_pUserData = _pUserData;
+			}
+	};
 }
 
 #endif

@@ -454,6 +454,20 @@ namespace DENG {
                 vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &vp);
             }
 
+            std::array<VkDescriptorSet, 2> descriptorSets = { VK_NULL_HANDLE, VK_NULL_HANDLE };
+            if (_pDescriptorAllocator) {
+                descriptorSets[0] = _pDescriptorAllocator->RequestShaderDescriptorSet(m_uCurrentFrameIndex);
+                descriptorSets[1] = _pDescriptorAllocator->RequestMeshDescriptorSet();
+            }
+
+            // check if textures should be bound
+            if (descriptorSets[0] && _textureIds.size() && (_mesh.itShaderModule->bEnable2DTextures || _mesh.itShaderModule->bEnable3DTextures)) {
+                _pDescriptorAllocator->UpdateShaderDescriptorSet(m_hMainBuffer, descriptorSets[0], _textureIds);
+            }
+            if (descriptorSets[1] && _textureIds.size() && (_mesh.itShaderModule->bEnable2DTextures || _mesh.itShaderModule->bEnable3DTextures)) {
+                _pDescriptorAllocator->UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
+            }
+
             // submit each draw command in mesh
             for (auto itCmd = _mesh.drawCommands.begin(); itCmd != _mesh.drawCommands.end(); itCmd++) {
                 vkCmdBindPipeline(
@@ -469,17 +483,6 @@ namespace DENG {
                     static_cast<uint32_t>(buffers.size()),
                     buffers.data(),
                     itCmd->attributeOffsets.data());
-
-                std::array<VkDescriptorSet, 2> descriptorSets = { VK_NULL_HANDLE, VK_NULL_HANDLE };
-                if (_pDescriptorAllocator) {
-                    descriptorSets[0] = _pDescriptorAllocator->RequestShaderDescriptorSet(m_uCurrentFrameIndex);
-                    descriptorSets[1] = _pDescriptorAllocator->RequestMeshDescriptorSet();
-                }
-
-                // check if textures should be bound
-                if (descriptorSets[1] && _textureIds.size() && (_mesh.itShaderModule->bEnable2DTextures || _mesh.itShaderModule->bEnable3DTextures)) {
-                    _pDescriptorAllocator->UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
-                }
 
                 // bind both descriptor sets
                 if (descriptorSets[0] && descriptorSets[1]) {

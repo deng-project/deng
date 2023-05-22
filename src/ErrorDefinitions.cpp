@@ -25,7 +25,9 @@ namespace DENG {
 		}
 
 		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-		if (_eSeverity == CRITICAL)
+		if (_eSeverity == CRITICAL) {
+			cin.get();
 			exit(1);
+		}
 	}
 }

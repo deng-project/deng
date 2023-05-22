@@ -76,7 +76,7 @@ namespace DENG {
         public:
             VulkanRenderer() = default;
             VulkanRenderer(VulkanRenderer&&) noexcept = default;
-            virtual ~VulkanRenderer() override;
+            ~VulkanRenderer();
 
             virtual uint32_t AddTextureResource(const TextureResource& _resource) override;
             virtual std::list<PipelineModule>::iterator CreatePipeline(const PipelineModule& _pipeline) override;
@@ -84,6 +84,7 @@ namespace DENG {
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
+            virtual void DeallocateMemory(size_t _uOffset) override;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
             virtual void DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
     };

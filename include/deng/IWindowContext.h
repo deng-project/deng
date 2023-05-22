@@ -198,7 +198,8 @@ namespace DENG {
 	};
 	
 	enum class MouseEvent {
-		BTN_1 = 0x087,
+		BTN_UNKNOWN = 0x087,
+		BTN_1,
 		BTN_2,
 		BTN_3,
 		BTN_X1,
@@ -206,7 +207,7 @@ namespace DENG {
 	};
 
 	enum class GamepadEvent {
-		BUTTON_A = 0x08c,
+		BUTTON_A = 0x08d,
 		BUTTON_B,
 		BUTTON_X,
 		BUTTON_Y,

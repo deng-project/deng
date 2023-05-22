@@ -12,7 +12,7 @@ set(DENG_IMGUI_HEADERS
 	deps/imgui/imstb_textedit.h
 	deps/imgui/imstb_truetype.h)
 	
-set(DENG_IMGUI_SRC
+set(DENG_IMGUI_SOURCES
 	deps/imgui/imgui.cpp
     deps/imgui/imgui_demo.cpp
     deps/imgui/imgui_draw.cpp
@@ -121,10 +121,10 @@ add_library(${DENG_COMPLETE_TARGET} SHARED
     ${DENG_COMPLETE_HEADERS}
 	${DENG_IMGUI_HEADERS}
     ${DENG_COMPLETE_SOURCES}
-	${DENG_IMGUI_SRC})
+	${DENG_IMGUI_SOURCES})
 
 # Source groups
-source_group("ImGui" FILES ${DENG_IMGUI_HEADERS} ${DENG_IMGUI_SRC})
+source_group("ImGui" FILES ${DENG_IMGUI_HEADERS} ${DENG_IMGUI_SOURCES})
 
 # Compile definitions
 target_compile_definitions(${DENG_COMPLETE_TARGET} PRIVATE DENG_COMPLETE_EXPORT_LIBRARY)
@@ -170,7 +170,7 @@ target_compile_definitions(${DENG_COMPLETE_TARGET}
 
 
 # Link trunked libraries
-if(WIN32)
+if(WIN32 AND NOT DENG_STATIC)
     target_compile_definitions(${DENG_COMPLETE_TARGET}
         PRIVATE IMGUI_API=_declspec\(dllexport\)
         INTERFACE IMGUI_API=_declspec\(dllimport\)
@@ -188,14 +188,17 @@ add_dependencies(${DENG_COMPLETE_TARGET}
 set(DENG_MINIMAL_TARGET deng-minimal)
 set(DENG_MINIMAL_HEADERS
 	include/deng/Api.h
+	include/deng/App.h
 	include/deng/BaseTypes.h
 	include/deng/Components.h
 	include/deng/ErrorDefinitions.h
 	include/deng/Exceptions.h
 	include/deng/GPUMemoryAllocator.h
 	include/deng/IFramebuffer.h
+	include/deng/ImGuiLayer.h
 	include/deng/IRenderer.h
 	include/deng/IWindowContext.h
+	include/deng/ILayer.h
 	include/deng/Missing.h
 	include/deng/ProgramFilesManager.h
 	include/deng/ModelUniforms.h
@@ -211,8 +214,10 @@ set(DENG_MINIMAL_HEADERS
 	include/deng/VulkanSwapchainCreator.h)
 	
 set(DENG_MINIMAL_SOURCES
+	src/App.cpp
 	src/ErrorDefinitions.cpp
 	src/GPUMemoryAllocator.cpp
+	src/ImGuiLayer.cpp
 	src/Missing.cpp
 	src/ProgramFilesManager.cpp
 	src/SDLWindowContext.cpp
@@ -226,13 +231,23 @@ set(DENG_MINIMAL_SOURCES
 	src/VulkanRenderer.cpp
 	src/VulkanSwapchainCreator.cpp)
 	
-add_library(${DENG_MINIMAL_TARGET} STATIC
+add_library(${DENG_MINIMAL_TARGET} SHARED
 			${DENG_MINIMAL_HEADERS}
-			${DENG_MINIMAL_SOURCES})
+			${DENG_MINIMAL_SOURCES}
+			${DENG_IMGUI_HEADERS}
+			${DENG_IMGUI_SOURCES})
+			
+if(WIN32 AND NOT DENG_STATIC)
+    target_compile_definitions(${DENG_MINIMAL_TARGET}
+        PRIVATE IMGUI_API=_declspec\(dllexport\)
+        INTERFACE IMGUI_API=_declspec\(dllimport\)
+	)
+endif()
 			
 # Compile definitions
-target_compile_definitions(${DENG_MINIMAL_TARGET} 
-	PUBLIC DENG_STATIC
+target_compile_definitions(${DENG_MINIMAL_TARGET}
+	PRIVATE DENG_COMPLETE_EXPORT_LIBRARY
+	PUBLIC ImDrawIdx=unsigned\ int
 	PUBLIC SDL_MAIN_HANDLED)
 
 # Include directories
@@ -242,6 +257,7 @@ target_include_directories(${DENG_MINIMAL_TARGET}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libdas/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/mar/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/trs/include
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/vcpkg/installed/x64-windows/include)
 
 target_link_directories(${DENG_MINIMAL_TARGET}

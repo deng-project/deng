@@ -159,12 +159,12 @@ namespace DENG {
             imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         else imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
         imageViewCreateInfo.format = eFormat;
-        imageViewCreateInfo.components = {
-            VK_COMPONENT_SWIZZLE_R,
-            VK_COMPONENT_SWIZZLE_G,
-            VK_COMPONENT_SWIZZLE_B,
-            VK_COMPONENT_SWIZZLE_A
-        };
+        //imageViewCreateInfo.components = {
+        //    VK_COMPONENT_SWIZZLE_R,
+        //    VK_COMPONENT_SWIZZLE_G,
+        //    VK_COMPONENT_SWIZZLE_B,
+        //    VK_COMPONENT_SWIZZLE_A
+        //};
         imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         imageViewCreateInfo.subresourceRange.levelCount = uMipLevels;
@@ -307,18 +307,20 @@ namespace DENG {
 
         Vulkan::Framebuffer* pSwapchainFramebuffer = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0]);
 
-        m_pipelineDescriptorAllocators.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(itAddedModule),
-            std::forward_as_tuple(
-                m_pInstanceCreator->GetDevice(),
-                m_hMainBuffer,
-                m_textureRegistry,
-                itAddedModule->uboDataLayouts,
-                static_cast<uint32_t>(pSwapchainFramebuffer->GetFramebufferImageIds().size()),
-                m_uMissing2DTextureId,
-                m_uMissing3DTextureId
-            ));
+        if (_pipeline.uboDataLayouts.size()) {
+            m_pipelineDescriptorAllocators.emplace(
+                std::piecewise_construct,
+                std::forward_as_tuple(itAddedModule),
+                std::forward_as_tuple(
+                    m_pInstanceCreator->GetDevice(),
+                    m_hMainBuffer,
+                    m_textureRegistry,
+                    itAddedModule->uboDataLayouts,
+                    static_cast<uint32_t>(pSwapchainFramebuffer->GetFramebufferImageIds().size()),
+                    m_uMissing2DTextureId,
+                    m_uMissing3DTextureId
+                ));
+        }
 
         return itAddedModule;
     }
@@ -433,22 +435,23 @@ namespace DENG {
 
         switch (_eType) {
             case BufferDataType::VERTEX:
-                return m_gpuMemoryAllocator.RequestMemory(
-                    static_cast<uint32_t>(_uSize),
-                    static_cast<uint32_t>(sizeof(float))).uOffset;
+                return m_gpuMemoryAllocator.RequestMemory(_uSize, sizeof(uint32_t)).uOffset;
 
             case BufferDataType::INDEX:
-                return m_gpuMemoryAllocator.RequestMemory(
-                    static_cast<uint32_t>(_uSize),
-                    static_cast<uint32_t>(sizeof(uint32_t))).uOffset;
+                return m_gpuMemoryAllocator.RequestMemory(_uSize, sizeof(uint32_t)).uOffset;
 
             case BufferDataType::UNIFORM:
                 return m_gpuMemoryAllocator.RequestMemory(
-                    static_cast<uint32_t>(_uSize),
+                    _uSize,
                     m_pInstanceCreator->GetPhysicalDeviceInformation().uMinimalUniformBufferAlignment).uOffset;
         }
         
         return 0;
+    }
+
+
+    void VulkanRenderer::DeallocateMemory(size_t _uOffset) {
+        m_gpuMemoryAllocator.FreeMemory(_uOffset);
     }
 
 
@@ -499,6 +502,9 @@ namespace DENG {
         if (itDescriptorAllocator != m_pipelineDescriptorAllocators.end()) {
             itDescriptorAllocator->second.ResetMeshCounter();
             vulkanFramebuffer->Draw(_mesh, _uMeshId, &itDescriptorAllocator->second, _textureIds);
+        }
+        else {
+            vulkanFramebuffer->Draw(_mesh, _uMeshId, nullptr, _textureIds);
         }
     }
 }
