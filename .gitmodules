@@ -1,22 +1,19 @@
-[submodule "deps/vcpkg"]
-	path = deps/vcpkg
+[submodule "ThirdParty/vcpkg"]
+	path = ThirdParty/vcpkg
 	url = https://github.com/Microsoft/vcpkg
-[submodule "deps/libdas"]
-	path = deps/libdas
+[submodule "ThirdParty/libdas"]
+	path = ThirdParty/libdas
 	url = https://git.dengproject.org/deng/libdas
-[submodule "deps/dxml"]
-	path = deps/dxml
+[submodule "ThirdParty/dxml"]
+	path = ThirdParty/dxml
 	url = https://git.dengproject.org/deng/dengxml
-[submodule "deps/mar"]
-	path = deps/mar
+[submodule "ThirdParty/mar"]
+	path = ThirdParty/mar
 	url = https://git.dengproject.org/deng/minimal-ascii-reader
-[submodule "deps/trs"]
-	path = deps/trs
+[submodule "ThirdParty/trs"]
+	path = ThirdParty/trs
 	url = https://git.dengproject.org/deng/trs-headers
-[submodule "deps/nekowin"]
-	path = deps/nekowin
-	url = https://git.dengproject.org/deng/nekowin
-[submodule "deps/imgui"]
-	path = deps/imgui
+[submodule "ThirdParty/imgui"]
+	path = ThirdParty/imgui
 	url = https://github.com/ocornut/imgui
 	branch = docking

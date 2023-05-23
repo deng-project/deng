@@ -4,7 +4,7 @@
 # author: Karl-Mihkel Ott
 
 set(IMGUI_APP_TARGET ImGuiApp)
-set(IMGUI_APP_SOURCES tests/ImGuiApp.cpp)
+set(IMGUI_APP_SOURCES Tests/ImGuiApp.cpp)
 
 add_executable(${IMGUI_APP_TARGET} ${IMGUI_APP_SOURCES})
 add_dependencies(${IMGUI_APP_TARGET} ${DENG_MINIMAL_TARGET})

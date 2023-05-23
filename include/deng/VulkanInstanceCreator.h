@@ -37,7 +37,6 @@
     #include "das/TextureReader.h"
 
     #include "deng/Api.h"
-    #include "deng/BaseTypes.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
     #include "deng/ShaderDefinitions.h"

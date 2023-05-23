@@ -8,7 +8,7 @@
 
 #include <string>
 #include <array>
-#include <queue>
+#include <list>
 #include <vector>
 
 #include "deng/Api.h"
@@ -274,7 +274,8 @@ namespace DENG {
 			uint32_t m_uHints = WindowHints::NONE;
 			bool m_bIsAlive = false;
 
-			std::queue<Event> m_eventQueue;
+			std::list<Event> m_eventQueue;
+			std::list<Event>::iterator m_itEvent = m_eventQueue.begin();
 
 		public:
 			IWindowContext(const std::string& _sTitle = "MyApplication") :
@@ -289,8 +290,26 @@ namespace DENG {
 			
 			virtual void Update() = 0;
 			
-			inline std::queue<Event>& GetEventQueue() {
-				return m_eventQueue;
+			inline Event& PeekEvent() {
+				return *m_itEvent;
+			}
+
+			inline void PopEvent() {
+				m_itEvent = m_eventQueue.erase(m_itEvent);
+			}
+
+			inline void SkipEvent() {
+				++m_itEvent;
+			}
+
+			inline bool HasEvents() {
+				bool bHasEvents = m_itEvent != m_eventQueue.end();
+
+				if (!bHasEvents) {
+					m_itEvent = m_eventQueue.begin();
+				}
+
+				return bHasEvents;
 			}
 
 			virtual std::vector<const char*> QueryRequiredVulkanExtensions() {

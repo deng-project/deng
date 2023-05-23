@@ -1,18 +1,12 @@
 import os
 import subprocess
 
-VCPKG_PATH = "./deps/vcpkg"
-VCPKG_PACKAGES = [ 
-    "wxWidgets:x64-windows", 
-    "vulkan-headers:x64-windows",
+VCPKG_PATH = "./ThirdParty/vcpkg"
+VCPKG_PACKAGES = [
     "entt:x64-windows",
-    "spirv-tools:x64-windows",
     "shaderc:x64-windows",
     "sdl2[vulkan]:x64-windows",
     "bullet3:x64-windows",
-    "python3:x64-windows",
-    "pybind11:x64-windows",
-    "cryptopp:x64-windows"
 ]
 
 def check_and_install_vcpkg():
