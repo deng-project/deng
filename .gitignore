@@ -4,4 +4,3 @@ build
 .vscode
 Shaders/PipelineCache
 Shaders/Binary
-ThirdParty
