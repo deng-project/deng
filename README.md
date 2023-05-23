@@ -22,14 +22,12 @@ git submodule update
 
 Download vcpkg and third party dependencies:  
 ```
-python3.exe vcpkg-init.py
+py.exe vcpkg-init.py
 ```
 
 Generate Visual Studio solution files using CMake
 ```
 mkdir build
-cd build
+cd Build
 cmake ..
 ```
-
-**More information:** https://dengproject.org
