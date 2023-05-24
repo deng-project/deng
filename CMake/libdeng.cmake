@@ -34,10 +34,10 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/IWindowContext.h
 	Include/deng/Missing.h
 	Include/deng/ProgramFilesManager.h
-	Include/deng/SceneLayer.h
+	Include/deng/Scene.h
 	Include/deng/SDLWindowContext.h
 	Include/deng/Shader.h
-	Include/deng/ShaderDefinitions.h
+	Include/deng/ShaderComponent.h
 	Include/deng/VulkanDescriptorAllocator.h
 	Include/deng/VulkanFramebuffer.h
 	Include/deng/VulkanHelpers.h
@@ -53,10 +53,9 @@ set(DENG_MINIMAL_SOURCES
 	Sources/ImGuiLayer.cpp
 	Sources/Missing.cpp
 	Sources/ProgramFilesManager.cpp
-	Sources/SceneLayer.cpp
+	Sources/Scene.cpp
 	Sources/SDLWindowContext.cpp
 	Sources/Shader.cpp
-	Sources/ShaderDefinitions.cpp
 	Sources/VulkanDescriptorAllocator.cpp
 	Sources/VulkanFramebuffer.cpp
 	Sources/VulkanHelpers.cpp
@@ -82,6 +81,7 @@ endif()
 target_compile_definitions(${DENG_MINIMAL_TARGET}
 	PRIVATE DENG_COMPLETE_EXPORT_LIBRARY
 	PUBLIC ImDrawIdx=unsigned\ int
+	PUBLIC NOMINMAX
 	PUBLIC SDL_MAIN_HANDLED)
 	
 # Find package
@@ -99,7 +99,8 @@ find_package(unofficial-shaderc_util CONFIG REQUIRED)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 
 # Include directories
-target_include_directories(${DENG_MINIMAL_TARGET} 
+target_include_directories(${DENG_MINIMAL_TARGET}
+	PUBLIC ${VULKAN_SDK_PATH}/Include
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/libdas/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/mar/include

@@ -409,13 +409,13 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds) {
+        void Framebuffer::Draw(const MeshComponent& _mesh, const ShaderComponent& _shader, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds) {
             // check if pipeline creator exists for requested mesh
-            if (m_pipelineCreators.find(_mesh.itShaderModule) == m_pipelineCreators.end()) {
+            if (m_pipelineCreators.find(_shader.pShader) == m_pipelineCreators.end()) {
                 if (_pDescriptorAllocator) {
                     m_pipelineCreators.emplace(
                         std::piecewise_construct,
-                        std::forward_as_tuple(_mesh.itShaderModule),
+                        std::forward_as_tuple(_shader.pShader),
                         std::forward_as_tuple(
                             m_pInstanceCreator->GetDevice(),
                             m_hRenderpass,
@@ -424,12 +424,12 @@ namespace DENG {
                             VkExtent2D{ m_uWidth, m_uHeight },
                             m_uSampleCountBits,
                             m_pInstanceCreator->GetPhysicalDeviceInformation(),
-                            *_mesh.itShaderModule));
+                            _shader));
                 }
                 else {
                     m_pipelineCreators.emplace(
                         std::piecewise_construct,
-                        std::forward_as_tuple(_mesh.itShaderModule),
+                        std::forward_as_tuple(_shader.pShader),
                         std::forward_as_tuple(
                             m_pInstanceCreator->GetDevice(),
                             m_hRenderpass,
@@ -438,17 +438,17 @@ namespace DENG {
                             VkExtent2D{ m_uWidth, m_uHeight },
                             m_uSampleCountBits,
                             m_pInstanceCreator->GetPhysicalDeviceInformation(),
-                            *_mesh.itShaderModule));
+                            _shader));
                 }
             }
 
             // check if custom viewport should be used
-            if (_mesh.itShaderModule->bEnableCustomViewport) {
+            if (_shader.bEnableCustomViewport) {
                 VkViewport vp = {};
-                vp.x = static_cast<float>(_mesh.itShaderModule->viewport.uX);
-                vp.y = static_cast<float>(_mesh.itShaderModule->viewport.uY);
-                vp.width = static_cast<float>(_mesh.itShaderModule->viewport.uWidth);
-                vp.height = static_cast<float>(_mesh.itShaderModule->viewport.uHeight);
+                vp.x = static_cast<float>(_shader.viewport.uX);
+                vp.y = static_cast<float>(_shader.viewport.uY);
+                vp.width = static_cast<float>(_shader.viewport.uWidth);
+                vp.height = static_cast<float>(_shader.viewport.uHeight);
                 vp.minDepth = 0.f;
                 vp.maxDepth = 1.f;
                 vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &vp);
@@ -461,10 +461,10 @@ namespace DENG {
             }
 
             // check if textures should be bound
-            if (descriptorSets[0] && _textureIds.size() && (_mesh.itShaderModule->bEnable2DTextures || _mesh.itShaderModule->bEnable3DTextures)) {
+            if (descriptorSets[0] && _textureIds.size() && (_shader.bEnable2DTextures || _shader.bEnable3DTextures)) {
                 _pDescriptorAllocator->UpdateShaderDescriptorSet(m_hMainBuffer, descriptorSets[0], _textureIds);
             }
-            if (descriptorSets[1] && _textureIds.size() && (_mesh.itShaderModule->bEnable2DTextures || _mesh.itShaderModule->bEnable3DTextures)) {
+            if (descriptorSets[1] && _textureIds.size() && (_shader.bEnable2DTextures || _shader.bEnable3DTextures)) {
                 _pDescriptorAllocator->UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
             }
 
@@ -473,9 +473,9 @@ namespace DENG {
                 vkCmdBindPipeline(
                     m_commandBuffers[m_uCurrentFrameIndex], 
                     VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                    m_pipelineCreators.find(_mesh.itShaderModule)->second.GetPipeline());
+                    m_pipelineCreators.find(_shader.pShader)->second.GetPipeline());
 
-                std::vector<VkBuffer> buffers(_mesh.itShaderModule->attributes.size(), m_hMainBuffer);
+                std::vector<VkBuffer> buffers(_shader.attributes.size(), m_hMainBuffer);
                 
                 vkCmdBindVertexBuffers(
                     m_commandBuffers[m_uCurrentFrameIndex],
@@ -489,7 +489,7 @@ namespace DENG {
                     vkCmdBindDescriptorSets(
                         m_commandBuffers[m_uCurrentFrameIndex],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipelineCreators.find(_mesh.itShaderModule)->second.GetPipelineLayout(),
+                        m_pipelineCreators.find(_shader.pShader)->second.GetPipelineLayout(),
                         0,
                         2,
                         descriptorSets.data(),
@@ -500,7 +500,7 @@ namespace DENG {
                     vkCmdBindDescriptorSets(
                         m_commandBuffers[m_uCurrentFrameIndex],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipelineCreators.find(_mesh.itShaderModule)->second.GetPipelineLayout(),
+                        m_pipelineCreators.find(_shader.pShader)->second.GetPipelineLayout(),
                         0,
                         1,
                         &descriptorSets[0],
@@ -511,7 +511,7 @@ namespace DENG {
                     vkCmdBindDescriptorSets(
                         m_commandBuffers[m_uCurrentFrameIndex],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipelineCreators.find(_mesh.itShaderModule)->second.GetPipelineLayout(),
+                        m_pipelineCreators.find(_shader.pShader)->second.GetPipelineLayout(),
                         0,
                         1,
                         &descriptorSets[1],
@@ -520,7 +520,7 @@ namespace DENG {
                 }
                     
                 // check if scissor technique should be used
-                if (_mesh.itShaderModule->bEnableScissor) {
+                if (_shader.bEnableScissor) {
                     VkRect2D rect = {};
                     rect.offset = VkOffset2D{ 
                         itCmd->scissor.offset.x, 
@@ -536,7 +536,7 @@ namespace DENG {
                 }
 
                 // check if indexed or unindexed draw call should be submitted
-                if (_mesh.itShaderModule->bEnableIndexing) {
+                if (_shader.bEnableIndexing) {
                     vkCmdBindIndexBuffer(m_commandBuffers[m_uCurrentFrameIndex], m_hMainBuffer, static_cast<VkDeviceSize>(itCmd->uIndicesOffset), VK_INDEX_TYPE_UINT32);
                     vkCmdDrawIndexed(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, 1, 0, 0, 0);
                 } else {
@@ -631,14 +631,16 @@ namespace DENG {
             }
 
             _CreateFramebuffers();
-            for (auto& pipelineCreator : m_pipelineCreators) {
-                const VkExtent2D extent = { m_uWidth, m_uHeight };
 
-                pipelineCreator.second.RecreatePipeline(
-                    *pipelineCreator.first,
-                    m_hRenderpass,
-                    extent,
-                    false);
+            if (m_pSwapchainCreator) {
+                for (auto& pipelineCreator : m_pipelineCreators) {
+                    const VkExtent2D extent = { m_uWidth, m_uHeight };
+
+                    pipelineCreator.second.RecreatePipeline(
+                        m_hRenderpass,
+                        extent,
+                        false);
+                }
             }
         }
     }

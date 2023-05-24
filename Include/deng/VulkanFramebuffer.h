@@ -33,7 +33,7 @@
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
-    #include "deng/ShaderDefinitions.h"
+    #include "deng/Components.h"
     #include "deng/IWindowContext.h"
     #include "deng/VulkanHelpers.h"
     #include "deng/IRenderer.h"
@@ -56,7 +56,7 @@ namespace DENG {
                 VkBuffer& m_hMainBuffer;
                 VkSampleCountFlagBits m_uSampleCountBits;
                 
-                std::unordered_map<std::list<PipelineModule>::iterator, PipelineCreator> m_pipelineCreators;
+                std::unordered_map<Shader*, PipelineCreator> m_pipelineCreators;
 
                 VkCommandPool m_hCommandPool;
                 std::vector<VkCommandBuffer> m_commandBuffers;
@@ -99,12 +99,12 @@ namespace DENG {
 
                 void RecreateFramebuffer();
 
-                inline void DestroyPipelineAllocator(std::list<PipelineModule>::iterator _itPipelineModule) {
-                    m_pipelineCreators.erase(_itPipelineModule);
+                inline void DestroyPipelineAllocator(Shader* _pShader) {
+                    m_pipelineCreators.erase(_pShader);
                 }
 
                 virtual void BeginCommandBufferRecording(TRS::Vector4<float> _vClearColor) override;
-                void Draw(const MeshComponent& _mesh, uint32_t _uMeshId, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds = {});
+                void Draw(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds = {});
                 virtual void EndCommandBufferRecording() override;
                 virtual void RenderToFramebuffer() override;
 

@@ -297,44 +297,13 @@ namespace DENG {
     }
 
 
-    std::list<PipelineModule>::iterator VulkanRenderer::CreatePipeline(const PipelineModule& _pipeline) {
-        DENG_ASSERT(m_pInstanceCreator);
-
-        m_pipelineModules.emplace_back(_pipeline);
-        std::list<PipelineModule>::iterator itAddedModule = (--m_pipelineModules.end());
-        
-        DENG_ASSERT(itAddedModule != m_pipelineModules.end());
-
-        Vulkan::Framebuffer* pSwapchainFramebuffer = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0]);
-
-        if (_pipeline.uboDataLayouts.size()) {
-            m_pipelineDescriptorAllocators.emplace(
-                std::piecewise_construct,
-                std::forward_as_tuple(itAddedModule),
-                std::forward_as_tuple(
-                    m_pInstanceCreator->GetDevice(),
-                    m_hMainBuffer,
-                    m_textureRegistry,
-                    itAddedModule->uboDataLayouts,
-                    static_cast<uint32_t>(pSwapchainFramebuffer->GetFramebufferImageIds().size()),
-                    m_uMissing2DTextureId,
-                    m_uMissing3DTextureId
-                ));
-        }
-
-        return itAddedModule;
-    }
-
-
-    void VulkanRenderer::DestroyPipeline(std::list<PipelineModule>::iterator _itPipelineModule) {
-        m_pipelineDescriptorAllocators.erase(_itPipelineModule);
+    void VulkanRenderer::DestroyPipeline(Shader* _pShader) {
+        m_pipelineDescriptorAllocators.erase(_pShader);
         
         for (IFramebuffer* pFramebuffer : m_framebuffers) {
             Vulkan::Framebuffer* pVulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(pFramebuffer);
-            pVulkanFramebuffer->DestroyPipelineAllocator(_itPipelineModule);
+            pVulkanFramebuffer->DestroyPipelineAllocator(_pShader);
         }
-
-        m_pipelineModules.erase(_itPipelineModule);
     }
 
     IFramebuffer* VulkanRenderer::CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) {
@@ -479,32 +448,32 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds) {
+    void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds) {
         DENG_ASSERT(_pFramebuffer);
         Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
         // descriptor allocators do not exist
-        if (_mesh.itShaderModule->uboDataLayouts.size() && m_pipelineDescriptorAllocators.find(_mesh.itShaderModule) == m_pipelineDescriptorAllocators.end()) {
+        if (_shaderComponent.uboDataLayouts.size() && m_pipelineDescriptorAllocators.find(_shaderComponent.pShader) == m_pipelineDescriptorAllocators.end()) {
             m_pipelineDescriptorAllocators.emplace(
                 std::piecewise_construct,
-                std::forward_as_tuple(_mesh.itShaderModule),
+                std::forward_as_tuple(_shaderComponent.pShader),
                 std::forward_as_tuple(
                     m_pInstanceCreator->GetDevice(),
                     m_hMainBuffer,
                     m_textureRegistry,
-                    _mesh.itShaderModule->uboDataLayouts,
+                    _shaderComponent.uboDataLayouts,
                     MAX_FRAMES_IN_FLIGHT,
                     m_uMissing2DTextureId,
                     m_uMissing3DTextureId));
         }
 
-        auto itDescriptorAllocator = m_pipelineDescriptorAllocators.find(_mesh.itShaderModule);
+        auto itDescriptorAllocator = m_pipelineDescriptorAllocators.find(_shaderComponent.pShader);
         
         if (itDescriptorAllocator != m_pipelineDescriptorAllocators.end()) {
             itDescriptorAllocator->second.ResetMeshCounter();
-            vulkanFramebuffer->Draw(_mesh, _uMeshId, &itDescriptorAllocator->second, _textureIds);
+            vulkanFramebuffer->Draw(_mesh, _shaderComponent, &itDescriptorAllocator->second, _textureIds);
         }
         else {
-            vulkanFramebuffer->Draw(_mesh, _uMeshId, nullptr, _textureIds);
+            vulkanFramebuffer->Draw(_mesh, _shaderComponent, nullptr, _textureIds);
         }
     }
 }

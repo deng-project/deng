@@ -22,23 +22,21 @@ class TriangleLayer : public DENG::ILayer {
 			0.f, 0.f, 1.f, 1.f
 		};
 		DENG::MeshComponent m_meshComponent;
+		DENG::ShaderComponent m_shaderComponent;
 
 	public:
 		virtual void Attach(DENG::IRenderer* _pRenderer, DENG::IWindowContext* _pWindowContext) override {
-			DENG::PipelineModule trianglePipelineModule;
-			trianglePipelineModule.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
-			trianglePipelineModule.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_FLOAT);
-			trianglePipelineModule.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
-			trianglePipelineModule.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
-			trianglePipelineModule.bEnableIndexing = false;
-			trianglePipelineModule.pShader = new DENG::Shader("Triangle", "Triangle");
+			m_shaderComponent.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
+			m_shaderComponent.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC4_FLOAT);
+			m_shaderComponent.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
+			m_shaderComponent.attributeStrides.push_back(sizeof(TRS::Vector3<float>) + sizeof(TRS::Vector4<float>));
+			m_shaderComponent.bEnableIndexing = false;
+			m_shaderComponent.pShader = new DENG::Shader("Triangle", "Triangle");
 
 			size_t uOffset = _pRenderer->AllocateMemory(sizeof(m_cTriangleVertices), DENG::BufferDataType::VERTEX);
-			std::list<DENG::PipelineModule>::iterator refPipeline;
-
+			
 			try {
 				_pRenderer->UpdateBuffer(m_cTriangleVertices, sizeof(m_cTriangleVertices), uOffset);
-				refPipeline = _pRenderer->CreatePipeline(trianglePipelineModule);
 			}
 			catch (const DENG::RendererException& e) {
 				DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
@@ -47,7 +45,6 @@ class TriangleLayer : public DENG::ILayer {
 				DISPATCH_ERROR_MESSAGE("ShaderException", e.what(), ErrorSeverity::CRITICAL);
 			}
 
-			m_meshComponent.itShaderModule = refPipeline;
 			m_meshComponent.drawCommands.emplace_back();
 			m_meshComponent.drawCommands.back().attributeOffsets.push_back(uOffset);
 			m_meshComponent.drawCommands.back().attributeOffsets.push_back(uOffset + sizeof(TRS::Vector3<float>));
@@ -58,7 +55,7 @@ class TriangleLayer : public DENG::ILayer {
 		}
 
 		virtual void Update(DENG::IFramebuffer* _pFramebuffer) override {
-			m_pRenderer->DrawMesh(m_meshComponent, 1, _pFramebuffer);
+			m_pRenderer->DrawMesh(m_meshComponent, m_shaderComponent, _pFramebuffer);
 		}
 };
 

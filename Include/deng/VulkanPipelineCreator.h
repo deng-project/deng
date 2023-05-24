@@ -17,7 +17,7 @@
 
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
-    #include "deng/ShaderDefinitions.h"
+    #include "deng/ShaderComponent.h"
     #include "deng/VulkanHelpers.h"
 #endif
 
@@ -49,6 +49,7 @@ namespace DENG {
 
                 VkPipelineDynamicStateCreateInfo        m_dynamicStateCreateInfo = {};
                 std::vector<VkDynamicState> m_dynamicStates;
+                VkGraphicsPipelineCreateInfo m_graphicsPipelineCreateInfo = {};
 
                 VkDescriptorSetLayout m_hShaderDescriptorSetLayout = VK_NULL_HANDLE;
                 VkDescriptorSetLayout m_hMeshDescriptorSetLayout = VK_NULL_HANDLE;
@@ -59,12 +60,12 @@ namespace DENG {
                 VkPipelineCache m_hPipelineCache = VK_NULL_HANDLE;
 
             private:
-                void _FindInputBindingDescriptions(const PipelineModule& _pipeline);
-                void _FindVertexInputAttributeDescriptions(const PipelineModule& _module);
+                void _FindInputBindingDescriptions(const ShaderComponent& _shader);
+                void _FindVertexInputAttributeDescriptions(const ShaderComponent& _shader);
                 VkShaderModule _CreateShaderModule(std::vector<uint32_t> &_bin);
 
                 void _CreatePipelineLayout();
-                VkGraphicsPipelineCreateInfo _GeneratePipelineCreateInfo(const PipelineModule& _pipeline, bool _bCreateShaderModules = true);
+                void _GeneratePipelineCreateInfo(const ShaderComponent& _shader, bool _bCreateShaderModules = true);
 
             public:
                 PipelineCreator(
@@ -75,13 +76,13 @@ namespace DENG {
                     VkExtent2D _extent, 
                     VkSampleCountFlagBits _uSampleBits,
                     const PhysicalDeviceInformation& _info,
-                    const PipelineModule& _module);
+                    const ShaderComponent& _module);
                 PipelineCreator(PipelineCreator &&_pc) noexcept;
                 PipelineCreator(const PipelineCreator &_pc) = delete;
                 ~PipelineCreator() noexcept;
 
                 void DestroyPipelineData();
-                void RecreatePipeline(const PipelineModule& _pipeline, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile = false);
+                void RecreatePipeline(VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile = false);
 
                 inline VkPipelineCache GetPipelineCache() { return m_hPipelineCache; }
                 inline VkPipelineLayout GetPipelineLayout() { return m_hPipelineLayout; }

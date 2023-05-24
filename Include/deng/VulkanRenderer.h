@@ -15,9 +15,7 @@
     #include <list>
     #include <unordered_map>
 
-    #define NOMINMAX
     #include <algorithm>
-    
 #ifdef __DEBUG
     #include <iostream>
 #endif
@@ -31,7 +29,6 @@
     #include "deng/Api.h"
     #include "deng/Exceptions.h"
     #include "deng/ErrorDefinitions.h"
-    #include "deng/ShaderDefinitions.h"
     #include "deng/Missing.h"
 
     #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
@@ -54,7 +51,7 @@ namespace DENG {
 
             Vulkan::InstanceCreator* m_pInstanceCreator = nullptr;
             Vulkan::SwapchainCreator* m_pSwapchainCreator = nullptr;
-            std::unordered_map<std::list<PipelineModule>::iterator, Vulkan::DescriptorAllocator> m_pipelineDescriptorAllocators;
+            std::unordered_map<Shader*, Vulkan::DescriptorAllocator> m_pipelineDescriptorAllocators;
 
             // locally managed vulkan resources
             VkDeviceSize m_uBufferSize = DEFAULT_BUFFER_SIZE;
@@ -79,14 +76,13 @@ namespace DENG {
             ~VulkanRenderer();
 
             virtual uint32_t AddTextureResource(const TextureResource& _resource) override;
-            virtual std::list<PipelineModule>::iterator CreatePipeline(const PipelineModule& _pipeline) override;
-            virtual void DestroyPipeline(std::list<PipelineModule>::iterator _id) override;
+            virtual void DestroyPipeline(Shader* _pShader) override;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
             virtual void DeallocateMemory(size_t _uOffset) override;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
-            virtual void DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
+            virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
     };
 }
 

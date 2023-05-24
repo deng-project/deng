@@ -56,8 +56,6 @@ namespace DENG {
 
 	class DENG_API Shader {
 		private:
-			static std::unordered_map<std::string, uint32_t> m_mShaderModuleIds;
-
 			const std::string m_csShaderSourcePath = "Shaders\\Source";
 			const std::string m_csSpirvBinaryPath = "Shaders\\Binary";
 			const std::string m_csPipelineCachePath = "Shaders\\PipelineCache";
@@ -87,9 +85,6 @@ namespace DENG {
 			std::vector<char> GetPipelineCache(RendererType _eRendererType);
 			void CachePipeline(RendererType _eRendererType, const void* _pData, size_t _uLength);
 			uint16_t GetPipelineCacheStatus();
-
-			// RETURN: UINT32_MAX if shader module is not present, valid id otherwise
-			uint32_t FindExistingShaderModuleId();
 
 			inline void SetBinaryIdentifier(const std::string& _sBinaryIdentifier) {
 				m_sBinaryIdentifier = _sBinaryIdentifier;

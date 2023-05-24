@@ -46,6 +46,7 @@ namespace DENG {
 
 			uint32_t m_uTextureHandle = 0;
 			MeshComponent m_meshComponent;
+			ShaderComponent m_shaderComponent;
 
 			bool m_bIsInit = false;
 

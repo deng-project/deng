@@ -12,8 +12,6 @@ namespace fs = filesystem;
 
 namespace DENG {
 
-	unordered_map<string, uint32_t> Shader::m_mShaderModuleIds = {};
-
 	Shader::Shader(const string& _sSourceIdentifier, const string& _sBinaryIdentifier) :
 		m_csSourceIdentifier(_sSourceIdentifier),
 		m_sBinaryIdentifier(_sBinaryIdentifier)
@@ -342,13 +340,6 @@ namespace DENG {
 			return PARTIAL_SPIRV;
 		}
 		else return NO_CACHE;
-	}
-
-
-	uint32_t Shader::FindExistingShaderModuleId() {
-		if (m_mShaderModuleIds.find(m_sBinaryIdentifier) == m_mShaderModuleIds.end())
-			return UINT32_MAX;
-		else return m_mShaderModuleIds[m_sBinaryIdentifier];
 	}
 
 

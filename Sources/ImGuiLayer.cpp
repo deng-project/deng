@@ -235,33 +235,29 @@ namespace DENG {
 		ImGui::SetCurrentContext(m_pImguiContext);
 		m_pIO = &ImGui::GetIO();
 
-		PipelineModule pipelineModule;
-		pipelineModule.pShader = new Shader("ImGui", "ImGui");
-		pipelineModule.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-		pipelineModule.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-		pipelineModule.attributes.push_back(ATTRIBUTE_TYPE_VEC4_UBYTE);
+		m_shaderComponent.pShader = new Shader("ImGui", "ImGui");
+		m_shaderComponent.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
+		m_shaderComponent.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
+		m_shaderComponent.attributes.push_back(ATTRIBUTE_TYPE_VEC4_UBYTE);
 
-		pipelineModule.attributeStrides.push_back(sizeof(ImDrawVert));
-		pipelineModule.attributeStrides.push_back(sizeof(ImDrawVert));
-		pipelineModule.attributeStrides.push_back(sizeof(ImDrawVert));
+		m_shaderComponent.attributeStrides.push_back(sizeof(ImDrawVert));
+		m_shaderComponent.attributeStrides.push_back(sizeof(ImDrawVert));
+		m_shaderComponent.attributeStrides.push_back(sizeof(ImDrawVert));
 
-		pipelineModule.bEnableBlend = true;
-		pipelineModule.bEnableScissor = true;
-		pipelineModule.bEnable2DTextures = true;
+		m_shaderComponent.bEnableBlend = true;
+		m_shaderComponent.bEnableScissor = true;
+		m_shaderComponent.bEnable2DTextures = true;
 		
-		pipelineModule.uboDataLayouts.resize(2, {});
-		pipelineModule.uboDataLayouts[0].block.uBinding = 0;
-		pipelineModule.uboDataLayouts[0].block.uSize = static_cast<uint32_t>(sizeof(TRS::Point2D<float>));
-		pipelineModule.uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_uUniformRegionOffset);
-		pipelineModule.uboDataLayouts[0].iStage = SHADER_STAGE_VERTEX;
-		pipelineModule.uboDataLayouts[0].eType = UNIFORM_DATA_TYPE_BUFFER;
+		m_shaderComponent.uboDataLayouts.resize(2, {});
+		m_shaderComponent.uboDataLayouts[0].block.uBinding = 0;
+		m_shaderComponent.uboDataLayouts[0].block.uSize = static_cast<uint32_t>(sizeof(TRS::Point2D<float>));
+		m_shaderComponent.uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_uUniformRegionOffset);
+		m_shaderComponent.uboDataLayouts[0].iStage = SHADER_STAGE_VERTEX;
+		m_shaderComponent.uboDataLayouts[0].eType = UNIFORM_DATA_TYPE_BUFFER;
 
-		pipelineModule.uboDataLayouts[1].block.uBinding = 1;
-		pipelineModule.uboDataLayouts[1].iStage = SHADER_STAGE_FRAGMENT;
-		pipelineModule.uboDataLayouts[1].eType = UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
-
-		std::list<PipelineModule>::iterator itPipeline = _pRenderer->CreatePipeline(pipelineModule);
-		m_meshComponent.itShaderModule = itPipeline;
+		m_shaderComponent.uboDataLayouts[1].block.uBinding = 1;
+		m_shaderComponent.uboDataLayouts[1].iStage = SHADER_STAGE_FRAGMENT;
+		m_shaderComponent.uboDataLayouts[1].eType = UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
 
 		unsigned char* pPixels = nullptr;
 		int iWidth = 0, iHeight = 0;
@@ -309,6 +305,6 @@ namespace DENG {
 		
 		m_pRenderer->UpdateBuffer(&m_uniform, sizeof(TRS::Point2D<float>), m_uUniformRegionOffset);
 		m_bIsInit = true;
-		m_pRenderer->DrawMesh(m_meshComponent, 0, _pFramebuffer, { m_uTextureHandle });
+		m_pRenderer->DrawMesh(m_meshComponent, m_shaderComponent, _pFramebuffer, { m_uTextureHandle });
 	}
 }

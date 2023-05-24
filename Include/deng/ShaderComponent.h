@@ -4,10 +4,10 @@
 // author: Karl-Mihkel Ott
 
 
-#ifndef SHADER_DEFINITIONS_H
-#define SHADER_DEFINITIONS_H
+#ifndef SHADER_COMPONENT_H
+#define SHADER_COMPONENT_H
 
-#ifdef SHADER_DEFINITIONS_CPP
+#ifdef SHADER_COMPONENT_CPP
     #include <cstdint>
     #include <vector>
     #include <string>
@@ -136,14 +136,32 @@ namespace DENG {
 
     // this structure defines shaders that should be used in a pipeline
     // NOTE: geometry shaders are completely optional and not required
-    struct PipelineModule {
-        PipelineModule() = default;
-        PipelineModule(const PipelineModule&) = default;
+    struct ShaderComponent {
+        ShaderComponent() = default;
+        ShaderComponent(const ShaderComponent&) = default;
+        ShaderComponent(ShaderComponent&& shader) noexcept :
+            attributes(std::move(shader.attributes)),
+            attributeStrides(std::move(shader.attributeStrides)),
+            uboDataLayouts(std::move(shader.uboDataLayouts)),
+            pShader(shader.pShader),
+            uShaderComponentId(shader.uShaderComponentId),
+            viewport(shader.viewport),
+            eCullMode(shader.eCullMode),
+            ePrimitiveMode(shader.ePrimitiveMode),
+            bEnableCustomViewport(shader.bEnableCustomViewport),
+            bEnable2DTextures(shader.bEnable2DTextures),
+            bEnable3DTextures(shader.bEnable3DTextures),
+            bEnableScissor(shader.bEnableScissor),
+            bEnableDepthTesting(shader.bEnableDepthTesting),
+            bEnableStencilTesting(shader.bEnableStencilTesting),
+            bEnableBlend(shader.bEnableBlend),
+            bEnableIndexing(shader.bEnableIndexing) {}
 
         std::vector<AttributeType> attributes;
         std::vector<std::size_t> attributeStrides;
         std::vector<UniformDataLayout> uboDataLayouts;
         Shader* pShader = nullptr;
+        uint32_t uShaderComponentId = 0;
         Viewport viewport;
         CullMode eCullMode = CULL_MODE_NONE;
         PrimitiveMode ePrimitiveMode = PRIMITIVE_MODE_TRIANGLES;
@@ -156,9 +174,6 @@ namespace DENG {
         bool bEnableBlend = false;
         bool bEnableIndexing = true;
     };
-
-    std::size_t CalculatePackedStride(const PipelineModule& _module);
-    std::size_t CalculateAttributeStride(const AttributeType _attr);
 }
 
 #endif

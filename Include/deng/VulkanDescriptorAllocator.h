@@ -18,7 +18,7 @@
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
-    #include "deng/ShaderDefinitions.h"
+    #include "deng/ShaderComponent.h"
     #include "deng/IRenderer.h"
     #include "deng/VulkanHelpers.h"
     #include "deng/Missing.h"

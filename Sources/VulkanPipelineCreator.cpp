@@ -19,7 +19,7 @@ namespace DENG {
             VkExtent2D _extent, 
             VkSampleCountFlagBits _uSampleBits, 
             const Vulkan::PhysicalDeviceInformation& _information, 
-            const PipelineModule& _pipeline) :
+            const ShaderComponent& _shader) :
             m_hDevice(_hDevice),
             m_extent(_extent),
             m_hShaderDescriptorSetLayout(_hShaderDescriptorSetLayout),
@@ -37,8 +37,8 @@ namespace DENG {
             VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
             pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
-            if (_pipeline.pShader->GetPipelineCacheStatus() & VULKAN_CACHE) {
-                auto cacheBytes = _pipeline.pShader->GetPipelineCache(RendererType::VULKAN);
+            if (_shader.pShader->GetPipelineCacheStatus() & VULKAN_CACHE) {
+                auto cacheBytes = _shader.pShader->GetPipelineCache(RendererType::VULKAN);
                 
                 VkPipelineCacheHeaderVersionOne header = {};
                 memcpy(&header, cacheBytes.data(), sizeof(VkPipelineCacheHeaderVersionOne));
@@ -57,9 +57,8 @@ namespace DENG {
                     throw RendererException("vkCreatePipelineCache() failed to create pipeline cache");
             }
 
-            VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {};
             try {
-                graphicsPipelineCreateInfo = _GeneratePipelineCreateInfo(_pipeline);
+                _GeneratePipelineCreateInfo(_shader);
             }
             catch (const ShaderException&) {
                 throw RendererException("Could not create PipelineCreator. Shader source code is invalid.");
@@ -69,7 +68,7 @@ namespace DENG {
             }
             
             // create a pipeline
-            if (vkCreateGraphicsPipelines(m_hDevice, m_hPipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &m_hPipeline) != VK_SUCCESS) {
+            if (vkCreateGraphicsPipelines(m_hDevice, m_hPipelineCache, 1, &m_graphicsPipelineCreateInfo, nullptr, &m_hPipeline) != VK_SUCCESS) {
                 throw RendererException("vkCreateGraphicsPipelines() failed to create a graphics pipeline");
             }
         
@@ -79,7 +78,7 @@ namespace DENG {
                 vector<char> cacheData(uCacheSize);
                 vkGetPipelineCacheData(m_hDevice, m_hPipelineCache, &uCacheSize, cacheData.data());
 
-                _pipeline.pShader->CachePipeline(RendererType::VULKAN, cacheData.data(), cacheData.size());
+                _shader.pShader->CachePipeline(RendererType::VULKAN, cacheData.data(), cacheData.size());
             }
         }
 
@@ -141,38 +140,40 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::RecreatePipeline(const PipelineModule& _pipeline, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile) {
+        void PipelineCreator::RecreatePipeline(VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile) {
             m_hRenderPass = _hRenderPass;
             m_extent = _extent;
 
             _CreatePipelineLayout();
-            VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = _GeneratePipelineCreateInfo(_pipeline, _bRecompile);
+            m_viewport.width = static_cast<float>(_extent.width);
+            m_viewport.height = static_cast<float>(_extent.height);
+            m_scissor.extent = _extent;
 
-            if(vkCreateGraphicsPipelines(m_hDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_hPipeline) != VK_SUCCESS)
+            if(vkCreateGraphicsPipelines(m_hDevice, VK_NULL_HANDLE, 1, &m_graphicsPipelineCreateInfo, nullptr, &m_hPipeline) != VK_SUCCESS)
                 VK_PIPELINEC_ERR("failed to create a pipeline");
         }
 
 
-        void PipelineCreator::_FindInputBindingDescriptions(const PipelineModule& _pipeline) {
-            DENG_ASSERT(_pipeline.attributes.size() == _pipeline.attributeStrides.size());
-            m_vertexInputBindingDescriptions.reserve(_pipeline.attributes.size());
+        void PipelineCreator::_FindInputBindingDescriptions(const ShaderComponent& _shader) {
+            DENG_ASSERT(_shader.attributes.size() == _shader.attributeStrides.size());
+            m_vertexInputBindingDescriptions.reserve(_shader.attributes.size());
 
-            for (size_t i = 0; i < _pipeline.attributes.size(); i++) {
+            for (size_t i = 0; i < _shader.attributes.size(); i++) {
                 m_vertexInputBindingDescriptions.emplace_back();
                 m_vertexInputBindingDescriptions.back().binding = static_cast<uint32_t>(i);;
-                m_vertexInputBindingDescriptions.back().stride = static_cast<uint32_t>(_pipeline.attributeStrides[i]);
+                m_vertexInputBindingDescriptions.back().stride = static_cast<uint32_t>(_shader.attributeStrides[i]);
                 m_vertexInputBindingDescriptions.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
             }
         }
 
 
-        void PipelineCreator::_FindVertexInputAttributeDescriptions(const PipelineModule &_pipeline) {
-            for(uint32_t i = 0; i < static_cast<uint32_t>(_pipeline.attributes.size()); i++) {
+        void PipelineCreator::_FindVertexInputAttributeDescriptions(const ShaderComponent &_shader) {
+            for(uint32_t i = 0; i < static_cast<uint32_t>(_shader.attributes.size()); i++) {
                 m_vertexInputAttributeDescriptions.push_back(VkVertexInputAttributeDescription{});
                 m_vertexInputAttributeDescriptions.back().binding = i;
                 m_vertexInputAttributeDescriptions.back().location = i;
 
-                switch(_pipeline.attributes[i]) {
+                switch(_shader.attributes[i]) {
                     // single element attributes
                     case ATTRIBUTE_TYPE_FLOAT:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32_SFLOAT;
@@ -351,7 +352,7 @@ namespace DENG {
 
 
         // pipelines should be created from skratch only when there is no cache available
-        VkGraphicsPipelineCreateInfo PipelineCreator::_GeneratePipelineCreateInfo(const PipelineModule& _pipeline, bool _bCreateShaderModules) {
+        void PipelineCreator::_GeneratePipelineCreateInfo(const ShaderComponent& _shader, bool _bCreateShaderModules) {
             if(_bCreateShaderModules) {
                 // Create vertex and fragment shader modules
                 m_shaderModules.clear();
@@ -359,8 +360,8 @@ namespace DENG {
                 
                 std::vector<uint32_t> vertexShaderSpirv, geometryShaderSpirv, fragmentShaderSpirv;
                 try {
-                    vertexShaderSpirv = _pipeline.pShader->ReadVertexShaderSpirv();
-                    fragmentShaderSpirv = _pipeline.pShader->ReadFragmentShaderSpirv();
+                    vertexShaderSpirv = _shader.pShader->ReadVertexShaderSpirv();
+                    fragmentShaderSpirv = _shader.pShader->ReadFragmentShaderSpirv();
                 }
                 catch (const IOException& e) {
                     DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::NON_CRITICAL);
@@ -372,7 +373,7 @@ namespace DENG {
                 }
 
                 try {
-                    geometryShaderSpirv = _pipeline.pShader->ReadGeometryShaderSpirv();
+                    geometryShaderSpirv = _shader.pShader->ReadGeometryShaderSpirv();
                 }
                 catch (const IOException& e) {
                     DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::NON_CRITICAL);
@@ -415,8 +416,8 @@ namespace DENG {
                 m_shaderStageCreateInfos.back().pName = "main";
 
                 // Bind get binding descriptors and attribute descriptors for the current pipeline type
-                _FindInputBindingDescriptions(_pipeline);
-                _FindVertexInputAttributeDescriptions(_pipeline);
+                _FindInputBindingDescriptions(_shader);
+                _FindVertexInputAttributeDescriptions(_shader);
             }
 
             // Set up vertex input create_info object 
@@ -428,7 +429,7 @@ namespace DENG {
 
             // Set up input assembly create_info object
             m_inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-            switch(_pipeline.ePrimitiveMode) {
+            switch(_shader.ePrimitiveMode) {
                 case PRIMITIVE_MODE_TRIANGLES:
                     m_inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
                     break;
@@ -470,7 +471,7 @@ namespace DENG {
             m_rasterizationStateCreateInfo.lineWidth = 1.0f;
 
             // set up culling mode
-            switch(_pipeline.eCullMode) {
+            switch(_shader.eCullMode) {
                 case CULL_MODE_NONE:
                     m_rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
                     break;
@@ -495,7 +496,7 @@ namespace DENG {
             m_multisampleStateCreateInfo.rasterizationSamples = m_uSampleBits;
 
             // Set colorblend options if required
-            if(_pipeline.bEnableBlend) {
+            if(_shader.bEnableBlend) {
                 m_colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
                 m_colorBlendAttachmentState.blendEnable = VK_TRUE;
                 m_colorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
@@ -510,7 +511,7 @@ namespace DENG {
             }
             
             // Check if depth stencil is enabled and if it is set the create_info accordingly
-            if(_pipeline.bEnableDepthTesting) {
+            if(_shader.bEnableDepthTesting) {
                 m_depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
                 m_depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
                 m_depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
@@ -530,12 +531,12 @@ namespace DENG {
             m_dynamicStates.clear();
             m_dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
-            if (_pipeline.bEnableCustomViewport) {
+            if (_shader.bEnableCustomViewport) {
                 m_dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
                 m_dynamicStateCreateInfo.dynamicStateCount++;
             }
 
-            if (_pipeline.bEnableScissor) {
+            if (_shader.bEnableScissor) {
                 m_dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
                 m_dynamicStateCreateInfo.dynamicStateCount++;
             }
@@ -548,31 +549,28 @@ namespace DENG {
             m_colorBlendStateCreateInfo.pAttachments = &m_colorBlendAttachmentState;
 
             // Set up graphics pipeline create_info
-            VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {};
-            graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-            graphicsPipelineCreateInfo.stageCount = static_cast<uint32_t>(m_shaderStageCreateInfos.size());
-            graphicsPipelineCreateInfo.pStages = m_shaderStageCreateInfos.data();
-            graphicsPipelineCreateInfo.pVertexInputState = &m_vertexInputStateCreateInfo;
-            graphicsPipelineCreateInfo.pInputAssemblyState = &m_inputAssemblyStateCreateInfo;
-            graphicsPipelineCreateInfo.pViewportState = &m_viewportStateCreateInfo;
-            graphicsPipelineCreateInfo.pColorBlendState = &m_colorBlendStateCreateInfo;
-            graphicsPipelineCreateInfo.pRasterizationState = &m_rasterizationStateCreateInfo;
-            graphicsPipelineCreateInfo.pMultisampleState = &m_multisampleStateCreateInfo;
-            graphicsPipelineCreateInfo.pDepthStencilState = &m_depthStencilStateCreateInfo;
+            m_graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            m_graphicsPipelineCreateInfo.stageCount = static_cast<uint32_t>(m_shaderStageCreateInfos.size());
+            m_graphicsPipelineCreateInfo.pStages = m_shaderStageCreateInfos.data();
+            m_graphicsPipelineCreateInfo.pVertexInputState = &m_vertexInputStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pInputAssemblyState = &m_inputAssemblyStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pViewportState = &m_viewportStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pColorBlendState = &m_colorBlendStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pRasterizationState = &m_rasterizationStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pMultisampleState = &m_multisampleStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pDepthStencilState = &m_depthStencilStateCreateInfo;
 
-            if(_pipeline.bEnableScissor || _pipeline.bEnableCustomViewport)
-                graphicsPipelineCreateInfo.pDynamicState = &m_dynamicStateCreateInfo;
-            else graphicsPipelineCreateInfo.pDynamicState = nullptr;
+            if(_shader.bEnableScissor || _shader.bEnableCustomViewport)
+                m_graphicsPipelineCreateInfo.pDynamicState = &m_dynamicStateCreateInfo;
+            else m_graphicsPipelineCreateInfo.pDynamicState = nullptr;
 
-            graphicsPipelineCreateInfo.layout = m_hPipelineLayout;
+            m_graphicsPipelineCreateInfo.layout = m_hPipelineLayout;
 
-            graphicsPipelineCreateInfo.renderPass = m_hRenderPass;
+            m_graphicsPipelineCreateInfo.renderPass = m_hRenderPass;
 
             // tmp
-            graphicsPipelineCreateInfo.subpass = 0;
-            graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-            return graphicsPipelineCreateInfo;
+            m_graphicsPipelineCreateInfo.subpass = 0;
+            m_graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
         }
     }
 }

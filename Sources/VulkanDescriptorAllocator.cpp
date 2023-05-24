@@ -261,7 +261,7 @@ namespace DENG {
             if (m_hMeshDescriptorSetLayout == VK_NULL_HANDLE)
                 return VK_NULL_HANDLE;
 
-            if (m_uMeshCounter > static_cast<uint32_t>(m_meshDescriptorSets.size())) {
+            if (m_uMeshCounter >= static_cast<uint32_t>(m_meshDescriptorSets.size())) {
 
                 // check if new pool allocation is required
                 if (m_uMeshCounter >= static_cast<size_t>(m_uMeshMasterPoolCapacity * m_uBufferingStageCount) * m_meshDescriptorPools.size())

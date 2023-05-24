@@ -19,7 +19,6 @@
 #include "deng/IFramebuffer.h"
 #include "deng/VulkanHelpers.h"
 #include "deng/GPUMemoryAllocator.h"
-#include "deng/ShaderDefinitions.h"
 #include "deng/Components.h"
 #include "deng/Missing.h"
 
@@ -30,9 +29,9 @@
 // hasher helper
 namespace std {
 	template<>
-	struct hash<list<DENG::PipelineModule>::iterator> {
-		size_t operator()(const list<DENG::PipelineModule>::iterator& it) const {
-			return hash<DENG::PipelineModule*>()(&*it);
+	struct hash<list<DENG::ShaderComponent>::iterator> {
+		size_t operator()(const list<DENG::ShaderComponent>::iterator& it) const {
+			return hash<DENG::ShaderComponent*>()(&*it);
 		}
 	};
 }
@@ -83,7 +82,6 @@ namespace DENG {
 
 			IWindowContext* m_pWindowContext = nullptr;
             GPUMemoryAllocator m_gpuMemoryAllocator;
-            std::list<PipelineModule> m_pipelineModules;
             std::unordered_map<uint32_t, TextureResource> m_textureRegistry;
 			std::queue<uint32_t> m_addedTextureResourceQueue;
 			std::queue<uint32_t> m_deletedTextureResourceQueue;
@@ -102,14 +100,13 @@ namespace DENG {
 				m_deletedTextureResourceQueue.push(_uTextureId);
 			}
 
-			virtual std::list<PipelineModule>::iterator CreatePipeline(const PipelineModule& _module) = 0;
-            virtual void DestroyPipeline(std::list<PipelineModule>::iterator _identifier) = 0;
+            virtual void DestroyPipeline(Shader* _pShader) = 0;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) = 0;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
 			virtual void DeallocateMemory(size_t _uOffset) = 0;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
-            virtual void DrawMesh(const MeshComponent& _mesh, uint32_t _uMeshId, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) = 0;
+            virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _Shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) = 0;
     };
 }
 
