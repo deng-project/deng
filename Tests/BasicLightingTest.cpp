@@ -1,5 +1,4 @@
 #include <random>
-#define _USE_MATH_CONSTANTS
 #include <cmath>
 
 #include "deng/App.h"
@@ -8,6 +7,7 @@
 #include "deng/VulkanRenderer.h"
 #include "deng/Exceptions.h"
 #include "deng/ErrorDefinitions.h"
+#include "deng/CameraTransformer.h"
 #include "deng/ImGuiLayer.h"
 #include "deng/Scene.h"
 
@@ -134,44 +134,20 @@ public:
 class CameraScript : public DENG::ScriptBehaviour {
 	private:
 		DENG::IWindowContext* m_pWindowContext;
-		const float m_fFieldOfView = 65.f * (float)M_PI / 180.f;
-		const float m_fNearPlane = 0.0001f;
-		const float m_fFarPlane = 1000000.f;
-
+		DENG::CameraTransformer m_cameraTransformer;
 		const float m_fRotationSpeed = (float)M_PI_2;
 		const float m_fMovementSpeed = 1.f;
 
-		bool m_bRotations[4] = {};
+		bool m_bRotations[6] = {};
 		bool m_bMovements[4] = {};
-
-		float m_fPitch = 0.f;
-		float m_fYaw = 0.f;
-
-		TRS::Vector3<float> m_vRight = { 1.f, 0.f, 0.f };
-		TRS::Vector3<float> m_vUp = { 0.f, 1.f, 0.f };
-		TRS::Vector3<float> m_vDirection = { 0.f, 0.f, -1.f };
 		
-	private:
-		inline TRS::Matrix4<float> _CalculateProjection() {
-			const float fInverseHalfTan = 1.f / std::tanf(m_fFieldOfView / 2.f);
-			const float fAspectRatio = 
-				static_cast<float>(m_pWindowContext->GetWidth()) / static_cast<float>(m_pWindowContext->GetHeight());
-
-			return TRS::Matrix4<float> {
-				{ fInverseHalfTan / fAspectRatio, 0.f, 0.f, 0.f },
-				{ 0.f, fInverseHalfTan, 0.f, 0.f },
-				{ 0.f, 0.f, (m_fNearPlane + m_fFarPlane) / (m_fNearPlane - m_fFarPlane), (2 * m_fFarPlane * m_fNearPlane) / (m_fNearPlane - m_fFarPlane) },
-				{ 0.f, 0.f, -1.f, 0.f }
-			};
-		}
-
 	public:
 		CameraScript(DENG::IWindowContext* _pWindowContext) :
 			m_pWindowContext(_pWindowContext) {}
 
 		void OnAttach() {
 			DENG::CameraComponent& camera = pScene->GetComponent<DENG::CameraComponent>(idEntity);
-			camera.mProjection = _CalculateProjection().Transpose();
+			camera.mProjection = m_cameraTransformer.CalculateProjection(m_pWindowContext->GetWidth(), m_pWindowContext->GetHeight());
 			LOG("CameraScript::OnAttach() called");
 		}
 
@@ -200,6 +176,14 @@ class CameraScript : public DENG::ScriptBehaviour {
 						m_bRotations[3] = event.eType == DENG::EventType::KEY_DOWN;
 						break;
 
+					case DENG::KeySymbol::KEY_LEFT_BRACKET:
+						m_bRotations[4] = event.eType == DENG::EventType::KEY_DOWN;
+						break;
+
+					case DENG::KeySymbol::KEY_RIGHT_BRACKET:
+						m_bRotations[5] = event.eType == DENG::EventType::KEY_DOWN;
+						break;
+
 					case DENG::KeySymbol::KEY_A:
 						m_bMovements[0] = event.eType == DENG::EventType::KEY_DOWN;
 						break;
@@ -226,34 +210,63 @@ class CameraScript : public DENG::ScriptBehaviour {
 
 			// yaw counter-clockwise
 			if (m_bRotations[0] && !m_bRotations[3]) {
-				m_fYaw -= _fTimestep * m_fRotationSpeed;
+				float fYaw = m_cameraTransformer.GetYaw();
+				fYaw += _fTimestep * m_fRotationSpeed;
 
-				if (m_fYaw < -2.f * M_PI)
-					m_fYaw += 2.f * M_PI;
+				if (fYaw > 2.f * M_PI)
+					fYaw -= 2.f * M_PI;
+
+				m_cameraTransformer.SetYaw(fYaw);
 			}
 			// yaw clockwise
 			else if (!m_bRotations[0] && m_bRotations[3]) {
-				m_fYaw += _fTimestep * m_fRotationSpeed;
+				float fYaw = m_cameraTransformer.GetYaw();
+				fYaw -= _fTimestep * m_fRotationSpeed;
 
-				if (m_fYaw > 2.f * M_PI)
-					m_fYaw -= 2.f * M_PI;
+				if (fYaw < -2.f * M_PI)
+					fYaw += 2.f * M_PI;
+				m_cameraTransformer.SetYaw(fYaw);
 			}
 
-			// pitch counter-clockwise
+			// pitch clockwise
 			if (m_bRotations[1] && !m_bRotations[2]) {
-				m_fPitch -= _fTimestep * m_fRotationSpeed;
+				float fPitch = m_cameraTransformer.GetPitch();
+				fPitch -= _fTimestep * m_fRotationSpeed;
 
 				// clip rotation to pi/2
-				if (m_fPitch < -M_PI_2)
-					m_fPitch = -M_PI_2;
+				if (fPitch < -M_PI_2)
+					fPitch = -M_PI_2;
+				m_cameraTransformer.SetPitch(fPitch);
 			}
-			// pitch clockwise
+			// pitch counter-clockwise
 			else if (!m_bRotations[1] && m_bRotations[2]) {
-				m_fPitch += _fTimestep * m_fRotationSpeed;
+				float fPitch = m_cameraTransformer.GetPitch();
+				fPitch += _fTimestep * m_fRotationSpeed;
 
-				if (m_fPitch > M_PI_2)
-					m_fPitch = M_PI_2;
+				if (fPitch > M_PI_2)
+					fPitch = M_PI_2;
+				m_cameraTransformer.SetPitch(fPitch);
 			}
+
+			// roll counter-clockwise
+			if (m_bRotations[4] && !m_bRotations[5]) {
+				float fRoll = m_cameraTransformer.GetRoll();
+				fRoll -= _fTimestep * m_fRotationSpeed;
+
+				if (fRoll < -2.f * M_PI)
+					fRoll += 2.f * M_PI;
+				m_cameraTransformer.SetRoll(fRoll);
+			}
+			// roll counter-clockwise
+			else if (!m_bRotations[4] && m_bRotations[5]) {
+				float fRoll = m_cameraTransformer.GetRoll();
+				fRoll += _fTimestep * m_fRotationSpeed;
+
+				if (fRoll > 2.f * M_PI)
+					fRoll -= 2.f * M_PI;
+				m_cameraTransformer.SetRoll(fRoll);
+			}
+			m_cameraTransformer.CalculateLookAt();
 
 			// move left
 			float fMovementX = 0.f;
@@ -274,36 +287,10 @@ class CameraScript : public DENG::ScriptBehaviour {
 			else if (!m_bMovements[1] && m_bMovements[2]) {
 				fMovementZ += _fTimestep * m_fMovementSpeed;
 			}
+			m_cameraTransformer.RelativeMoveX(fMovementX);
+			m_cameraTransformer.RelativeMoveZ(fMovementZ);
 			
-			m_vDirection.first = std::cosf(m_fYaw) * std::cosf(m_fPitch);
-			m_vDirection.second = std::sinf(m_fPitch);
-			m_vDirection.third = std::sinf(m_fYaw) * std::cosf(m_fPitch);
-			m_vDirection.Normalise();
-		
-			const TRS::Vector3<float> cvUp = { 0.f, 1.f, 0.f };
-			m_vRight = TRS::Vector3<float>::Cross(cvUp, m_vDirection);
-			m_vRight.Normalise();
-			m_vUp = TRS::Vector3<float>::Cross(m_vDirection, m_vRight);
-			m_vUp.Normalise();
-
-			const TRS::Vector3<float> vMovement = (m_vRight * fMovementX) + (m_vDirection * fMovementZ);
-			camera.vPosition.first += vMovement.first;
-			camera.vPosition.second += vMovement.second;
-			camera.vPosition.third += vMovement.third;
-
-			TRS::Matrix4<float> mTranslation;
-			mTranslation[0][3] = -camera.vPosition.first;
-			mTranslation[1][3] = -camera.vPosition.second;
-			mTranslation[2][3] = -camera.vPosition.third;
-			camera.mView = {
-				{ m_vRight.first, m_vRight.second, m_vRight.third, 0.f },
-				{ m_vUp.first, m_vUp.second, m_vUp.third, 0.f },
-				{ m_vDirection.first, m_vDirection.second, m_vDirection.third, 0.f },
-				{ 0.f, 0.f, 0.f, 1.f }
-			};
-
-			camera.mView *= mTranslation;
-			camera.mView = camera.mView.Transpose();
+			camera.mView = m_cameraTransformer.CalculateViewMatrix();
 		}
 
 		void OnDestroy() {

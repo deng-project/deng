@@ -23,6 +23,7 @@ set(DENG_IMGUI_SOURCES
 set(DENG_MINIMAL_HEADERS
 	Include/deng/Api.h
 	Include/deng/App.h
+	Include/deng/CameraTransformer.h
 	Include/deng/Components.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Exceptions.h
@@ -32,6 +33,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/ImGuiLayer.h
 	Include/deng/IRenderer.h
 	Include/deng/IWindowContext.h
+	Include/deng/MathConstants.h
 	Include/deng/Missing.h
 	Include/deng/ProgramFilesManager.h
 	Include/deng/Scene.h
@@ -49,6 +51,7 @@ set(DENG_MINIMAL_HEADERS
 	
 set(DENG_MINIMAL_SOURCES
 	Sources/App.cpp
+	Sources/CameraTransformer.cpp
 	Sources/ErrorDefinitions.cpp
 	Sources/GPUMemoryAllocator.cpp
 	Sources/ImGuiLayer.cpp
