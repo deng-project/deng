@@ -23,7 +23,24 @@ layout(std140, set = 0, binding = 2) uniform Lights {
 
 void main() {
 	const vec3 vObjectColor = vec3(1.f, 1.f, 1.f);
-	const vec3 vAmbientColor = vec3(0.2f, 0.2f, 0.2f);
+	const vec3 vAmbientColor = vec3(0.1f, 0.1f, 0.1f);
+	const float cfSpecularStrength = 0.5f;
 	
-	vFragColor = vec4(vAmbientColor * vObjectColor, 1.f);
+	vec3 vDiffuse = vec3(0.f);
+	vec3 vSpecular = vec3(0.f);
+	
+	for (int i = 0; i < 2; i++) {
+		vec3 vNormal = normalize(vInputNormal);
+		vec3 vLightDir = normalize(uboLights.lights[i].vPosition.xyz - vInputPosition);
+		
+		float fDiffuseImpact = max(dot(vNormal, vLightDir), 0.f);
+		vDiffuse += fDiffuseImpact * uboLights.lights[i].vColor.xyz;
+	
+		vec3 vViewDir = normalize(uboCamera.vPosition.xyz - vInputPosition);
+		vec3 vReflectDir = reflect(-vLightDir, vNormal);
+		
+		float fSpecular = pow(max(dot(vViewDir, vReflectDir), 0.f), 64);
+		vSpecular = cfSpecularStrength * fSpecular * uboLights.lights[i].vColor.xyz;
+	}
+	vFragColor = vec4((vDiffuse + vAmbientColor + vSpecular) * vObjectColor, 1.f);
 }

@@ -46,9 +46,9 @@ mat4 CalculateRotation() {
 
 mat4 CalculateTransform() {
 	mat4 mTranslation = mat4(1.f);
-	mTranslation[0][3] = uboTransform.vTranslation.x;
-	mTranslation[1][3] = uboTransform.vTranslation.y;
-	mTranslation[2][3] = uboTransform.vTranslation.z;
+	mTranslation[3][0] = uboTransform.vTranslation.x;
+	mTranslation[3][1] = uboTransform.vTranslation.y;
+	mTranslation[3][2] = uboTransform.vTranslation.z;
 
 	mat4 mRotation = CalculateRotation();
 	
@@ -65,5 +65,5 @@ void main() {
 	mat4 mTransform = CalculateTransform();
 	gl_Position = uboCamera.mProjection * uboCamera.mView * mTransform * vec4(vInputPosition, 1.0f);
 	vOutputPosition = vec3(mTransform * vec4(vInputPosition, 1.f));
-	vOutputNormal = vInputNormal;
+	vOutputNormal = mat3(transpose(inverse(mTransform))) * vInputNormal;
 }

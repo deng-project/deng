@@ -106,7 +106,8 @@ namespace DENG {
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
 			virtual void DeallocateMemory(size_t _uOffset) = 0;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
-            virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _Shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) = 0;
+			virtual void SetupFrame() = 0;
+			virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _Shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) = 0;
     };
 }
 

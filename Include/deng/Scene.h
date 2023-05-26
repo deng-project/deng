@@ -10,6 +10,7 @@
 
 #include "deng/Api.h"
 #include "deng/IRenderer.h"
+#include "deng/SceneRenderer.h"
 
 #ifdef SCENE_CPP
 	#include "deng/ErrorDefinitions.h"
@@ -21,7 +22,7 @@ namespace DENG {
 
 	class DENG_API Scene {
 		private:
-			IFramebuffer* m_pFramebuffer;
+			SceneRenderer m_sceneRenderer;
 
 			entt::registry m_registry;
 			Entity m_idMainCamera = entt::null;
@@ -32,7 +33,7 @@ namespace DENG {
 				std::chrono::high_resolution_clock::now();
 
 		public:
-			Scene(IFramebuffer* _pFramebuffer);
+			Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
 
 			inline Entity CreateEntity() {
 				return m_registry.create();
@@ -57,7 +58,7 @@ namespace DENG {
 			}
 
 			void AttachComponents();
-			void RenderScene(IRenderer* _pRenderer);
+			void RenderScene();
 			void DestroyComponents();
 	};
 }

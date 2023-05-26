@@ -46,9 +46,9 @@ mat4 CalculateRotation() {
 
 mat4 CalculateTransform() {
 	mat4 mTranslation = mat4(1.f);
-	mTranslation[0][3] = uboTransform.vTranslation.x;
-	mTranslation[1][3] = uboTransform.vTranslation.y;
-	mTranslation[2][3] = uboTransform.vTranslation.z;
+	mTranslation[3][0] = uboTransform.vTranslation.x;
+	mTranslation[3][1] = uboTransform.vTranslation.y;
+	mTranslation[3][2] = uboTransform.vTranslation.z;
 
 	mat4 mRotation = CalculateRotation();
 	
@@ -57,7 +57,7 @@ mat4 CalculateTransform() {
 	mScale[1][1] = uboTransform.vScale.y;
 	mScale[2][2] = uboTransform.vScale.z;
 	
-	return mTranslation * mRotation * mScale;
+	return mTranslation * mRotation * mScale * uboTransform.mCustom;
 }
 
 

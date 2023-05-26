@@ -461,10 +461,10 @@ namespace DENG {
             }
 
             // check if textures should be bound
-            if (descriptorSets[0] && _textureIds.size() && (_shader.bEnable2DTextures || _shader.bEnable3DTextures)) {
+            if (descriptorSets[0]) {
                 _pDescriptorAllocator->UpdateShaderDescriptorSet(m_hMainBuffer, descriptorSets[0], _textureIds);
             }
-            if (descriptorSets[1] && _textureIds.size() && (_shader.bEnable2DTextures || _shader.bEnable3DTextures)) {
+            if (descriptorSets[1]) {
                 _pDescriptorAllocator->UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
             }
 

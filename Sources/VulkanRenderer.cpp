@@ -448,6 +448,44 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::SetupFrame() {
+        for (auto it = m_pipelineDescriptorAllocators.begin(); it != m_pipelineDescriptorAllocators.end(); it++) {
+            it->second.ResetMeshCounter();
+        }
+
+        // check if there are any textures that could be removed
+        while (!m_deletedTextureResourceQueue.empty()) {
+            uint32_t hTexture = m_deletedTextureResourceQueue.front();
+            m_deletedTextureResourceQueue.pop();
+
+            auto itTexture = m_textureRegistry.find(hTexture);
+            
+            // just in case
+            if (itTexture == m_textureRegistry.end())
+                continue;
+        
+            Vulkan::TextureData textureData = std::get<0>(itTexture->second.apiTextureHandles);
+            vkDestroySampler(m_pInstanceCreator->GetDevice(), textureData.hSampler, nullptr);
+            vkDestroyImageView(m_pInstanceCreator->GetDevice(), textureData.hImageView, nullptr);
+            vkDestroyImage(m_pInstanceCreator->GetDevice(), textureData.hImage, nullptr);
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), textureData.hMemory, nullptr);
+        }
+
+        // check if there are any textures that could be added
+        while (!m_addedTextureResourceQueue.empty()) {
+            uint32_t hTexture = m_addedTextureResourceQueue.front();
+            m_addedTextureResourceQueue.pop();
+
+            auto itTexture = m_textureRegistry.find(hTexture);
+
+            if (itTexture == m_textureRegistry.end())
+                continue;
+
+            _CreateApiImageHandles(hTexture);
+        }
+    }
+
+
     void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds) {
         DENG_ASSERT(_pFramebuffer);
         Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
@@ -469,7 +507,6 @@ namespace DENG {
         auto itDescriptorAllocator = m_pipelineDescriptorAllocators.find(_shaderComponent.pShader);
         
         if (itDescriptorAllocator != m_pipelineDescriptorAllocators.end()) {
-            itDescriptorAllocator->second.ResetMeshCounter();
             vulkanFramebuffer->Draw(_mesh, _shaderComponent, &itDescriptorAllocator->second, _textureIds);
         }
         else {

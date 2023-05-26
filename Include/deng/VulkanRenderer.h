@@ -82,6 +82,7 @@ namespace DENG {
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
             virtual void DeallocateMemory(size_t _uOffset) override;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
+            virtual void SetupFrame() override;
             virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
     };
 }

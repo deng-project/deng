@@ -76,7 +76,8 @@ namespace DENG {
                 void MergeMeshDescriptorPools();
 
                 inline void ResetMeshCounter() {
-                    m_uMeshCounter = 0;
+                    if (m_uMeshCounter % m_uBufferingStageCount == 0)
+                        m_uMeshCounter = 0;
                 }
 
                 inline VkDescriptorSet RequestShaderDescriptorSet(uint32_t _uCurrentFrame) const {

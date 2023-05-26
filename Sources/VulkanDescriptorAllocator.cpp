@@ -69,7 +69,7 @@ namespace DENG {
 
             for (VkDescriptorPool descriptorPool : m_meshDescriptorPools) {
                 if (descriptorPool != VK_NULL_HANDLE)
-                    vkDestroyDescriptorPool(m_hDevice, m_hShaderDescriptorPool, nullptr);
+                    vkDestroyDescriptorPool(m_hDevice, descriptorPool, nullptr);
             }
 
             if (m_hShaderDescriptorSetLayout)
@@ -488,7 +488,7 @@ namespace DENG {
             uint32_t uUsedImageCount = 0;
 
             for (auto it = m_uniformDataLayouts.begin(); it != m_uniformDataLayouts.end(); it++) {
-                if (it->eUsage == UNIFORM_USAGE_PER_SHADER) {
+                if (it->eUsage == UNIFORM_USAGE_PER_MESH) {
                     writeDescriptorSets.emplace_back();
                     writeDescriptorSets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                     writeDescriptorSets.back().dstSet = _hDescriptorSet;

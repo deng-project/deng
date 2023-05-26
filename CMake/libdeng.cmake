@@ -35,6 +35,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/Missing.h
 	Include/deng/ProgramFilesManager.h
 	Include/deng/Scene.h
+	Include/deng/SceneRenderer.h
 	Include/deng/SDLWindowContext.h
 	Include/deng/Shader.h
 	Include/deng/ShaderComponent.h
@@ -54,6 +55,7 @@ set(DENG_MINIMAL_SOURCES
 	Sources/Missing.cpp
 	Sources/ProgramFilesManager.cpp
 	Sources/Scene.cpp
+	Sources/SceneRenderer.cpp
 	Sources/SDLWindowContext.cpp
 	Sources/Shader.cpp
 	Sources/VulkanDescriptorAllocator.cpp
