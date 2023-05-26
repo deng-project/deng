@@ -13,6 +13,7 @@
 
 #define WIDTH 1280
 #define HEIGHT 720
+#define SQ(x) (x*x)
 
 static const float g_cCubeVertices[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -57,6 +58,78 @@ static const float g_cCubeVertices[] = {
 	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
 	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
+
+class LightScript : public DENG::ScriptBehaviour {
+	private:
+		const float m_cfRotationSpeed = (float)M_PI_4;
+		float m_fCurrentRotation = 0.f;
+		float m_fRadius = 0.f;
+
+	public:
+		LightScript() = default;
+
+		void OnAttach() {
+			DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
+			
+			m_fRadius = 2.5f;
+			LOG("Light source radius from y-axis is " << m_fRadius);
+
+			// set light source color and initial position
+			light.vColor = { 0.f, 0.f, 1.f, 1.f };
+			light.vPosition[1] = 0.67f;
+			light.vPosition[2] = m_fRadius;
+		}
+
+		void OnUpdate(float _fTimestep) {
+			DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
+			m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
+
+			// clip rotation
+			if (m_fCurrentRotation > 2 * (float)M_PI) {
+				m_fCurrentRotation -= 2 * (float)M_PI;
+			}
+
+			light.vPosition.first = std::sinf(m_fCurrentRotation) * m_fRadius;
+			light.vPosition.third = std::cosf(m_fCurrentRotation) * m_fRadius;
+		}
+};
+
+
+class LightScript2 : public DENG::ScriptBehaviour {
+private:
+	const float m_cfRotationSpeed = (float)M_PI_4;
+	float m_fCurrentRotation = 0.f;
+	float m_fRadius = 0.f;
+
+public:
+	LightScript2() = default;
+
+	void OnAttach() {
+		DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
+
+		m_fRadius = 2.5f;
+		LOG("Light source radius from y-axis is " << m_fRadius);
+
+		// set light source color and initial position
+		light.vColor = { 0.f, 1.f, 0.f, 1.f };
+		light.vPosition[1] = 0.67f;
+		light.vPosition[2] = m_fRadius;
+	}
+
+	void OnUpdate(float _fTimestep) {
+		DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
+		m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
+
+		// clip rotation
+		if (m_fCurrentRotation > 2 * (float)M_PI) {
+			m_fCurrentRotation -= 2 * (float)M_PI;
+		}
+
+		light.vPosition.first = -std::sinf(m_fCurrentRotation) * m_fRadius;
+		light.vPosition.third = std::cosf(m_fCurrentRotation) * m_fRadius;
+	}
+};
+
 
 class CameraScript : public DENG::ScriptBehaviour {
 	private:
@@ -328,7 +401,9 @@ class BasicLightingLayer : public DENG::ILayer {
 			m_lightSources[0] = m_scene.CreateEntity();
 			m_lightSources[1] = m_scene.CreateEntity();
 			m_scene.EmplaceComponent<DENG::LightComponent>(m_lightSources[0]);
+			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[0]).BindScript<LightScript>(m_lightSources[0], &m_scene);
 			m_scene.EmplaceComponent<DENG::LightComponent>(m_lightSources[1]);
+			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[1]).BindScript<LightScript2>(m_lightSources[1], &m_scene);
 
 			// camera components
 			{
@@ -338,53 +413,16 @@ class BasicLightingLayer : public DENG::ILayer {
 				m_scene.EmplaceComponent<DENG::ScriptComponent>(idCamera).BindScript<CameraScript>(idCamera, &m_scene, m_pWindowContext);
 			}
 
-			// update light uniforms
+
+			// update transform uniforms
 			{
-				auto view = m_scene.GetRegistry().view<DENG::LightComponent>();
-				std::default_random_engine engRandom((unsigned)time(nullptr));
-				std::uniform_real_distribution<float> realDistPosition(1.f, 2.f);
-				std::uniform_real_distribution<float> realDistColor(0.f, 1.f);
-				std::bernoulli_distribution boolDistSign(0.5);
+				DENG::TransformComponent& whiteCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idWhiteCube);
+				whiteCubeTransform.vTranslation.first = -0.5f;
+				whiteCubeTransform.vTranslation.third = -1.f;
 
-				size_t uCount = 0;
-				for (DENG::Entity idLight : view) {
-					auto& light = m_scene.GetComponent<DENG::LightComponent>(idLight);
-
-					if (boolDistSign(engRandom))
-						light.vPosition.first = realDistPosition(engRandom);
-					else light.vPosition.first = -realDistPosition(engRandom);
-
-					if (boolDistSign(engRandom))
-						light.vPosition.second = realDistPosition(engRandom);
-					else light.vPosition.second = -realDistPosition(engRandom);
-
-					if (boolDistSign(engRandom))
-						light.vPosition.third = realDistPosition(engRandom);
-					else light.vPosition.third = realDistPosition(engRandom);
-					light.vPosition.fourth = 1.0f;
-
-					light.vColor = TRS::Vector4<float>{
-						1.f,
-						1.f,
-						1.f,
-						1.f
-					};
-
-					LOG("Light position { " << light.vPosition.first << ", " << light.vPosition.second << ", " <<
-						light.vPosition.third << " } and color { " << light.vColor.first << ", " << light.vColor.second << ", " <<
-						light.vColor.third << " }");
-				}
-
-				// update transform uniforms
-				{
-					DENG::TransformComponent& whiteCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idWhiteCube);
-					whiteCubeTransform.vTranslation.first = -0.5f;
-					whiteCubeTransform.vTranslation.third = -1.f;
-
-					DENG::TransformComponent& shadedCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idShadedCube);
-					shadedCubeTransform.vTranslation.first = 0.5f;
-					shadedCubeTransform.vTranslation.third = 1.f;
-				}
+				DENG::TransformComponent& shadedCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idShadedCube);
+				shadedCubeTransform.vTranslation.first = 0.5f;
+				shadedCubeTransform.vTranslation.third = 1.f;
 			}
 
 			m_scene.AttachComponents();
