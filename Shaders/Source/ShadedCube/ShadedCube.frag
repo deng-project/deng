@@ -6,9 +6,11 @@ layout(location = 1) in vec3 vInputNormal;
 
 layout(location = 0) out vec4 vFragColor;
 
-layout(std140, set = 0, binding = 0) uniform Camera {
-	mat4 mView;
+layout(push_constant) uniform Camera {
 	mat4 mProjection;
+	vec4 vCameraRight;
+	vec4 vCameraUp;
+	vec4 vCameraLookAt;
 	vec4 vPosition;
 } uboCamera; 
 
@@ -17,8 +19,10 @@ struct Light {
 	vec4 vColor;
 };
 
-layout(std140, set = 0, binding = 2) uniform Lights {
-	Light lights[2];
+layout(std430, set = 0, binding = 1) readonly buffer Lights {
+	uint uLightsCount;
+	uint _pad[3];
+	Light lights[];
 } uboLights;
 
 void main() {
@@ -29,7 +33,7 @@ void main() {
 	vec3 vDiffuse = vec3(0.f);
 	vec3 vSpecular = vec3(0.f);
 	
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < uboLights.uLightsCount; i++) {
 		vec3 vNormal = normalize(vInputNormal);
 		vec3 vLightDir = normalize(uboLights.lights[i].vPosition.xyz - vInputPosition);
 		

@@ -16,10 +16,10 @@ namespace DENG {
 		private:
 			IRenderer* m_pRenderer = nullptr;
 			IFramebuffer* m_pFramebuffer = nullptr;
-			size_t m_uCameraOffset = 0;
 			std::vector<size_t> m_transformOffsets;
 			size_t m_uLightsOffset = SIZE_MAX;
-			size_t m_uLightCount = 0;
+			uint32_t m_uLightsCount = 0;
+			size_t m_uCameraOffset = 0;
 
 		public:
 			SceneRenderer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
@@ -30,7 +30,8 @@ namespace DENG {
 
 			void RenderLights(const std::vector<LightComponent>& _lights);
 			void RenderMesh(
-				const MeshComponent& _mesh, 
+				const MeshComponent& _mesh,
+				const CameraComponent& _camera,
 				ShaderComponent& _shader, 
 				Entity _idEntity,
 				const TransformComponent& _transform = TransformComponent());

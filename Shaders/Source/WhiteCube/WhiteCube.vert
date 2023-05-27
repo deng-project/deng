@@ -7,13 +7,15 @@ layout(location = 1) in vec3 vInputNormal;
 layout(location = 0) out vec3 vOutputPosition;
 layout(location = 1) out vec3 vOutputNormal;
 
-layout(std140, set = 0, binding = 0) uniform Camera {
-	mat4 mView;
+layout(push_constant) uniform Camera {
 	mat4 mProjection;
+	vec4 vCameraRight;
+	vec4 vCameraUp;
+	vec4 vCameraLookAt;
 	vec4 vPosition;
 } uboCamera;
 
-layout(std140, set = 1, binding = 1) uniform Transform {
+layout(std140, set = 1, binding = 0) uniform Transform {
 	mat4 mCustom;
 	vec4 vTranslation;
 	vec3 vScale;
@@ -60,10 +62,33 @@ mat4 CalculateTransform() {
 	return mTranslation * mRotation * mScale * uboTransform.mCustom;
 }
 
+mat4 CalculateViewMatrix() {
+	mat4 mLookAt = mat4(1.f);
+	mLookAt[0][0] = uboCamera.vCameraRight.x;
+	mLookAt[1][0] = uboCamera.vCameraRight.y;
+	mLookAt[2][0] = uboCamera.vCameraRight.z;
+	
+	mLookAt[0][1] = uboCamera.vCameraUp.x;
+	mLookAt[1][1] = uboCamera.vCameraUp.y;
+	mLookAt[2][1] = uboCamera.vCameraUp.z;
+	
+	mLookAt[0][2] = uboCamera.vCameraLookAt.x;
+	mLookAt[1][2] = uboCamera.vCameraLookAt.y;
+	mLookAt[2][2] = uboCamera.vCameraLookAt.z;
+	
+	mat4 mTranslation = mat4(1.f);
+	mTranslation[3].xyz = -uboCamera.vPosition.xyz;
+	
+	return mLookAt * mTranslation;
+}
+
 
 void main() {
-	mat4 mTransform = CalculateTransform();
-	gl_Position = uboCamera.mProjection * uboCamera.mView * mTransform * vec4(vInputPosition, 1.0f);
+	const mat4 mTransform = CalculateTransform();
+	const mat4 mView = CalculateViewMatrix();
+	
+	gl_Position = uboCamera.mProjection * mView * mTransform * vec4(vInputPosition, 1.0f);
 	vOutputPosition = vec3(mTransform * vec4(vInputPosition, 1.f));
+	vOutputPosition = vInputPosition;
 	vOutputNormal = vInputNormal;
 }

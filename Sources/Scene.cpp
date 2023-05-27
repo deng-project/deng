@@ -26,6 +26,7 @@ namespace DENG {
 
 
 	void Scene::RenderScene() {
+		static CameraComponent s_cameraComponent;
 		std::chrono::duration<float, std::milli> frametime;
 		// step 1: update scripts
 		{
@@ -43,9 +44,13 @@ namespace DENG {
 		m_tpBegin = std::chrono::high_resolution_clock::now();
 
 		// step 2: render camera if it exists
+		CameraComponent* pCamera = nullptr;
 		if (m_idMainCamera != entt::null) {
-			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
-			m_sceneRenderer.RenderCamera(camera);
+			pCamera = &m_registry.get<CameraComponent>(m_idMainCamera);
+			m_sceneRenderer.RenderCamera(*pCamera);
+		}
+		else {
+			pCamera = &s_cameraComponent;
 		}
 
 		// step 3: render lights
@@ -67,7 +72,7 @@ namespace DENG {
 			auto view = m_registry.view<MeshComponent, ShaderComponent, TransformComponent>();
 			for (Entity idMesh : view) {
 				auto& [mesh, shader, transform] = m_registry.get<MeshComponent, ShaderComponent, TransformComponent>(idMesh);
-				m_sceneRenderer.RenderMesh(mesh, shader, idMesh, transform);
+				m_sceneRenderer.RenderMesh(mesh, *pCamera, shader, idMesh, transform);
 			}
 		}
 
@@ -76,7 +81,7 @@ namespace DENG {
 			auto view = m_registry.view<MeshComponent, ShaderComponent>(entt::exclude_t<TransformComponent>());
 			for (Entity idMesh : view) {
 				auto& [mesh, shader] = m_registry.get<MeshComponent, ShaderComponent>(idMesh);
-				m_sceneRenderer.RenderMesh(mesh, shader, idMesh);
+				m_sceneRenderer.RenderMesh(mesh, *pCamera, shader, idMesh);
 			}
 		}
 	}

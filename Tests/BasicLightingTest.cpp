@@ -61,7 +61,7 @@ static const float g_cCubeVertices[] = {
 
 class LightScript : public DENG::ScriptBehaviour {
 	private:
-		const float m_cfRotationSpeed = (float)M_PI_4;
+		const float m_cfRotationSpeed = (float)MF_PI_4;
 		float m_fCurrentRotation = 0.f;
 		float m_fRadius = 0.f;
 
@@ -85,8 +85,8 @@ class LightScript : public DENG::ScriptBehaviour {
 			m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
 
 			// clip rotation
-			if (m_fCurrentRotation > 2 * (float)M_PI) {
-				m_fCurrentRotation -= 2 * (float)M_PI;
+			if (m_fCurrentRotation > 2 * (float)MF_PI) {
+				m_fCurrentRotation -= 2 * (float)MF_PI;
 			}
 
 			light.vPosition.first = std::sinf(m_fCurrentRotation) * m_fRadius;
@@ -97,7 +97,7 @@ class LightScript : public DENG::ScriptBehaviour {
 
 class LightScript2 : public DENG::ScriptBehaviour {
 private:
-	const float m_cfRotationSpeed = (float)M_PI_4;
+	const float m_cfRotationSpeed = (float)MF_PI_4;
 	float m_fCurrentRotation = 0.f;
 	float m_fRadius = 0.f;
 
@@ -121,8 +121,8 @@ public:
 		m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
 
 		// clip rotation
-		if (m_fCurrentRotation > 2 * (float)M_PI) {
-			m_fCurrentRotation -= 2 * (float)M_PI;
+		if (m_fCurrentRotation > 2 * (float)MF_PI) {
+			m_fCurrentRotation -= 2 * (float)MF_PI;
 		}
 
 		light.vPosition.first = -std::sinf(m_fCurrentRotation) * m_fRadius;
@@ -135,7 +135,7 @@ class CameraScript : public DENG::ScriptBehaviour {
 	private:
 		DENG::IWindowContext* m_pWindowContext;
 		DENG::CameraTransformer m_cameraTransformer;
-		const float m_fRotationSpeed = (float)M_PI_2;
+		const float m_fRotationSpeed = (float)MF_PI_2;
 		const float m_fMovementSpeed = 1.f;
 
 		bool m_bRotations[6] = {};
@@ -213,8 +213,8 @@ class CameraScript : public DENG::ScriptBehaviour {
 				float fYaw = m_cameraTransformer.GetYaw();
 				fYaw += _fTimestep * m_fRotationSpeed;
 
-				if (fYaw > 2.f * M_PI)
-					fYaw -= 2.f * M_PI;
+				if (fYaw > 2.f * MF_PI)
+					fYaw -= 2.f * MF_PI;
 
 				m_cameraTransformer.SetYaw(fYaw);
 			}
@@ -223,8 +223,8 @@ class CameraScript : public DENG::ScriptBehaviour {
 				float fYaw = m_cameraTransformer.GetYaw();
 				fYaw -= _fTimestep * m_fRotationSpeed;
 
-				if (fYaw < -2.f * M_PI)
-					fYaw += 2.f * M_PI;
+				if (fYaw < -2.f * MF_PI)
+					fYaw += 2.f * MF_PI;
 				m_cameraTransformer.SetYaw(fYaw);
 			}
 
@@ -234,8 +234,8 @@ class CameraScript : public DENG::ScriptBehaviour {
 				fPitch -= _fTimestep * m_fRotationSpeed;
 
 				// clip rotation to pi/2
-				if (fPitch < -M_PI_2)
-					fPitch = -M_PI_2;
+				if (fPitch < -MF_PI_2)
+					fPitch = -MF_PI_2;
 				m_cameraTransformer.SetPitch(fPitch);
 			}
 			// pitch counter-clockwise
@@ -243,8 +243,8 @@ class CameraScript : public DENG::ScriptBehaviour {
 				float fPitch = m_cameraTransformer.GetPitch();
 				fPitch += _fTimestep * m_fRotationSpeed;
 
-				if (fPitch > M_PI_2)
-					fPitch = M_PI_2;
+				if (fPitch > MF_PI_2)
+					fPitch = MF_PI_2;
 				m_cameraTransformer.SetPitch(fPitch);
 			}
 
@@ -253,8 +253,8 @@ class CameraScript : public DENG::ScriptBehaviour {
 				float fRoll = m_cameraTransformer.GetRoll();
 				fRoll -= _fTimestep * m_fRotationSpeed;
 
-				if (fRoll < -2.f * M_PI)
-					fRoll += 2.f * M_PI;
+				if (fRoll < -2.f * MF_PI)
+					fRoll += 2.f * MF_PI;
 				m_cameraTransformer.SetRoll(fRoll);
 			}
 			// roll counter-clockwise
@@ -262,8 +262,8 @@ class CameraScript : public DENG::ScriptBehaviour {
 				float fRoll = m_cameraTransformer.GetRoll();
 				fRoll += _fTimestep * m_fRotationSpeed;
 
-				if (fRoll > 2.f * M_PI)
-					fRoll -= 2.f * M_PI;
+				if (fRoll > 2.f * MF_PI)
+					fRoll -= 2.f * MF_PI;
 				m_cameraTransformer.SetRoll(fRoll);
 			}
 			m_cameraTransformer.CalculateLookAt();
@@ -289,8 +289,11 @@ class CameraScript : public DENG::ScriptBehaviour {
 			}
 			m_cameraTransformer.RelativeMoveX(fMovementX);
 			m_cameraTransformer.RelativeMoveZ(fMovementZ);
-			
-			camera.mView = m_cameraTransformer.CalculateViewMatrix();
+		
+			camera.vCameraDirection = m_cameraTransformer.GetLookAtDirection();
+			camera.vCameraRight = m_cameraTransformer.GetCameraRight();
+			camera.vCameraUp = m_cameraTransformer.GetCameraUp();
+			camera.vPosition = m_cameraTransformer.GetPosition();
 		}
 
 		void OnDestroy() {
@@ -319,23 +322,19 @@ class BasicLightingLayer : public DENG::ILayer {
 			_shader.uboDataLayouts.emplace_back();
 			_shader.uboDataLayouts.back().block.uBinding = 0;
 			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_BUFFER;
-			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT;
-			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_SHADER;
-
-			_shader.uboDataLayouts.emplace_back();
-			_shader.uboDataLayouts.back().block.uBinding = 1;
-			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_BUFFER;
 			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_VERTEX;
 			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_MESH;
 			_shader.eCullMode = DENG::CULL_MODE_NONE;
 
 			_shader.uboDataLayouts.emplace_back();
-			_shader.uboDataLayouts.back().block.uBinding = 2;
-			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_BUFFER;
+			_shader.uboDataLayouts.back().block.uBinding = 1;
+			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_STORAGE_BUFFER;
 			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_FRAGMENT;
 			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_SHADER;
 
 			_shader.pShader = new DENG::Shader(_sShaderName, _sShaderName);
+			_shader.iPushConstantShaderStage = SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT;
+			_shader.bEnablePushConstants = true;
 			_shader.bEnableBlend = true;
 			_shader.bEnableIndexing = false;
 			_shader.bEnableDepthTesting = true;

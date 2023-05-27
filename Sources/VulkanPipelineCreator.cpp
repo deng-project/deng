@@ -28,7 +28,7 @@ namespace DENG {
             m_hRenderPass(_hRenderPass)
         {
             try {
-                _CreatePipelineLayout();
+                _CreatePipelineLayout(_shader);
             }
             catch (const RendererException& e) {
                 DISPATCH_ERROR_MESSAGE("RendererException", e.what(), CRITICAL);
@@ -140,11 +140,11 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::RecreatePipeline(VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile) {
+        void PipelineCreator::RecreatePipeline(const ShaderComponent& _shader, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile) {
             m_hRenderPass = _hRenderPass;
             m_extent = _extent;
 
-            _CreatePipelineLayout();
+            _CreatePipelineLayout(_shader);
             m_viewport.width = static_cast<float>(_extent.width);
             m_viewport.height = static_cast<float>(_extent.height);
             m_scissor.extent = _extent;
@@ -326,10 +326,9 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_CreatePipelineLayout() {
+        void PipelineCreator::_CreatePipelineLayout(const ShaderComponent& _shader) {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
             
             // 1. only per shader descriptor set layouts are present
             // 2. only per mesh descriptor set layouts are present
@@ -344,6 +343,20 @@ namespace DENG {
                 pipelineLayoutCreateInfo.setLayoutCount = 2;
                 VkDescriptorSetLayout descriptorSetLayouts[2] = { m_hShaderDescriptorSetLayout, m_hMeshDescriptorSetLayout };
                 pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
+            }
+
+            VkPushConstantRange pushConstantRange = {};
+            if (_shader.bEnablePushConstants) {
+                pushConstantRange.size = _shader.uPushConstantDataLength;
+                if (_shader.iPushConstantShaderStage & SHADER_STAGE_VERTEX)
+                    pushConstantRange.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+                if (_shader.iPushConstantShaderStage & SHADER_STAGE_FRAGMENT)
+                    pushConstantRange.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+                if (_shader.iPushConstantShaderStage & SHADER_STAGE_GEOMETRY)
+                    pushConstantRange.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+
+                pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+                pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
             }
 
             if(vkCreatePipelineLayout(m_hDevice, &pipelineLayoutCreateInfo, NULL, &m_hPipelineLayout) != VK_SUCCESS)

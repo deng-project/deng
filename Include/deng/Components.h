@@ -133,12 +133,11 @@ namespace DENG {
 	struct CameraComponent {
 		CameraComponent() = default;
 		CameraComponent(const CameraComponent&) = default;
-		CameraComponent(const TRS::Matrix4<float> &_mView, const TRS::Matrix4<float> &_mProjection) :
-			mView(_mView),
-			mProjection(_mProjection) {}
 
-		TRS::Matrix4<float> mView;
 		TRS::Matrix4<float> mProjection;
+		TRS::Vector4<float> vCameraRight;
+		TRS::Vector4<float> vCameraUp;
+		TRS::Vector4<float> vCameraDirection;
 		TRS::Vector4<float> vPosition;
 	};
 

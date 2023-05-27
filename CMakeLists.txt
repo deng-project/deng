@@ -19,6 +19,7 @@ set(VULKAN_SDK_PATH "C:/VulkanSDK/${VULKAN_VERSION}")
 include(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 option(DENG_BUILD_TESTS "Build DENG testing applications" ON)
+option(DENG_STATIC "Build DENG as a static library" ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 

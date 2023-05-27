@@ -82,6 +82,7 @@ namespace DENG {
 
     enum UniformDataType {
         UNIFORM_DATA_TYPE_BUFFER,
+        UNIFORM_DATA_TYPE_PUSH_CONSTANT,
         UNIFORM_DATA_TYPE_STORAGE_BUFFER,
         UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER,
         UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER
@@ -124,6 +125,7 @@ namespace DENG {
         UniformDataType eType = UNIFORM_DATA_TYPE_BUFFER;
         UniformUsage eUsage = UNIFORM_USAGE_PER_SHADER;
         ShaderStage iStage = SHADER_STAGE_NULL;
+        uint32_t uPurposeBits = 0; // purpose bits are only useful in scene framework
     };
 
     struct Viewport {
@@ -165,6 +167,12 @@ namespace DENG {
         Viewport viewport;
         CullMode eCullMode = CULL_MODE_NONE;
         PrimitiveMode ePrimitiveMode = PRIMITIVE_MODE_TRIANGLES;
+        
+        uint32_t uPushConstantDataLength = 0;
+        ShaderStage iPushConstantShaderStage = 0;
+        const void* pPushConstantData = nullptr;
+        bool bEnablePushConstants = false;
+        
         bool bEnableCustomViewport = false;
         bool bEnable2DTextures = false;
         bool bEnable3DTextures = false;

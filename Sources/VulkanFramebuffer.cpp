@@ -462,10 +462,20 @@ namespace DENG {
 
             // check if textures should be bound
             if (descriptorSets[0]) {
-                _pDescriptorAllocator->UpdateShaderDescriptorSet(m_hMainBuffer, descriptorSets[0], _textureIds);
+                _pDescriptorAllocator->UpdateDescriptorSet(
+                    m_hMainBuffer, 
+                    descriptorSets[0], 
+                    UNIFORM_USAGE_PER_SHADER, 
+                    m_uCurrentFrameIndex,
+                    _textureIds);
             }
             if (descriptorSets[1]) {
-                _pDescriptorAllocator->UpdateMeshDescriptorSet(m_hMainBuffer, descriptorSets[1], _textureIds);
+                _pDescriptorAllocator->UpdateDescriptorSet(
+                    m_hMainBuffer, 
+                    descriptorSets[1],
+                    UNIFORM_USAGE_PER_MESH,
+                    m_uCurrentFrameIndex,
+                    _textureIds);
             }
 
             // submit each draw command in mesh
@@ -533,6 +543,27 @@ namespace DENG {
                     };
 
                     vkCmdSetScissor(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &rect);
+                }
+
+                // check if push constants should be bound
+                if (_shader.bEnablePushConstants) {
+                    auto itPipelineCreator = m_pipelineCreators.find(_shader.pShader);
+                    VkShaderStageFlags bShaderStage = (VkShaderStageFlags)0;
+
+                    if (_shader.iPushConstantShaderStage & SHADER_STAGE_VERTEX)
+                        bShaderStage |= VK_SHADER_STAGE_VERTEX_BIT;
+                    if (_shader.iPushConstantShaderStage & SHADER_STAGE_FRAGMENT)
+                        bShaderStage |= VK_SHADER_STAGE_FRAGMENT_BIT;
+                    if (_shader.iPushConstantShaderStage & SHADER_STAGE_GEOMETRY)
+                        bShaderStage |= VK_SHADER_STAGE_GEOMETRY_BIT;
+
+                    vkCmdPushConstants(
+                        m_commandBuffers[m_uCurrentFrameIndex],
+                        itPipelineCreator->second.GetPipelineLayout(),
+                        bShaderStage,
+                        0,
+                        _shader.uPushConstantDataLength,
+                        _shader.pPushConstantData);
                 }
 
                 // check if indexed or unindexed draw call should be submitted
@@ -636,10 +667,11 @@ namespace DENG {
                 for (auto& pipelineCreator : m_pipelineCreators) {
                     const VkExtent2D extent = { m_uWidth, m_uHeight };
 
-                    pipelineCreator.second.RecreatePipeline(
-                        m_hRenderpass,
-                        extent,
-                        false);
+                    //pipelineCreator.second.RecreatePipeline(
+                    //    pipelineCreator.second,
+                    //    m_hRenderpass,
+                    //    extent,
+                    //    false);
                 }
             }
         }

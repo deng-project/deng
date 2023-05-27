@@ -64,7 +64,7 @@ namespace DENG {
                 void _FindVertexInputAttributeDescriptions(const ShaderComponent& _shader);
                 VkShaderModule _CreateShaderModule(std::vector<uint32_t> &_bin);
 
-                void _CreatePipelineLayout();
+                void _CreatePipelineLayout(const ShaderComponent& _shader);
                 void _GeneratePipelineCreateInfo(const ShaderComponent& _shader, bool _bCreateShaderModules = true);
 
             public:
@@ -82,7 +82,7 @@ namespace DENG {
                 ~PipelineCreator() noexcept;
 
                 void DestroyPipelineData();
-                void RecreatePipeline(VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile = false);
+                void RecreatePipeline(const ShaderComponent& _shader, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile = false);
 
                 inline VkPipelineCache GetPipelineCache() { return m_hPipelineCache; }
                 inline VkPipelineLayout GetPipelineLayout() { return m_hPipelineLayout; }

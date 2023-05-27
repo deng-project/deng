@@ -69,17 +69,28 @@ set(DENG_MINIMAL_SOURCES
 	Sources/VulkanRenderer.cpp
 	Sources/VulkanSwapchainCreator.cpp)
 	
-add_library(${DENG_MINIMAL_TARGET} SHARED
-			${DENG_MINIMAL_HEADERS}
-			${DENG_MINIMAL_SOURCES}
-			${DENG_IMGUI_HEADERS}
-			${DENG_IMGUI_SOURCES})
+if (NOT DENG_STATIC)
+	add_library(${DENG_MINIMAL_TARGET} SHARED
+				${DENG_MINIMAL_HEADERS}
+				${DENG_MINIMAL_SOURCES}
+				${DENG_IMGUI_HEADERS}
+				${DENG_IMGUI_SOURCES})
+else()
+	add_library(${DENG_MINIMAL_TARGET} STATIC
+				${DENG_MINIMAL_HEADERS}
+				${DENG_MINIMAL_SOURCES}
+				${DENG_IMGUI_HEADERS}
+				${DENG_IMGUI_SOURCES})
+endif()
 			
 if(WIN32 AND NOT DENG_STATIC)
     target_compile_definitions(${DENG_MINIMAL_TARGET}
-        PRIVATE IMGUI_API=_declspec\(dllexport\)
+		PRIVATE IMGUI_API=_declspec\(dllexport\)
         INTERFACE IMGUI_API=_declspec\(dllimport\)
 	)
+else()
+	target_compile_definitions(${DENG_MINIMAL_TARGET}
+		PUBLIC DENG_STATIC)
 endif()
 			
 # Compile definitions
@@ -123,9 +134,8 @@ add_dependencies(${DENG_MINIMAL_TARGET}
 	
 # Linking
 target_link_libraries(${DENG_MINIMAL_TARGET}
-    PRIVATE mar
-    PRIVATE unofficial::shaderc::shaderc
-	PRIVATE unofficial::shaderc_util::shaderc_util
+	PRIVATE mar
+	PRIVATE unofficial::shaderc::shaderc
 	PRIVATE ${BULLET_LIBRARIES}
 	PRIVATE
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>

@@ -37,27 +37,9 @@ namespace DENG {
 		m_vUpDirection[2] = cfSinYaw * cfSinRoll + cfSinPitch * cfCosRoll * cfCosYaw;
 		m_vUpDirection.Normalise();
 
-		m_vRightDirection = TRS::Vector3<float>::Cross(m_vUpDirection, m_vLookAtDirection);
-		m_vUpDirection = TRS::Vector3<float>::Cross(m_vLookAtDirection, m_vRightDirection);
-	}
-
-
-	TRS::Matrix4<float> CameraTransformer::CalculateViewMatrix() {
-		TRS::Matrix4<float> mView = {
-			{ m_vRightDirection.first, m_vRightDirection.second, m_vRightDirection.third, 0.f },
-			{ m_vUpDirection.first, m_vUpDirection.second, m_vUpDirection.third, 0.f },
-			{ m_vLookAtDirection.first, m_vLookAtDirection.second, m_vLookAtDirection.third, 0.f },
-			{ 0.f, 0.f, 0.f, 1.f }
-		};
-
-		const TRS::Matrix4<float> mInverseTranslation = {
-			{ 1.f, 0.f, 0.f, -m_vPosition.first },
-			{ 0.f, 1.f, 0.f, -m_vPosition.second },
-			{ 0.f, 0.f, 1.f, -m_vPosition.third },
-			{ 0.f, 0.f, 0.f, 1.f }
-		};
-
-		mView *= mInverseTranslation;
-		return mView.Transpose();
+		const TRS::Vector3<float> vUpDirection = { m_vUpDirection.first, m_vUpDirection.second, m_vUpDirection.third };
+		const TRS::Vector3<float> vLookAtDirection = { m_vLookAtDirection.first, m_vLookAtDirection.second, m_vLookAtDirection.third };
+		m_vRightDirection = TRS::Vector3<float>::Cross(vUpDirection, vLookAtDirection);
+		m_vRightDirection.Normalise();
 	}
 }

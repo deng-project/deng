@@ -23,7 +23,7 @@ namespace DENG {
 
 	class DENG_API CameraTransformer {
 		private:
-			float m_fFieldOfView = 65.f * (float)M_PI / 180.f;
+			float m_fFieldOfView = 65.f * MF_PI / 180.f;
 			float m_fNearPlane = 0.0001f;
 			float m_fFarPlane = 1e6f;
 
@@ -31,10 +31,10 @@ namespace DENG {
 			float m_fYaw = 0.f;
 			float m_fRoll = 0.f;
 
-			TRS::Vector3<float> m_vRightDirection = { 1.f, 0.f, 0.f };
-			TRS::Vector3<float> m_vUpDirection = { 0.f, 1.f, 0.f };
-			TRS::Vector3<float> m_vLookAtDirection = { 0.f, 0.f, -1.f };
-			TRS::Vector3<float> m_vPosition = { 0.f, 0.f, 0.f };
+			TRS::Vector4<float> m_vRightDirection = { 1.f, 0.f, 0.f, 0.f };
+			TRS::Vector4<float> m_vUpDirection = { 0.f, 1.f, 0.f, 0.f };
+			TRS::Vector4<float> m_vLookAtDirection = { 0.f, 0.f, -1.f, 0.f };
+			TRS::Vector4<float> m_vPosition = { 0.f, 0.f, 0.f, 0.f };
 
 		public:
 			inline void SetFieldOfView(float _fFOV)		{ m_fFieldOfView = _fFOV;		}
@@ -57,12 +57,17 @@ namespace DENG {
 			inline void RelativeMoveY(float _fDelta) { m_vPosition += m_vUpDirection * _fDelta;		}
 			inline void RelativeMoveZ(float _fDelta) { m_vPosition += m_vLookAtDirection * _fDelta; }
 
-			inline void SetPosition(const TRS::Vector3<float>& _vPosition) { m_vPosition = _vPosition; }
-			inline TRS::Vector3<float> GetPosition() { return m_vPosition;  }
+			inline void SetPosition(const TRS::Vector4<float>& _vPosition)		{ m_vPosition = _vPosition;		}
+			inline const TRS::Vector4<float>& GetPosition()						{ return m_vPosition;			}
+			inline void SetCameraRight(const TRS::Vector4<float>& _vRight)		{ m_vRightDirection = _vRight;  }
+			inline const TRS::Vector4<float>& GetCameraRight()					{ return m_vRightDirection;		}
+			inline void SetCameraUp(const TRS::Vector4<float>& _vUp)			{ m_vUpDirection = _vUp;		}
+			inline const TRS::Vector4<float>& GetCameraUp()						{ return m_vUpDirection;		}
+			inline void SetLookAtDirection(const TRS::Vector4<float>& _vDir)	{ m_vLookAtDirection = _vDir;	}
+			inline const TRS::Vector4<float>& GetLookAtDirection()				{ return m_vLookAtDirection;	}
 
 			TRS::Matrix4<float> CalculateProjection(uint32_t _uViewportWidth, uint32_t _uViewportHeight);
 			void CalculateLookAt();
-			TRS::Matrix4<float> CalculateViewMatrix();
 	};
 }
 

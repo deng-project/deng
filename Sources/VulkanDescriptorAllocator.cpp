@@ -30,9 +30,6 @@ namespace DENG {
                 _CreateShaderDescriptorPool();
                 _AllocateNewMeshDescriptorPool();
                 _AllocateShaderDescriptorSets();
-
-                for (uint32_t i = 0; i < m_uBufferingStageCount; i++)
-                    UpdateShaderDescriptorSet(_hMainBuffer, m_shaderDescriptorSets[i]);
             }
             catch (const RendererException& e) {
                 DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
@@ -284,7 +281,13 @@ namespace DENG {
         }
 
 
-        void DescriptorAllocator::UpdateShaderDescriptorSet(VkBuffer _hMainBuffer, VkDescriptorSet _hDescriptorSet, const std::vector<uint32_t>& _textures) {
+        void DescriptorAllocator::UpdateDescriptorSet(
+            VkBuffer _hMainBuffer, 
+            VkDescriptorSet _hDescriptorSet, 
+            UniformUsage _eUsage, 
+            size_t _uFrameIndex, 
+            const std::vector<uint32_t>& _textures) 
+        {
             std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
             std::vector<VkDescriptorImageInfo> descriptorImageInfos;
             std::vector<VkWriteDescriptorSet> writeDescriptorSets;
@@ -301,13 +304,19 @@ namespace DENG {
 
             uint32_t uTextureCounter = 0;
             for (size_t i = 0; i < m_uniformDataLayouts.size(); i++) {
-                if (m_uniformDataLayouts[i].eUsage == UNIFORM_USAGE_PER_SHADER) {
+                if (m_uniformDataLayouts[i].eUsage == _eUsage) {
                     switch (m_uniformDataLayouts[i].eType) {
                         case UNIFORM_DATA_TYPE_BUFFER:
-                        case UNIFORM_DATA_TYPE_STORAGE_BUFFER:
                             descriptorBufferInfos.emplace_back();
                             descriptorBufferInfos.back().buffer = _hMainBuffer;
                             descriptorBufferInfos.back().offset = m_uniformDataLayouts[i].block.uOffset;
+                            descriptorBufferInfos.back().range = m_uniformDataLayouts[i].block.uSize;
+                            break;
+
+                        case UNIFORM_DATA_TYPE_STORAGE_BUFFER:
+                            descriptorBufferInfos.emplace_back();
+                            descriptorBufferInfos.back().buffer = _hMainBuffer;
+                            descriptorBufferInfos.back().offset = m_uniformDataLayouts[i].block.uOffset + _uFrameIndex * m_uniformDataLayouts[i].block.uSize;
                             descriptorBufferInfos.back().range = m_uniformDataLayouts[i].block.uSize;
                             break;
 
@@ -369,126 +378,7 @@ namespace DENG {
             uint32_t uUsedImageCount = 0;
 
             for (auto it = m_uniformDataLayouts.begin(); it != m_uniformDataLayouts.end(); it++) {
-                if (it->eUsage == UNIFORM_USAGE_PER_SHADER) {
-                    writeDescriptorSets.emplace_back();
-                    writeDescriptorSets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    writeDescriptorSets.back().dstSet = _hDescriptorSet;
-                    writeDescriptorSets.back().dstBinding = it->block.uBinding;
-                    writeDescriptorSets.back().dstArrayElement = 0;
-                    writeDescriptorSets.back().descriptorCount = 1;
-
-                    switch (it->eType) {
-                        case UNIFORM_DATA_TYPE_BUFFER:
-                        case UNIFORM_DATA_TYPE_STORAGE_BUFFER:
-                            writeDescriptorSets.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                            writeDescriptorSets.back().pBufferInfo = &descriptorBufferInfos[uUsedBufferCount++];
-                            writeDescriptorSets.back().pImageInfo = nullptr;
-                            break;
-
-                        case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
-                        case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
-                            writeDescriptorSets.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                            writeDescriptorSets.back().pImageInfo = &descriptorImageInfos[uUsedImageCount++];
-                            writeDescriptorSets.back().pBufferInfo = nullptr;
-                            break;
-
-                        default:
-                            DENG_ASSERT(false);
-                            break;
-                    }
-                }
-            }
-
-            vkUpdateDescriptorSets(m_hDevice, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
-        }
-
-
-        void DescriptorAllocator::UpdateMeshDescriptorSet(VkBuffer _hMainBuffer, VkDescriptorSet _hDescriptorSet, const std::vector<uint32_t>& _textures) {
-            std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
-            std::vector<VkDescriptorImageInfo> descriptorImageInfos;
-            std::vector<VkWriteDescriptorSet> writeDescriptorSets;
-
-            descriptorBufferInfos.reserve(m_uniformDataLayouts.size());
-            descriptorImageInfos.reserve(m_uniformDataLayouts.size());
-            writeDescriptorSets.reserve(m_uniformDataLayouts.size());
-
-            auto m_missing2DTexture = m_textureRegistry.find(m_u2DMissingTextureId);
-            auto m_missing3DTexture = m_textureRegistry.find(m_u3DMissingTextureId);
-
-            DENG_ASSERT(m_missing2DTexture != m_textureRegistry.end());
-            DENG_ASSERT(m_missing3DTexture != m_textureRegistry.end());
-
-            uint32_t uTextureCounter = 0;
-            for (size_t i = 0; i < m_uniformDataLayouts.size(); i++) {
-                if (m_uniformDataLayouts[i].eUsage == UNIFORM_USAGE_PER_MESH) {
-                    switch (m_uniformDataLayouts[i].eType) {
-                        case UNIFORM_DATA_TYPE_BUFFER:
-                        case UNIFORM_DATA_TYPE_STORAGE_BUFFER:
-                            descriptorBufferInfos.emplace_back();
-                            descriptorBufferInfos.back().buffer = _hMainBuffer;
-                            descriptorBufferInfos.back().offset = m_uniformDataLayouts[i].block.uOffset;
-                            descriptorBufferInfos.back().range = m_uniformDataLayouts[i].block.uSize;
-                            break;
-
-                        case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
-                        {
-                            descriptorImageInfos.emplace_back();
-                            descriptorImageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                            Vulkan::TextureData vkTextureData;
-
-                            if (uTextureCounter >= static_cast<uint32_t>(_textures.size()) ||
-                                m_textureRegistry.find(_textures[uTextureCounter]) == m_textureRegistry.end() ||
-                                (m_textureRegistry.find(_textures[uTextureCounter])->second.eResourceType != TEXTURE_RESOURCE_2D_IMAGE &&
-                                    m_textureRegistry.find(_textures[uTextureCounter])->second.eResourceType != TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE))
-                            {
-                                vkTextureData = std::get<0>(m_missing2DTexture->second.apiTextureHandles);
-                            }
-                            else {
-                                vkTextureData = std::get<0>(m_textureRegistry.find(_textures[uTextureCounter])->second.apiTextureHandles);
-                            }
-
-                            descriptorImageInfos.back().imageView = vkTextureData.hImageView;
-                            descriptorImageInfos.back().sampler = vkTextureData.hSampler;
-                            uTextureCounter++;
-                            break;
-                        }
-
-                        case UNIFORM_DATA_TYPE_3D_IMAGE_SAMPLER:
-                        {
-                            descriptorImageInfos.emplace_back();
-                            descriptorImageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                            Vulkan::TextureData vkTextureData;
-
-                            if (uTextureCounter >= static_cast<uint32_t>(_textures.size()) ||
-                                m_textureRegistry.find(_textures[uTextureCounter]) == m_textureRegistry.end() ||
-                                (m_textureRegistry.find(_textures[uTextureCounter])->second.eResourceType != TEXTURE_RESOURCE_3D_IMAGE &&
-                                    m_textureRegistry.find(_textures[uTextureCounter])->second.eResourceType != TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_3D_IMAGE))
-                            {
-                                vkTextureData = std::get<0>(m_missing3DTexture->second.apiTextureHandles);
-                            }
-                            else {
-                                vkTextureData = std::get<0>(m_textureRegistry.find(_textures[uTextureCounter])->second.apiTextureHandles);
-                            }
-
-                            descriptorImageInfos.back().imageView = vkTextureData.hImageView;
-                            descriptorImageInfos.back().sampler = vkTextureData.hSampler;
-                            uTextureCounter++;
-                            break;
-                        }
-
-                        default:
-                            DENG_ASSERT(false);
-                            break;
-                    }
-                }
-            }
-
-            // create write infos
-            uint32_t uUsedBufferCount = 0;
-            uint32_t uUsedImageCount = 0;
-
-            for (auto it = m_uniformDataLayouts.begin(); it != m_uniformDataLayouts.end(); it++) {
-                if (it->eUsage == UNIFORM_USAGE_PER_MESH) {
+                if (it->eUsage == _eUsage) {
                     writeDescriptorSets.emplace_back();
                     writeDescriptorSets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                     writeDescriptorSets.back().dstSet = _hDescriptorSet;
