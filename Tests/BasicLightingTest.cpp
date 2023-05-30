@@ -112,7 +112,6 @@ public:
 
 		// set light source color and initial position
 		light.vColor = { 0.f, 1.f, 0.f, 1.f };
-		light.vPosition[1] = 0.67f;
 		light.vPosition[2] = m_fRadius;
 	}
 

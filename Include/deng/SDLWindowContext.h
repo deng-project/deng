@@ -15,6 +15,8 @@
 #ifdef SDL_WINDOW_CONTEXT_CPP
 	#include <cstring>
 	#include <SDL2/SDL_vulkan.h>
+	#include "deng/WindowEvents.h"
+	#include "deng/InputEvents.h"
 	#include "deng/Exceptions.h"
 	#include "deng/ErrorDefinitions.h"
 #endif
@@ -24,20 +26,20 @@ namespace DENG {
 
 	class DENG_API SDLWindowContext : public IWindowContext {
 		private:
-			static std::array<MouseEvent, 5> ms_MouseButtonEventLookup;
+			static std::array<MouseButton, 5> ms_MouseButtonEventLookup;
 
 			SDL_Event m_event;
 			SDL_Window* m_pWindow = nullptr;
 			SDL_Surface* m_pScreenSurface = nullptr;
 
 		private:
-			KeySymbol _TranslateKeyCode(SDL_Scancode _eCode);
-			int32_t _TranslateKeyboardModifier(uint16_t _uMod);
-			int32_t _TranslateButtonModifier(uint32_t _uMod);
-			WindowEvent _TranslateWindowEvent(uint32_t _uWinEvent);
+			Keycode _TranslateKeycode(SDL_Scancode _eCode);
+			KeyModifier _TranslateKeyboardModifier(uint16_t _uMod);
+			MouseButtonModifier _TranslateButtonModifier(uint32_t _uMod);
+			void _TranslateAndDispatchWindowEvent();
 
 		public:
-			SDLWindowContext();
+			SDLWindowContext(EventManager& _eventManager);
 			~SDLWindowContext();
 
 			virtual std::vector<const char*> QueryRequiredVulkanExtensions() override;

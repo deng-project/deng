@@ -13,12 +13,14 @@
 
 #include "trs/Points.h"
 
+#include "deng/InputEvents.h"
+
 #ifdef IMGUI_LAYER_CPP
 	#include "deng/Exceptions.h"
 	#include "deng/ErrorDefinitions.h"
 
-	#define KEYLOOKUP(key) s_ImGuiKeyCodes[key - static_cast<uint32_t>(KeySymbol::KEY_UNKNOWN) - 1]
-	#define MOUSE_BTN_LOOKUP(btn) s_ImGuiMouseCodes[btn - static_cast<uint32_t>(MouseEvent::BTN_UNKNOWN) - 1]
+	#define KEYLOOKUP(key) s_ImGuiKeyCodes[static_cast<size_t>(key) - 1]
+	#define MOUSE_BTN_LOOKUP(btn) s_ImGuiMouseCodes[static_cast<size_t>(btn) - 1]
 #endif
 
 namespace DENG {
@@ -27,6 +29,7 @@ namespace DENG {
 
 	class DENG_API ImGuiLayer : public ILayer {
 		private:
+			EventManager& m_eventManager;
 			ImGuiIO* m_pIO = nullptr;
 			ImGuiContext* m_pImguiContext = nullptr;
 			
@@ -57,6 +60,7 @@ namespace DENG {
 			void _CreateDrawCommands(ImDrawData* _pDrawData, IFramebuffer* _pFramebuffer);
 
 		public:
+			ImGuiLayer(EventManager& _eventManager);
 			~ImGuiLayer();
 			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;
@@ -65,6 +69,11 @@ namespace DENG {
 				_Callback = _pfnCallback;
 				m_pUserData = _pUserData;
 			}
+
+			bool OnKeyboardEvent(KeyboardEvent& _event);
+			bool OnMouseButtonEvent(MouseButtonEvent& _event);
+			bool OnMouseMovedEvent(MouseMovedEvent& _event);
+			bool OnMouseScrollEvent(MouseScrolledEvent& _event);
 	};
 }
 

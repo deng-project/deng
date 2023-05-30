@@ -12,6 +12,8 @@
 #include "deng/ILayer.h"
 #include "deng/IWindowContext.h"
 #include "deng/IRenderer.h"
+#include "deng/Event.h"
+
 // NOTE: OpenGL support is incomplete
 // #include "deng/OpenGLRenderer.h"
 
@@ -35,6 +37,9 @@ namespace DENG {
 			IRenderer* m_pRenderer = nullptr;
 			IFramebuffer* m_pMainFramebuffer = nullptr;
 			std::vector<ILayer*> m_layers;
+
+		protected:
+			EventManager m_eventManager;
 
 		protected:
 			virtual void AttachLayers();

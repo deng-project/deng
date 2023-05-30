@@ -17,9 +17,9 @@ class ImGuiApp : public DENG::App {
 
 	public:
 		ImGuiApp() {
-			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext);
+			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext(m_eventManager));
 			DENG::IRenderer* pRenderer = SetRenderer(new DENG::VulkanRenderer);
-			pWindowContext->SetHints(DENG::WindowHints::VULKAN | DENG::WindowHints::SHOWN);
+			pWindowContext->SetHints(DENG::WindowHint_Vulkan | DENG::WindowHint_Shown);
 			DENG::IFramebuffer* pMainFramebuffer = nullptr;
 
 			try {
@@ -36,7 +36,7 @@ class ImGuiApp : public DENG::App {
 				DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
 			}
 
-			DENG::ImGuiLayer* pLayer = PushLayer<DENG::ImGuiLayer>();
+			DENG::ImGuiLayer* pLayer = PushLayer<DENG::ImGuiLayer>(m_eventManager);
 			pLayer->SetDrawCallback(ImGuiApp::_ImGuiCallback, nullptr);
 			AttachLayers();
 		}

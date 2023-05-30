@@ -11,8 +11,6 @@ namespace DENG {
 	static ImGuiMouseButton s_ImGuiMouseCodes[] = {
 		ImGuiMouseButton_Left,
 		ImGuiMouseButton_Middle,
-		ImGuiMouseButton_Right,
-		ImGuiMouseButton_Left,
 		ImGuiMouseButton_Right
 	};
 
@@ -81,7 +79,21 @@ namespace DENG {
 		ImGuiKey_Menu
 	};
 
+	ImGuiLayer::ImGuiLayer(EventManager& _eventManager) :
+		m_eventManager(_eventManager)
+	{
+		m_eventManager.AddListener<ImGuiLayer, KeyboardEvent>(&ImGuiLayer::OnKeyboardEvent, this);
+		m_eventManager.AddListener<ImGuiLayer, MouseButtonEvent>(&ImGuiLayer::OnMouseButtonEvent, this);
+		m_eventManager.AddListener<ImGuiLayer, MouseMovedEvent>(&ImGuiLayer::OnMouseMovedEvent, this);
+		m_eventManager.AddListener<ImGuiLayer, MouseScrolledEvent>(&ImGuiLayer::OnMouseScrollEvent, this);
+	}
+
 	ImGuiLayer::~ImGuiLayer() {
+		m_eventManager.RemoveListener<ImGuiLayer, KeyboardEvent>(this);
+		m_eventManager.RemoveListener<ImGuiLayer, MouseButtonEvent>(this);
+		m_eventManager.RemoveListener<ImGuiLayer, MouseMovedEvent>(this);
+		m_eventManager.RemoveListener<ImGuiLayer, MouseScrolledEvent>(this);
+
 		ImGui::SetCurrentContext(m_pImguiContext);
 		ImGui::DestroyContext();
 	}
@@ -91,51 +103,6 @@ namespace DENG {
 		m_pIO->DeltaTime = m_fDeltaTime;
 		m_pIO->DisplaySize.x = static_cast<float>(_pFramebuffer->GetWidth());
 		m_pIO->DisplaySize.y = static_cast<float>(_pFramebuffer->GetHeight());
-
-		while (m_pWindowContext->HasEvents()) {
-			Event& event = m_pWindowContext->PeekEvent();
-
-			switch (event.eType) {
-				case EventType::MOUSE_MOTION:
-					m_pIO->AddMousePosEvent(static_cast<float>(event.x), static_cast<float>(event.y));
-					m_pWindowContext->PopEvent();
-					break;
-
-				case EventType::MOUSE_WHEEL:
-					m_pIO->AddMouseWheelEvent(static_cast<float>(event.xrel), static_cast<float>(event.yrel));
-					m_pWindowContext->PopEvent();
-					break;
-
-				case EventType::MOUSE_BUTTON_DOWN:
-					m_pIO->AddMouseButtonEvent(MOUSE_BTN_LOOKUP(event.uDescription), true);
-					m_pWindowContext->PopEvent();
-					break;
-
-				case EventType::MOUSE_BUTTON_UP:
-					m_pIO->AddMouseButtonEvent(MOUSE_BTN_LOOKUP(event.uDescription), false);
-					m_pWindowContext->PopEvent();
-					break;
-
-				case EventType::KEY_DOWN:
-					m_pIO->AddKeyEvent(KEYLOOKUP(event.uDescription), true);
-					m_pWindowContext->PopEvent();
-					break;
-				
-				case EventType::KEY_UP:
-					m_pIO->AddKeyEvent(KEYLOOKUP(event.uDescription), false);
-					m_pWindowContext->PopEvent();
-					break;
-
-				case EventType::TEXT_INPUT:
-					m_pIO->AddInputCharactersUTF8(event.szEditedText);
-					m_pWindowContext->PopEvent();
-					break;
-
-				default:
-					m_pWindowContext->SkipEvent();
-					break;
-			}
-		}
 	}
 
 
@@ -306,5 +273,59 @@ namespace DENG {
 		m_pRenderer->UpdateBuffer(&m_uniform, sizeof(TRS::Point2D<float>), m_uUniformRegionOffset);
 		m_bIsInit = true;
 		m_pRenderer->DrawMesh(m_meshComponent, m_shaderComponent, _pFramebuffer, { m_uTextureHandle });
+	}
+
+
+	bool ImGuiLayer::OnKeyboardEvent(KeyboardEvent& _event) {
+		switch (_event.GetEventType()) {
+			case EventType::KeyPressed:
+				m_pIO->AddKeyEvent(KEYLOOKUP(static_cast<KeyPressedEvent&>(_event).GetKeycode()), true);
+				return true;
+
+			case EventType::KeyReleased:
+				m_pIO->AddKeyEvent(KEYLOOKUP(static_cast<KeyReleasedEvent&>(_event).GetKeycode()), false);
+				return true;
+
+			case EventType::KeyTyped:
+				m_pIO->AddInputCharactersUTF8(static_cast<KeyTypedEvent&>(_event).GetBuffer());
+				return true;
+
+			default:
+				return false;
+		}
+	}
+
+
+	bool ImGuiLayer::OnMouseButtonEvent(MouseButtonEvent& _event) {
+		switch (_event.GetEventType()) {
+			case EventType::MouseButtonPressed:
+				m_pIO->AddMouseButtonEvent(MOUSE_BTN_LOOKUP(_event.GetMouseButton()), true);
+				return true;
+
+			case EventType::MouseButtonReleased:
+				m_pIO->AddMouseButtonEvent(MOUSE_BTN_LOOKUP(_event.GetMouseButton()), false);
+				return true;
+
+			default:
+				return false;
+		}
+	}
+
+
+	bool ImGuiLayer::OnMouseMovedEvent(MouseMovedEvent& _event) {
+		m_pIO->AddMousePosEvent(
+			static_cast<float>(_event.GetPositionX()),
+			static_cast<float>(_event.GetPositionY()));
+
+		return true;
+	}
+
+
+	bool ImGuiLayer::OnMouseScrollEvent(MouseScrolledEvent& _event) {
+		m_pIO->AddMouseWheelEvent(
+			static_cast<float>(_event.GetScrollDeltaX()),
+			static_cast<float>(_event.GetScrollDeltaY()));
+
+		return true;
 	}
 }
