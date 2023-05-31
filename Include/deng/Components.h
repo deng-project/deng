@@ -31,11 +31,29 @@ namespace DENG {
 		TransformComponent(const TransformComponent&) = default;
 
 		TRS::Matrix4<float> mCustomTransform;
-		TRS::Vector4<float> vTranslation;
+		TRS::Vector4<float> vTranslation = { 0.f, 0.f, 0.f, 1.f };
 		TRS::Vector3<float> vScale = { 1.f, 1.f, 1.f };
 		float _pad;
 		TRS::Vector3<float> vRotation = { 0.f, 0.f, 0.f }; // in radians
 		float _pad1;
+	};
+
+
+	struct MaterialComponent {
+		MaterialComponent() = default;
+		MaterialComponent(const MaterialComponent&) = default;
+
+		using Vec4 = TRS::Vector4<float>;
+		MaterialComponent(const Vec4& _vAmbient, const Vec4& _vDiffuse, const Vec4& _vSpecular, float _fShininess) :
+			vAmbient(_vAmbient),
+			vDiffuse(_vDiffuse),
+			vSpecular(_vSpecular),
+			fShininess(_fShininess) {}
+
+		TRS::Vector4<float> vAmbient = { 1.f, 1.f, 1.f, 0.f };
+		TRS::Vector4<float> vDiffuse;
+		TRS::Vector4<float> vSpecular;
+		float fShininess = 0.f;
 	};
 
 
@@ -160,18 +178,6 @@ namespace DENG {
 		uint32_t uUniformBufferChunkSize = 0;
 	};
 
-
-	// to be implemented in more depth
-	struct MaterialComponent {
-		MaterialComponent() = default;
-		MaterialComponent(const MaterialComponent&) = default;
-		MaterialComponent(MaterialComponent&& _material) noexcept :
-			textureIds(std::move(_material.textureIds)),
-			fReflectivity(_material.fReflectivity) {}
-
-		std::vector<uint32_t> textureIds;
-		float fReflectivity = 1.f;
-	};
 
 	struct DrawCommand {
 		uint32_t uIndicesOffset = 0;

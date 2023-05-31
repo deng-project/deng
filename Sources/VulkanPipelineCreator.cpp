@@ -314,6 +314,8 @@ namespace DENG {
             // 1. only per shader descriptor set layouts are present
             // 2. only per mesh descriptor set layouts are present
             // 3. all descriptor set layouts are present
+            VkDescriptorSetLayout descriptorSetLayouts[2] = { m_hShaderDescriptorSetLayout, m_hMeshDescriptorSetLayout };
+
             if(m_hShaderDescriptorSetLayout != VK_NULL_HANDLE && m_hMeshDescriptorSetLayout == VK_NULL_HANDLE) {
                 pipelineLayoutCreateInfo.setLayoutCount = 1;
                 pipelineLayoutCreateInfo.pSetLayouts = &m_hShaderDescriptorSetLayout;
@@ -322,7 +324,6 @@ namespace DENG {
                 pipelineLayoutCreateInfo.pSetLayouts = &m_hMeshDescriptorSetLayout;
             } else if (m_hShaderDescriptorSetLayout != VK_NULL_HANDLE && m_hMeshDescriptorSetLayout != VK_NULL_HANDLE) {
                 pipelineLayoutCreateInfo.setLayoutCount = 2;
-                VkDescriptorSetLayout descriptorSetLayouts[2] = { m_hShaderDescriptorSetLayout, m_hMeshDescriptorSetLayout };
                 pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
             }
 

@@ -61,75 +61,6 @@ static const float g_cCubeVertices[] = {
 	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 
-class LightScript : public DENG::ScriptBehaviour {
-	private:
-		const float m_cfRotationSpeed = (float)MF_PI_4;
-		float m_fCurrentRotation = 0.f;
-		float m_fRadius = 0.f;
-
-	public:
-		SCRIPT_DEFINE_CONSTRUCTOR(LightScript)
-
-		void OnAttach() {
-			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
-			
-			m_fRadius = 2.5f;
-			LOG("Light source radius from y-axis is " << m_fRadius);
-
-			// set light source color and initial position
-			light.vColor = { 0.f, 0.f, 1.f, 1.f };
-			light.vPosition[1] = 0.67f;
-			light.vPosition[2] = m_fRadius;
-		}
-
-		void OnUpdate(float _fTimestep) {
-			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
-			m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
-
-			// clip rotation
-			if (m_fCurrentRotation > 2 * (float)MF_PI) {
-				m_fCurrentRotation -= 2 * (float)MF_PI;
-			}
-
-			light.vPosition.first = std::sinf(m_fCurrentRotation) * m_fRadius;
-			light.vPosition.third = std::cosf(m_fCurrentRotation) * m_fRadius;
-		}
-};
-
-
-class LightScript2 : public DENG::ScriptBehaviour {
-	private:
-		const float m_cfRotationSpeed = (float)MF_PI_4;
-		float m_fCurrentRotation = 0.f;
-		float m_fRadius = 0.f;
-	
-	public:
-		SCRIPT_DEFINE_CONSTRUCTOR(LightScript2)
-	
-		void OnAttach() {
-			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
-	
-			m_fRadius = 2.5f;
-			LOG("Light source radius from y-axis is " << m_fRadius);
-	
-			// set light source color and initial position
-			light.vColor = { 0.f, 1.f, 0.f, 1.f };
-			light.vPosition[2] = m_fRadius;
-		}
-	
-		void OnUpdate(float _fTimestep) {
-			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
-			m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
-	
-			// clip rotation
-			if (m_fCurrentRotation > 2 * (float)MF_PI) {
-				m_fCurrentRotation -= 2 * (float)MF_PI;
-			}
-	
-			light.vPosition.first = -std::sinf(m_fCurrentRotation) * m_fRadius;
-			light.vPosition.third = std::cosf(m_fCurrentRotation) * m_fRadius;
-		}
-};
 
 
 class CameraScript : public DENG::ScriptBehaviour {
@@ -356,9 +287,38 @@ class CameraScript : public DENG::ScriptBehaviour {
 class BasicLightingLayer : public DENG::ILayer {
 	private:
 		DENG::Scene m_scene;
-		DENG::Entity m_idWhiteCube = entt::null;
+		DENG::Entity m_idLightSource = entt::null;
 		DENG::Entity m_idShadedCube = entt::null;
-		std::array<DENG::Entity, 2> m_lightSources = {};
+		const std::unordered_map<std::string, DENG::MaterialComponent> m_cMaterials = {
+			{ "default", DENG::MaterialComponent() },
+			{ "emerald", { { 0.0215f, 0.1745f, 0.0215f, 0.f }, { 0.07568f, 0.61424f, 0.07568f, 0.f }, { 0.633f, 0.727811f, 0.633f, 0.f }, 0.6f } },
+			{ "jade", { { 0.135f, 0.2225f, 0.1575f, 0.f }, { 0.54f, 0.89f, 0.63f, 0.f }, { 0.316228f, 0.316228f, 0.316228f, 0.f }, 0.1f } },
+			{ "obsidian", { { 0.05375f, 0.05f, 0.06625f, 0.f }, { 0.18275f, 0.17f, 0.22525f, 0.f }, { 0.332741f, 0.328634f, 0.346435f, 0.f }, 0.3f } },
+			{ "pearl", { { 0.25f, 0.20725f, 0.20725f, 0.f }, { 1.0f, 0.829f, 0.829f, 0.f }, { 0.296648f, 0.296648f, 0.296648f, 0.f }, 0.088f } },
+			{ "ruby", { { 0.1745f, 0.01175f, 0.01175f, 0.f }, { 0.61424f, 0.04136f, 0.04136f, 0.f }, { 0.727811f, 0.626959f, 0.626959f, 0.f }, 0.6f } },
+			{ "turquoise", { { 0.1f, 0.18725f, 0.1745f, 0.f }, { 0.396f, 0.74151f, 0.69102f, 0.f }, { 0.297254f, 0.30829f, 0.306678f, 0.f }, 0.1f } },
+			{ "brass", { { 0.329412f, 0.223529f, 0.027451f, 0.f }, { 0.780392f, 0.568627f, 0.113725f, 0.f }, { 0.992157f, 0.941176f, 0.807843f, 0.f }, 0.21794872f } },
+			{ "bronze", { { 0.2125f, 0.1275f, 0.054f, 0.f }, { 0.714f, 0.4284f, 0.18144f, 0.f }, { 0.393548f, 0.271906f, 0.166721f, 0.f }, 0.2f } },
+			{ "chrome", { { 0.25f, 0.25f, 0.25f, 0.f }, { 0.4f, 0.4f, 0.4f, 0.f }, { 0.774597f, 0.774597f, 0.774597f, 0.f }, 0.6f } },
+			{ "copper", { { 0.19125f, 0.0735f, 0.0225f, 0.f }, { 0.7038f, 0.27048f, 0.0828f, 0.f }, { 0.256777f, 0.137622f, 0.086014f, 0.f }, 0.1f } },
+			{ "gold", { { 0.24725f, 0.1995f, 0.0745f, 0.f }, { 0.75164f, 0.60648f, 0.22648f, 0.f }, { 0.628281f, 0.555802f, 0.366065f, 0.f }, 0.4f } },
+			{ "silver", { { 0.19225f, 0.19225f, 0.19225f, 0.f }, { 0.50754f, 0.50754f, 0.50754f, 0.f }, { 0.508273f, 0.508273f, 0.508273f, 0.f }, 0.4f } },
+			{ "black_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.01f, 0.01f, 0.01f, 0.f }, { 0.50f, 0.50f, 0.50f, 0.f }, 0.25f } },
+			{ "cyan_plastic", { { 0.0f, 0.1f, 0.06f, 0.f }, { 0.0f, 0.50980392f, 0.50980392f, 0.f }, { 0.50196078f, 0.50196078f, 0.50196078f, 0.f }, 0.25f } },
+			{ "green_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.1f, 0.35f, 0.1f, 0.f }, { 0.45f, 0.55f, 0.45f, 0.f }, 0.25f } },
+			{ "red_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.0f, 0.0f, 0.f }, { 0.7f, 0.6f, 0.6f, 0.f }, 0.25f } },
+			{ "white_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.55f, 0.55f, 0.55f, 0.f }, { 0.70f, 0.70f, 0.70f, 0.f }, 0.25f } },
+			{ "yellow_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.5f, 0.0f, 0.f }, { 0.60f, 0.60f, 0.50f, 0.f }, 0.25f } },
+			{ "black_rubber", { { 0.02f, 0.02f, 0.02f, 0.f }, { 0.01f, 0.01f, 0.01f, 0.f }, { 0.4f, 0.4f, 0.4f, 0.f }, 0.078125f } },
+			{ "cyan_rubber", { { 0.0f, 0.05f, 0.05f, 0.f }, { 0.4f, 0.5f, 0.5f, 0.f }, { 0.04f, 0.7f, 0.7f, 0.f }, 0.078125f } },
+			{ "green_rubber", { { 0.0f, 0.05f, 0.0f, 0.f }, { 0.4f, 0.5f, 0.4f, 0.f }, { 0.04f, 0.7f, 0.04f, 0.f }, 0.078125f } },
+			{ "red_rubber", { { 0.05f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.4f, 0.4f, 0.f }, { 0.7f, 0.04f, 0.04f, 0.f }, 0.078125f } },
+			{ "white_rubber", { { 0.05f, 0.05f, 0.05f, 0.f }, { 0.5f, 0.5f, 0.5f, 0.f }, { 0.7f, 0.7f, 0.7f, 0.f }, 0.078125f } },
+			{ "yellow_rubber", { { 0.05f, 0.05f, 0.0f, 0.f }, { 0.5f, 0.5f, 0.4f, 0.f }, { 0.7f, 0.7f, 0.04f, 0.f }, 0.078125f } },
+		};
+
+
+
 
 	private:
 		// ubos structure
@@ -383,6 +343,12 @@ class BasicLightingLayer : public DENG::ILayer {
 			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_STORAGE_BUFFER;
 			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_FRAGMENT;
 			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_SHADER;
+
+			_shader.uboDataLayouts.emplace_back();
+			_shader.uboDataLayouts.back().block.uBinding = 2;
+			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_BUFFER;
+			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_FRAGMENT;
+			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_MESH;
 
 			_shader.pShader = new DENG::Shader(_sShaderName, _sShaderName);
 			_shader.iPushConstantShaderStage = SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT;
@@ -412,18 +378,21 @@ class BasicLightingLayer : public DENG::ILayer {
 			size_t uVertexOffset = m_pRenderer->AllocateMemory(sizeof(g_cCubeVertices), DENG::BufferDataType::VERTEX);
 			m_pRenderer->UpdateBuffer(g_cCubeVertices, sizeof(g_cCubeVertices), uVertexOffset);
 			
-			m_idWhiteCube = m_scene.CreateEntity();
-			m_scene.EmplaceComponent<DENG::MeshComponent>(m_idWhiteCube);
-			m_scene.EmplaceComponent<DENG::ShaderComponent>(m_idWhiteCube);
-			m_scene.EmplaceComponent<DENG::TransformComponent>(m_idWhiteCube);
+			m_idLightSource = m_scene.CreateEntity();
+			m_scene.EmplaceComponent<DENG::MeshComponent>(m_idLightSource);
+			m_scene.EmplaceComponent<DENG::ShaderComponent>(m_idLightSource);
+			m_scene.EmplaceComponent<DENG::TransformComponent>(m_idLightSource);
+			m_scene.EmplaceComponent<DENG::MaterialComponent>(m_idLightSource);
+			m_scene.EmplaceComponent<DENG::LightComponent>(m_idLightSource);
 
 			m_idShadedCube = m_scene.CreateEntity();
 			m_scene.EmplaceComponent<DENG::MeshComponent>(m_idShadedCube);
 			m_scene.EmplaceComponent<DENG::ShaderComponent>(m_idShadedCube);
 			m_scene.EmplaceComponent<DENG::TransformComponent>(m_idShadedCube);
+			m_scene.EmplaceComponent<DENG::MaterialComponent>(m_idShadedCube);
 
 			// white cube mesh
-			auto& whiteMesh = m_scene.GetComponent<DENG::MeshComponent>(m_idWhiteCube);
+			auto& whiteMesh = m_scene.GetComponent<DENG::MeshComponent>(m_idLightSource);
 			whiteMesh.sName = "WhiteCube";
 			whiteMesh.drawCommands.emplace_back();
 			whiteMesh.drawCommands.back().uDrawCount = 36;
@@ -436,19 +405,12 @@ class BasicLightingLayer : public DENG::ILayer {
 			shadedMesh.sName = "ShadedCube";
 
 			// white cube shader
-			auto& whiteCubeShader = m_scene.GetComponent<DENG::ShaderComponent>(m_idWhiteCube);
+			auto& whiteCubeShader = m_scene.GetComponent<DENG::ShaderComponent>(m_idLightSource);
 			_CreateShaderComponent(whiteCubeShader, "WhiteCube");
 
 			// shaded cube shader
 			auto& shadedCubeShader = m_scene.GetComponent<DENG::ShaderComponent>(m_idShadedCube);
 			_CreateShaderComponent(shadedCubeShader, "ShadedCube");
-
-			m_lightSources[0] = m_scene.CreateEntity();
-			m_lightSources[1] = m_scene.CreateEntity();
-			m_scene.EmplaceComponent<DENG::LightComponent>(m_lightSources[0]);
-			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[0]).BindScript<LightScript>(m_lightSources[0], m_eventManager, m_scene);
-			m_scene.EmplaceComponent<DENG::LightComponent>(m_lightSources[1]);
-			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[1]).BindScript<LightScript2>(m_lightSources[1], m_eventManager, m_scene);
 
 			// camera components
 			{
@@ -461,13 +423,11 @@ class BasicLightingLayer : public DENG::ILayer {
 
 			// update transform uniforms
 			{
-				DENG::TransformComponent& whiteCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idWhiteCube);
-				whiteCubeTransform.vTranslation.first = -0.5f;
-				whiteCubeTransform.vTranslation.third = -1.f;
+				DENG::TransformComponent& whiteCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idLightSource);
+				whiteCubeTransform.vTranslation.first = -6.f;
+				whiteCubeTransform.vScale = { 0.1f, 0.1f, 0.1f };
 
 				DENG::TransformComponent& shadedCubeTransform = m_scene.GetComponent<DENG::TransformComponent>(m_idShadedCube);
-				shadedCubeTransform.vTranslation.first = 0.5f;
-				shadedCubeTransform.vTranslation.third = 1.f;
 			}
 
 			m_scene.AttachComponents();
@@ -475,6 +435,56 @@ class BasicLightingLayer : public DENG::ILayer {
 
 		virtual void Update(DENG::IFramebuffer* _pFramebuffer) override {
 			m_scene.RenderScene();
+		}
+
+
+		void OnImGuiDraw() {
+			ImGui::Begin("Diagnostics/Material properties");
+
+			ImGui::Text("Current framerate: %d fps", static_cast<int>(ImGui::GetIO().Framerate));
+			auto& [light, lightTransform] = m_scene.GetRegistry().get<DENG::LightComponent, DENG::TransformComponent>(m_idLightSource);
+			ImGui::Text("Light position: { %f, %f, %f }", light.vPosition.first, light.vPosition.second, light.vPosition.third);
+
+			ImGui::Separator();
+			ImGui::SliderFloat("Light source translation X", &lightTransform.vTranslation.first, -50.f, 50.f);
+			ImGui::SliderFloat("Light source translation Y", &lightTransform.vTranslation.second, -50.f, 50.f);
+			ImGui::SliderFloat("Light source translation Z", &lightTransform.vTranslation.third, -50.f, 50.f);
+			ImGui::Separator();
+			ImGui::SliderAngle("Light source rotation X", &lightTransform.vRotation.first);
+			ImGui::SliderAngle("Light source rotation Y", &lightTransform.vRotation.second);
+			ImGui::SliderAngle("Light source rotation Z", &lightTransform.vRotation.third);
+			ImGui::Separator();
+
+			if (ImGui::TreeNode("Click to choose ambient color")) {
+				ImGui::ColorPicker3("Ambient color", (float*)&m_scene.GetAmbient(), ImGuiColorEditFlags_NoPicker);
+				ImGui::TreePop();
+			}
+			
+			ImGui::Separator();
+			ImGui::Text("Shaded cube material");
+			const char* materials[] = {
+				"default", "emerald", "jade", "obsidian", "pearl", "ruby", "turquoise", "brass", "bronze", "chrome",
+				"copper", "gold", "silver", "black_plastic", "cyan_plastic", "green_plastic", "red_plastic", "white_plastic",
+				"yellow_plastic", "black_rubber", "cyan_rubber", "green_rubber", "red_rubber", "white_rubber", "yellow_rubber"
+			};
+
+			static const char* s_szCurrentItem = materials[0];
+			if (ImGui::BeginCombo("##combo", s_szCurrentItem)) {
+				for (int i = 0; i < IM_ARRAYSIZE(materials); i++) {
+					bool bIsSelected = (s_szCurrentItem == materials[i]);
+					if (ImGui::Selectable(materials[i], bIsSelected))
+						s_szCurrentItem = materials[i];
+					if (bIsSelected) {
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			auto& material = m_scene.GetComponent<DENG::MaterialComponent>(m_idShadedCube);
+			material = m_cMaterials.find(s_szCurrentItem)->second;
+
+			ImGui::End();
 		}
 };
 
@@ -500,7 +510,9 @@ class LightingTestApp : public DENG::App {
 				DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
 			}
 
-			PushLayer<BasicLightingLayer>(pRenderer, pMainFramebuffer);
+			auto lightingLayer = PushLayer<BasicLightingLayer>(pRenderer, pMainFramebuffer);
+			auto pImGuiLayer = PushLayer<DENG::ImGuiLayer>();
+			pImGuiLayer->SetDrawCallback(&BasicLightingLayer::OnImGuiDraw, lightingLayer);
 			AttachLayers();
 		}
 };

@@ -34,8 +34,8 @@ mat4 CalculateRotation() {
 	mat4 mY = mat4(1.f);
 	mY[0][0] = cos(uboTransform.vRotation.y);
 	mY[2][2] = mY[0][0];
-	mY[3][0] = sin(uboTransform.vRotation.y);
-	mY[0][3] = -mY[3][0];
+	mY[2][0] = sin(uboTransform.vRotation.y);
+	mY[0][2] = -mY[2][0];
 	
 	mat4 mZ = mat4(1.f);
 	mZ[0][0] = cos(uboTransform.vRotation.z);

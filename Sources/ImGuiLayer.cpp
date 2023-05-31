@@ -258,7 +258,8 @@ namespace DENG {
 		ImGui::SetCurrentContext(m_pImguiContext);
 		_UpdateIO(_pFramebuffer);
 		ImGui::NewFrame();
-		_Callback(m_pUserData);
+		if (_CallbackLambda)
+			_CallbackLambda();
 		ImGui::EndFrame();
 
 		ImGui::Render();

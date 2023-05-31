@@ -16,4 +16,8 @@
     #define DENG_API
 #endif
 
+#ifdef _DEBUG
+#define DENG_DEBUG
+#endif
+
 #endif

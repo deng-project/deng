@@ -15,7 +15,7 @@ namespace DENG {
             try {
                 _CreateInstance(_window);
                 m_hSurface = static_cast<VkSurfaceKHR>(_window.CreateVulkanSurface(m_hInstance));
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
                 _CreateDebugMessenger();
 #endif
                 _PickPhysicalDevice();
@@ -33,7 +33,7 @@ namespace DENG {
         InstanceCreator::~InstanceCreator() {
             vkDestroyDevice(m_hDevice, nullptr);
             vkDestroySurfaceKHR(m_hInstance, m_hSurface, nullptr);
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
             PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = 
                 (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_hInstance, "vkDestroyDebugUtilsMessengerEXT");
             vkDestroyDebugUtilsMessengerEXT(m_hInstance, m_hDebugUtilsMessenger, nullptr);
@@ -60,7 +60,7 @@ namespace DENG {
 
             // Log all extensions to console
             std::vector<const char*> enabledExtensions = _window.QueryRequiredVulkanExtensions();
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
             // check if VK_EXT_debug_utils is present
             // if not then add it to required extension vector
             {
@@ -80,14 +80,14 @@ namespace DENG {
 
 
             for (const char *ext : enabledExtensions) {
-                LOG("Required extension: " + std::string(ext));
+                LOG("Required extension: " << ext);
             }
 
             instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
             instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
             
             // Check for validatation layer support
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = {};
 
             if(!_CheckValidationLayerSupport()) {
@@ -118,7 +118,7 @@ namespace DENG {
         }
 
 
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
         bool InstanceCreator::_CheckValidationLayerSupport() {
             uint32_t uLayerCount;
             vkEnumerateInstanceLayerProperties(&uLayerCount, nullptr);
@@ -370,7 +370,7 @@ namespace DENG {
             logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(m_requiredExtensions.size());
             logicalDeviceCreateInfo.ppEnabledExtensionNames = m_requiredExtensions.data();
 
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
             logicalDeviceCreateInfo.enabledLayerCount = 1;
             logicalDeviceCreateInfo.ppEnabledLayerNames = &m_szValidationLayerName;
 #else

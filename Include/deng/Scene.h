@@ -32,6 +32,8 @@ namespace DENG {
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_tpEnd =
 				std::chrono::high_resolution_clock::now();
 
+			TRS::Vector3<float> m_vAmbient = { 0.3f, 0.3f, 0.3f };
+
 		public:
 			Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
 
@@ -55,6 +57,18 @@ namespace DENG {
 
 			inline entt::registry& GetRegistry() {
 				return m_registry;
+			}
+
+			inline const TRS::Vector3<float>& GetAmbient() const {
+				return m_vAmbient;
+			}
+
+			inline TRS::Vector3<float>& GetAmbient() {
+				return m_vAmbient;
+			}
+
+			inline void SetAmbient(const TRS::Vector3<float>& _vAmbient) {
+				m_vAmbient = _vAmbient;
 			}
 
 			void AttachComponents();

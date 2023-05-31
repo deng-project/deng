@@ -79,7 +79,7 @@ namespace DENG {
 
             private:
                 void _CreateInstance(IWindowContext& _window);
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
                 bool _CheckValidationLayerSupport();
                 void _CreateDebugMessenger();
 

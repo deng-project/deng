@@ -21,8 +21,16 @@ struct Light {
 
 layout(std140, set = 0, binding = 1) readonly buffer Lights {
 	uint uLightsCount;
+	vec3 vAmbient;
 	Light lights[];
 } uboLights;
+
+layout(std140, set = 1, binding = 2) uniform Material {
+	vec4 vAmbient;
+	vec4 vDiffuse;
+	vec4 vSpecular;
+	float fShininess;
+} uboMaterial;
 
 void main() {
 	vFragColor = vec4(1.f, 1.f, 1.f, 1.f);

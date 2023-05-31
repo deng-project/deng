@@ -7,6 +7,8 @@
 #define IMGUI_LAYER_H
 
 #include <chrono>
+#include <functional>
+
 #include <imgui.h>
 #include "deng/Api.h"
 #include "deng/ILayer.h"
@@ -25,15 +27,12 @@
 
 namespace DENG {
 
-	typedef void(*PFN_ImGuiDrawCallback)(void* _pUserData);
-
 	class DENG_API ImGuiLayer : public ILayer {
 		private:
 			ImGuiIO* m_pIO = nullptr;
 			ImGuiContext* m_pImguiContext = nullptr;
 			
-			PFN_ImGuiDrawCallback _Callback = nullptr;
-			void* m_pUserData = nullptr;
+			std::function<void()> _CallbackLambda = nullptr;
 
 			TRS::Point2D<float> m_uniform;
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_beginTimePoint =
@@ -64,9 +63,12 @@ namespace DENG {
 			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;
 
-			inline void SetDrawCallback(PFN_ImGuiDrawCallback _pfnCallback, void* _pUserData) {
-				_Callback = _pfnCallback;
-				m_pUserData = _pUserData;
+			template<typename T>
+			using PFN_ImGuiDrawCallbackMethod = void(T::*)();
+
+			template<typename T>
+			void SetDrawCallback(PFN_ImGuiDrawCallbackMethod<T> _pfnMethod, T* _pInstance) {
+				_CallbackLambda = [=]() { (*_pInstance.*_pfnMethod)(); };
 			}
 
 			bool OnKeyboardEvent(KeyboardEvent& _event);

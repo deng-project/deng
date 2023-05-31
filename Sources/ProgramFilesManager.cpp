@@ -23,8 +23,8 @@ namespace DENG {
 
 		m_sParentDirectory = filesystem::path(sFilePath).parent_path().u8string();
 
-#if !defined(DENG_WINDOWS_PACKAGE_CONFIGURATION) && !defined(DENG_PORTABLE) && !defined(_DEBUG)
-		m_sParentDirectory += "..\\..";
+#if !defined(DENG_WINDOWS_PACKAGE_CONFIGURATION) && !defined(DENG_PORTABLE) && !defined(DENG_DEBUG)
+		m_sParentDirectory += "..";
 #elif defined(_DEBUG)
 		m_sParentDirectory += "..";
 #endif

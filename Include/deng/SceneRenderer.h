@@ -10,6 +10,8 @@
 #include "deng/IRenderer.h"
 #include "deng/Components.h"
 
+#include "trs/Vector.h"
+
 namespace DENG {
 
 	class DENG_API SceneRenderer {
@@ -17,8 +19,9 @@ namespace DENG {
 			IRenderer* m_pRenderer = nullptr;
 			IFramebuffer* m_pFramebuffer = nullptr;
 			std::vector<size_t> m_transformOffsets;
+			std::vector<size_t> m_materialOffsets;
 			size_t m_uLightsOffset = SIZE_MAX;
-			uint32_t m_uLightsCount = 0;
+			size_t m_uLightsCount = 0;
 			size_t m_uCameraOffset = 0;
 
 		public:
@@ -28,12 +31,13 @@ namespace DENG {
 				m_pRenderer->UpdateBuffer(&_camera, sizeof(CameraComponent), m_uCameraOffset);
 			}
 
-			void RenderLights(const std::vector<LightComponent>& _lights);
+			void RenderLights(const std::vector<LightComponent>& _lights, const TRS::Vector3<float>& _vAmbient);
 			void RenderMesh(
 				const MeshComponent& _mesh,
 				const CameraComponent& _camera,
 				ShaderComponent& _shader, 
 				Entity _idEntity,
+				const MaterialComponent& _material,
 				const TransformComponent& _transform = TransformComponent());
 	};
 }
