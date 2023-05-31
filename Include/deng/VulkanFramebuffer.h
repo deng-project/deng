@@ -97,7 +97,7 @@ namespace DENG {
                 Framebuffer(Framebuffer &&_fb) noexcept = default;
                 ~Framebuffer();
 
-                void RecreateFramebuffer();
+                void RecreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight);
 
                 inline void DestroyPipelineAllocator(Shader* _pShader) {
                     m_pipelineCreators.erase(_pShader);

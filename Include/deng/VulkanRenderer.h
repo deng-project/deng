@@ -34,6 +34,10 @@
     #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
 #endif
 
+#ifndef RESIZE_DEBOUNCE_TIMESTEP
+#define RESIZE_DEBOUNCE_TIMESTEP 100.f // ms
+#endif
+
 #include "deng/IRenderer.h"
 #include "deng/VulkanHelpers.h"
 #include "deng/VulkanInstanceCreator.h"
@@ -65,6 +69,15 @@ namespace DENG {
             VkBuffer m_hStagingBuffer = VK_NULL_HANDLE;
             VkDeviceMemory m_hStagingBufferMemory = VK_NULL_HANDLE;
 
+            uint32_t m_uResizedViewportWidth = 0;
+            uint32_t m_uResizedViewportHeight = 0;
+            bool m_bResizeModeTriggered = false;
+
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_resizeBeginTimestamp =
+                std::chrono::high_resolution_clock::now();
+            std::chrono::time_point<std::chrono::high_resolution_clock> m_resizeEndTimestamp =
+                std::chrono::high_resolution_clock::now();
+
         private:
             void _CreateApiImageHandles(uint32_t _id);
             void _CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset);
@@ -75,6 +88,7 @@ namespace DENG {
             VulkanRenderer(VulkanRenderer&&) noexcept = default;
             ~VulkanRenderer();
 
+            virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) override;
             virtual uint32_t AddTextureResource(const TextureResource& _resource) override;
             virtual void DestroyPipeline(Shader* _pShader) override;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
@@ -82,7 +96,7 @@ namespace DENG {
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
             virtual void DeallocateMemory(size_t _uOffset) override;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
-            virtual void SetupFrame() override;
+            virtual bool SetupFrame() override;
             virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
     };
 }

@@ -287,6 +287,17 @@ namespace DENG {
     }
 
 
+    void VulkanRenderer::UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) {
+        if (!m_bResizeModeTriggered) {
+            m_resizeBeginTimestamp = std::chrono::high_resolution_clock::now();
+            m_bResizeModeTriggered = true;
+        }
+
+        m_uResizedViewportWidth = _uWidth;
+        m_uResizedViewportHeight = _uHeight;
+        LOG("VulkanRenderer::UpdateViewport(): new viewport dimentions are " << m_uResizedViewportWidth << 'x' << m_uResizedViewportHeight);
+    }
+
     uint32_t VulkanRenderer::AddTextureResource(const TextureResource& _resource) {
         DENG_ASSERT(m_pInstanceCreator);
         uint32_t uImageId = m_uImageCounter++;
@@ -448,7 +459,24 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::SetupFrame() {
+    bool VulkanRenderer::SetupFrame() {
+        // check if resize mode is active
+        if (m_bResizeModeTriggered) {
+            m_resizeEndTimestamp = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float, std::milli> timestep = m_resizeEndTimestamp - m_resizeBeginTimestamp;
+            
+            if (timestep.count() >= RESIZE_DEBOUNCE_TIMESTEP && m_uResizedViewportWidth && m_uResizedViewportHeight) {
+                vkDeviceWaitIdle(m_pInstanceCreator->GetDevice());
+                m_bResizeModeTriggered = false;
+                LOG("Resized viewport dimentions: " << m_uResizedViewportWidth << 'x' << m_uResizedViewportHeight);
+                m_pInstanceCreator->UpdateSurfaceProperties();
+                static_cast<Vulkan::Framebuffer*>(m_framebuffers[0])->RecreateFramebuffer(m_uResizedViewportWidth, m_uResizedViewportHeight);
+            }
+            else {
+                return false;
+            }
+        }
+
         for (auto it = m_pipelineDescriptorAllocators.begin(); it != m_pipelineDescriptorAllocators.end(); it++) {
             it->second.ResetMeshCounter();
         }
@@ -483,11 +511,17 @@ namespace DENG {
 
             _CreateApiImageHandles(hTexture);
         }
+
+        return true;
     }
 
 
     void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds) {
         DENG_ASSERT(_pFramebuffer);
+        
+        if (m_bResizeModeTriggered)
+            return;
+        
         Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
         // descriptor allocators do not exist
         if (_shaderComponent.uboDataLayouts.size() && m_pipelineDescriptorAllocators.find(_shaderComponent.pShader) == m_pipelineDescriptorAllocators.end()) {

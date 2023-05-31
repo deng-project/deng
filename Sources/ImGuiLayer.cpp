@@ -80,7 +80,7 @@ namespace DENG {
 	};
 
 	ImGuiLayer::ImGuiLayer(EventManager& _eventManager) :
-		m_eventManager(_eventManager)
+		ILayer(_eventManager)
 	{
 		m_eventManager.AddListener<ImGuiLayer, KeyboardEvent>(&ImGuiLayer::OnKeyboardEvent, this);
 		m_eventManager.AddListener<ImGuiLayer, MouseButtonEvent>(&ImGuiLayer::OnMouseButtonEvent, this);

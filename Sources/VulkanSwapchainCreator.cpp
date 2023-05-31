@@ -146,6 +146,7 @@ namespace DENG {
 
             vkDestroySwapchainKHR(m_pInstanceCreator->GetDevice(), m_hSwapchain, nullptr);
 
+            _ConfigureSwapchainSettings();
             _CreateSwapchain(_uWidth, _uHeight);
             _CreateSwapchainImageViews();
         }

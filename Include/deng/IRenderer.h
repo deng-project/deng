@@ -100,13 +100,14 @@ namespace DENG {
 				m_deletedTextureResourceQueue.push(_uTextureId);
 			}
 
+			virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual void DestroyPipeline(Shader* _pShader) = 0;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) = 0;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
 			virtual void DeallocateMemory(size_t _uOffset) = 0;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
-			virtual void SetupFrame() = 0;
+			virtual bool SetupFrame() = 0;
 			virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _Shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) = 0;
     };
 }

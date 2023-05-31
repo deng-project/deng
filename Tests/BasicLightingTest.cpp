@@ -10,6 +10,8 @@
 #include "deng/CameraTransformer.h"
 #include "deng/ImGuiLayer.h"
 #include "deng/Scene.h"
+#include "deng/WindowEvents.h"
+#include "deng/InputEvents.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -66,10 +68,10 @@ class LightScript : public DENG::ScriptBehaviour {
 		float m_fRadius = 0.f;
 
 	public:
-		LightScript() = default;
+		SCRIPT_DEFINE_CONSTRUCTOR(LightScript)
 
 		void OnAttach() {
-			DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
+			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
 			
 			m_fRadius = 2.5f;
 			LOG("Light source radius from y-axis is " << m_fRadius);
@@ -81,7 +83,7 @@ class LightScript : public DENG::ScriptBehaviour {
 		}
 
 		void OnUpdate(float _fTimestep) {
-			DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
+			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
 			m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
 
 			// clip rotation
@@ -96,43 +98,42 @@ class LightScript : public DENG::ScriptBehaviour {
 
 
 class LightScript2 : public DENG::ScriptBehaviour {
-private:
-	const float m_cfRotationSpeed = (float)MF_PI_4;
-	float m_fCurrentRotation = 0.f;
-	float m_fRadius = 0.f;
-
-public:
-	LightScript2() = default;
-
-	void OnAttach() {
-		DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
-
-		m_fRadius = 2.5f;
-		LOG("Light source radius from y-axis is " << m_fRadius);
-
-		// set light source color and initial position
-		light.vColor = { 0.f, 1.f, 0.f, 1.f };
-		light.vPosition[2] = m_fRadius;
-	}
-
-	void OnUpdate(float _fTimestep) {
-		DENG::LightComponent& light = pScene->GetComponent<DENG::LightComponent>(idEntity);
-		m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
-
-		// clip rotation
-		if (m_fCurrentRotation > 2 * (float)MF_PI) {
-			m_fCurrentRotation -= 2 * (float)MF_PI;
+	private:
+		const float m_cfRotationSpeed = (float)MF_PI_4;
+		float m_fCurrentRotation = 0.f;
+		float m_fRadius = 0.f;
+	
+	public:
+		SCRIPT_DEFINE_CONSTRUCTOR(LightScript2)
+	
+		void OnAttach() {
+			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
+	
+			m_fRadius = 2.5f;
+			LOG("Light source radius from y-axis is " << m_fRadius);
+	
+			// set light source color and initial position
+			light.vColor = { 0.f, 1.f, 0.f, 1.f };
+			light.vPosition[2] = m_fRadius;
 		}
-
-		light.vPosition.first = -std::sinf(m_fCurrentRotation) * m_fRadius;
-		light.vPosition.third = std::cosf(m_fCurrentRotation) * m_fRadius;
-	}
+	
+		void OnUpdate(float _fTimestep) {
+			DENG::LightComponent& light = m_scene.GetComponent<DENG::LightComponent>(m_idEntity);
+			m_fCurrentRotation += _fTimestep * m_cfRotationSpeed;
+	
+			// clip rotation
+			if (m_fCurrentRotation > 2 * (float)MF_PI) {
+				m_fCurrentRotation -= 2 * (float)MF_PI;
+			}
+	
+			light.vPosition.first = -std::sinf(m_fCurrentRotation) * m_fRadius;
+			light.vPosition.third = std::cosf(m_fCurrentRotation) * m_fRadius;
+		}
 };
 
 
 class CameraScript : public DENG::ScriptBehaviour {
 	private:
-		DENG::IWindowContext* m_pWindowContext;
 		DENG::CameraTransformer m_cameraTransformer;
 		const float m_fRotationSpeed = (float)MF_PI_2;
 		const float m_fMovementSpeed = 1.f;
@@ -141,72 +142,124 @@ class CameraScript : public DENG::ScriptBehaviour {
 		bool m_bMovements[4] = {};
 		
 	public:
-		CameraScript(DENG::IWindowContext* _pWindowContext) :
-			m_pWindowContext(_pWindowContext) {}
+		SCRIPT_DEFINE_CONSTRUCTOR(CameraScript)
 
+		bool OnWindowResizedEvent(DENG::WindowResizedEvent& _event) {
+			auto& camera = m_scene.GetComponent<DENG::CameraComponent>(m_idEntity);
+			camera.mProjection = m_cameraTransformer.CalculateProjection(_event.GetWidth(), _event.GetHeight());
+			return false; // pass the even to other listeners
+		}
+
+
+		bool OnKeyPressEvent(DENG::KeyPressedEvent& _event) {
+			switch (_event.GetKeycode()) {
+				case DENG::Keycode::LeftArrow:
+					m_bRotations[0] = true;
+					return true;
+
+				case DENG::Keycode::UpArrow:
+					m_bRotations[1] = true;
+					return true;
+
+				case DENG::Keycode::DownArrow:
+					m_bRotations[2] = true;
+					return true;
+
+				case DENG::Keycode::RightArrow:
+					m_bRotations[3] = true;
+					return true;
+
+				case DENG::Keycode::LeftBracket:
+					m_bRotations[4] = true;
+					return true;
+
+				case DENG::Keycode::RightBracket:
+					m_bRotations[5] = true;
+					return true;
+
+				case DENG::Keycode::A:
+					m_bMovements[0] = true;
+					return true;
+
+				case DENG::Keycode::W:
+					m_bMovements[1] = true;
+					return true;
+
+				case DENG::Keycode::S:
+					m_bMovements[2] = true;
+					return true;
+
+				case DENG::Keycode::D:
+					m_bMovements[3] = true;
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
+
+		bool OnKeyReleasedEvent(DENG::KeyReleasedEvent& _event) {
+			switch (_event.GetKeycode()) {
+				case DENG::Keycode::LeftArrow:
+					m_bRotations[0] = false;
+					return true;
+
+				case DENG::Keycode::UpArrow:
+					m_bRotations[1] = false;
+					return true;
+
+				case DENG::Keycode::DownArrow:
+					m_bRotations[2] = false;
+					return true;
+
+				case DENG::Keycode::RightArrow:
+					m_bRotations[3] = false;
+					return true;
+
+				case DENG::Keycode::LeftBracket:
+					m_bRotations[4] = false;
+					return true;
+
+				case DENG::Keycode::RightBracket:
+					m_bRotations[5] = false;
+					return true;
+
+				case DENG::Keycode::A:
+					m_bMovements[0] = false;
+					return true;
+
+				case DENG::Keycode::W:
+					m_bMovements[1] = false;
+					return true;
+
+				case DENG::Keycode::S:
+					m_bMovements[2] = false;
+					return true;
+
+				case DENG::Keycode::D:
+					m_bMovements[3] = false;
+					return true;
+
+				default:
+					return false;
+			}
+		}
+		
 		void OnAttach() {
-			DENG::CameraComponent& camera = pScene->GetComponent<DENG::CameraComponent>(idEntity);
-			camera.mProjection = m_cameraTransformer.CalculateProjection(m_pWindowContext->GetWidth(), m_pWindowContext->GetHeight());
+			auto& camera = m_scene.GetComponent<DENG::CameraComponent>(m_idEntity);
+			camera.mProjection = m_cameraTransformer.CalculateProjection(WIDTH, HEIGHT);
+
+			m_eventManager.AddListener<CameraScript, DENG::WindowResizedEvent>(&CameraScript::OnWindowResizedEvent, this);
+			m_eventManager.AddListener<CameraScript, DENG::KeyPressedEvent>(&CameraScript::OnKeyPressEvent, this);
+			m_eventManager.AddListener<CameraScript, DENG::KeyReleasedEvent>(&CameraScript::OnKeyReleasedEvent, this);
+
 			LOG("CameraScript::OnAttach() called");
 		}
 
 		void OnUpdate(float _fTimestep) {
-			DENG::CameraComponent& camera = pScene->GetComponent<DENG::CameraComponent>(idEntity);
-
-			// poll keyboard events
-			while (m_pWindowContext->HasEvents()) {
-				DENG::Event& event = m_pWindowContext->PeekEvent();
-
-				if (event.eType == DENG::EventType::KEY_DOWN || event.eType == DENG::EventType::KEY_UP) {
-					switch (static_cast<DENG::KeySymbol>(event.uDescription)) {
-					case DENG::KeySymbol::KEY_LEFT:
-						m_bRotations[0] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_UP:
-						m_bRotations[1] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_DOWN:
-						m_bRotations[2] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_RIGHT:
-						m_bRotations[3] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_LEFT_BRACKET:
-						m_bRotations[4] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_RIGHT_BRACKET:
-						m_bRotations[5] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_A:
-						m_bMovements[0] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_W:
-						m_bMovements[1] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_S:
-						m_bMovements[2] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					case DENG::KeySymbol::KEY_D:
-						m_bMovements[3] = event.eType == DENG::EventType::KEY_DOWN;
-						break;
-
-					default:
-						break;
-					}
-				}
-
-				m_pWindowContext->PopEvent();
-			}
-
+			DENG::CameraComponent& camera = m_scene.GetComponent<DENG::CameraComponent>(m_idEntity);
+			
 			// yaw counter-clockwise
 			if (m_bRotations[0] && !m_bRotations[3]) {
 				float fYaw = m_cameraTransformer.GetYaw();
@@ -296,7 +349,7 @@ class CameraScript : public DENG::ScriptBehaviour {
 		}
 
 		void OnDestroy() {
-			LOG("CameraScript::OnUpdate() called");
+			LOG("CameraScript::OnDestroy() called");
 		}
 };
 
@@ -340,10 +393,17 @@ class BasicLightingLayer : public DENG::ILayer {
 		}
 
 	public:
-		BasicLightingLayer(DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer) :
+		BasicLightingLayer(DENG::EventManager& _eventManager, DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer) :
+			ILayer(_eventManager),
 			m_scene(_pRenderer, _pFramebuffer) 
 		{
 			m_pRenderer = _pRenderer;
+			m_eventManager.AddListener<BasicLightingLayer, DENG::WindowResizedEvent>(&BasicLightingLayer::OnWindowResizedEvent, this);
+		}
+
+		bool OnWindowResizedEvent(DENG::WindowResizedEvent& _event) {
+			m_pRenderer->UpdateViewport(_event.GetWidth(), _event.GetHeight());
+			return true;
 		}
 
 		virtual void Attach(DENG::IRenderer*, DENG::IWindowContext* _pWindowContext) {
@@ -386,16 +446,16 @@ class BasicLightingLayer : public DENG::ILayer {
 			m_lightSources[0] = m_scene.CreateEntity();
 			m_lightSources[1] = m_scene.CreateEntity();
 			m_scene.EmplaceComponent<DENG::LightComponent>(m_lightSources[0]);
-			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[0]).BindScript<LightScript>(m_lightSources[0], &m_scene);
+			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[0]).BindScript<LightScript>(m_lightSources[0], m_eventManager, m_scene);
 			m_scene.EmplaceComponent<DENG::LightComponent>(m_lightSources[1]);
-			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[1]).BindScript<LightScript2>(m_lightSources[1], &m_scene);
+			m_scene.EmplaceComponent<DENG::ScriptComponent>(m_lightSources[1]).BindScript<LightScript2>(m_lightSources[1], m_eventManager, m_scene);
 
 			// camera components
 			{
 				DENG::Entity idCamera = m_scene.CreateEntity();
 				m_scene.SetMainCamera(idCamera);
 				auto& camera = m_scene.EmplaceComponent<DENG::CameraComponent>(idCamera);
-				m_scene.EmplaceComponent<DENG::ScriptComponent>(idCamera).BindScript<CameraScript>(idCamera, &m_scene, m_pWindowContext);
+				m_scene.EmplaceComponent<DENG::ScriptComponent>(idCamera).BindScript<CameraScript>(idCamera, m_eventManager, m_scene);
 			}
 
 
@@ -421,11 +481,10 @@ class BasicLightingLayer : public DENG::ILayer {
 class LightingTestApp : public DENG::App {
 	public:
 		LightingTestApp() {
-			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext);
+			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext(m_eventManager));
 			DENG::IRenderer* pRenderer = SetRenderer(new DENG::VulkanRenderer);
 			DENG::IFramebuffer* pMainFramebuffer = nullptr;
-			pWindowContext->SetHints(DENG::WindowHints::SHOWN | DENG::WindowHints::VULKAN);
-
+			pWindowContext->SetHints(DENG::WindowHint_Shown | DENG::WindowHint_Vulkan | DENG::WindowHint_Resizeable);
 
 			try {
 				pWindowContext->Create("BasicLightingTest | Vulkan | SDL", WIDTH, HEIGHT);

@@ -36,7 +36,7 @@ class ImGuiApp : public DENG::App {
 				DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
 			}
 
-			DENG::ImGuiLayer* pLayer = PushLayer<DENG::ImGuiLayer>(m_eventManager);
+			DENG::ImGuiLayer* pLayer = PushLayer<DENG::ImGuiLayer>();
 			pLayer->SetDrawCallback(ImGuiApp::_ImGuiCallback, nullptr);
 			AttachLayers();
 		}

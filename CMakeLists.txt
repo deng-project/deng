@@ -10,11 +10,8 @@ project(deng)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if (NOT DEFINED VULKAN_VERSION)
-	set(VULKAN_VERSION "1.3.246.1")
-endif()
-
-set(VULKAN_SDK_PATH "C:/VulkanSDK/${VULKAN_VERSION}")
+set(VULKAN_VERSION "1.3.246.1" CACHE STRING "Vulkan SDK version to use")
+set(VULKAN_SDK_PATH "C:/VulkanSDK/${VULKAN_VERSION}" CACHE STRING "Vulkan SDK path to use")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vcpkg/scripts/buildsystems/vcpkg.cmake)
 

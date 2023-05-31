@@ -154,7 +154,7 @@ namespace DENG {
 				for (EventType eEventType : eventTypesToDispatch) {
 					auto& eventHandlers = m_eventHandlers[static_cast<size_t>(eEventType)];
 
-					for (auto it = eventHandlers.rbegin(); it != eventHandlers.rend(); it--) {
+					for (auto it = eventHandlers.rbegin(); it != eventHandlers.rend(); it++) {
 						if (it->OnEvent(event))
 							break;
 					}

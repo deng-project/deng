@@ -48,11 +48,25 @@ namespace DENG {
 
 
 	class DENG_API WindowExposedEvent : public WindowEvent {
+		private:
+			uint32_t m_uWidth;
+			uint32_t m_uHeight;
+
 		public:
-			WindowExposedEvent(uint32_t _uWindowId) :
-				WindowEvent(_uWindowId) {}
+			WindowExposedEvent(uint32_t _uWindowId, uint32_t _uWidth, uint32_t _uHeight) :
+				WindowEvent(_uWindowId),
+				m_uWidth(_uWidth),
+				m_uHeight(_uHeight) {}
 			WindowExposedEvent(const WindowExposedEvent&) = default;
 			
+			inline uint32_t GetWidth() {
+				return m_uWidth;
+			}
+
+			inline uint32_t GetHeight() {
+				return m_uHeight;
+			}
+
 			EVENT_CLASS_TYPE(EventType::WindowExposed, WindowEvent);
 	};
 

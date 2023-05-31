@@ -16,12 +16,10 @@ namespace DENG {
             VkRenderPass _hRenderPass,
             VkDescriptorSetLayout _hShaderDescriptorSetLayout,
             VkDescriptorSetLayout _hMeshDescriptorSetLayout,
-            VkExtent2D _extent, 
             VkSampleCountFlagBits _uSampleBits, 
             const Vulkan::PhysicalDeviceInformation& _information, 
             const ShaderComponent& _shader) :
             m_hDevice(_hDevice),
-            m_extent(_extent),
             m_hShaderDescriptorSetLayout(_hShaderDescriptorSetLayout),
             m_hMeshDescriptorSetLayout(_hMeshDescriptorSetLayout),
             m_uSampleBits(_uSampleBits),
@@ -85,9 +83,6 @@ namespace DENG {
 
         PipelineCreator::PipelineCreator(PipelineCreator &&_pc) noexcept :
             m_hDevice(_pc.m_hDevice),
-            m_viewport(_pc.m_viewport),
-            m_scissor(_pc.m_scissor),
-            m_extent(_pc.m_extent),
             m_uSampleBits(_pc.m_uSampleBits),
             m_shaderStageCreateInfos(move(_pc.m_shaderStageCreateInfos)),
             m_shaderModules(move(_pc.m_shaderModules)),
@@ -139,21 +134,7 @@ namespace DENG {
             m_hPipelineLayout = VK_NULL_HANDLE;
         }
 
-
-        void PipelineCreator::RecreatePipeline(const ShaderComponent& _shader, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile) {
-            m_hRenderPass = _hRenderPass;
-            m_extent = _extent;
-
-            _CreatePipelineLayout(_shader);
-            m_viewport.width = static_cast<float>(_extent.width);
-            m_viewport.height = static_cast<float>(_extent.height);
-            m_scissor.extent = _extent;
-
-            if(vkCreateGraphicsPipelines(m_hDevice, VK_NULL_HANDLE, 1, &m_graphicsPipelineCreateInfo, nullptr, &m_hPipeline) != VK_SUCCESS)
-                VK_PIPELINEC_ERR("failed to create a pipeline");
-        }
-
-
+        
         void PipelineCreator::_FindInputBindingDescriptions(const ShaderComponent& _shader) {
             DENG_ASSERT(_shader.attributes.size() == _shader.attributeStrides.size());
             m_vertexInputBindingDescriptions.reserve(_shader.attributes.size());
@@ -457,24 +438,8 @@ namespace DENG {
             }
             m_inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-            // Set viewport values
-            m_viewport.width = static_cast<float>(m_extent.width);
-            m_viewport.height = -static_cast<float>(m_extent.height);
-            m_viewport.x = 0.0f;
-            m_viewport.y = -m_viewport.height;
-            m_viewport.minDepth = 0.0f;
-            m_viewport.maxDepth = 1.0f;
-
-            // Set scissor offset and extent values
-            m_scissor.offset = {0, 0};
-            m_scissor.extent = m_extent;
-
             // Set up viewport state create_info object
             m_viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-            m_viewportStateCreateInfo.viewportCount = 1;
-            m_viewportStateCreateInfo.pViewports = &m_viewport;
-            m_viewportStateCreateInfo.scissorCount = 1;
-            m_viewportStateCreateInfo.pScissors = &m_scissor;
 
             // Set up rasterization create info
             m_rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -542,17 +507,11 @@ namespace DENG {
 
             m_dynamicStateCreateInfo = {};
             m_dynamicStates.clear();
+            m_dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+            m_dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+
             m_dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-
-            if (_shader.bEnableCustomViewport) {
-                m_dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-                m_dynamicStateCreateInfo.dynamicStateCount++;
-            }
-
-            if (_shader.bEnableScissor) {
-                m_dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-                m_dynamicStateCreateInfo.dynamicStateCount++;
-            }
+            m_dynamicStateCreateInfo.dynamicStateCount = 2;
             m_dynamicStateCreateInfo.pDynamicStates = m_dynamicStates.data();
 
             // Set up colorblend state create_info
@@ -560,6 +519,11 @@ namespace DENG {
             m_colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
             m_colorBlendStateCreateInfo.attachmentCount = 1;
             m_colorBlendStateCreateInfo.pAttachments = &m_colorBlendAttachmentState;
+
+            m_viewportStateCreateInfo = {};
+            m_viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+            m_viewportStateCreateInfo.scissorCount = 1;
+            m_viewportStateCreateInfo.viewportCount = 1;
 
             // Set up graphics pipeline create_info
             m_graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -572,10 +536,8 @@ namespace DENG {
             m_graphicsPipelineCreateInfo.pRasterizationState = &m_rasterizationStateCreateInfo;
             m_graphicsPipelineCreateInfo.pMultisampleState = &m_multisampleStateCreateInfo;
             m_graphicsPipelineCreateInfo.pDepthStencilState = &m_depthStencilStateCreateInfo;
-
-            if(_shader.bEnableScissor || _shader.bEnableCustomViewport)
-                m_graphicsPipelineCreateInfo.pDynamicState = &m_dynamicStateCreateInfo;
-            else m_graphicsPipelineCreateInfo.pDynamicState = nullptr;
+            m_graphicsPipelineCreateInfo.pDynamicState = &m_dynamicStateCreateInfo;
+            m_graphicsPipelineCreateInfo.pViewportState = &m_viewportStateCreateInfo;
 
             m_graphicsPipelineCreateInfo.layout = m_hPipelineLayout;
 

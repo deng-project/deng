@@ -29,7 +29,6 @@ namespace DENG {
 
 	class DENG_API ImGuiLayer : public ILayer {
 		private:
-			EventManager& m_eventManager;
 			ImGuiIO* m_pIO = nullptr;
 			ImGuiContext* m_pImguiContext = nullptr;
 			

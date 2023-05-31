@@ -29,12 +29,14 @@ namespace DENG {
 			m_pWindowContext->Update();
 
 			try {
-				m_pRenderer->SetupFrame();
-				m_pMainFramebuffer->BeginCommandBufferRecording({ 0.f, 0.f, 0.f, 1.f });
-				for (ILayer* pLayer : m_layers)
-					pLayer->Update(m_pMainFramebuffer);
-				m_pMainFramebuffer->EndCommandBufferRecording();
-				m_pMainFramebuffer->RenderToFramebuffer();
+				bool bSuccessBit = m_pRenderer->SetupFrame();
+				if (bSuccessBit) {
+					m_pMainFramebuffer->BeginCommandBufferRecording({ 0.f, 0.f, 0.f, 1.f });
+					for (ILayer* pLayer : m_layers)
+						pLayer->Update(m_pMainFramebuffer);
+					m_pMainFramebuffer->EndCommandBufferRecording();
+					m_pMainFramebuffer->RenderToFramebuffer();
+				}
 			}
 			catch (const RendererException& e) {
 				DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);

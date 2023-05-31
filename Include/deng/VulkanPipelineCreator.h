@@ -28,9 +28,6 @@ namespace DENG {
         class PipelineCreator {
             private:
                 VkDevice m_hDevice = VK_NULL_HANDLE;
-                VkViewport m_viewport = {};
-                VkRect2D m_scissor = {};
-                VkExtent2D m_extent = {};
                 VkSampleCountFlagBits m_uSampleBits = {};
 
                 std::vector<VkPipelineShaderStageCreateInfo> m_shaderStageCreateInfos;
@@ -73,7 +70,6 @@ namespace DENG {
                     VkRenderPass _hRenderPass,
                     VkDescriptorSetLayout _hShaderDescriptorSetLayout,
                     VkDescriptorSetLayout _hMeshDescriptorSetLayout,
-                    VkExtent2D _extent, 
                     VkSampleCountFlagBits _uSampleBits,
                     const PhysicalDeviceInformation& _info,
                     const ShaderComponent& _module);
@@ -82,8 +78,7 @@ namespace DENG {
                 ~PipelineCreator() noexcept;
 
                 void DestroyPipelineData();
-                void RecreatePipeline(const ShaderComponent& _shader, VkRenderPass _hRenderPass, VkExtent2D _extent, bool _bRecompile = false);
-
+                
                 inline VkPipelineCache GetPipelineCache() { return m_hPipelineCache; }
                 inline VkPipelineLayout GetPipelineLayout() { return m_hPipelineLayout; }
                 inline VkPipeline GetPipeline() { return m_hPipeline; }

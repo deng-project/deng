@@ -11,12 +11,12 @@
 
 #include "deng/Api.h"
 #include "deng/IWindowContext.h"
+#include "deng/InputEvents.h"
 
 #ifdef SDL_WINDOW_CONTEXT_CPP
 	#include <cstring>
 	#include <SDL2/SDL_vulkan.h>
 	#include "deng/WindowEvents.h"
-	#include "deng/InputEvents.h"
 	#include "deng/Exceptions.h"
 	#include "deng/ErrorDefinitions.h"
 #endif

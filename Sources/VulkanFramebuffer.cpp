@@ -332,8 +332,6 @@ namespace DENG {
             vkResetCommandPool(m_pInstanceCreator->GetDevice(), m_hCommandPool, 0);
             for (auto& fb : m_framebuffers)
                 vkDestroyFramebuffer(m_pInstanceCreator->GetDevice(), fb, nullptr);
-            for (auto& pipelineCreator : m_pipelineCreators)
-                pipelineCreator.second.DestroyPipelineData();
 
             // destroy framebuffer images if possible
             if (!m_pSwapchainCreator) {
@@ -421,7 +419,6 @@ namespace DENG {
                             m_hRenderpass,
                             _pDescriptorAllocator->GetShaderDescriptorSetLayout(),
                             _pDescriptorAllocator->GetMeshDescriptorSetLayout(),
-                            VkExtent2D{ m_uWidth, m_uHeight },
                             m_uSampleCountBits,
                             m_pInstanceCreator->GetPhysicalDeviceInformation(),
                             _shader));
@@ -435,7 +432,6 @@ namespace DENG {
                             m_hRenderpass,
                             VK_NULL_HANDLE,
                             VK_NULL_HANDLE,
-                            VkExtent2D{ m_uWidth, m_uHeight },
                             m_uSampleCountBits,
                             m_pInstanceCreator->GetPhysicalDeviceInformation(),
                             _shader));
@@ -452,6 +448,16 @@ namespace DENG {
                 vp.minDepth = 0.f;
                 vp.maxDepth = 1.f;
                 vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &vp);
+            }
+            else {
+                VkViewport viewport = {};
+                viewport.x = 0;
+                viewport.y = static_cast<float>(m_uHeight);
+                viewport.width = static_cast<float>(m_uWidth);
+                viewport.height = -static_cast<float>(m_uHeight);
+                viewport.minDepth = 0.f;
+                viewport.maxDepth = 1.f;
+                vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &viewport);
             }
 
             std::array<VkDescriptorSet, 2> descriptorSets = { VK_NULL_HANDLE, VK_NULL_HANDLE };
@@ -532,7 +538,7 @@ namespace DENG {
                 // check if scissor technique should be used
                 if (_shader.bEnableScissor) {
                     VkRect2D rect = {};
-                    rect.offset = VkOffset2D{ 
+                    rect.offset = VkOffset2D { 
                         itCmd->scissor.offset.x, 
                         itCmd->scissor.offset.y 
                     };
@@ -542,6 +548,12 @@ namespace DENG {
                         itCmd->scissor.extent.y 
                     };
 
+                    vkCmdSetScissor(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &rect);
+                }
+                else {
+                    VkRect2D rect = {};
+                    rect.offset = { 0, 0 };
+                    rect.extent = { m_uWidth, m_uHeight };
                     vkCmdSetScissor(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &rect);
                 }
 
@@ -627,7 +639,10 @@ namespace DENG {
             }
         }
 
-        void Framebuffer::RecreateFramebuffer() {
+        void Framebuffer::RecreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) {
+            m_uWidth = _uWidth;
+            m_uHeight = _uHeight;
+            
             // destroy previous resources
             _DestroyFramebuffer(false);
             _CreateDepthResources();
@@ -636,13 +651,11 @@ namespace DENG {
                 _CreateFramebufferImage();
             }
 
-            m_hRenderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_pInstanceCreator->GetDevice(), VK_FORMAT_DEFAULT_IMAGE, m_uSampleCountBits, !m_pSwapchainCreator);
-
             if (!m_pSwapchainCreator) {
                 _CreateFramebufferImage();
             }
             else {
-                m_pSwapchainCreator = new SwapchainCreator(m_pInstanceCreator, m_uWidth, m_uHeight, m_uSampleCountBits);
+                m_pSwapchainCreator->RecreateSwapchain(m_uWidth, m_uHeight);
                 const std::vector<Vulkan::TextureData>& swapchainImageResources =
                     m_pSwapchainCreator->GetSwapchainImageHandles();
 
@@ -662,18 +675,6 @@ namespace DENG {
             }
 
             _CreateFramebuffers();
-
-            if (m_pSwapchainCreator) {
-                for (auto& pipelineCreator : m_pipelineCreators) {
-                    const VkExtent2D extent = { m_uWidth, m_uHeight };
-
-                    //pipelineCreator.second.RecreatePipeline(
-                    //    pipelineCreator.second,
-                    //    m_hRenderpass,
-                    //    extent,
-                    //    false);
-                }
-            }
         }
     }
 }

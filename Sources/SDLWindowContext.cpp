@@ -439,7 +439,7 @@ namespace DENG {
 
 
 	void SDLWindowContext::_TranslateAndDispatchWindowEvent() {
-		switch (m_event.window.type) {
+		switch (m_event.window.event) {
 			case SDL_WINDOWEVENT_SHOWN:
 				m_eventManager.Dispatch<WindowShownEvent>(m_event.window.windowID);
 				break;
@@ -449,12 +449,14 @@ namespace DENG {
 				break;
 			
 			case SDL_WINDOWEVENT_EXPOSED: 
-				m_eventManager.Dispatch<WindowExposedEvent>(m_event.window.windowID);
+				m_eventManager.Dispatch<WindowExposedEvent>(
+					m_event.window.windowID,
+					m_event.window.data1,
+					m_event.window.data2);
 				break;
 
 			case SDL_WINDOWEVENT_RESIZED:
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
-			case SDL_WINDOWEVENT_RESTORED:
 				m_eventManager.Dispatch<WindowResizedEvent>(
 					m_event.window.windowID,
 					static_cast<uint32_t>(m_event.window.data1),
@@ -566,6 +568,7 @@ namespace DENG {
 		m_pScreenSurface = SDL_GetWindowSurface(m_pWindow);
 	}
 
+	
 	void* SDLWindowContext::CreateVulkanSurface(void* _pInstance) {
 		DENG_ASSERT(m_pWindow);
 		DENG_ASSERT(m_uHints & WindowHint_Vulkan);
@@ -574,6 +577,7 @@ namespace DENG {
 		SDL_Vulkan_CreateSurface(m_pWindow, (VkInstance)_pInstance, &hSurface);
 		return (void*)hSurface;
 	}
+
 
 	void SDLWindowContext::Update() {
 		DENG_ASSERT(m_pWindow);

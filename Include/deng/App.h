@@ -50,7 +50,7 @@ namespace DENG {
 
 			template <typename T, typename... Args>
 			T* PushLayer(Args&&... args) {
-				m_layers.push_back(new T(std::forward<Args>(args)...));
+				m_layers.push_back(new T(m_eventManager, std::forward<Args>(args)...));
 				return static_cast<T*>(m_layers.back());
 			}
 

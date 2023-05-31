@@ -17,6 +17,8 @@
 #include "trs/Matrix.h"
 #include "trs/Quaternion.h"
 
+#include "deng/Api.h"
+#include "deng/Event.h"
 #include "deng/ErrorDefinitions.h"
 #include "deng/ShaderComponent.h"
 
@@ -48,15 +50,22 @@ namespace DENG {
 		TRS::Vector4<float> vColor = { 1.f, 1.f, 1.f, 1.f };
 	};
 
+#define SCRIPT_DEFINE_CONSTRUCTOR(script) script::script(DENG::Entity _idEntity, DENG::EventManager& _eventManager, DENG::Scene& _scene) :\
+											 ScriptBehaviour(_idEntity, _eventManager, _scene, #script) {}
 	class Scene;
 	class DENG_API ScriptBehaviour {
-		public:
-			Scene* pScene = nullptr;
-			Entity idEntity = entt::null;
-			std::string sClassName = "MyClass";
+		protected:
+			const Entity m_idEntity = entt::null;
+			EventManager& m_eventManager;
+			Scene& m_scene;
+			const std::string m_sClassName;
 
 		public:
-			ScriptBehaviour() = default;
+			ScriptBehaviour(Entity _idEntity, EventManager& _eventManager, Scene& _scene, const std::string& _sClassName = "MyClass") :
+				m_idEntity(_idEntity),
+				m_eventManager(_eventManager),
+				m_scene(_scene),
+				m_sClassName(_sClassName) {}
 	};
 
 	class ScriptComponent;
@@ -92,10 +101,8 @@ namespace DENG {
 			PFN_OnDestroy OnDestroy = nullptr;
 
 			template<typename T, typename... Args>
-			inline void BindScript(Entity _idEntity, Scene* _pScene, Args... args) {
-				m_pScriptBehaviour = new T(std::forward<Args>(args)...);
-				m_pScriptBehaviour->pScene = _pScene;
-				m_pScriptBehaviour->idEntity = _idEntity;
+			inline void BindScript(Entity _idEntity, EventManager& _eventManager, Scene& _scene, Args... args) {
+				m_pScriptBehaviour = new T(_idEntity, _eventManager, _scene, std::forward<Args>(args)...);
 
 				if constexpr (_ScriptBehaviourTest<T>::HAS_ON_ATTACH > 0) {
 					OnAttach = [](ScriptComponent& _scriptComponent) {
@@ -116,15 +123,8 @@ namespace DENG {
 				}
 			}
 
-			inline void SetScriptableClassName(const std::string& _sClassName) {
-				m_pScriptBehaviour->sClassName = _sClassName;
-			}
-			inline const std::string& GetScriptableClassName() const {
-				return m_pScriptBehaviour->sClassName;
-			}
-
 			template<typename T>
-			inline T* GetScriptBehaviour() {
+			T* GetScriptBehaviour() {
 				return static_cast<T*>(m_pScriptBehaviour);
 			}
 	};

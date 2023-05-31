@@ -26,11 +26,13 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/CameraTransformer.h
 	Include/deng/Components.h
 	Include/deng/ErrorDefinitions.h
+	Include/deng/Event.h
 	Include/deng/Exceptions.h
 	Include/deng/GPUMemoryAllocator.h
 	Include/deng/IFramebuffer.h
 	Include/deng/ILayer.h
 	Include/deng/ImGuiLayer.h
+	Include/deng/InputEvents.h
 	Include/deng/IRenderer.h
 	Include/deng/IWindowContext.h
 	Include/deng/MathConstants.h
@@ -47,7 +49,8 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/VulkanInstanceCreator.h
 	Include/deng/VulkanPipelineCreator.h
 	Include/deng/VulkanRenderer.h
-	Include/deng/VulkanSwapchainCreator.h)
+	Include/deng/VulkanSwapchainCreator.h
+	Include/deng/WindowEvents.h)
 	
 set(DENG_MINIMAL_SOURCES
 	Sources/App.cpp
