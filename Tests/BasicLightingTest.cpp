@@ -1,5 +1,6 @@
 #include <random>
 #include <cmath>
+#include <unordered_map>
 
 #include "deng/App.h"
 #include "deng/ILayer.h"
@@ -13,52 +14,55 @@
 #include "deng/WindowEvents.h"
 #include "deng/InputEvents.h"
 
+#include <das/stb_image.h>
+
 #define WIDTH 1280
 #define HEIGHT 720
 #define SQ(x) (x*x)
 
 static const float g_cCubeVertices[] = {
-	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	// positions          // normals           // texture coords
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
 
-	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-	0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-	0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-	0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
 
-	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-	0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-	0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-	0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-	0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-	0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
 
-	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-	0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-	0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 };
 
 
@@ -289,32 +293,35 @@ class BasicLightingLayer : public DENG::ILayer {
 		DENG::Scene m_scene;
 		DENG::Entity m_idLightSource = entt::null;
 		DENG::Entity m_idShadedCube = entt::null;
+		std::array<uint32_t, 2> m_mapIds = {};
+
+		using Vec4 = TRS::Vector4<uint32_t>;
 		const std::unordered_map<std::string, DENG::MaterialComponent> m_cMaterials = {
 			{ "default", DENG::MaterialComponent() },
-			{ "emerald", { { 0.0215f, 0.1745f, 0.0215f, 0.f }, { 0.07568f, 0.61424f, 0.07568f, 0.f }, { 0.633f, 0.727811f, 0.633f, 0.f }, 0.6f } },
-			{ "jade", { { 0.135f, 0.2225f, 0.1575f, 0.f }, { 0.54f, 0.89f, 0.63f, 0.f }, { 0.316228f, 0.316228f, 0.316228f, 0.f }, 0.1f } },
-			{ "obsidian", { { 0.05375f, 0.05f, 0.06625f, 0.f }, { 0.18275f, 0.17f, 0.22525f, 0.f }, { 0.332741f, 0.328634f, 0.346435f, 0.f }, 0.3f } },
-			{ "pearl", { { 0.25f, 0.20725f, 0.20725f, 0.f }, { 1.0f, 0.829f, 0.829f, 0.f }, { 0.296648f, 0.296648f, 0.296648f, 0.f }, 0.088f } },
-			{ "ruby", { { 0.1745f, 0.01175f, 0.01175f, 0.f }, { 0.61424f, 0.04136f, 0.04136f, 0.f }, { 0.727811f, 0.626959f, 0.626959f, 0.f }, 0.6f } },
-			{ "turquoise", { { 0.1f, 0.18725f, 0.1745f, 0.f }, { 0.396f, 0.74151f, 0.69102f, 0.f }, { 0.297254f, 0.30829f, 0.306678f, 0.f }, 0.1f } },
-			{ "brass", { { 0.329412f, 0.223529f, 0.027451f, 0.f }, { 0.780392f, 0.568627f, 0.113725f, 0.f }, { 0.992157f, 0.941176f, 0.807843f, 0.f }, 0.21794872f } },
-			{ "bronze", { { 0.2125f, 0.1275f, 0.054f, 0.f }, { 0.714f, 0.4284f, 0.18144f, 0.f }, { 0.393548f, 0.271906f, 0.166721f, 0.f }, 0.2f } },
-			{ "chrome", { { 0.25f, 0.25f, 0.25f, 0.f }, { 0.4f, 0.4f, 0.4f, 0.f }, { 0.774597f, 0.774597f, 0.774597f, 0.f }, 0.6f } },
-			{ "copper", { { 0.19125f, 0.0735f, 0.0225f, 0.f }, { 0.7038f, 0.27048f, 0.0828f, 0.f }, { 0.256777f, 0.137622f, 0.086014f, 0.f }, 0.1f } },
-			{ "gold", { { 0.24725f, 0.1995f, 0.0745f, 0.f }, { 0.75164f, 0.60648f, 0.22648f, 0.f }, { 0.628281f, 0.555802f, 0.366065f, 0.f }, 0.4f } },
-			{ "silver", { { 0.19225f, 0.19225f, 0.19225f, 0.f }, { 0.50754f, 0.50754f, 0.50754f, 0.f }, { 0.508273f, 0.508273f, 0.508273f, 0.f }, 0.4f } },
-			{ "black_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.01f, 0.01f, 0.01f, 0.f }, { 0.50f, 0.50f, 0.50f, 0.f }, 0.25f } },
-			{ "cyan_plastic", { { 0.0f, 0.1f, 0.06f, 0.f }, { 0.0f, 0.50980392f, 0.50980392f, 0.f }, { 0.50196078f, 0.50196078f, 0.50196078f, 0.f }, 0.25f } },
-			{ "green_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.1f, 0.35f, 0.1f, 0.f }, { 0.45f, 0.55f, 0.45f, 0.f }, 0.25f } },
-			{ "red_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.0f, 0.0f, 0.f }, { 0.7f, 0.6f, 0.6f, 0.f }, 0.25f } },
-			{ "white_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.55f, 0.55f, 0.55f, 0.f }, { 0.70f, 0.70f, 0.70f, 0.f }, 0.25f } },
-			{ "yellow_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.5f, 0.0f, 0.f }, { 0.60f, 0.60f, 0.50f, 0.f }, 0.25f } },
-			{ "black_rubber", { { 0.02f, 0.02f, 0.02f, 0.f }, { 0.01f, 0.01f, 0.01f, 0.f }, { 0.4f, 0.4f, 0.4f, 0.f }, 0.078125f } },
-			{ "cyan_rubber", { { 0.0f, 0.05f, 0.05f, 0.f }, { 0.4f, 0.5f, 0.5f, 0.f }, { 0.04f, 0.7f, 0.7f, 0.f }, 0.078125f } },
-			{ "green_rubber", { { 0.0f, 0.05f, 0.0f, 0.f }, { 0.4f, 0.5f, 0.4f, 0.f }, { 0.04f, 0.7f, 0.04f, 0.f }, 0.078125f } },
-			{ "red_rubber", { { 0.05f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.4f, 0.4f, 0.f }, { 0.7f, 0.04f, 0.04f, 0.f }, 0.078125f } },
-			{ "white_rubber", { { 0.05f, 0.05f, 0.05f, 0.f }, { 0.5f, 0.5f, 0.5f, 0.f }, { 0.7f, 0.7f, 0.7f, 0.f }, 0.078125f } },
-			{ "yellow_rubber", { { 0.05f, 0.05f, 0.0f, 0.f }, { 0.5f, 0.5f, 0.4f, 0.f }, { 0.7f, 0.7f, 0.04f, 0.f }, 0.078125f } },
+			{ "emerald", { { 0.0215f, 0.1745f, 0.0215f, 0.f }, { 0.07568f, 0.61424f, 0.07568f, 0.f }, { 0.633f, 0.727811f, 0.633f, 0.f }, Vec4(), 0.6f } },
+			{ "jade", { { 0.135f, 0.2225f, 0.1575f, 0.f }, { 0.54f, 0.89f, 0.63f, 0.f }, { 0.316228f, 0.316228f, 0.316228f, 0.f }, Vec4(), 0.1f, } },
+			{ "obsidian", { { 0.05375f, 0.05f, 0.06625f, 0.f }, { 0.18275f, 0.17f, 0.22525f, 0.f }, { 0.332741f, 0.328634f, 0.346435f, 0.f }, Vec4(), 0.3f } },
+			{ "pearl", { { 0.25f, 0.20725f, 0.20725f, 0.f }, { 1.0f, 0.829f, 0.829f, 0.f }, { 0.296648f, 0.296648f, 0.296648f, 0.f }, Vec4(), 0.088f } },
+			{ "ruby", { { 0.1745f, 0.01175f, 0.01175f, 0.f }, { 0.61424f, 0.04136f, 0.04136f, 0.f }, { 0.727811f, 0.626959f, 0.626959f, 0.f }, Vec4(), 0.6f } },
+			{ "turquoise", { { 0.1f, 0.18725f, 0.1745f, 0.f }, { 0.396f, 0.74151f, 0.69102f, 0.f }, { 0.297254f, 0.30829f, 0.306678f, 0.f }, Vec4(), 0.1f, } },
+			{ "brass", { { 0.329412f, 0.223529f, 0.027451f, 0.f }, { 0.780392f, 0.568627f, 0.113725f, 0.f }, { 0.992157f, 0.941176f, 0.807843f, 0.f }, Vec4(), 0.21794872f } },
+			{ "bronze", { { 0.2125f, 0.1275f, 0.054f, 0.f }, { 0.714f, 0.4284f, 0.18144f, 0.f }, { 0.393548f, 0.271906f, 0.166721f, 0.f }, Vec4(), 0.2f, } },
+			{ "chrome", { { 0.25f, 0.25f, 0.25f, 0.f }, { 0.4f, 0.4f, 0.4f, 0.f }, { 0.774597f, 0.774597f, 0.774597f, 0.f }, Vec4(), 0.6f, } },
+			{ "copper", { { 0.19125f, 0.0735f, 0.0225f, 0.f }, { 0.7038f, 0.27048f, 0.0828f, 0.f }, { 0.256777f, 0.137622f, 0.086014f, 0.f }, Vec4(), 0.1f, } },
+			{ "gold", { { 0.24725f, 0.1995f, 0.0745f, 0.f }, { 0.75164f, 0.60648f, 0.22648f, 0.f }, { 0.628281f, 0.555802f, 0.366065f, 0.f }, Vec4(), 0.4f, } },
+			{ "silver", { { 0.19225f, 0.19225f, 0.19225f, 0.f }, { 0.50754f, 0.50754f, 0.50754f, 0.f }, { 0.508273f, 0.508273f, 0.508273f, 0.f }, Vec4(), 0.4f, } },
+			{ "black_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.01f, 0.01f, 0.01f, 0.f }, { 0.50f, 0.50f, 0.50f, 0.f }, Vec4(), 0.25f, } },
+			{ "cyan_plastic", { { 0.0f, 0.1f, 0.06f, 0.f }, { 0.0f, 0.50980392f, 0.50980392f, 0.f }, { 0.50196078f, 0.50196078f, 0.50196078f, 0.f }, Vec4(), 0.25f, } },
+			{ "green_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.1f, 0.35f, 0.1f, 0.f }, { 0.45f, 0.55f, 0.45f, 0.f }, Vec4(), 0.25f, } },
+			{ "red_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.0f, 0.0f, 0.f }, { 0.7f, 0.6f, 0.6f, 0.f }, Vec4(), 0.25f, } },
+			{ "white_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.55f, 0.55f, 0.55f, 0.f }, { 0.70f, 0.70f, 0.70f, 0.f }, Vec4(), 0.25f, } },
+			{ "yellow_plastic", { { 0.0f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.5f, 0.0f, 0.f }, { 0.60f, 0.60f, 0.50f, 0.f }, Vec4(), 0.25f, } },
+			{ "black_rubber", { { 0.02f, 0.02f, 0.02f, 0.f }, { 0.01f, 0.01f, 0.01f, 0.f }, { 0.4f, 0.4f, 0.4f, 0.f }, Vec4(), 0.078125f, } },
+			{ "cyan_rubber", { { 0.0f, 0.05f, 0.05f, 0.f }, { 0.4f, 0.5f, 0.5f, 0.f }, { 0.04f, 0.7f, 0.7f, 0.f }, Vec4(), 0.078125f, } },
+			{ "green_rubber", { { 0.0f, 0.05f, 0.0f, 0.f }, { 0.4f, 0.5f, 0.4f, 0.f }, { 0.04f, 0.7f, 0.04f, 0.f }, Vec4(), 0.078125f, } },
+			{ "red_rubber", { { 0.05f, 0.0f, 0.0f, 0.f }, { 0.5f, 0.4f, 0.4f, 0.f }, { 0.7f, 0.04f, 0.04f, 0.f }, Vec4(), 0.078125f, } },
+			{ "white_rubber", { { 0.05f, 0.05f, 0.05f, 0.f }, { 0.5f, 0.5f, 0.5f, 0.f }, { 0.7f, 0.7f, 0.7f, 0.f }, Vec4(), 0.078125f, } },
+			{ "yellow_rubber", { { 0.05f, 0.05f, 0.0f, 0.f }, { 0.5f, 0.5f, 0.4f, 0.f }, { 0.7f, 0.7f, 0.04f, 0.f }, Vec4(), 0.078125f, } },
 		};
 
 
@@ -328,8 +335,10 @@ class BasicLightingLayer : public DENG::ILayer {
 		void _CreateShaderComponent(DENG::ShaderComponent& _shader, const std::string& _sShaderName) {
 			_shader.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
 			_shader.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC3_FLOAT);
-			_shader.attributeStrides.push_back(6u * sizeof(float));
-			_shader.attributeStrides.push_back(6u * sizeof(float));
+			_shader.attributes.push_back(DENG::ATTRIBUTE_TYPE_VEC2_FLOAT);
+			_shader.attributeStrides.push_back(8u * sizeof(float));
+			_shader.attributeStrides.push_back(8u * sizeof(float));
+			_shader.attributeStrides.push_back(8u * sizeof(float));
 
 			_shader.uboDataLayouts.emplace_back();
 			_shader.uboDataLayouts.back().block.uBinding = 0;
@@ -350,12 +359,45 @@ class BasicLightingLayer : public DENG::ILayer {
 			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_FRAGMENT;
 			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_MESH;
 
+			_shader.uboDataLayouts.emplace_back();
+			_shader.uboDataLayouts.back().block.uBinding = 3;
+			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
+			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_FRAGMENT;
+			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_MESH;
+
+			_shader.uboDataLayouts.emplace_back();
+			_shader.uboDataLayouts.back().block.uBinding = 4;
+			_shader.uboDataLayouts.back().eType = DENG::UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
+			_shader.uboDataLayouts.back().iStage = SHADER_STAGE_FRAGMENT;
+			_shader.uboDataLayouts.back().eUsage = DENG::UNIFORM_USAGE_PER_MESH;
+
 			_shader.pShader = new DENG::Shader(_sShaderName, _sShaderName);
 			_shader.iPushConstantShaderStage = SHADER_STAGE_VERTEX | SHADER_STAGE_FRAGMENT;
 			_shader.bEnablePushConstants = true;
 			_shader.bEnableBlend = true;
 			_shader.bEnableIndexing = false;
 			_shader.bEnableDepthTesting = true;
+		}
+
+
+		uint32_t _LoadTexture(const std::string& _filename) {
+			DENG::ProgramFilesManager m_programFilesManager;
+			auto content = m_programFilesManager.GetProgramFileContent(_filename);
+			if (!content.size()) {
+				throw DENG::IOException("File '" + _filename + "' does not exist");
+			}
+			int x, y;
+			int channels;
+			unsigned char* data = stbi_load_from_memory((const unsigned char*)content.data(), static_cast<int>(content.size()), &x, &y, &channels, 4);
+			DENG::TextureResource resource;
+			resource.bHeapAllocationFlag = true;
+			resource.eLoadType = DENG::TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_PNG;
+			resource.eResourceType = DENG::TEXTURE_RESOURCE_2D_IMAGE;
+			resource.uWidth = static_cast<uint32_t>(x);
+			resource.uHeight = static_cast<uint32_t>(y);
+			resource.uBitDepth = 4;
+			resource.pRGBAData = (char*)data;
+			return m_pRenderer->AddTextureResource(resource);
 		}
 
 	public:
@@ -382,14 +424,23 @@ class BasicLightingLayer : public DENG::ILayer {
 			m_scene.EmplaceComponent<DENG::MeshComponent>(m_idLightSource);
 			m_scene.EmplaceComponent<DENG::ShaderComponent>(m_idLightSource);
 			m_scene.EmplaceComponent<DENG::TransformComponent>(m_idLightSource);
-			m_scene.EmplaceComponent<DENG::MaterialComponent>(m_idLightSource);
-			m_scene.EmplaceComponent<DENG::LightComponent>(m_idLightSource);
+			auto& light = m_scene.EmplaceComponent<DENG::LightComponent>(m_idLightSource);
+			light.vDiffuse = { 0.5f, 0.5f, 0.5f, 0.f };
+			light.vSpecular = { 1.f, 1.f, 1.f, 0.f };
 
 			m_idShadedCube = m_scene.CreateEntity();
 			m_scene.EmplaceComponent<DENG::MeshComponent>(m_idShadedCube);
 			m_scene.EmplaceComponent<DENG::ShaderComponent>(m_idShadedCube);
 			m_scene.EmplaceComponent<DENG::TransformComponent>(m_idShadedCube);
-			m_scene.EmplaceComponent<DENG::MaterialComponent>(m_idShadedCube);
+			auto& material = m_scene.EmplaceComponent<DENG::MaterialComponent>(m_idShadedCube);
+			
+			try {
+				m_mapIds[0] = _LoadTexture("Textures\\Container\\diffuse.png");
+				m_mapIds[1] = _LoadTexture("Textures\\Container\\specular.png");
+			}
+			catch (const DENG::IOException& e) {
+				DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::CRITICAL);
+			}
 
 			// white cube mesh
 			auto& whiteMesh = m_scene.GetComponent<DENG::MeshComponent>(m_idLightSource);
@@ -398,6 +449,7 @@ class BasicLightingLayer : public DENG::ILayer {
 			whiteMesh.drawCommands.back().uDrawCount = 36;
 			whiteMesh.drawCommands.back().attributeOffsets.push_back(uVertexOffset);
 			whiteMesh.drawCommands.back().attributeOffsets.push_back(uVertexOffset + 3 * sizeof(float));
+			whiteMesh.drawCommands.back().attributeOffsets.push_back(uVertexOffset + 6 * sizeof(float));
 
 			// shaded cube mesh
 			auto& shadedMesh = m_scene.GetComponent<DENG::MeshComponent>(m_idShadedCube);
@@ -482,7 +534,24 @@ class BasicLightingLayer : public DENG::ILayer {
 			}
 
 			auto& material = m_scene.GetComponent<DENG::MaterialComponent>(m_idShadedCube);
-			material = m_cMaterials.find(s_szCurrentItem)->second;
+			auto& selectedMaterial = m_cMaterials.find(s_szCurrentItem)->second;
+			material.vAmbient = selectedMaterial.vAmbient;
+			material.vDiffuse = selectedMaterial.vDiffuse;
+			material.vSpecular = selectedMaterial.vSpecular;
+			material.vMaps = { 0, 0, 0, 0 };
+
+			static bool bUseMaps = false;
+			ImGui::Checkbox("Use diffuse and specular maps", &bUseMaps);
+			
+			if (bUseMaps) {
+				material.vMaps[0] = m_mapIds[0];
+				material.vMaps[1] = m_mapIds[1];
+
+				ImGui::SliderFloat("Specular shininess", &material.fShininess, 0.f, 1.f);
+			}
+			else {
+				material.fShininess = selectedMaterial.fShininess;
+			}
 
 			ImGui::End();
 		}

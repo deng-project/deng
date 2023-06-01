@@ -3,6 +3,7 @@
 
 layout(location = 0) in vec3 vInputPosition;
 layout(location = 1) in vec3 vInputNormal;
+layout(location = 2) in vec2 vInputUV;
 
 layout(location = 0) out vec4 vFragColor;
 
@@ -16,7 +17,8 @@ layout(push_constant) uniform Camera {
 
 struct Light {
 	vec4 vPosition;
-	vec4 vColor;
+	vec4 vDiffuse;
+	vec4 vSpecular;
 };
 
 layout(std430, set = 0, binding = 1) readonly buffer Lights {
@@ -28,32 +30,55 @@ layout(std140, set = 1, binding = 2) uniform Material {
 	vec4 vAmbient;
 	vec4 vDiffuse;
 	vec4 vSpecular;
+	uvec4 vMaps;
 	float fShininess;
 } uboMaterial;
 
+layout(set = 1, binding = 3) uniform sampler2D smpDiffuse;
+layout(set = 1, binding = 4) uniform sampler2D smpSpecular;
+
 void main() {
-	// ambient color
-	const vec3 vAmbientColor = uboLights.vAmbientColor.xyz * uboMaterial.vAmbient.xyz;
+	// ambient
+	vec3 vAmbient = vec3(0.f);
+	
+	if (uboMaterial.vMaps[0] == 0) {
+		vAmbient = uboLights.vAmbientColor.xyz * uboMaterial.vAmbient.xyz;
+	}
+	else {
+		vAmbient = uboLights.vAmbientColor.xyz * vec3(texture(smpDiffuse, vInputUV));
+	}
 	
 	// diffuse and specular
 	vec3 vDiffuse = vec3(0.f);
 	vec3 vSpecular = vec3(0.f);
 	
 	for (int i = 0; i < int(uboLights.vAmbientColor.w); i++) {
-		// diffuse
 		vec3 vNormal = normalize(vInputNormal);
 		vec3 vLightDir = normalize(uboLights.lights[i].vPosition.xyz - vInputPosition);
-		
 		float fDiffuseImpact = max(dot(vNormal, vLightDir), 0.f);
-		vDiffuse += uboLights.lights[i].vColor.xyz * (fDiffuseImpact * uboMaterial.vDiffuse.xyz);
+			
+		// diffuse
+		if (uboMaterial.vMaps[0] == 0) {
+			vDiffuse += uboLights.lights[i].vDiffuse.xyz * (fDiffuseImpact * uboMaterial.vDiffuse.xyz);
+		}
+		// diffuse map
+		else {
+			vDiffuse += uboLights.lights[i].vDiffuse.xyz * (fDiffuseImpact * vec3(texture(smpDiffuse, vInputUV)));
+		}
 	
-		// specular
 		vec3 vViewDir = normalize(uboCamera.vPosition.xyz - vInputPosition);
 		vec3 vReflectDir = reflect(-vLightDir, vNormal);
+		float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.fShininess * 128.f);
 		
-		float fSpecular = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.fShininess * 128.f);
-		vSpecular += uboLights.lights[i].vColor.xyz * (fSpecular * uboMaterial.vSpecular.xyz);
+		// specular
+		if (uboMaterial.vMaps[1] == 0) {
+			vSpecular += uboLights.lights[i].vSpecular.xyz * (fSpecularImpact * uboMaterial.vSpecular.xyz);
+		}
+		// specular map
+		else {
+			vSpecular += uboLights.lights[i].vSpecular.xyz * (fSpecularImpact * vec3(texture(smpSpecular, vInputUV)));
+		}
 	}
 	
-	vFragColor = vec4(vDiffuse + vAmbientColor + vSpecular, 1.f);
+	vFragColor = vec4(vDiffuse + vAmbient + vSpecular, 1.f);
 }

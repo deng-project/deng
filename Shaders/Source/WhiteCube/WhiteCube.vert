@@ -3,9 +3,11 @@
 
 layout(location = 0) in vec3 vInputPosition;
 layout(location = 1) in vec3 vInputNormal;
+layout(location = 2) in vec2 vInputUV;
 
 layout(location = 0) out vec3 vOutputPosition;
 layout(location = 1) out vec3 vOutputNormal;
+layout(location = 2) out vec2 vOutputUV;
 
 layout(push_constant) uniform Camera {
 	mat4 mProjection;
@@ -91,4 +93,5 @@ void main() {
 	vOutputPosition = vec3(mTransform * vec4(vInputPosition, 1.f));
 	vOutputPosition = vInputPosition;
 	vOutputNormal = vInputNormal;
+	vOutputUV = vInputUV;
 }

@@ -73,6 +73,11 @@ namespace DENG {
 		_shader.uboDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_materialOffsets[cuEntity]);
 		_shader.uboDataLayouts[2].block.uSize = static_cast<uint32_t>(sizeof(MaterialComponent));
 
-		m_pRenderer->DrawMesh(_mesh, _shader, m_pFramebuffer, {});
+		std::vector<uint32_t> textureIds;
+		if (_material.vMaps[0] && _material.vMaps[1]) {
+			textureIds.push_back(_material.vMaps[0]);
+			textureIds.push_back(_material.vMaps[1]);
+		}
+		m_pRenderer->DrawMesh(_mesh, _shader, m_pFramebuffer, textureIds);
 	}
 }

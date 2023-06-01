@@ -79,12 +79,12 @@ namespace DENG {
 
         switch (textureResource.eResourceType) {
             case TEXTURE_RESOURCE_2D_IMAGE:
-                uSize = static_cast<VkDeviceSize>(textureResource.uWidth * textureResource.uHeight * textureResource.uBitDepth);
+                uSize = static_cast<VkDeviceSize>(textureResource.uWidth * textureResource.uHeight * (uint32_t)textureResource.uBitDepth);
                 uArrayCount = 1;
                 break;
 
             case TEXTURE_RESOURCE_3D_IMAGE:
-                uSize = static_cast<VkDeviceSize>(textureResource.uWidth * textureResource.uHeight * textureResource.uBitDepth * 6u);
+                uSize = static_cast<VkDeviceSize>(textureResource.uWidth * textureResource.uHeight * (uint32_t)textureResource.uBitDepth * 6u);
                 uArrayCount = 6;
                 bImageBits = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
                 break;
@@ -159,12 +159,12 @@ namespace DENG {
             imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         else imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
         imageViewCreateInfo.format = eFormat;
-        //imageViewCreateInfo.components = {
-        //    VK_COMPONENT_SWIZZLE_R,
-        //    VK_COMPONENT_SWIZZLE_G,
-        //    VK_COMPONENT_SWIZZLE_B,
-        //    VK_COMPONENT_SWIZZLE_A
-        //};
+        imageViewCreateInfo.components = {
+            VK_COMPONENT_SWIZZLE_R,
+            VK_COMPONENT_SWIZZLE_G,
+            VK_COMPONENT_SWIZZLE_B,
+            VK_COMPONENT_SWIZZLE_A
+        };
         imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         imageViewCreateInfo.subresourceRange.levelCount = uMipLevels;

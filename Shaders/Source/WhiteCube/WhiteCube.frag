@@ -3,6 +3,7 @@
 
 layout(location = 0) in vec3 vInputPosition;
 layout(location = 1) in vec3 vInputNormal;
+layout(location = 2) in vec2 vInputUV;
 
 layout(location = 0) out vec4 vFragColor;
 
@@ -16,7 +17,8 @@ layout(push_constant) uniform Camera {
 
 struct Light {
 	vec4 vPosition;
-	vec4 vColor;
+	vec4 vDiffuse;
+	vec4 vSpecular;
 };
 
 layout(std140, set = 0, binding = 1) readonly buffer Lights {
@@ -29,6 +31,7 @@ layout(std140, set = 1, binding = 2) uniform Material {
 	vec4 vAmbient;
 	vec4 vDiffuse;
 	vec4 vSpecular;
+	uvec4 vMaps;
 	float fShininess;
 } uboMaterial;
 

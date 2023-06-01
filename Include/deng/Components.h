@@ -43,29 +43,28 @@ namespace DENG {
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
 
-		using Vec4 = TRS::Vector4<float>;
-		MaterialComponent(const Vec4& _vAmbient, const Vec4& _vDiffuse, const Vec4& _vSpecular, float _fShininess) :
-			vAmbient(_vAmbient),
-			vDiffuse(_vDiffuse),
-			vSpecular(_vSpecular),
-			fShininess(_fShininess) {}
-
 		TRS::Vector4<float> vAmbient = { 1.f, 1.f, 1.f, 0.f };
 		TRS::Vector4<float> vDiffuse;
 		TRS::Vector4<float> vSpecular;
-		float fShininess = 0.f;
+		// first: diffuse map id, second: specular map ids, third and fourth: padding
+		TRS::Vector4<uint32_t> vMaps;
+		float fShininess = 0.3f;
 	};
 
 
 	struct LightComponent {
 		LightComponent() = default;
 		LightComponent(const LightComponent&) = default;
-		LightComponent(TRS::Vector4<float> _vPosition, TRS::Vector4<float> _vColor) :
+
+		using Vec4 = TRS::Vector4<float>;
+		LightComponent(Vec4 _vPosition, Vec4 _vDiffuse, Vec4 _vSpecular) :
 			vPosition(_vPosition),
-			vColor(_vColor) {}
+			vDiffuse(_vDiffuse),
+			vSpecular(_vSpecular) {}
 		
 		TRS::Vector4<float> vPosition = { 0.f, 0.f, 0.f, 1.f };
-		TRS::Vector4<float> vColor = { 1.f, 1.f, 1.f, 1.f };
+		TRS::Vector4<float> vDiffuse;
+		TRS::Vector4<float> vSpecular;
 	};
 
 #define SCRIPT_DEFINE_CONSTRUCTOR(script) script::script(DENG::Entity _idEntity, DENG::EventManager& _eventManager, DENG::Scene& _scene) :\
