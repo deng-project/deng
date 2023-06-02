@@ -32,7 +32,6 @@ namespace DENG {
             private:
                 VkDevice m_hDevice = VK_NULL_HANDLE;
                 const std::unordered_map<uint32_t, TextureResource>& m_textureRegistry;
-                const std::vector<UniformDataLayout>& m_uniformDataLayouts;
                 uint32_t m_u2DMissingTextureId;
                 uint32_t m_u3DMissingTextureId;
 
@@ -43,6 +42,7 @@ namespace DENG {
                 // second: descriptor pool size
                 std::vector<VkDescriptorPool> m_meshDescriptorPools;
                 std::vector<VkDescriptorSet> m_meshDescriptorSets;
+                uint32_t m_uCurrentFrame = 0;
                 uint32_t m_uMeshCounter = 0;
                 uint32_t m_uMeshMasterPoolCapacity = 100; // the real pool size is m_uMeshMasterPoolCapacity * m_uBufferingStageCount
                 uint32_t m_uBufferingStageCount = MAX_FRAMES_IN_FLIGHT;
@@ -51,10 +51,10 @@ namespace DENG {
                 VkDescriptorSetLayout m_hMeshDescriptorSetLayout = VK_NULL_HANDLE;
 
             private:
-                void _CreateDescriptorSetLayouts();
-                void _CreateShaderDescriptorPool();
-                void _AllocateNewMeshDescriptorPool();
-                void _AllocateShaderDescriptorSets();
+                void _CreateDescriptorSetLayouts(const std::vector<UniformDataLayout>& _uniformDataLayouts);
+                void _CreateShaderDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts);
+                void _AllocateNewMeshDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts);
+                void _AllocateShaderDescriptorSets(const std::vector<UniformDataLayout>& _uniformDataLayouts);
 
             public:
                 DescriptorAllocator(
@@ -70,12 +70,19 @@ namespace DENG {
                 ~DescriptorAllocator() noexcept;
 
                 // whenever new uniform buffer is allocated
-                VkDescriptorSet RequestMeshDescriptorSet();
-                void UpdateDescriptorSet(VkBuffer _hMainBuffer, VkDescriptorSet _hDescriptorSet, UniformUsage _eUsage, size_t _uFrameIndex = 0, const std::vector<uint32_t>& _textures = {});
-                void MergeMeshDescriptorPools();
+                VkDescriptorSet RequestMeshDescriptorSet(const std::vector<UniformDataLayout>& _uniformDataLayouts);
+                void UpdateDescriptorSet(
+                    VkBuffer _hMainBuffer, 
+                    VkDescriptorSet _hDescriptorSet, 
+                    UniformUsage _eUsage, 
+                    const std::vector<UniformDataLayout>& _uniformDataLayouts,
+                    size_t _uFrameIndex = 0,
+                    const std::vector<uint32_t>& _textures = {});
+                void MergeMeshDescriptorPools(const std::vector<UniformDataLayout>& _uniformDataLayouts);
 
                 inline void ResetMeshCounter() {
-                    if (m_uMeshCounter % m_uBufferingStageCount == 0)
+                    m_uCurrentFrame = (m_uCurrentFrame + 1) % m_uBufferingStageCount;
+                    if (m_uCurrentFrame == 0)
                         m_uMeshCounter = 0;
                 }
 

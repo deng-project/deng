@@ -141,23 +141,6 @@ namespace DENG {
     struct ShaderComponent {
         ShaderComponent() = default;
         ShaderComponent(const ShaderComponent&) = default;
-        ShaderComponent(ShaderComponent&& shader) noexcept :
-            attributes(std::move(shader.attributes)),
-            attributeStrides(std::move(shader.attributeStrides)),
-            uboDataLayouts(std::move(shader.uboDataLayouts)),
-            pShader(shader.pShader),
-            uShaderComponentId(shader.uShaderComponentId),
-            viewport(shader.viewport),
-            eCullMode(shader.eCullMode),
-            ePrimitiveMode(shader.ePrimitiveMode),
-            bEnableCustomViewport(shader.bEnableCustomViewport),
-            bEnable2DTextures(shader.bEnable2DTextures),
-            bEnable3DTextures(shader.bEnable3DTextures),
-            bEnableScissor(shader.bEnableScissor),
-            bEnableDepthTesting(shader.bEnableDepthTesting),
-            bEnableStencilTesting(shader.bEnableStencilTesting),
-            bEnableBlend(shader.bEnableBlend),
-            bEnableIndexing(shader.bEnableIndexing) {}
 
         std::vector<AttributeType> attributes;
         std::vector<std::size_t> attributeStrides;

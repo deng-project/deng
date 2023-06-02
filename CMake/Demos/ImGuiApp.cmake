@@ -4,10 +4,10 @@
 # author: Karl-Mihkel Ott
 
 set(IMGUI_APP_TARGET ImGuiApp)
-set(IMGUI_APP_SOURCES Tests/ImGuiApp.cpp)
+set(IMGUI_APP_SOURCES Demos/ImGuiApp.cpp)
 
 add_executable(${IMGUI_APP_TARGET} ${IMGUI_APP_SOURCES})
 add_dependencies(${IMGUI_APP_TARGET} ${DENG_MINIMAL_TARGET})
 target_link_libraries(${IMGUI_APP_TARGET} 
 	PRIVATE ${DENG_MINIMAL_TARGET})
-set_target_properties(${IMGUI_APP_TARGET} PROPERTIES FOLDER ${MANUAL_TEST_DIR})
+set_target_properties(${IMGUI_APP_TARGET} PROPERTIES FOLDER ${DEMO_APPS_DIR})

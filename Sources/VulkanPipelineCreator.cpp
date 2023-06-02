@@ -539,9 +539,7 @@ namespace DENG {
             m_graphicsPipelineCreateInfo.pDepthStencilState = &m_depthStencilStateCreateInfo;
             m_graphicsPipelineCreateInfo.pDynamicState = &m_dynamicStateCreateInfo;
             m_graphicsPipelineCreateInfo.pViewportState = &m_viewportStateCreateInfo;
-
             m_graphicsPipelineCreateInfo.layout = m_hPipelineLayout;
-
             m_graphicsPipelineCreateInfo.renderPass = m_hRenderPass;
 
             // tmp

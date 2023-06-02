@@ -19,5 +19,7 @@
 #define MF_2_SQRTPI 1.1283791f   // 2/sqrt(pi)
 #define MF_SQRT2    1.4142135f   // sqrt(2)
 #define MF_SQRT1_2  0.7071067f	// 1/sqrt(2)
+#define MF_SQRT3	1.7320508f	// sqrt(3)
+#define MF_SQRT1_3	0.5773503f	// 1 / sqrt(3)
 
 #endif

@@ -18,6 +18,7 @@
 #include "trs/Quaternion.h"
 
 #include "deng/Api.h"
+#include "deng/MathConstants.h"
 #include "deng/Event.h"
 #include "deng/ErrorDefinitions.h"
 #include "deng/ShaderComponent.h"
@@ -52,20 +53,64 @@ namespace DENG {
 	};
 
 
-	struct LightComponent {
-		LightComponent() = default;
-		LightComponent(const LightComponent&) = default;
+	struct PointLightComponent {
+		PointLightComponent() = default;
+		PointLightComponent(const PointLightComponent&) = default;
 
 		using Vec4 = TRS::Vector4<float>;
-		LightComponent(Vec4 _vPosition, Vec4 _vDiffuse, Vec4 _vSpecular) :
+		using Vec3 = TRS::Vector3<float>;
+		PointLightComponent(const Vec4& _vPosition, const Vec4& _vDiffuse, const Vec4& _vSpecular, const Vec3& _vK) :
 			vPosition(_vPosition),
 			vDiffuse(_vDiffuse),
-			vSpecular(_vSpecular) {}
+			vSpecular(_vSpecular),
+			vK(_vK) {}
 		
-		TRS::Vector4<float> vPosition = { 0.f, 0.f, 0.f, 1.f };
-		TRS::Vector4<float> vDiffuse;
-		TRS::Vector4<float> vSpecular;
+		Vec4 vPosition = { 0.f, 0.f, 0.f, 1.f };
+		Vec4 vDiffuse;
+		Vec4 vSpecular;
+
+		// first: constant, second: linear, third: quadric
+		Vec3 vK;
+		float _pad = 0.f;
 	};
+
+
+	struct DirectionalLightComponent {
+		DirectionalLightComponent() = default;
+		DirectionalLightComponent(const DirectionalLightComponent&) = default;
+		
+		using Vec4 = TRS::Vector4<float>;
+		DirectionalLightComponent(const Vec4& _vDirection, const Vec4& _vDiffuse, const Vec4& _vSpecular) :
+			vDirection(_vDirection),
+			vDiffuse(_vDiffuse),
+			vSpecular(_vSpecular) {}
+
+		Vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
+		Vec4 vDiffuse;
+		Vec4 vSpecular;
+	};
+
+
+	struct SpotlightComponent {
+		SpotlightComponent() = default;
+		SpotlightComponent(const SpotlightComponent&) = default;
+
+		using Vec4 = TRS::Vector4<float>;
+		SpotlightComponent(const Vec4& _vPosition, const Vec4& _vDirection, float _fInnerCutoff, float _fOuterCutoff) :
+			vPosition(_vPosition),
+			vDirection(_vDirection),
+			fInnerCutoff(_fInnerCutoff),
+			fOuterCutoff(_fOuterCutoff) {}
+
+		Vec4 vPosition;
+		Vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
+		Vec4 vDiffuse;
+		Vec4 vSpecular;
+		float fInnerCutoff = MF_SQRT3 / 2.f; // 30 degrees
+		float fOuterCutoff = 0.819152f;		 // 35 degrees
+		float _pad[2] = {};
+	};
+
 
 #define SCRIPT_DEFINE_CONSTRUCTOR(script) script::script(DENG::Entity _idEntity, DENG::EventManager& _eventManager, DENG::Scene& _scene) :\
 											 ScriptBehaviour(_idEntity, _eventManager, _scene, #script) {}

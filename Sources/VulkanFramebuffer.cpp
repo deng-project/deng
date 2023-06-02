@@ -463,7 +463,7 @@ namespace DENG {
             std::array<VkDescriptorSet, 2> descriptorSets = { VK_NULL_HANDLE, VK_NULL_HANDLE };
             if (_pDescriptorAllocator) {
                 descriptorSets[0] = _pDescriptorAllocator->RequestShaderDescriptorSet(m_uCurrentFrameIndex);
-                descriptorSets[1] = _pDescriptorAllocator->RequestMeshDescriptorSet();
+                descriptorSets[1] = _pDescriptorAllocator->RequestMeshDescriptorSet(_shader.uboDataLayouts);
             }
 
             // check if textures should be bound
@@ -471,7 +471,8 @@ namespace DENG {
                 _pDescriptorAllocator->UpdateDescriptorSet(
                     m_hMainBuffer, 
                     descriptorSets[0], 
-                    UNIFORM_USAGE_PER_SHADER, 
+                    UNIFORM_USAGE_PER_SHADER,
+                    _shader.uboDataLayouts,
                     m_uCurrentFrameIndex,
                     _textureIds);
             }
@@ -480,6 +481,7 @@ namespace DENG {
                     m_hMainBuffer, 
                     descriptorSets[1],
                     UNIFORM_USAGE_PER_MESH,
+                    _shader.uboDataLayouts,
                     m_uCurrentFrameIndex,
                     _textureIds);
             }

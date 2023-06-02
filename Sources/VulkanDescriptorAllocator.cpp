@@ -20,16 +20,15 @@ namespace DENG {
             uint32_t _uMissing3DTextureId
         ) : m_hDevice(_hDevice),
             m_textureRegistry(_textureRegistry),
-            m_uniformDataLayouts(_uniformDataLayouts),
             m_uBufferingStageCount(_uBufferingStageCount),
             m_u2DMissingTextureId(_uMissing2DTextureId),
             m_u3DMissingTextureId(_uMissing3DTextureId)
         {
             try {
-                _CreateDescriptorSetLayouts();
-                _CreateShaderDescriptorPool();
-                _AllocateNewMeshDescriptorPool();
-                _AllocateShaderDescriptorSets();
+                _CreateDescriptorSetLayouts(_uniformDataLayouts);
+                _CreateShaderDescriptorPool(_uniformDataLayouts);
+                _AllocateNewMeshDescriptorPool(_uniformDataLayouts);
+                _AllocateShaderDescriptorSets(_uniformDataLayouts);
             }
             catch (const RendererException& e) {
                 DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
@@ -40,7 +39,6 @@ namespace DENG {
         DescriptorAllocator::DescriptorAllocator(DescriptorAllocator&& _descriptorAllocator) noexcept :
             m_hDevice(_descriptorAllocator.m_hDevice),
             m_textureRegistry(_descriptorAllocator.m_textureRegistry),
-            m_uniformDataLayouts(_descriptorAllocator.m_uniformDataLayouts),
             m_u2DMissingTextureId(_descriptorAllocator.m_u2DMissingTextureId),
             m_u3DMissingTextureId(_descriptorAllocator.m_u3DMissingTextureId),
             m_hShaderDescriptorPool(_descriptorAllocator.m_hShaderDescriptorPool),
@@ -76,14 +74,14 @@ namespace DENG {
         }
 
 
-        void DescriptorAllocator::_CreateDescriptorSetLayouts() {
+        void DescriptorAllocator::_CreateDescriptorSetLayouts(const std::vector<UniformDataLayout>& _uniformDataLayouts) {
             std::vector<VkDescriptorSetLayoutBinding> shaderBindings;
             std::vector<VkDescriptorSetLayoutBinding> meshBindings;
 
-            shaderBindings.reserve(m_uniformDataLayouts.size());
-            meshBindings.reserve(m_uniformDataLayouts.size());
+            shaderBindings.reserve(_uniformDataLayouts.size());
+            meshBindings.reserve(_uniformDataLayouts.size());
 
-            for (auto it = m_uniformDataLayouts.begin(); it != m_uniformDataLayouts.end(); it++) {
+            for (auto it = _uniformDataLayouts.begin(); it != _uniformDataLayouts.end(); it++) {
                 VkDescriptorSetLayoutBinding* pBinding = nullptr;
                 if (it->eUsage == UNIFORM_USAGE_PER_MESH) {
                     meshBindings.emplace_back();
@@ -145,17 +143,19 @@ namespace DENG {
 
                 if (vkCreateDescriptorSetLayout(m_hDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_hMeshDescriptorSetLayout) != VK_SUCCESS)
                     throw RendererException("vkCreateDescriptorSetLayout() failed to create a per-mesh descriptor set layout");
+                
+                return;
             }
         }
 
-        void DescriptorAllocator::_CreateShaderDescriptorPool() {
+        void DescriptorAllocator::_CreateShaderDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts) {
             std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
-            descriptorPoolSizes.reserve(m_uniformDataLayouts.size());
+            descriptorPoolSizes.reserve(_uniformDataLayouts.size());
 
-            for (size_t i = 0; i < m_uniformDataLayouts.size(); i++) {
-                if (m_uniformDataLayouts[i].eUsage == UNIFORM_USAGE_PER_SHADER) {
+            for (size_t i = 0; i < _uniformDataLayouts.size(); i++) {
+                if (_uniformDataLayouts[i].eUsage == UNIFORM_USAGE_PER_SHADER) {
                     descriptorPoolSizes.emplace_back();
-                    switch (m_uniformDataLayouts[i].eType) {
+                    switch (_uniformDataLayouts[i].eType) {
                         case UNIFORM_DATA_TYPE_BUFFER:
                             descriptorPoolSizes.back().type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                             break;
@@ -191,16 +191,16 @@ namespace DENG {
         }
 
 
-        void DescriptorAllocator::_AllocateNewMeshDescriptorPool() {
+        void DescriptorAllocator::_AllocateNewMeshDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts) {
             m_meshDescriptorPools.emplace_back();
 
             std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
-            descriptorPoolSizes.reserve(m_uniformDataLayouts.size());
+            descriptorPoolSizes.reserve(_uniformDataLayouts.size());
 
-            for (size_t i = 0; i < m_uniformDataLayouts.size(); i++) {
-                if (m_uniformDataLayouts[i].eUsage == UNIFORM_USAGE_PER_MESH) {
+            for (size_t i = 0; i < _uniformDataLayouts.size(); i++) {
+                if (_uniformDataLayouts[i].eUsage == UNIFORM_USAGE_PER_MESH) {
                     descriptorPoolSizes.emplace_back();
-                    switch (m_uniformDataLayouts[i].eType) {
+                    switch (_uniformDataLayouts[i].eType) {
                         case UNIFORM_DATA_TYPE_BUFFER:
                             descriptorPoolSizes.back().type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                             break;
@@ -236,7 +236,7 @@ namespace DENG {
         }
 
 
-        void DescriptorAllocator::_AllocateShaderDescriptorSets() {
+        void DescriptorAllocator::_AllocateShaderDescriptorSets(const std::vector<UniformDataLayout>& _uniformDataLayouts) {
             m_shaderDescriptorSets.resize(m_uBufferingStageCount, VK_NULL_HANDLE);
 
             if (m_hShaderDescriptorPool != VK_NULL_HANDLE) {
@@ -254,7 +254,7 @@ namespace DENG {
         }
 
 
-        VkDescriptorSet DescriptorAllocator::RequestMeshDescriptorSet() {
+        VkDescriptorSet DescriptorAllocator::RequestMeshDescriptorSet(const std::vector<UniformDataLayout>& _uniformDataLayouts) {
             if (m_hMeshDescriptorSetLayout == VK_NULL_HANDLE)
                 return VK_NULL_HANDLE;
 
@@ -262,7 +262,7 @@ namespace DENG {
 
                 // check if new pool allocation is required
                 if (m_uMeshCounter >= static_cast<size_t>(m_uMeshMasterPoolCapacity * m_uBufferingStageCount) * m_meshDescriptorPools.size())
-                    _AllocateNewMeshDescriptorPool();
+                    _AllocateNewMeshDescriptorPool(_uniformDataLayouts);
 
                 VkDescriptorPool descriptorPool = m_meshDescriptorPools.back();
                 m_meshDescriptorSets.emplace_back();
@@ -285,6 +285,7 @@ namespace DENG {
             VkBuffer _hMainBuffer, 
             VkDescriptorSet _hDescriptorSet, 
             UniformUsage _eUsage, 
+            const std::vector<UniformDataLayout>& _uniformDataLayouts,
             size_t _uFrameIndex, 
             const std::vector<uint32_t>& _textures) 
         {
@@ -292,9 +293,9 @@ namespace DENG {
             std::vector<VkDescriptorImageInfo> descriptorImageInfos;
             std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 
-            descriptorBufferInfos.reserve(m_uniformDataLayouts.size());
-            descriptorImageInfos.reserve(m_uniformDataLayouts.size());
-            writeDescriptorSets.reserve(m_uniformDataLayouts.size());
+            descriptorBufferInfos.reserve(_uniformDataLayouts.size());
+            descriptorImageInfos.reserve(_uniformDataLayouts.size());
+            writeDescriptorSets.reserve(_uniformDataLayouts.size());
 
             auto m_missing2DTexture = m_textureRegistry.find(m_u2DMissingTextureId);
             auto m_missing3DTexture = m_textureRegistry.find(m_u3DMissingTextureId);
@@ -303,21 +304,21 @@ namespace DENG {
             DENG_ASSERT(m_missing3DTexture != m_textureRegistry.end());
 
             uint32_t uTextureCounter = 0;
-            for (size_t i = 0; i < m_uniformDataLayouts.size(); i++) {
-                if (m_uniformDataLayouts[i].eUsage == _eUsage) {
-                    switch (m_uniformDataLayouts[i].eType) {
+            for (size_t i = 0; i < _uniformDataLayouts.size(); i++) {
+                if (_uniformDataLayouts[i].eUsage == _eUsage) {
+                    switch (_uniformDataLayouts[i].eType) {
                         case UNIFORM_DATA_TYPE_BUFFER:
                             descriptorBufferInfos.emplace_back();
                             descriptorBufferInfos.back().buffer = _hMainBuffer;
-                            descriptorBufferInfos.back().offset = m_uniformDataLayouts[i].block.uOffset;
-                            descriptorBufferInfos.back().range = m_uniformDataLayouts[i].block.uSize;
+                            descriptorBufferInfos.back().offset = _uniformDataLayouts[i].block.uOffset;
+                            descriptorBufferInfos.back().range = _uniformDataLayouts[i].block.uSize;
                             break;
 
                         case UNIFORM_DATA_TYPE_STORAGE_BUFFER:
                             descriptorBufferInfos.emplace_back();
                             descriptorBufferInfos.back().buffer = _hMainBuffer;
-                            descriptorBufferInfos.back().offset = m_uniformDataLayouts[i].block.uOffset + _uFrameIndex * m_uniformDataLayouts[i].block.uSize;
-                            descriptorBufferInfos.back().range = m_uniformDataLayouts[i].block.uSize;
+                            descriptorBufferInfos.back().offset = _uniformDataLayouts[i].block.uOffset + _uFrameIndex * _uniformDataLayouts[i].block.uSize;
+                            descriptorBufferInfos.back().range = _uniformDataLayouts[i].block.uSize;
                             break;
 
                         case UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER:
@@ -377,7 +378,7 @@ namespace DENG {
             uint32_t uUsedBufferCount = 0;
             uint32_t uUsedImageCount = 0;
 
-            for (auto it = m_uniformDataLayouts.begin(); it != m_uniformDataLayouts.end(); it++) {
+            for (auto it = _uniformDataLayouts.begin(); it != _uniformDataLayouts.end(); it++) {
                 if (it->eUsage == _eUsage) {
                     writeDescriptorSets.emplace_back();
                     writeDescriptorSets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -417,7 +418,7 @@ namespace DENG {
         }
 
 
-        void DescriptorAllocator::MergeMeshDescriptorPools() {
+        void DescriptorAllocator::MergeMeshDescriptorPools(const std::vector<UniformDataLayout>& _uniformDataLayouts) {
             if (m_meshDescriptorPools.size() > 1) {
                 vkDeviceWaitIdle(m_hDevice);
 
@@ -429,7 +430,7 @@ namespace DENG {
                 }
 
                 m_meshDescriptorPools.clear();
-                _AllocateNewMeshDescriptorPool();
+                _AllocateNewMeshDescriptorPool(_uniformDataLayouts);
             }
         }
     }

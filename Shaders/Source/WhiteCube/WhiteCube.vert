@@ -2,12 +2,6 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 vInputPosition;
-layout(location = 1) in vec3 vInputNormal;
-layout(location = 2) in vec2 vInputUV;
-
-layout(location = 0) out vec3 vOutputPosition;
-layout(location = 1) out vec3 vOutputNormal;
-layout(location = 2) out vec2 vOutputUV;
 
 layout(push_constant) uniform Camera {
 	mat4 mProjection;
@@ -17,7 +11,7 @@ layout(push_constant) uniform Camera {
 	vec4 vPosition;
 } uboCamera;
 
-layout(std140, set = 1, binding = 0) uniform Transform {
+layout(std140, set = 0, binding = 0) uniform Transform {
 	mat4 mCustom;
 	vec4 vTranslation;
 	vec3 vScale;
@@ -61,7 +55,7 @@ mat4 CalculateTransform() {
 	mScale[1][1] = uboTransform.vScale.y;
 	mScale[2][2] = uboTransform.vScale.z;
 	
-	return mScale * mRotation * mTranslation;
+	return mRotation * mTranslation * mScale;
 }
 
 mat4 CalculateViewMatrix() {
@@ -90,8 +84,4 @@ void main() {
 	const mat4 mView = CalculateViewMatrix();
 	
 	gl_Position = uboCamera.mProjection * mView * mTransform * vec4(vInputPosition, 1.0f);
-	vOutputPosition = vec3(mTransform * vec4(vInputPosition, 1.f));
-	vOutputPosition = vInputPosition;
-	vOutputNormal = vInputNormal;
-	vOutputUV = vInputUV;
 }

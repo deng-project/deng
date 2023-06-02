@@ -15,7 +15,7 @@ set(VULKAN_SDK_PATH "C:/VulkanSDK/${VULKAN_VERSION}" CACHE STRING "Vulkan SDK pa
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
-option(DENG_BUILD_TESTS "Build DENG testing applications" ON)
+option(DENG_BUILD_DEMOS "Build DENG demo applications" ON)
 option(DENG_STATIC "Build DENG as a static library" ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -61,10 +61,10 @@ include(CMake/libdeng.cmake)
 
 # Non-experimental tests
 if(DENG_BUILD_TESTS)
-    message(STATUS "Adding test build configurations")
-	set(MANUAL_TEST_DIR ManualTests)
+    message(STATUS "Adding demo build configurations")
+	set(DEMO_APPS_DIR DemoApps)
 	
-	include(CMake/Tests/TriangleApp.cmake)
-	include(CMake/Tests/ImGuiApp.cmake)
-	include(CMake/Tests/BasicLightingTest.cmake)
+	include(CMake/Demos/TriangleApp.cmake)
+	include(CMake/Demos/ImGuiApp.cmake)
+	include(CMake/Demos/BasicLightingDemo.cmake)
 endif()

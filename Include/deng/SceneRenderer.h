@@ -10,7 +10,9 @@
 #include "deng/IRenderer.h"
 #include "deng/Components.h"
 
-#include "trs/Vector.h"
+#ifdef SCENE_RENDERER_CPP
+	#include "trs/Vector.h"
+#endif
 
 namespace DENG {
 
@@ -20,25 +22,30 @@ namespace DENG {
 			IFramebuffer* m_pFramebuffer = nullptr;
 			std::vector<size_t> m_transformOffsets;
 			std::vector<size_t> m_materialOffsets;
-			size_t m_uLightsOffset = SIZE_MAX;
-			size_t m_uLightsCount = 0;
-			size_t m_uCameraOffset = 0;
+			
+			std::array<size_t, 3> m_arrLightOffsets = { SIZE_MAX, 0, 0 };
+			size_t m_uUsedLightsSize = 0;
+
+			char* m_pLightBuffer = nullptr;
+			size_t m_uLightBufferSize = 0;
 
 		public:
 			SceneRenderer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
-			
-			inline void RenderCamera(const CameraComponent& _camera) {
-				m_pRenderer->UpdateBuffer(&_camera, sizeof(CameraComponent), m_uCameraOffset);
-			}
+			~SceneRenderer();
 
-			void RenderLights(const std::vector<LightComponent>& _lights, const TRS::Vector3<float>& _vAmbient);
+			void RenderLights(
+				const std::vector<PointLightComponent>& _pointLights, 
+				const std::vector<DirectionalLightComponent>& _dirLights, 
+				const std::vector<SpotlightComponent>& _spotLights,
+				const TRS::Vector3<float>& _vAmbient);
+
 			void RenderMesh(
 				const MeshComponent& _mesh,
-				const CameraComponent& _camera,
 				ShaderComponent& _shader, 
 				Entity _idEntity,
-				const MaterialComponent& _material,
-				const TransformComponent& _transform = TransformComponent());
+				const MaterialComponent& _material = MaterialComponent(),
+				const TransformComponent& _transform = TransformComponent(),
+				const CameraComponent& _camera = CameraComponent());
 	};
 }
 

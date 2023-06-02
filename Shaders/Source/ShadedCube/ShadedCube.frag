@@ -1,6 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#define SHINE_MUL 128.f
+
 layout(location = 0) in vec3 vInputPosition;
 layout(location = 1) in vec3 vInputNormal;
 layout(location = 2) in vec2 vInputUV;
@@ -15,18 +17,47 @@ layout(push_constant) uniform Camera {
 	vec4 vPosition;
 } uboCamera;
 
-struct Light {
+struct PointLight {
 	vec4 vPosition;
+	vec4 vDiffuse;
+	vec4 vSpecular;
+	vec3 vK;
+};
+
+struct DirectionalLight {
+	vec4 vDirection;
 	vec4 vDiffuse;
 	vec4 vSpecular;
 };
 
-layout(std430, set = 0, binding = 1) readonly buffer Lights {
-	vec4 vAmbientColor;
-	Light lights[];
-} uboLights;
 
-layout(std140, set = 1, binding = 2) uniform Material {
+struct SpotLight {
+	vec4 vPosition;
+	vec4 vDirection;
+	vec4 vDiffuse;
+	vec4 vSpecular;
+	float fInnerCutoff;
+	float fOuterCutoff;
+};
+
+layout(std430, set = 0, binding = 1) readonly buffer Lights1 {
+	vec4 vAmbient;
+	// x: point light count; y: directional light count; z: spot light count
+	uvec4 vLightCounts;
+	PointLight pointLights[];
+} uboPointLights;
+
+
+layout(std430, set = 0, binding = 2) readonly buffer Lights2 {
+	DirectionalLight dirLights[];
+} uboDirLights;
+
+
+layout(std430, set = 0, binding = 3) readonly buffer Lights3 {
+	SpotLight spotLights[];
+} uboSpotLights;
+
+layout(std140, set = 1, binding = 4) uniform Material {
 	vec4 vAmbient;
 	vec4 vDiffuse;
 	vec4 vSpecular;
@@ -34,51 +65,108 @@ layout(std140, set = 1, binding = 2) uniform Material {
 	float fShininess;
 } uboMaterial;
 
-layout(set = 1, binding = 3) uniform sampler2D smpDiffuse;
-layout(set = 1, binding = 4) uniform sampler2D smpSpecular;
+layout(set = 1, binding = 5) uniform sampler2D smpDiffuse;
+layout(set = 1, binding = 6) uniform sampler2D smpSpecular;
+
+
+vec3 g_vDiffuse = vec3(0.f);
+vec3 g_vSpecular = vec3(0.f);
+
+vec3 calculateDiffuse(vec3 vLightDir, vec3 vLightDiffuse) {
+	const vec3 vNormal = normalize(vInputNormal);
+	const float fDiffuseImpact = max(dot(vNormal, vLightDir), 0.f);
+	
+	// material diffuse
+	if (uboMaterial.vMaps[0] == 0) {
+		return vLightDiffuse * (fDiffuseImpact * uboMaterial.vDiffuse.xyz);
+	}
+	// diffuse map is used
+	else {
+		return vLightDiffuse * (fDiffuseImpact * vec3(texture(smpDiffuse, vInputUV)));
+	}
+}
+
+vec3 calculateSpecular(vec3 vLightDir, vec3 vLightSpecular) {
+	const vec3 vNormal = normalize(vInputNormal);
+	const vec3 vViewDir = normalize(uboCamera.vPosition.xyz - vInputPosition);
+	const vec3 vReflectDir = reflect(-vLightDir, vNormal);
+	const float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.fShininess * SHINE_MUL);
+	
+	// material specular
+	if (uboMaterial.vMaps[1] == 0) {
+		return vLightSpecular * (fSpecularImpact * uboMaterial.vSpecular.xyz);
+	}
+	// specular map
+	else {
+		return vLightSpecular * (fSpecularImpact * vec3(texture(smpSpecular, vInputUV)));
+	}
+}
+
+void calculatePointLights() {
+	for (uint i = 0; i < uboPointLights.vLightCounts.x; i++) {
+		vec3 vLightDir = uboPointLights.pointLights[i].vPosition.xyz - vInputPosition;
+		const float fDistance = length(vLightDir);
+		const float fAttenuation = 1.f / (uboPointLights.pointLights[i].vK[0] + 
+			uboPointLights.pointLights[i].vK[1] * fDistance + uboPointLights.pointLights[i].vK[2] * (fDistance * fDistance));
+		
+		vLightDir = normalize(vLightDir);
+		
+		g_vDiffuse += fAttenuation * calculateDiffuse(vLightDir, uboPointLights.pointLights[i].vDiffuse.xyz);
+		g_vSpecular += fAttenuation * calculateSpecular(vLightDir, uboPointLights.pointLights[i].vSpecular.xyz);
+	}
+}
+
+void calculateDirLights() {
+	// for each directional light
+	for (uint i = 0; i < uboPointLights.vLightCounts.y; i++) {
+		const vec3 vLightDir = normalize(-uboDirLights.dirLights[i].vDirection.xyz);
+		
+		g_vDiffuse += calculateDiffuse(vLightDir, uboDirLights.dirLights[i].vDiffuse.xyz);
+		g_vSpecular += calculateDiffuse(vLightDir, uboDirLights.dirLights[i].vSpecular.xyz);
+	}
+}
+
+void calculateSpotLights() {
+	// for each spotlight
+	for (uint i = 0; i < uboPointLights.vLightCounts.z; i++) {
+		const vec3 vLightDir = normalize(uboSpotLights.spotLights[i].vPosition.xyz - vInputPosition);
+		const float fTheta = dot(vLightDir, normalize(-uboSpotLights.spotLights[i].vDirection.xyz));
+		const float fIntensity = clamp((fTheta - uboSpotLights.spotLights[i].fOuterCutoff) / (uboSpotLights.spotLights[i].fInnerCutoff - uboSpotLights.spotLights[i].fOuterCutoff), 0.f, 1.f);
+		
+		g_vDiffuse += fIntensity * calculateDiffuse(vLightDir, uboSpotLights.spotLights[i].vDiffuse.xyz);
+		g_vSpecular += fIntensity * calculateSpecular(vLightDir, uboSpotLights.spotLights[i].vSpecular.xyz);
+	}
+}
+
+vec3 calculateAmbient() {
+	vec3 vAmbient = vec3(0.f);
+	if (uboMaterial.vMaps[0] == 0) {
+		vAmbient = uboPointLights.vAmbient.xyz * uboMaterial.vAmbient.xyz;
+	}
+	else {
+		vAmbient = uboPointLights.vAmbient.xyz * vec3(texture(smpDiffuse, vInputUV));
+	}
+	
+	return vAmbient;
+}
+
 
 void main() {
 	// ambient
-	vec3 vAmbient = vec3(0.f);
+	vec3 vAmbient = calculateAmbient();
 	
-	if (uboMaterial.vMaps[0] == 0) {
-		vAmbient = uboLights.vAmbientColor.xyz * uboMaterial.vAmbient.xyz;
-	}
-	else {
-		vAmbient = uboLights.vAmbientColor.xyz * vec3(texture(smpDiffuse, vInputUV));
-	}
+	calculatePointLights();
+	calculateDirLights();
+	calculateSpotLights();
 	
-	// diffuse and specular
-	vec3 vDiffuse = vec3(0.f);
-	vec3 vSpecular = vec3(0.f);
+	vFragColor = vec4(vAmbient + g_vDiffuse + g_vSpecular, 1.f);
+	//vFragColor = vec4(1.f, 0.f, 0.f, 1.f);
 	
-	for (int i = 0; i < int(uboLights.vAmbientColor.w); i++) {
-		vec3 vNormal = normalize(vInputNormal);
-		vec3 vLightDir = normalize(uboLights.lights[i].vPosition.xyz - vInputPosition);
-		float fDiffuseImpact = max(dot(vNormal, vLightDir), 0.f);
-			
-		// diffuse
-		if (uboMaterial.vMaps[0] == 0) {
-			vDiffuse += uboLights.lights[i].vDiffuse.xyz * (fDiffuseImpact * uboMaterial.vDiffuse.xyz);
-		}
-		// diffuse map
-		else {
-			vDiffuse += uboLights.lights[i].vDiffuse.xyz * (fDiffuseImpact * vec3(texture(smpDiffuse, vInputUV)));
-		}
-	
-		vec3 vViewDir = normalize(uboCamera.vPosition.xyz - vInputPosition);
-		vec3 vReflectDir = reflect(-vLightDir, vNormal);
-		float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.fShininess * 128.f);
-		
-		// specular
-		if (uboMaterial.vMaps[1] == 0) {
-			vSpecular += uboLights.lights[i].vSpecular.xyz * (fSpecularImpact * uboMaterial.vSpecular.xyz);
-		}
-		// specular map
-		else {
-			vSpecular += uboLights.lights[i].vSpecular.xyz * (fSpecularImpact * vec3(texture(smpSpecular, vInputUV)));
-		}
-	}
-	
-	vFragColor = vec4(vDiffuse + vAmbient + vSpecular, 1.f);
+	// clamp fragment values to 1.0f
+	if (vFragColor[0] > 1.f)
+		vFragColor[0] = 1.f;
+	if (vFragColor[1] > 1.f)
+		vFragColor[1] = 1.f;
+	if (vFragColor[2] > 1.f)
+		vFragColor[2] = 1.f;
 }
