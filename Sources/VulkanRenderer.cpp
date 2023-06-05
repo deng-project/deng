@@ -192,12 +192,16 @@ namespace DENG {
     void VulkanRenderer::_CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset) {
         VkCommandPool hCommandPool = static_cast<Vulkan::Framebuffer*>(m_framebuffers[0])->GetCommandPool();
 
+        // check if device should be on idle
+        if (static_cast<VkDeviceSize>(_uSize) > m_uStagingBufferSize || static_cast<VkDeviceSize>(_uSize + _uOffset) > m_uBufferSize)
+            vkDeviceWaitIdle(m_pInstanceCreator->GetDevice());
+
         // check if staging buffer reallocation is required
         if (static_cast<VkDeviceSize>(_uSize) > m_uStagingBufferSize) {
             vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hStagingBufferMemory, nullptr);
             vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hStagingBuffer, nullptr);
 
-            m_uStagingBufferSize = std::max((m_uStagingBufferSize * 3) >> 1, _uSize);
+            m_uStagingBufferSize = std::max(m_uStagingBufferSize * 3, _uSize * 3) >> 1;
             const VkDeviceSize uMinUniformBufferAlignment = static_cast<VkDeviceSize>(m_pInstanceCreator->GetPhysicalDeviceInformation().uMinimalUniformBufferAlignment);
 
             m_uStagingBufferSize = (m_uStagingBufferSize + uMinUniformBufferAlignment - 1) & ~(uMinUniformBufferAlignment - 1);
@@ -236,7 +240,7 @@ namespace DENG {
                 m_pInstanceCreator->GetDevice(),
                 m_pInstanceCreator->GetPhysicalDevice(),
                 memoryRequirements.size,
-                m_hStagingBufferMemory,
+                hTemporaryBufferMemory,
                 memoryRequirements.memoryTypeBits,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -253,10 +257,8 @@ namespace DENG {
                 0, 0);
 
             // free old main buffer resources and allocate new larger buffer
-            vkFreeMemory(m_pInstanceCreator->GetDevice(), m_hMainBufferMemory, nullptr);
-            vkDestroyBuffer(m_pInstanceCreator->GetDevice(), m_hMainBuffer, nullptr);
-
-            m_uBufferSize = std::max(static_cast<VkDeviceSize>(_uSize + _uOffset), (m_uBufferSize * 3) >> 1);
+            m_deletedBuffers.push_back({ m_hMainBuffer, m_hMainBufferMemory, cuOldBufferSize });
+            m_uBufferSize = (std::max(static_cast<VkDeviceSize>(_uSize + _uOffset), m_uBufferSize) * 3) >> 1;
 
             memoryRequirements = Vulkan::_CreateBuffer(
                 m_pInstanceCreator->GetDevice(),
@@ -283,6 +285,9 @@ namespace DENG {
                 m_hMainBuffer,
                 cuOldBufferSize,
                 0, 0);
+
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), hTemporaryBufferMemory, nullptr);
+            vkDestroyBuffer(m_pInstanceCreator->GetDevice(), hTemporaryBuffer, nullptr);
         }
     }
 
@@ -481,6 +486,17 @@ namespace DENG {
             it->second.ResetMeshCounter();
         }
 
+        // delete all previously reallocated buffers
+        if (m_deletedBuffers.size()) {
+            vkDeviceWaitIdle(m_pInstanceCreator->GetDevice());
+            for (auto it = m_deletedBuffers.begin(); it != m_deletedBuffers.end(); it++) {
+                vkFreeMemory(m_pInstanceCreator->GetDevice(), it->hMemory, nullptr);
+                vkDestroyBuffer(m_pInstanceCreator->GetDevice(), it->hBuffer, nullptr);
+            }
+
+            m_deletedBuffers.clear();
+        }
+
         // check if there are any textures that could be removed
         while (!m_deletedTextureResourceQueue.empty()) {
             uint32_t hTexture = m_deletedTextureResourceQueue.front();
@@ -516,7 +532,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds) {
+    void VulkanRenderer::DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, IFramebuffer* _pFramebuffer, uint32_t _uInstanceCount, const std::vector<uint32_t>& _textureIds) {
         DENG_ASSERT(_pFramebuffer);
         
         if (m_bResizeModeTriggered)
@@ -541,10 +557,10 @@ namespace DENG {
         auto itDescriptorAllocator = m_pipelineDescriptorAllocators.find(_shaderComponent.pShader);
         
         if (itDescriptorAllocator != m_pipelineDescriptorAllocators.end()) {
-            vulkanFramebuffer->Draw(_mesh, _shaderComponent, &itDescriptorAllocator->second, _textureIds);
+            vulkanFramebuffer->Draw(_mesh, _shaderComponent, &itDescriptorAllocator->second, _uInstanceCount, _textureIds);
         }
         else {
-            vulkanFramebuffer->Draw(_mesh, _shaderComponent, nullptr, _textureIds);
+            vulkanFramebuffer->Draw(_mesh, _shaderComponent, nullptr, _uInstanceCount, _textureIds);
         }
     }
 }

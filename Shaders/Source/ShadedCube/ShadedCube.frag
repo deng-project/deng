@@ -6,6 +6,7 @@
 layout(location = 0) in vec3 vInputPosition;
 layout(location = 1) in vec3 vInputNormal;
 layout(location = 2) in vec2 vInputUV;
+layout(location = 3) in flat int iInstanceIndex;
 
 layout(location = 0) out vec4 vFragColor;
 
@@ -57,12 +58,17 @@ layout(std430, set = 0, binding = 3) readonly buffer Lights3 {
 	SpotLight spotLights[];
 } uboSpotLights;
 
-layout(std140, set = 1, binding = 4) uniform Material {
+
+struct Material {
 	vec4 vAmbient;
 	vec4 vDiffuse;
 	vec4 vSpecular;
 	uvec4 vMaps;
 	float fShininess;
+};
+
+layout(std140, set = 1, binding = 4) readonly buffer MaterialSSBO {
+	Material materials[];
 } uboMaterial;
 
 layout(set = 1, binding = 5) uniform sampler2D smpDiffuse;
@@ -77,8 +83,8 @@ vec3 calculateDiffuse(vec3 vLightDir, vec3 vLightDiffuse) {
 	const float fDiffuseImpact = max(dot(vNormal, vLightDir), 0.f);
 	
 	// material diffuse
-	if (uboMaterial.vMaps[0] == 0) {
-		return vLightDiffuse * (fDiffuseImpact * uboMaterial.vDiffuse.xyz);
+	if (uboMaterial.materials[iInstanceIndex].vMaps[0] == 0) {
+		return vLightDiffuse * (fDiffuseImpact * uboMaterial.materials[iInstanceIndex].vDiffuse.xyz);
 	}
 	// diffuse map is used
 	else {
@@ -90,11 +96,11 @@ vec3 calculateSpecular(vec3 vLightDir, vec3 vLightSpecular) {
 	const vec3 vNormal = normalize(vInputNormal);
 	const vec3 vViewDir = normalize(uboCamera.vPosition.xyz - vInputPosition);
 	const vec3 vReflectDir = reflect(-vLightDir, vNormal);
-	const float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.fShininess * SHINE_MUL);
+	const float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.materials[iInstanceIndex].fShininess * SHINE_MUL);
 	
 	// material specular
-	if (uboMaterial.vMaps[1] == 0) {
-		return vLightSpecular * (fSpecularImpact * uboMaterial.vSpecular.xyz);
+	if (uboMaterial.materials[iInstanceIndex].vMaps[1] == 0) {
+		return vLightSpecular * (fSpecularImpact * uboMaterial.materials[iInstanceIndex].vSpecular.xyz);
 	}
 	// specular map
 	else {
@@ -140,8 +146,8 @@ void calculateSpotLights() {
 
 vec3 calculateAmbient() {
 	vec3 vAmbient = vec3(0.f);
-	if (uboMaterial.vMaps[0] == 0) {
-		vAmbient = uboPointLights.vAmbient.xyz * uboMaterial.vAmbient.xyz;
+	if (uboMaterial.materials[iInstanceIndex].vMaps[0] == 0) {
+		vAmbient = uboPointLights.vAmbient.xyz * uboMaterial.materials[iInstanceIndex].vAmbient.xyz;
 	}
 	else {
 		vAmbient = uboPointLights.vAmbient.xyz * vec3(texture(smpDiffuse, vInputUV));

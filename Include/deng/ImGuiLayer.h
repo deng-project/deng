@@ -41,9 +41,11 @@ namespace DENG {
 				std::chrono::high_resolution_clock::now();
 
 			size_t m_uVertexRegionOffset = 0;
-			size_t m_uIndexRegionOffset = 0;
 			size_t m_uUniformRegionOffset = 0;
 			float m_fDeltaTime = 0.f;
+
+			char* m_pDataBuffer = nullptr;
+			size_t m_uDataBufferSize = 0;
 
 			uint32_t m_uTextureHandle = 0;
 			MeshComponent m_meshComponent;

@@ -61,8 +61,13 @@ namespace DENG {
             VkDeviceSize m_uBufferSize = DEFAULT_BUFFER_SIZE;
             VkDeviceSize m_uStagingBufferSize = DEFAULT_STAGING_BUFFER_SIZE;
 
-            //  Main memory is usually splitted into vertex regions and index regions, but not always
-            //  [ [ VERTICES ] [ INDICES ] ]
+            struct _DeletedBuffer {
+                VkBuffer hBuffer = VK_NULL_HANDLE;
+                VkDeviceMemory hMemory = VK_NULL_HANDLE;
+                VkDeviceSize uSize = 0;
+            };
+
+            std::vector<_DeletedBuffer> m_deletedBuffers;
             VkBuffer m_hMainBuffer = VK_NULL_HANDLE;
             VkDeviceMemory m_hMainBufferMemory = VK_NULL_HANDLE;
 
@@ -97,7 +102,7 @@ namespace DENG {
             virtual void DeallocateMemory(size_t _uOffset) override;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
             virtual bool SetupFrame() override;
-            virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shader, IFramebuffer* _pFramebuffer, const std::vector<uint32_t>& _textureIds = {}) override;
+            virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _shader, IFramebuffer* _pFramebuffer, uint32_t _uInstanceCount, const std::vector<uint32_t>& _textureIds = {}) override;
     };
 }
 

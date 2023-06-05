@@ -111,8 +111,6 @@ namespace DENG {
 
 		if (m_uVertexRegionOffset)
 			m_pRenderer->DeallocateMemory(m_uVertexRegionOffset);
-		if (m_uIndexRegionOffset)
-			m_pRenderer->DeallocateMemory(m_uIndexRegionOffset);
 
 		size_t uVertexSize = 0;
 		size_t uIndexSize = 0;
@@ -124,25 +122,34 @@ namespace DENG {
 			uIndexSize += static_cast<size_t>(pDrawList->IdxBuffer.Size);
 		}
 
-		m_uVertexRegionOffset = m_pRenderer->AllocateMemory(uVertexSize * sizeof(ImDrawVert), BufferDataType::VERTEX);
-		m_uIndexRegionOffset = m_pRenderer->AllocateMemory(uIndexSize * sizeof(ImDrawIdx), BufferDataType::INDEX);
+		uVertexSize *= sizeof(ImDrawVert);
+		uIndexSize *= sizeof(ImDrawIdx);
+
+		m_uVertexRegionOffset = m_pRenderer->AllocateMemory(uVertexSize + uIndexSize, BufferDataType::VERTEX);
+		
+		// check if data buffer is big enough
+		if (uVertexSize + uIndexSize > m_uDataBufferSize) {
+			delete[] m_pDataBuffer;
+			m_uDataBufferSize = ((uVertexSize + uIndexSize) * 3) >> 1;
+			m_pDataBuffer = new char[m_uDataBufferSize];
+		}
 
 		// create draw commands and copy data to buffers
-		size_t uCommandVertexOffset = m_uVertexRegionOffset, uCommandIndexOffset = m_uIndexRegionOffset;
+		size_t uOffset = 0;
+		size_t uCommandVertexOffset = m_uVertexRegionOffset;
+		size_t uCommandIndexOffset = m_uVertexRegionOffset;
+
 		for (int i = 0; i < _pDrawData->CmdListsCount; i++) {
 			const ImDrawList* pDrawList = _pDrawData->CmdLists[i];
 			const ImDrawVert* pVertexBuffer = pDrawList->VtxBuffer.Data;
 			const ImDrawIdx* pIndexBuffer = pDrawList->IdxBuffer.Data;
 
-			m_pRenderer->UpdateBuffer(
-				pVertexBuffer, 
-				static_cast<size_t>(pDrawList->VtxBuffer.Size) * sizeof(ImDrawVert), 
-				uCommandVertexOffset);
+			std::memcpy(m_pDataBuffer + uOffset, pDrawList->VtxBuffer.Data, static_cast<size_t>(pDrawList->VtxBuffer.Size) * sizeof(ImDrawVert));
+			uOffset += static_cast<size_t>(pDrawList->VtxBuffer.Size) * sizeof(ImDrawVert);
+			uCommandIndexOffset += static_cast<size_t>(pDrawList->VtxBuffer.Size) * sizeof(ImDrawVert);
 
-			m_pRenderer->UpdateBuffer(
-				pIndexBuffer,
-				static_cast<size_t>(pDrawList->IdxBuffer.Size) * sizeof(ImDrawIdx),
-				uCommandIndexOffset);
+			std::memcpy(m_pDataBuffer + uOffset, pDrawList->IdxBuffer.Data, static_cast<size_t>(pDrawList->IdxBuffer.Size) * sizeof(ImDrawIdx));
+			uOffset += static_cast<size_t>(pDrawList->IdxBuffer.Size) * sizeof(ImDrawIdx);
 
 			for (int j = 0; j < pDrawList->CmdBuffer.Size; j++) {
 				const ImDrawCmd& drawCommand = pDrawList->CmdBuffer[j];
@@ -189,9 +196,12 @@ namespace DENG {
 				}
 			}
 
-			uCommandVertexOffset += static_cast<size_t>(pDrawList->VtxBuffer.Size) * sizeof(ImDrawVert);
 			uCommandIndexOffset += static_cast<size_t>(pDrawList->IdxBuffer.Size) * sizeof(ImDrawIdx);
+			uCommandVertexOffset = uCommandIndexOffset;
 		}
+
+		if (uVertexSize + uIndexSize)
+			m_pRenderer->UpdateBuffer(m_pDataBuffer, uVertexSize + uIndexSize, m_uVertexRegionOffset);
 	}
 
 
@@ -225,6 +235,7 @@ namespace DENG {
 		m_shaderComponent.uboDataLayouts[1].block.uBinding = 1;
 		m_shaderComponent.uboDataLayouts[1].iStage = SHADER_STAGE_FRAGMENT;
 		m_shaderComponent.uboDataLayouts[1].eType = UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
+		m_meshComponent.sName = "ImGuiLayer";
 
 		unsigned char* pPixels = nullptr;
 		int iWidth = 0, iHeight = 0;
@@ -273,7 +284,7 @@ namespace DENG {
 		
 		m_pRenderer->UpdateBuffer(&m_uniform, sizeof(TRS::Point2D<float>), m_uUniformRegionOffset);
 		m_bIsInit = true;
-		m_pRenderer->DrawMesh(m_meshComponent, m_shaderComponent, _pFramebuffer, { m_uTextureHandle });
+		m_pRenderer->DrawMesh(m_meshComponent, m_shaderComponent, _pFramebuffer, 1, { m_uTextureHandle });
 	}
 
 

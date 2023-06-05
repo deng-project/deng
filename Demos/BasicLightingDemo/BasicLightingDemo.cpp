@@ -1,6 +1,9 @@
 #define BASIC_LIGHTING_DEMO_CPP
 #include "BasicLightingDemo.h"
 
+#ifndef _DEBUG
+#pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+#endif
 
 BasicLightingDemoApp::BasicLightingDemoApp() {
 	DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext(m_eventManager));

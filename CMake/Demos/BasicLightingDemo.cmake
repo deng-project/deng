@@ -5,9 +5,14 @@
 
 set(BASIC_LIGHTING_DEMO_TARGET BasicLightingDemo)
 set(BASIC_LIGHTING_DEMO_HEADERS 
-	Demos/BasicLightingDemo/BasicLightingDemo.h)
+	Demos/BasicLightingDemo/BasicLightingDemo.h
+	Demos/BasicLightingDemo/BasicLightingLayer.h
+	Demos/Utils/CameraScript.h
+	Demos/Utils/CubeVertices.h)
 set(BASIC_LIGHTING_DEMO_SOURCES 
-	Demos/BasicLightingDemo/BasicLightingDemo.cpp)
+	Demos/BasicLightingDemo/BasicLightingDemo.cpp
+	Demos/BasicLightingDemo/BasicLightingLayer.cpp
+	Demos/Utils/CameraScript.cpp)
 
 add_executable(${BASIC_LIGHTING_DEMO_TARGET} 
 	${BASIC_LIGHTING_DEMO_HEADERS}

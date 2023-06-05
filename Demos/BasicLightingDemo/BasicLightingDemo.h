@@ -19,7 +19,7 @@
 
 #include <das/stb_image.h>
 
-#include "CameraScript.h"
+#include "../Utils/CameraScript.h"
 #include "BasicLightingLayer.h"
 
 

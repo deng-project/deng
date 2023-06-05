@@ -407,7 +407,7 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Draw(const MeshComponent& _mesh, const ShaderComponent& _shader, DescriptorAllocator* _pDescriptorAllocator, const std::vector<uint32_t>& _textureIds) {
+        void Framebuffer::Draw(const MeshComponent& _mesh, const ShaderComponent& _shader, DescriptorAllocator* _pDescriptorAllocator, uint32_t _uInstanceCount, const std::vector<uint32_t>& _textureIds) {
             // check if pipeline creator exists for requested mesh
             if (m_pipelineCreators.find(_shader.pShader) == m_pipelineCreators.end()) {
                 if (_pDescriptorAllocator) {
@@ -583,9 +583,9 @@ namespace DENG {
                 // check if indexed or unindexed draw call should be submitted
                 if (_shader.bEnableIndexing) {
                     vkCmdBindIndexBuffer(m_commandBuffers[m_uCurrentFrameIndex], m_hMainBuffer, static_cast<VkDeviceSize>(itCmd->uIndicesOffset), VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, 1, 0, 0, 0);
+                    vkCmdDrawIndexed(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, 0, 0, 0);
                 } else {
-                    vkCmdDraw(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, 1, 0, 0);
+                    vkCmdDraw(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, 0, 0);
                 }
            }
         }

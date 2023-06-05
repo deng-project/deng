@@ -69,6 +69,48 @@ namespace DENG {
 				}
 			}
 
+			template<typename T>
+			void _ViewAndRender() {
+				auto view = m_registry.view<T>();
+				for (Entity idEntity : view) {
+					T& mesh = m_registry.get<T>(idEntity);
+
+					MaterialComponent material;
+					TransformComponent transform;
+
+					// query material if exists
+					if (m_registry.all_of<MaterialComponent>(idEntity))
+						material = m_registry.get<MaterialComponent>(idEntity);
+					else if (m_registry.all_of<Ref<MaterialComponent>>(idEntity))
+						material = m_registry.get<Ref<MaterialComponent>>(idEntity).Get();
+
+					// query transform if exists
+					if (m_registry.all_of<TransformComponent>(idEntity))
+						transform = m_registry.get<TransformComponent>(idEntity);
+
+					if (m_registry.all_of<ShaderComponent>(idEntity)) {
+						auto& shader = m_registry.get<ShaderComponent>(idEntity);
+
+						if constexpr (std::is_same<T, MeshComponent>::value) {
+							m_sceneRenderer.RenderMesh(mesh, shader, material, transform, idEntity, idEntity);
+						}
+						else {
+							m_sceneRenderer.RenderMesh(mesh, shader, material, transform, mesh.GetOwner(), idEntity);
+						}
+					}
+					else if (m_registry.all_of<Ref<ShaderComponent>>(idEntity)) {
+						auto& shader = m_registry.get<Ref<ShaderComponent>>(idEntity);
+
+						if constexpr (std::is_same<T, MeshComponent>::value) {
+							m_sceneRenderer.RenderMesh(mesh, shader, material, transform, idEntity, shader.GetOwner());
+						}
+						else {
+							m_sceneRenderer.RenderMesh(mesh, shader, material, transform, mesh.GetOwner(), shader.GetOwner());
+						}
+					}
+				}
+			}
+
 			void _UpdateScripts();
 			void _RenderLights();
 			void _DrawMeshes();
@@ -81,8 +123,8 @@ namespace DENG {
 			}
 
 			template<typename T, typename ...Args>
-			inline T& EmplaceComponent(Entity _idEntity, Args... args) {
-				return m_registry.emplace<T>(_idEntity, std::forward(args)...);
+			inline T& EmplaceComponent(Entity _idEntity, Args&&... args) {
+				return m_registry.emplace<T>(_idEntity, std::forward<Args>(args)...);
 			}
 
 			template<typename T>

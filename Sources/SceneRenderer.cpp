@@ -13,7 +13,7 @@ namespace DENG {
 		m_pFramebuffer(_pFramebuffer) {}
 
 	SceneRenderer::~SceneRenderer() {
-		delete[] m_pLightBuffer;
+		delete[] m_pIntermediateStorageBuffer;
 	}
 
 	void SceneRenderer::RenderLights(
@@ -27,15 +27,15 @@ namespace DENG {
 			_dirLights.size() * sizeof(DirectionalLightComponent) +
 			_spotLights.size() * sizeof(SpotlightComponent) + sizeof(TRS::Vector4<float>) + sizeof(TRS::Vector4<uint32_t>));
 
-		if (m_uUsedLightsSize > m_uLightBufferSize) {
-			delete[] m_pLightBuffer;
-			m_uLightBufferSize = (m_uUsedLightsSize * 3) >> 1;
-			m_pLightBuffer = new char[m_uLightBufferSize]{};
+		if (m_uUsedLightsSize > m_uIntermediateStorageBufferSize) {
+			delete[] m_pIntermediateStorageBuffer;
+			m_uIntermediateStorageBufferSize = (m_uUsedLightsSize * 3) >> 1;
+			m_pIntermediateStorageBuffer = new char[m_uIntermediateStorageBufferSize]{};
 
 			// deallocate and allocate on device memory
 			if (m_arrLightOffsets[0] != SIZE_MAX)
 				m_pRenderer->DeallocateMemory(m_arrLightOffsets[0]);
-			m_arrLightOffsets[0] = m_pRenderer->AllocateMemory(m_uLightBufferSize, BufferDataType::UNIFORM);
+			m_arrLightOffsets[0] = m_pRenderer->AllocateMemory(m_uIntermediateStorageBufferSize, BufferDataType::UNIFORM);
 		}
 
 		size_t uOffset = 0;
@@ -44,7 +44,7 @@ namespace DENG {
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			TRS::Vector4<float> vCombined = { _vAmbient[0], _vAmbient[1], _vAmbient[2], 0.f };
-			std::memcpy(m_pLightBuffer + uOffset, &vCombined, sizeof(TRS::Vector4<float>));
+			std::memcpy(m_pIntermediateStorageBuffer + uOffset, &vCombined, sizeof(TRS::Vector4<float>));
 			uOffset += sizeof(TRS::Vector4<float>);
 			TRS::Vector4<uint32_t> vLightCounts = {
 				static_cast<uint32_t>(_pointLights.size()),
@@ -52,88 +52,122 @@ namespace DENG {
 				static_cast<uint32_t>(_spotLights.size()),
 				0
 			};
-			std::memcpy(m_pLightBuffer + uOffset, &vLightCounts, sizeof(TRS::Vector4<uint32_t>));
+			std::memcpy(m_pIntermediateStorageBuffer + uOffset, &vLightCounts, sizeof(TRS::Vector4<uint32_t>));
 			uOffset += sizeof(TRS::Vector4<uint32_t>);
 
 			for (const PointLightComponent& pointLight : _pointLights) {
-				std::memcpy(m_pLightBuffer + uOffset, &pointLight, sizeof(PointLightComponent));
+				std::memcpy(m_pIntermediateStorageBuffer + uOffset, &pointLight, sizeof(PointLightComponent));
 				uOffset += sizeof(PointLightComponent);
 			}
 
 			if (i == 0) m_arrLightOffsets[1] += uOffset;
 			
 			for (const DirectionalLightComponent& dirLight : _dirLights) {
-				std::memcpy(m_pLightBuffer + uOffset, &dirLight, sizeof(DirectionalLightComponent));
+				std::memcpy(m_pIntermediateStorageBuffer + uOffset, &dirLight, sizeof(DirectionalLightComponent));
 				uOffset += sizeof(DirectionalLightComponent);
 			}
 
 			if (i == 0) m_arrLightOffsets[2] += uOffset;
 
 			for (const SpotlightComponent& spotLight : _spotLights) {
-				std::memcpy(m_pLightBuffer + uOffset, &spotLight, sizeof(SpotlightComponent));
+				std::memcpy(m_pIntermediateStorageBuffer + uOffset, &spotLight, sizeof(SpotlightComponent));
 				uOffset += sizeof(SpotlightComponent);
 			}
 		}
 
-		m_pRenderer->UpdateBuffer(m_pLightBuffer, m_uUsedLightsSize, m_arrLightOffsets[0]);
+		m_pRenderer->UpdateBuffer(m_pIntermediateStorageBuffer, m_uUsedLightsSize, m_arrLightOffsets[0]);
 	}
 
-	void SceneRenderer::RenderMesh(
-		const MeshComponent& _mesh,
-		ShaderComponent& _shader,
-		Entity _idEntity,
-		const MaterialComponent& _material,
-		const TransformComponent& _transform,
-		const CameraComponent& _camera) 
-	{
-		DENG_ASSERT(_shader.bEnablePushConstants);
 
-		// check if transform offset has not been allocated
-		const size_t cuEntity = static_cast<size_t>(_idEntity);
+	void SceneRenderer::SubmitBatches(const CameraComponent& _camera) {
+		// calculate required SSBO size
+		size_t uTransformSize = 0;
+		size_t uMaterialSize = 0;
+		for (size_t i = 0; i < m_batches.size(); i++) {
+			DENG_ASSERT(m_batches[i].pMeshComponent);
+			DENG_ASSERT(m_batches[i].pShaderComponent);
+			uTransformSize += m_batches[i].transforms.size();
+			uMaterialSize += m_batches[i].materials.size();
+		}
 
-		_shader.uPushConstantDataLength = static_cast<uint32_t>(sizeof(CameraComponent));
-		_shader.pPushConstantData = &_camera;
+		uTransformSize *= sizeof(TransformComponent) * MAX_FRAMES_IN_FLIGHT;
+		uMaterialSize *= sizeof(MaterialComponent) * MAX_FRAMES_IN_FLIGHT;
+
+		// check if device memory allocation is required
+		size_t uOffset = 0;
+		if (uTransformSize + uMaterialSize > m_uInstancedSSBOSize) {
+			if (m_uInstancedSSBOSize)
+				m_pRenderer->DeallocateMemory(m_uInstancedSSBOOffset);
+			m_uInstancedSSBOSize = ((uTransformSize + uMaterialSize) * 3) >> 1;
+
+			m_uInstancedSSBOOffset = m_pRenderer->AllocateMemory(m_uInstancedSSBOSize, BufferDataType::UNIFORM);
+		}
 		
-		// use custom transforms
-		if (_shader.uboDataLayouts.size() >= 1) {
-			// allocate memory for custom transforms
-			if (cuEntity >= m_transformOffsets.size() || m_transformOffsets[cuEntity] == SIZE_MAX) {
-				if (cuEntity >= m_transformOffsets.size())
-					m_transformOffsets.resize(cuEntity + 1, SIZE_MAX);
-				m_transformOffsets[cuEntity] = m_pRenderer->AllocateMemory(sizeof(TransformComponent), BufferDataType::UNIFORM);
+		uOffset = m_uInstancedSSBOOffset;
+
+		// check if intermediate buffer reallocation is required
+		if (uTransformSize + uMaterialSize > m_uIntermediateStorageBufferSize) {
+			m_uIntermediateStorageBufferSize = ((uTransformSize + uMaterialSize) * 3) >> 1;
+			delete[] m_pIntermediateStorageBuffer;
+			m_pIntermediateStorageBuffer = new char[m_uIntermediateStorageBufferSize]{};
+		}
+	
+		// update buffer objects
+		size_t uIntermediateTransformOffset = 0;
+		size_t uIntermediateMaterialOffset = uTransformSize;
+		size_t uTransformOffset = uOffset;
+		size_t uMaterialOffset = uTransformOffset + uTransformSize;
+
+		for (size_t i = 0; i < m_batches.size(); i++) {
+			m_batches[i].pShaderComponent->uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(uTransformOffset);
+			m_batches[i].pShaderComponent->uboDataLayouts[0].block.uSize = static_cast<uint32_t>(m_batches[i].transforms.size() * sizeof(TransformComponent));
+			
+			for (size_t j = 0; j < MAX_FRAMES_IN_FLIGHT; j++) {
+				std::memcpy(m_pIntermediateStorageBuffer + uIntermediateTransformOffset, m_batches[i].transforms.data(), m_batches[i].transforms.size() * sizeof(TransformComponent));
+				uIntermediateTransformOffset += m_batches[i].transforms.size() * sizeof(TransformComponent);
 			}
-			m_pRenderer->UpdateBuffer(&_transform, sizeof(TransformComponent), m_transformOffsets[cuEntity]);
 
-			_shader.uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_transformOffsets[cuEntity]);
-			_shader.uboDataLayouts[0].block.uSize = static_cast<uint32_t>(sizeof(TransformComponent));
+			uTransformOffset += m_batches[i].transforms.size() * sizeof(TransformComponent) * MAX_FRAMES_IN_FLIGHT;
 
-			// use lights and materials
-			if (_shader.uboDataLayouts.size() >= 7) {
-				DENG_ASSERT(m_arrLightOffsets[0] != SIZE_MAX);
+			if (m_batches[i].pShaderComponent->uboDataLayouts.size() >= 7) {
+				m_batches[i].pShaderComponent->uboDataLayouts[1].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[0]);
+				m_batches[i].pShaderComponent->uboDataLayouts[1].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+				m_batches[i].pShaderComponent->uboDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[1]);
+				m_batches[i].pShaderComponent->uboDataLayouts[2].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+				m_batches[i].pShaderComponent->uboDataLayouts[3].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[2]);
+				m_batches[i].pShaderComponent->uboDataLayouts[3].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+				m_batches[i].pShaderComponent->uboDataLayouts[4].block.uOffset = static_cast<uint32_t>(uMaterialOffset);
+				m_batches[i].pShaderComponent->uboDataLayouts[4].block.uSize = static_cast<uint32_t>(m_batches[i].materials.size() * sizeof(MaterialComponent));
 
-				if (cuEntity >= m_materialOffsets.size() || m_materialOffsets[cuEntity] == SIZE_MAX) {
-					if (cuEntity >= m_materialOffsets.size())
-						m_materialOffsets.resize(cuEntity + 1, SIZE_MAX);
-					m_materialOffsets[cuEntity] = m_pRenderer->AllocateMemory(sizeof(MaterialComponent), BufferDataType::UNIFORM);
+				m_batches[i].pShaderComponent->uPushConstantDataLength = sizeof(CameraComponent);								
+				m_batches[i].pShaderComponent->pPushConstantData = &_camera;
+				
+				uMaterialOffset += m_batches[i].materials.size() * sizeof(MaterialComponent) * MAX_FRAMES_IN_FLIGHT;
+				for (size_t j = 0; j < MAX_FRAMES_IN_FLIGHT; j++) {
+					std::memcpy(m_pIntermediateStorageBuffer + uIntermediateMaterialOffset, m_batches[i].materials.data(), m_batches[i].materials.size() * sizeof(MaterialComponent));
+					uIntermediateMaterialOffset += m_batches[i].materials.size() * sizeof(MaterialComponent);
 				}
-				m_pRenderer->UpdateBuffer(&_material, sizeof(MaterialComponent), m_materialOffsets[cuEntity]);
-
-				_shader.uboDataLayouts[1].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[0]);
-				_shader.uboDataLayouts[1].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize >> 1);
-				_shader.uboDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[1]);
-				_shader.uboDataLayouts[2].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize >> 1);
-				_shader.uboDataLayouts[3].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[2]);
-				_shader.uboDataLayouts[3].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize >> 1);
-				_shader.uboDataLayouts[4].block.uOffset = static_cast<uint32_t>(m_materialOffsets[cuEntity]);
-				_shader.uboDataLayouts[4].block.uSize = static_cast<uint32_t>(sizeof(MaterialComponent));
 			}
 		}
 
-		std::vector<uint32_t> textureIds;
-		if (_material.vMaps[0] && _material.vMaps[1]) {
-			textureIds.push_back(_material.vMaps[0]);
-			textureIds.push_back(_material.vMaps[1]);
+		if (uTransformSize + uMaterialOffset) {
+			m_pRenderer->UpdateBuffer(m_pIntermediateStorageBuffer, uTransformSize + uMaterialSize, uOffset);
 		}
-		m_pRenderer->DrawMesh(_mesh, _shader, m_pFramebuffer, textureIds);
+
+		// issue batch draw commands
+		for (size_t i = 0; i < m_batches.size(); i++) {
+			// check if diffuse and specular textures are used
+			std::vector<uint32_t> textureIds;
+			if (m_batches[i].materials.size()) {
+				if (m_batches[i].materials.front().vMaps[0])
+					textureIds.push_back(m_batches[i].materials.front().vMaps[0]);
+				if (m_batches[i].materials.front().vMaps[1])
+					textureIds.push_back(m_batches[i].materials.front().vMaps[1]);
+			}
+			m_pRenderer->DrawMesh(*m_batches[i].pMeshComponent, *m_batches[i].pShaderComponent, m_pFramebuffer, m_batches[i].uInstanceCount, textureIds);
+			m_batches[i].materials.clear();
+			m_batches[i].transforms.clear();
+			m_batches[i].uInstanceCount = 0;
+		}
 	}
 }

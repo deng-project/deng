@@ -43,41 +43,11 @@ namespace DENG {
 	void Scene::_DrawMeshes() {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
-			// draw meshes with transform and material
-			{
-				auto view = m_registry.view<MeshComponent, ShaderComponent, MaterialComponent, TransformComponent>();
-				for (Entity idMesh : view) {
-					auto& [mesh, shader, material, transform] = m_registry.get<MeshComponent, ShaderComponent, MaterialComponent, TransformComponent>(idMesh);
-					m_sceneRenderer.RenderMesh(mesh, shader, idMesh, material, transform, camera);
-				}
-			}
+			
+			_ViewAndRender<MeshComponent>();
+			_ViewAndRender<Ref<MeshComponent>>();
 
-			// draw meshes without transform but with material
-			{
-				auto view = m_registry.view<MeshComponent, ShaderComponent, MaterialComponent>(entt::exclude_t<TransformComponent>());
-				for (Entity idMesh : view) {
-					auto& [mesh, shader, material] = m_registry.get<MeshComponent, ShaderComponent, MaterialComponent>(idMesh);
-					m_sceneRenderer.RenderMesh(mesh, shader, idMesh, material, TransformComponent(), camera);
-				}
-			}
-
-			// draw meshes without material but with transform
-			{
-				auto view = m_registry.view<MeshComponent, ShaderComponent, TransformComponent>(entt::exclude_t<MaterialComponent>());
-				for (Entity idMesh : view) {
-					auto& [mesh, shader, transform] = m_registry.get<MeshComponent, ShaderComponent, TransformComponent>(idMesh);
-					m_sceneRenderer.RenderMesh(mesh, shader, idMesh, MaterialComponent(), transform, camera);
-				}
-			}
-
-			// draw meshes without material nor transform
-			{
-				auto view = m_registry.view<MeshComponent, ShaderComponent>(entt::exclude_t<MaterialComponent, TransformComponent>());
-				for (Entity idMesh : view) {
-					auto& [mesh, shader] = m_registry.get<MeshComponent, ShaderComponent>(idMesh);
-					m_sceneRenderer.RenderMesh(mesh, shader, idMesh, MaterialComponent(), TransformComponent(), camera);
-				}
-			}
+			m_sceneRenderer.SubmitBatches(camera);
 		}
 	}
 

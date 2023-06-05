@@ -24,8 +24,38 @@
 #include "deng/ShaderComponent.h"
 
 namespace DENG {
-
+	class Scene;
 	typedef entt::entity Entity;
+
+	template<typename T>
+	class Ref {
+		private:
+			Entity m_owner;
+			Scene& m_scene;
+
+		public:
+			Ref(Entity _owner, Scene& _scene) noexcept :
+				m_owner(_owner),
+				m_scene(_scene) {}
+			Ref(Ref<T>&& _other) noexcept :
+				m_owner(_other.m_owner),
+				m_scene(_other.m_scene) {}
+			~Ref() = default;
+
+			inline T& Get() { return m_scene.GetComponent<T>(m_owner); }
+			inline const T& Get() const { return m_scene.GetComponent<T>(m_owner); }
+			inline Entity GetOwner() const { return m_owner; }
+
+			// implicit cast
+			inline operator T& () { return Get(); }
+			inline operator const T& () const { return Get(); }
+	};
+
+
+	class PrefabComponent {
+		private:
+			const bool bIsPrefab = true;
+	};
 
 	struct TransformComponent {
 		TransformComponent() = default;
@@ -33,14 +63,12 @@ namespace DENG {
 
 		TRS::Matrix4<float> mCustomTransform;
 		TRS::Vector4<float> vTranslation = { 0.f, 0.f, 0.f, 1.f };
-		TRS::Vector3<float> vScale = { 1.f, 1.f, 1.f };
-		float _pad;
-		TRS::Vector3<float> vRotation = { 0.f, 0.f, 0.f }; // in radians
-		float _pad1;
+		TRS::Vector4<float> vScale = { 1.f, 1.f, 1.f, 0.f };
+		TRS::Vector4<float> vRotation = { 0.f, 0.f, 0.f, 0.f }; // in radians
 	};
 
 
-	struct MaterialComponent {
+	struct alignas(16) MaterialComponent {
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
 
@@ -114,7 +142,6 @@ namespace DENG {
 
 #define SCRIPT_DEFINE_CONSTRUCTOR(script) script::script(DENG::Entity _idEntity, DENG::EventManager& _eventManager, DENG::Scene& _scene) :\
 											 ScriptBehaviour(_idEntity, _eventManager, _scene, #script) {}
-	class Scene;
 	class DENG_API ScriptBehaviour {
 		protected:
 			const Entity m_idEntity = entt::null;

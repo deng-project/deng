@@ -14,8 +14,8 @@
 	#include "deng/ImGuiLayer.h"
 	#include <das/stb_image.h>
 
-	#include "CameraScript.h"
-	#include "CubeVertices.h"
+	#include "../Utils/CameraScript.h"
+	#include "../Utils/CubeVertices.h"
 
 	#define BOUNDS 50.f
 #endif
