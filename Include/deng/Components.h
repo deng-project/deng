@@ -267,16 +267,36 @@ namespace DENG {
 	struct MeshComponent {
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
-		MeshComponent(MeshComponent&& _mesh) noexcept :
-			sName(std::move(_mesh.sName)),
-			drawCommands(std::move(_mesh.drawCommands)) {}
-
 		MeshComponent(const std::string& _sName, const std::vector<DrawCommand>& _drawCommands) :
 			sName(_sName),
 			drawCommands(_drawCommands) {}
+		~MeshComponent() {}
 
 		std::string sName = "MeshComponent";
 		std::vector<DrawCommand> drawCommands;
+		size_t uDrawCommandHash = 0;
+
+		bool operator==(const MeshComponent& _mesh) const {
+			return uDrawCommandHash == _mesh.uDrawCommandHash;
+		}
+
+		struct _Hash {
+			std::size_t operator()(const MeshComponent& _mesh) {
+				std::size_t uHash = 0;
+				std::hash<size_t> hasher;
+				const size_t uConstant = 0x9e3779b9;
+				
+				for (auto it = _mesh.drawCommands.begin(); it != _mesh.drawCommands.end(); it++) {
+					uHash ^= hasher(static_cast<size_t>(it->uDrawCount)) + uConstant + (uHash << 6) + (uHash >> 2);
+					uHash ^= hasher(static_cast<size_t>(it->bWireframe)) + uConstant + (uHash << 6) + (uHash >> 2);
+				
+					for (size_t j = 0; j < it->attributeOffsets.size(); j++)
+						uHash ^= hasher(static_cast<size_t>(it->attributeOffsets[j])) + uConstant + (uHash << 6) + (uHash >> 2);
+				}
+
+				return uHash;
+			}
+		};
 	};
 
 	

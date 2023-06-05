@@ -141,6 +141,7 @@ namespace DENG {
     struct ShaderComponent {
         ShaderComponent() = default;
         ShaderComponent(const ShaderComponent&) = default;
+        ~ShaderComponent() {};
 
         std::vector<AttributeType> attributes;
         std::vector<std::size_t> attributeStrides;
@@ -164,6 +165,10 @@ namespace DENG {
         bool bEnableStencilTesting = false;
         bool bEnableBlend = false;
         bool bEnableIndexing = true;
+
+        bool operator==(const ShaderComponent& _shader) {
+            return pShader == _shader.pShader;
+        }
     };
 }
 

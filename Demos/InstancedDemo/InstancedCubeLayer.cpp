@@ -157,23 +157,22 @@ namespace Application {
 				m_scene.EmplaceComponent<MeshComponent>(m_entities[i]);
 				m_scene.EmplaceComponent<MaterialComponent>(m_entities[i]);
 				m_scene.EmplaceComponent<ShaderComponent>(m_entities[i]);
+				_CreatePrefab(_pRenderer);
 			}
 			else {
 				auto& mesh = m_scene.GetComponent<MeshComponent>(m_entities[0]);
 				auto& shader = m_scene.GetComponent<ShaderComponent>(m_entities[0]);
 				auto& material = m_scene.GetComponent<MaterialComponent>(m_entities[0]);
 				
-				m_scene.EmplaceComponent<Ref<MeshComponent>>(m_entities[i], m_entities[0], m_scene);
-				m_scene.EmplaceComponent<Ref<ShaderComponent>>(m_entities[i], m_entities[0], m_scene);
-				m_scene.EmplaceComponent<Ref<MaterialComponent>>(m_entities[i], m_entities[0], m_scene);
+				m_scene.EmplaceComponent<MeshComponent>(m_entities[i], mesh);
+				m_scene.EmplaceComponent<ShaderComponent>(m_entities[i], shader);
+				m_scene.EmplaceComponent<MaterialComponent>(m_entities[i], material);
 			}
 
 			m_scene.EmplaceComponent<TransformComponent>(m_entities[i]);
 		}
 
-		_CreatePrefab(_pRenderer);
 		_ApplyTransforms();
-
 		m_scene.AttachComponents();
 	}
 

@@ -23,7 +23,7 @@ using namespace DENG;
 #endif
 
 #define SQ(x) (x*x)
-#define ROW_LEN	1000
+#define ROW_LEN	100
 
 namespace Application {
 

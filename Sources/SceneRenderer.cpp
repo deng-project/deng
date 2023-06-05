@@ -79,95 +79,81 @@ namespace DENG {
 	}
 
 
-	void SceneRenderer::SubmitBatches(const CameraComponent& _camera) {
-		// calculate required SSBO size
-		size_t uTransformSize = 0;
-		size_t uMaterialSize = 0;
-		for (size_t i = 0; i < m_batches.size(); i++) {
-			DENG_ASSERT(m_batches[i].pMeshComponent);
-			DENG_ASSERT(m_batches[i].pShaderComponent);
-			uTransformSize += m_batches[i].transforms.size();
-			uMaterialSize += m_batches[i].materials.size();
+	void SceneRenderer::RenderBatch(
+		const MeshComponent& _mesh,
+		ShaderComponent& _shader,
+		const std::vector<MaterialComponent>& _materials,
+		const std::vector<TransformComponent>& _transforms,
+		const CameraComponent& _camera)
+	{
+		DENG_ASSERT(m_batchSSBOOffsets.size() == m_batchSSBOSizes.size());
+		DENG_ASSERT(_materials.size() == _transforms.size());
+
+		const size_t cuSize = MAX_FRAMES_IN_FLIGHT * (_materials.size() * sizeof(MaterialComponent) + _transforms.size() * sizeof(TransformComponent));
+
+		// reallocation, reallocation, reallocation
+		if (m_uBatchCounter >= m_batchSSBOOffsets.size()) {
+			m_batchSSBOOffsets.push_back(
+				m_pRenderer->AllocateMemory(cuSize, BufferDataType::UNIFORM));
+			m_batchSSBOSizes.push_back(cuSize);
+		}
+		else if (m_batchSSBOSizes[m_uBatchCounter] < cuSize) {
+			m_pRenderer->DeallocateMemory(m_batchSSBOOffsets[m_uBatchCounter]);
+			m_batchSSBOOffsets[m_uBatchCounter] = m_pRenderer->AllocateMemory(cuSize, BufferDataType::UNIFORM);
+			m_batchSSBOSizes[m_uBatchCounter] = cuSize;
 		}
 
-		uTransformSize *= sizeof(TransformComponent) * MAX_FRAMES_IN_FLIGHT;
-		uMaterialSize *= sizeof(MaterialComponent) * MAX_FRAMES_IN_FLIGHT;
-
-		// check if device memory allocation is required
-		size_t uOffset = 0;
-		if (uTransformSize + uMaterialSize > m_uInstancedSSBOSize) {
-			if (m_uInstancedSSBOSize)
-				m_pRenderer->DeallocateMemory(m_uInstancedSSBOOffset);
-			m_uInstancedSSBOSize = ((uTransformSize + uMaterialSize) * 3) >> 1;
-
-			m_uInstancedSSBOOffset = m_pRenderer->AllocateMemory(m_uInstancedSSBOSize, BufferDataType::UNIFORM);
-		}
-		
-		uOffset = m_uInstancedSSBOOffset;
-
-		// check if intermediate buffer reallocation is required
-		if (uTransformSize + uMaterialSize > m_uIntermediateStorageBufferSize) {
-			m_uIntermediateStorageBufferSize = ((uTransformSize + uMaterialSize) * 3) >> 1;
+		// intermediate storage reallocation check
+		if (m_uIntermediateStorageBufferSize < cuSize) {
 			delete[] m_pIntermediateStorageBuffer;
-			m_pIntermediateStorageBuffer = new char[m_uIntermediateStorageBufferSize]{};
+			m_uIntermediateStorageBufferSize = (cuSize * 3) >> 1;
+			m_pIntermediateStorageBuffer = new char[m_uIntermediateStorageBufferSize];
 		}
-	
-		// update buffer objects
-		size_t uIntermediateTransformOffset = 0;
-		size_t uIntermediateMaterialOffset = uTransformSize;
-		size_t uTransformOffset = uOffset;
-		size_t uMaterialOffset = uTransformOffset + uTransformSize;
 
-		for (size_t i = 0; i < m_batches.size(); i++) {
-			m_batches[i].pShaderComponent->uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(uTransformOffset);
-			m_batches[i].pShaderComponent->uboDataLayouts[0].block.uSize = static_cast<uint32_t>(m_batches[i].transforms.size() * sizeof(TransformComponent));
-			
-			for (size_t j = 0; j < MAX_FRAMES_IN_FLIGHT; j++) {
-				std::memcpy(m_pIntermediateStorageBuffer + uIntermediateTransformOffset, m_batches[i].transforms.data(), m_batches[i].transforms.size() * sizeof(TransformComponent));
-				uIntermediateTransformOffset += m_batches[i].transforms.size() * sizeof(TransformComponent);
+		if (_shader.uboDataLayouts.size() >= 1) {
+			_shader.uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_batchSSBOOffsets[m_uBatchCounter]);
+			_shader.uboDataLayouts[0].block.uSize = static_cast<uint32_t>(_transforms.size() * sizeof(TransformComponent));
+
+			// copy to intermediate buffer
+			size_t uOffset = 0;
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				std::memcpy(m_pIntermediateStorageBuffer + uOffset, _transforms.data(), _transforms.size() * sizeof(TransformComponent));
+				uOffset += _transforms.size() * sizeof(TransformComponent);
 			}
 
-			uTransformOffset += m_batches[i].transforms.size() * sizeof(TransformComponent) * MAX_FRAMES_IN_FLIGHT;
+			if (_shader.uboDataLayouts.size() >= 7) {
+				_shader.uboDataLayouts[1].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[0]);
+				_shader.uboDataLayouts[1].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+				_shader.uboDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[1]);
+				_shader.uboDataLayouts[2].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+				_shader.uboDataLayouts[3].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[2]);
+				_shader.uboDataLayouts[3].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+				_shader.uboDataLayouts[4].block.uOffset = static_cast<uint32_t>(m_batchSSBOOffsets[m_uBatchCounter] + _transforms.size() * sizeof(TransformComponent) * MAX_FRAMES_IN_FLIGHT);
+				_shader.uboDataLayouts[4].block.uSize = static_cast<uint32_t>(_materials.size() * sizeof(MaterialComponent));
 
-			if (m_batches[i].pShaderComponent->uboDataLayouts.size() >= 7) {
-				m_batches[i].pShaderComponent->uboDataLayouts[1].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[0]);
-				m_batches[i].pShaderComponent->uboDataLayouts[1].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
-				m_batches[i].pShaderComponent->uboDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[1]);
-				m_batches[i].pShaderComponent->uboDataLayouts[2].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
-				m_batches[i].pShaderComponent->uboDataLayouts[3].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[2]);
-				m_batches[i].pShaderComponent->uboDataLayouts[3].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
-				m_batches[i].pShaderComponent->uboDataLayouts[4].block.uOffset = static_cast<uint32_t>(uMaterialOffset);
-				m_batches[i].pShaderComponent->uboDataLayouts[4].block.uSize = static_cast<uint32_t>(m_batches[i].materials.size() * sizeof(MaterialComponent));
+				_shader.uPushConstantDataLength = sizeof(CameraComponent);
+				_shader.pPushConstantData = &_camera;
 
-				m_batches[i].pShaderComponent->uPushConstantDataLength = sizeof(CameraComponent);								
-				m_batches[i].pShaderComponent->pPushConstantData = &_camera;
-				
-				uMaterialOffset += m_batches[i].materials.size() * sizeof(MaterialComponent) * MAX_FRAMES_IN_FLIGHT;
 				for (size_t j = 0; j < MAX_FRAMES_IN_FLIGHT; j++) {
-					std::memcpy(m_pIntermediateStorageBuffer + uIntermediateMaterialOffset, m_batches[i].materials.data(), m_batches[i].materials.size() * sizeof(MaterialComponent));
-					uIntermediateMaterialOffset += m_batches[i].materials.size() * sizeof(MaterialComponent);
+					std::memcpy(m_pIntermediateStorageBuffer + uOffset, _materials.data(), _materials.size() * sizeof(MaterialComponent));
+					uOffset += _materials.size() * sizeof(MaterialComponent);
 				}
 			}
 		}
 
-		if (uTransformSize + uMaterialOffset) {
-			m_pRenderer->UpdateBuffer(m_pIntermediateStorageBuffer, uTransformSize + uMaterialSize, uOffset);
+		// check if updating buffer is necessary
+		if (cuSize) {
+			m_pRenderer->UpdateBuffer(m_pIntermediateStorageBuffer, cuSize, m_batchSSBOOffsets[m_uBatchCounter]);
 		}
 
-		// issue batch draw commands
-		for (size_t i = 0; i < m_batches.size(); i++) {
-			// check if diffuse and specular textures are used
-			std::vector<uint32_t> textureIds;
-			if (m_batches[i].materials.size()) {
-				if (m_batches[i].materials.front().vMaps[0])
-					textureIds.push_back(m_batches[i].materials.front().vMaps[0]);
-				if (m_batches[i].materials.front().vMaps[1])
-					textureIds.push_back(m_batches[i].materials.front().vMaps[1]);
-			}
-			m_pRenderer->DrawMesh(*m_batches[i].pMeshComponent, *m_batches[i].pShaderComponent, m_pFramebuffer, m_batches[i].uInstanceCount, textureIds);
-			m_batches[i].materials.clear();
-			m_batches[i].transforms.clear();
-			m_batches[i].uInstanceCount = 0;
+		// check if any texture were bound
+		std::vector<uint32_t> textureIds = {};
+		if (_materials.size() && _materials[0].vMaps[0] && _materials[0].vMaps[1]) {
+			textureIds.push_back(_materials[0].vMaps[0]);
+			textureIds.push_back(_materials[0].vMaps[1]);
 		}
+
+		const uint32_t uInstanceCount = static_cast<uint32_t>(_materials.size());
+		m_pRenderer->DrawMesh(_mesh, _shader, m_pFramebuffer, uInstanceCount, textureIds);
 	}
 }
