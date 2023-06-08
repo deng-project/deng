@@ -12,6 +12,57 @@ namespace DENG {
 		m_sceneRenderer(_pRenderer, _pFramebuffer) {}
 
 
+	void Scene::_DrawImplicitlyInstancedMeshes(const CameraComponent& _mainCamera) {
+		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent, TransformComponent>();
+
+		std::vector<MaterialComponent> materials;
+		materials.reserve(group.size());
+		std::vector<TransformComponent> transforms;
+		transforms.reserve(group.size());
+
+		for (auto it = group.begin(); it != group.end(); it++) {
+			auto& [mesh, shader, transform, material] = group.get<MeshComponent, ShaderComponent, TransformComponent, MaterialComponent>(*it);
+
+			if (it != group.begin()) {
+				auto itPrev = it - 1;
+				auto& [prevMesh, prevShader] = group.get<MeshComponent, ShaderComponent>(*itPrev);
+
+				if (prevMesh == mesh && prevShader == shader) {
+					materials.push_back(material);
+					transforms.push_back(transform);
+				}
+				else {
+					// render the previous batch
+					m_sceneRenderer.RenderBatch(prevMesh, prevShader, materials, transforms, _mainCamera);
+					materials.clear();
+					transforms.clear();
+					materials.push_back(material);
+					transforms.push_back(transform);
+				}
+			}
+			else {
+				materials.push_back(material);
+				transforms.push_back(transform);
+			}
+		}
+
+		if (materials.size() && transforms.size()) {
+			auto it = group.rbegin();
+			auto& [mesh, shader] = group.get<MeshComponent, ShaderComponent>(*it);
+			m_sceneRenderer.RenderBatch(mesh, shader, materials, transforms, _mainCamera);
+		}
+	}
+
+
+	void Scene::_DrawPrefabs(const CameraComponent& _mainCamera) {
+		auto view = m_registry.view<MeshComponent, ShaderComponent, PrefabMaterialComponents, PrefabTransformComponents>();
+
+		for (auto it = view.begin(); it != view.end(); it++) {
+			auto& [mesh, shader, transforms, materials] = view.get<MeshComponent, ShaderComponent, PrefabTransformComponents, PrefabMaterialComponents>(*it);
+			m_sceneRenderer.RenderBatch(mesh, shader, materials.materials, transforms.transforms, _mainCamera);
+		}
+	}
+
 	void Scene::_UpdateScripts() {
 		std::chrono::duration<float, std::milli> frametime;
 		
@@ -44,44 +95,8 @@ namespace DENG {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
 			
-			// every drawable mesh needs to have following components:
-			// MeshComponent, ShaderComponent, MaterialComponent, TransformComponent
-			auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent, TransformComponent>();
-
-			std::vector<MaterialComponent> materials;
-			std::vector<TransformComponent> transforms;
-
-			for (auto it = group.begin(); it != group.end(); it++) {
-				auto& [mesh, shader, transform, material] = group.get<MeshComponent, ShaderComponent, TransformComponent, MaterialComponent>(*it);
-
-				if (it != group.begin()) {
-					auto itPrev = it - 1;
-					auto& [prevMesh, prevShader] = group.get<MeshComponent, ShaderComponent>(*itPrev);
-
-					if (prevMesh == mesh && prevShader == shader) {
-						materials.push_back(material);
-						transforms.push_back(transform);
-					}
-					else {
-						// render the previous batch
-						m_sceneRenderer.RenderBatch(prevMesh, prevShader, materials, transforms, camera);
-						materials.clear();
-						transforms.clear();
-						materials.push_back(material);
-						transforms.push_back(transform);
-					}
-				}
-				else {
-					materials.push_back(material);
-					transforms.push_back(transform);
-				}
-			}
-
-			if (materials.size() && transforms.size()) {
-				auto it = group.rbegin();
-				auto& [mesh, shader] = group.get<MeshComponent, ShaderComponent>(*it);
-				m_sceneRenderer.RenderBatch(mesh, shader, materials, transforms, camera);
-			}
+			_DrawPrefabs(camera);
+			_DrawImplicitlyInstancedMeshes(camera);
 
 			m_sceneRenderer.Finalize();
 		}

@@ -23,7 +23,7 @@ using namespace DENG;
 #endif
 
 #define SQ(x) (x*x)
-#define ROW_LEN	100
+#define ROW_LEN	316
 
 namespace Application {
 
@@ -31,7 +31,7 @@ namespace Application {
 		private:
 			DENG::Scene m_scene;
 			DENG::IRenderer* m_pRenderer = nullptr;
-			std::array<DENG::Entity, SQ(ROW_LEN)> m_entities{entt::null};
+			DENG::Entity m_prefabEntity = entt::null;
 			std::array<uint32_t, 2> m_mapIds = {};
 
 		private:

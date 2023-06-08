@@ -52,11 +52,6 @@ namespace DENG {
 	};
 
 
-	class PrefabComponent {
-		private:
-			const bool bIsPrefab = true;
-	};
-
 	struct TransformComponent {
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
@@ -299,6 +294,15 @@ namespace DENG {
 		};
 	};
 
+
+	struct PrefabTransformComponents {
+		std::vector<TransformComponent> transforms;
+	};
+
+
+	struct PrefabMaterialComponents {
+		std::vector<MaterialComponent> materials;
+	};
 	
 	struct SkeletalJointComponent {
 		SkeletalJointComponent() = default;

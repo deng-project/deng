@@ -38,9 +38,9 @@ namespace Application {
 		size_t uOffset = _pRenderer->AllocateMemory(sizeof(g_cCubeVertices), BufferDataType::VERTEX);
 		_pRenderer->UpdateBuffer(g_cCubeVertices, sizeof(g_cCubeVertices), uOffset);
 
-		auto& mesh = m_scene.GetComponent<MeshComponent>(m_entities[0]);
-		auto& material = m_scene.GetComponent<MaterialComponent>(m_entities[0]);
-		auto& shader = m_scene.GetComponent<ShaderComponent>(m_entities[0]);
+		auto& mesh = m_scene.GetComponent<MeshComponent>(m_prefabEntity);
+		auto& materials = m_scene.GetComponent<PrefabMaterialComponents>(m_prefabEntity).materials;
+		auto& shader = m_scene.GetComponent<ShaderComponent>(m_prefabEntity);
 
 		// mesh component
 		mesh.sName = "Cube mesh prefab";
@@ -52,14 +52,18 @@ namespace Application {
 
 		// material component
 		try {
-			material.vMaps[0] = _LoadTexture("Textures/Container/diffuse.png", _pRenderer);		// diffuse map
-			material.vMaps[1] = _LoadTexture("Textures/Container/specular.png", _pRenderer);	// specular map
+			materials[0].vMaps[0] = _LoadTexture("Textures/Container/diffuse.png", _pRenderer);		// diffuse map
+			materials[0].vMaps[1] = _LoadTexture("Textures/Container/specular.png", _pRenderer);	// specular map
 		}
 		catch (const RendererException& e) {
 			DISPATCH_ERROR_MESSAGE("RendererException", e.what(), ErrorSeverity::CRITICAL);
 		}
 
-		material.fShininess = 0.2f;
+		materials[0].fShininess = 0.2f;
+
+		for (int i = 1; i < SQ(ROW_LEN); i++) {
+			materials[i] = materials[0];
+		}
 
 		// shader component
 		shader.attributes.push_back(ATTRIBUTE_TYPE_VEC3_FLOAT);
@@ -127,13 +131,15 @@ namespace Application {
 		const float cfCubeSize = 1.f;
 		const float cfStartX = -(float)ROW_LEN * (2.f * cfGap + cfCubeSize) / 2.f;
 		float fCurrentHeight = 0.5f;
+
+		auto& transforms = m_scene.GetComponent<PrefabTransformComponents>(m_prefabEntity).transforms;
+
 		// x
 		for (int i = 0; i < ROW_LEN; i++) {
+			// y
 			for (int j = 0; j < ROW_LEN; j++) {
-				Entity idEntity = m_entities[i * ROW_LEN + j];
-				auto& transform = m_scene.GetComponent<TransformComponent>(idEntity);
-				transform.vTranslation[0] = cfStartX + static_cast<float>(j) * (cfGap + cfCubeSize);
-				transform.vTranslation[1] = fCurrentHeight;
+				transforms[i * ROW_LEN + j].vTranslation[0] = cfStartX + static_cast<float>(j) * (cfGap + cfCubeSize);
+				transforms[i * ROW_LEN + j].vTranslation[1] = fCurrentHeight;
 			}
 
 			fCurrentHeight += cfGap + cfCubeSize;
@@ -151,27 +157,13 @@ namespace Application {
 		m_scene.EmplaceComponent<ScriptComponent>(idCamera).BindScript<CameraScript>(idCamera, m_eventManager, m_scene);
 		m_scene.SetMainCamera(idCamera);
 
-		for (size_t i = 0; i < m_entities.size(); i++) {
-			m_entities[i] = m_scene.CreateEntity();
-			if (i == 0) {
-				m_scene.EmplaceComponent<MeshComponent>(m_entities[i]);
-				m_scene.EmplaceComponent<MaterialComponent>(m_entities[i]);
-				m_scene.EmplaceComponent<ShaderComponent>(m_entities[i]);
-				_CreatePrefab(_pRenderer);
-			}
-			else {
-				auto& mesh = m_scene.GetComponent<MeshComponent>(m_entities[0]);
-				auto& shader = m_scene.GetComponent<ShaderComponent>(m_entities[0]);
-				auto& material = m_scene.GetComponent<MaterialComponent>(m_entities[0]);
-				
-				m_scene.EmplaceComponent<MeshComponent>(m_entities[i], mesh);
-				m_scene.EmplaceComponent<ShaderComponent>(m_entities[i], shader);
-				m_scene.EmplaceComponent<MaterialComponent>(m_entities[i], material);
-			}
+		m_prefabEntity = m_scene.CreateEntity();
+		m_scene.EmplaceComponent<MeshComponent>(m_prefabEntity);
+		m_scene.EmplaceComponent<ShaderComponent>(m_prefabEntity);
+		m_scene.EmplaceComponent<PrefabTransformComponents>(m_prefabEntity).transforms.resize(SQ(ROW_LEN));
+		m_scene.EmplaceComponent<PrefabMaterialComponents>(m_prefabEntity).materials.resize(SQ(ROW_LEN));
 
-			m_scene.EmplaceComponent<TransformComponent>(m_entities[i]);
-		}
-
+		_CreatePrefab(_pRenderer);
 		_ApplyTransforms();
 		m_scene.AttachComponents();
 	}
