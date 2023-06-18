@@ -237,7 +237,7 @@ namespace DENG {
 
             // free old main buffer resources and allocate new larger buffer
             m_deletedBuffers.push_back(m_mainBuffer);
-            m_mainBuffer.uSize = (static_cast<VkDeviceSize>(_uSize + _uOffset)) >> 1;
+            m_mainBuffer.uSize = (static_cast<VkDeviceSize>(_uSize + _uOffset) * 3) >> 1;
 
             memoryRequirements = Vulkan::_CreateBuffer(
                 m_pInstanceCreator->GetDevice(),
