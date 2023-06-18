@@ -41,7 +41,16 @@ struct SpotLight {
 	float fOuterCutoff;
 };
 
-layout(std430, set = 0, binding = 1) readonly buffer Lights1 {
+struct DrawDescriptorIndices {
+	ivec4 indices;
+};
+
+layout(std430, set = 0, binding = 0) readonly buffer DrawDescriptorIndicesSSBO {
+	DrawDescriptorIndices descriptors[];
+} uboIndices;
+
+
+layout(std430, set = 0, binding = 2) readonly buffer Lights1 {
 	vec4 vAmbient;
 	// x: point light count; y: directional light count; z: spot light count
 	uvec4 vLightCounts;
@@ -49,12 +58,12 @@ layout(std430, set = 0, binding = 1) readonly buffer Lights1 {
 } uboPointLights;
 
 
-layout(std430, set = 0, binding = 2) readonly buffer Lights2 {
+layout(std430, set = 0, binding = 3) readonly buffer Lights2 {
 	DirectionalLight dirLights[];
 } uboDirLights;
 
 
-layout(std430, set = 0, binding = 3) readonly buffer Lights3 {
+layout(std430, set = 0, binding = 4) readonly buffer Lights3 {
 	SpotLight spotLights[];
 } uboSpotLights;
 
@@ -67,24 +76,26 @@ struct Material {
 	float fShininess;
 };
 
-layout(std140, set = 1, binding = 4) readonly buffer MaterialSSBO {
+layout(std140, set = 0, binding = 5) readonly buffer MaterialSSBO {
 	Material materials[];
 } uboMaterial;
 
-layout(set = 1, binding = 5) uniform sampler2D smpDiffuse;
-layout(set = 1, binding = 6) uniform sampler2D smpSpecular;
+layout(set = 1, binding = 0) uniform sampler2D smpDiffuse;
+layout(set = 1, binding = 1) uniform sampler2D smpSpecular;
 
 
 vec3 g_vDiffuse = vec3(0.f);
 vec3 g_vSpecular = vec3(0.f);
 
 vec3 calculateDiffuse(vec3 vLightDir, vec3 vLightDiffuse) {
+	const int ciIndex = uboIndices.descriptors[iInstanceIndex].indices.y;
+	
 	const vec3 vNormal = normalize(vInputNormal);
 	const float fDiffuseImpact = max(dot(vNormal, vLightDir), 0.f);
 	
 	// material diffuse
-	if (uboMaterial.materials[iInstanceIndex].vMaps[0] == 0) {
-		return vLightDiffuse * (fDiffuseImpact * uboMaterial.materials[iInstanceIndex].vDiffuse.xyz);
+	if (uboMaterial.materials[ciIndex].vMaps[0] == 0) {
+		return vLightDiffuse * (fDiffuseImpact * uboMaterial.materials[ciIndex].vDiffuse.xyz);
 	}
 	// diffuse map is used
 	else {
@@ -93,14 +104,16 @@ vec3 calculateDiffuse(vec3 vLightDir, vec3 vLightDiffuse) {
 }
 
 vec3 calculateSpecular(vec3 vLightDir, vec3 vLightSpecular) {
+	const int ciIndex = uboIndices.descriptors[iInstanceIndex].indices.y;
+	
 	const vec3 vNormal = normalize(vInputNormal);
 	const vec3 vViewDir = normalize(uboCamera.vPosition.xyz - vInputPosition);
 	const vec3 vReflectDir = reflect(-vLightDir, vNormal);
-	const float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.materials[iInstanceIndex].fShininess * SHINE_MUL);
+	const float fSpecularImpact = pow(max(dot(vViewDir, vReflectDir), 0.f), uboMaterial.materials[ciIndex].fShininess * SHINE_MUL);
 	
 	// material specular
-	if (uboMaterial.materials[iInstanceIndex].vMaps[1] == 0) {
-		return vLightSpecular * (fSpecularImpact * uboMaterial.materials[iInstanceIndex].vSpecular.xyz);
+	if (uboMaterial.materials[ciIndex].vMaps[2] == 0) {
+		return vLightSpecular * (fSpecularImpact * uboMaterial.materials[ciIndex].vSpecular.xyz);
 	}
 	// specular map
 	else {
@@ -146,8 +159,10 @@ void calculateSpotLights() {
 
 vec3 calculateAmbient() {
 	vec3 vAmbient = vec3(0.f);
-	if (uboMaterial.materials[iInstanceIndex].vMaps[0] == 0) {
-		vAmbient = uboPointLights.vAmbient.xyz * uboMaterial.materials[iInstanceIndex].vAmbient.xyz;
+	const int ciIndex = uboIndices.descriptors[iInstanceIndex].indices.y;
+	
+	if (uboMaterial.materials[ciIndex].vMaps[0] == 0) {
+		vAmbient = uboPointLights.vAmbient.xyz * uboMaterial.materials[ciIndex].vAmbient.xyz;
 	}
 	else {
 		vAmbient = uboPointLights.vAmbient.xyz * vec3(texture(smpDiffuse, vInputUV));

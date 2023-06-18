@@ -21,7 +21,7 @@ namespace DENG {
 			result = GetLastError();
 		}
 
-		m_sParentDirectory = filesystem::path(sFilePath).parent_path().u8string();
+		m_sParentDirectory = filesystem::path(sFilePath).parent_path().string();
 
 #if !defined(DENG_WINDOWS_PACKAGE_CONFIGURATION) && !defined(DENG_PORTABLE) && !defined(DENG_DEBUG)
 		m_sParentDirectory += "..";
@@ -30,13 +30,13 @@ namespace DENG {
 #endif
 	}
 
-	bool ProgramFilesManager::ExistsFile(const string& _sPath) {
+	bool ProgramFilesManager::ExistsFile(const string& _sPath) const {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
 		return filesystem::exists(sAbsolutePath) && filesystem::is_regular_file(sAbsolutePath);
 	}
 
 
-	size_t ProgramFilesManager::FileSize(const string& _sPath) {
+	size_t ProgramFilesManager::FileSize(const string& _sPath) const {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
 		size_t size = 0; 
 		try {
@@ -51,7 +51,7 @@ namespace DENG {
 	}
 
 
-	time_t ProgramFilesManager::GetFileTimestamp(const string& _sPath) {
+	time_t ProgramFilesManager::GetFileTimestamp(const string& _sPath) const {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
 		filesystem::file_time_type tTimestamp; 
 		
@@ -67,7 +67,7 @@ namespace DENG {
 	}
 
 
-	vector<char> ProgramFilesManager::GetProgramFileContent(const string& _sPath) {
+	vector<char> ProgramFilesManager::GetProgramFileContent(const string& _sPath) const {
 		vector<char> output;
 		const std::string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
 
@@ -87,7 +87,7 @@ namespace DENG {
 	}
 
 
-	void ProgramFilesManager::WriteProgramFile(const vector<char>& _data, const string& _sFilePath) {
+	void ProgramFilesManager::WriteProgramFile(const vector<char>& _data, const string& _sFilePath) const {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sFilePath;
 		const filesystem::path parentPath = filesystem::path(sAbsolutePath).parent_path();
 
@@ -107,7 +107,7 @@ namespace DENG {
 	}
 
 
-	void ProgramFilesManager::WriteProgramFile(const char* _pBytes, size_t _uByteCount, const string& _sFilePath) {
+	void ProgramFilesManager::WriteProgramFile(const char* _pBytes, size_t _uByteCount, const string& _sFilePath) const {
 		const string sAbsolutePath = m_sParentDirectory + '\\' + _sFilePath;
 		const filesystem::path parentPath = filesystem::path(sAbsolutePath).parent_path();
 

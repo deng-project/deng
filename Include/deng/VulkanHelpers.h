@@ -8,15 +8,12 @@
 #define VULKAN_HELPERS_H
 
 #ifdef VULKAN_HELPERS_CPP
-    #include <cstdint>
-    #include <cstring>
-#ifdef __DEBUG
-    #include <iostream>
-#endif
-    #include <vulkan/vulkan.h>
     #include "deng/ErrorDefinitions.h"
 #endif
 
+#include <vulkan/vulkan.h>
+#include "deng/SID.h"
+#include "deng/IRenderer.h"
 #define VK_FORMAT_DEFAULT_IMAGE VK_FORMAT_R8G8B8A8_UNORM
 
 namespace DENG {
@@ -44,6 +41,17 @@ namespace DENG {
             PhysicalDeviceType eDeviceType = PhysicalDeviceType::OTHER;
         };
 
+        struct BufferData {
+            VkBuffer hBuffer = VK_NULL_HANDLE;
+            VkDeviceMemory hMemory = VK_NULL_HANDLE;
+            VkDeviceSize uSize = 0;
+        };
+
+
+        struct ShaderDescriptorData {
+            VkDescriptorSetLayout hDescriptorSetLayout = VK_NULL_HANDLE;
+            std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+        };
 
         struct TextureData {
             VkImage hImage = VK_NULL_HANDLE;

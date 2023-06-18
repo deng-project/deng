@@ -315,13 +315,13 @@ namespace DENG {
                 if(m_uPresentationQueueFamilyIndex != UINT32_MAX && m_uGraphicsQueueFamilyIndex != UINT32_MAX)
                     break;
 
-                if(queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                if((queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT))
                     m_uGraphicsQueueFamilyIndex = i;
 
                 // check if presentation is supported
-                VkBool32 bPresenetationSupported;
-                vkGetPhysicalDeviceSurfaceSupportKHR(m_hPhysicalDevice, i, m_hSurface, &bPresenetationSupported);
-                if(bPresenetationSupported) 
+                VkBool32 bPresentationSupported = VK_FALSE;
+                vkGetPhysicalDeviceSurfaceSupportKHR(m_hPhysicalDevice, i, m_hSurface, &bPresentationSupported);
+                if(bPresentationSupported) 
                     m_uPresentationQueueFamilyIndex = i;
             }
 

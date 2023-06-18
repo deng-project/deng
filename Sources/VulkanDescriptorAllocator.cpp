@@ -13,13 +13,11 @@ namespace DENG {
         DescriptorAllocator::DescriptorAllocator(
             VkDevice _hDevice,
             VkBuffer _hMainBuffer,
-            const std::unordered_map<uint32_t, TextureResource>& _textureRegistry,
             const std::vector<UniformDataLayout>& _uniformDataLayouts,
             uint32_t _uBufferingStageCount,
-            uint32_t _uMissing2DTextureId,
-            uint32_t _uMissing3DTextureId
+            hash_t _uMissing2DTextureId,
+            hash_t _uMissing3DTextureId
         ) : m_hDevice(_hDevice),
-            m_textureRegistry(_textureRegistry),
             m_uBufferingStageCount(_uBufferingStageCount),
             m_u2DMissingTextureId(_uMissing2DTextureId),
             m_u3DMissingTextureId(_uMissing3DTextureId)

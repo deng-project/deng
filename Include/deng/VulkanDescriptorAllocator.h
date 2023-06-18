@@ -18,7 +18,7 @@
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
-    #include "deng/ShaderComponent.h"
+    #include "deng/IShader.h"
     #include "deng/IRenderer.h"
     #include "deng/VulkanHelpers.h"
     #include "deng/Missing.h"
@@ -31,9 +31,8 @@ namespace DENG {
         class DescriptorAllocator {
             private:
                 VkDevice m_hDevice = VK_NULL_HANDLE;
-                const std::unordered_map<uint32_t, TextureResource>& m_textureRegistry;
-                uint32_t m_u2DMissingTextureId;
-                uint32_t m_u3DMissingTextureId;
+                hash_t m_u2DMissingTextureId;
+                hash_t m_u3DMissingTextureId;
 
                 VkDescriptorPool m_hShaderDescriptorPool = VK_NULL_HANDLE;
                 std::vector<VkDescriptorSet> m_shaderDescriptorSets;
@@ -52,19 +51,17 @@ namespace DENG {
 
             private:
                 void _CreateDescriptorSetLayouts(const std::vector<UniformDataLayout>& _uniformDataLayouts);
-                void _CreateShaderDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts);
-                void _AllocateNewMeshDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts);
-                void _AllocateShaderDescriptorSets(const std::vector<UniformDataLayout>& _uniformDataLayouts);
+                void _CreateDescriptorPool(const std::vector<UniformDataLayout>& _uniformDataLayouts);
+                void _AllocateDescriptorSets(const std::vector<UniformDataLayout>& _uniformDataLayouts);
 
             public:
                 DescriptorAllocator(
                     VkDevice _hDevice,
                     VkBuffer _hMainBuffer,
-                    const std::unordered_map<uint32_t, TextureResource>& _textureRegistry,
                     const std::vector<UniformDataLayout> &_uniformDataLayouts, 
                     uint32_t _uFrameCount,
-                    uint32_t _uMissing2DTextureId,
-                    uint32_t _uMissing3DTextureId);
+                    hash_t _uMissing2DTextureId,
+                    hash_t _uMissing3DTextureId);
                 DescriptorAllocator(DescriptorAllocator&& _da) noexcept;
                 DescriptorAllocator(const DescriptorAllocator& _da) = delete;
                 ~DescriptorAllocator() noexcept;
@@ -74,7 +71,6 @@ namespace DENG {
                 void UpdateDescriptorSet(
                     VkBuffer _hMainBuffer, 
                     VkDescriptorSet _hDescriptorSet, 
-                    UniformUsage _eUsage, 
                     const std::vector<UniformDataLayout>& _uniformDataLayouts,
                     size_t _uFrameIndex = 0,
                     const std::vector<uint32_t>& _textures = {});

@@ -15,9 +15,9 @@
     #include <vulkan/vulkan.h>
     #include <shaderc/shaderc.hpp>
 
+    #include "deng/IShader.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
-    #include "deng/ShaderComponent.h"
     #include "deng/VulkanHelpers.h"
 #endif
 
@@ -49,7 +49,7 @@ namespace DENG {
                 VkGraphicsPipelineCreateInfo m_graphicsPipelineCreateInfo = {};
 
                 VkDescriptorSetLayout m_hShaderDescriptorSetLayout = VK_NULL_HANDLE;
-                VkDescriptorSetLayout m_hMeshDescriptorSetLayout = VK_NULL_HANDLE;
+                VkDescriptorSetLayout m_hMaterialDescriptorSetLayout = VK_NULL_HANDLE;
                 VkPipelineLayout m_hPipelineLayout = VK_NULL_HANDLE;
                 VkPipeline m_hPipeline = VK_NULL_HANDLE;
                 VkRenderPass m_hRenderPass = VK_NULL_HANDLE;
@@ -57,12 +57,12 @@ namespace DENG {
                 VkPipelineCache m_hPipelineCache = VK_NULL_HANDLE;
 
             private:
-                void _FindInputBindingDescriptions(const ShaderComponent& _shader);
-                void _FindVertexInputAttributeDescriptions(const ShaderComponent& _shader);
-                VkShaderModule _CreateShaderModule(std::vector<uint32_t> &_bin);
+                void _FindInputBindingDescriptions(const IShader* _pShader);
+                void _FindVertexInputAttributeDescriptions(const IShader* _pShader);
+                VkShaderModule _CreateShaderModule(std::vector<uint32_t>& _bin);
 
-                void _CreatePipelineLayout(const ShaderComponent& _shader);
-                void _GeneratePipelineCreateInfo(const ShaderComponent& _shader, bool _bCreateShaderModules = true);
+                void _CreatePipelineLayout(const IShader* _pShader);
+                void _GeneratePipelineCreateInfo(const IShader* _pShader, bool _bCreateShaderModules = true);
 
             public:
                 PipelineCreator(
@@ -72,7 +72,7 @@ namespace DENG {
                     VkDescriptorSetLayout _hMeshDescriptorSetLayout,
                     VkSampleCountFlagBits _uSampleBits,
                     const PhysicalDeviceInformation& _info,
-                    const ShaderComponent& _module);
+                    const IShader* _pShader);
                 PipelineCreator(PipelineCreator &&_pc) noexcept;
                 PipelineCreator(const PipelineCreator &_pc) = delete;
                 ~PipelineCreator() noexcept;

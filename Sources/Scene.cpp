@@ -12,55 +12,69 @@ namespace DENG {
 		m_sceneRenderer(_pRenderer, _pFramebuffer) {}
 
 
-	void Scene::_DrawImplicitlyInstancedMeshes(const CameraComponent& _mainCamera) {
-		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent, TransformComponent>();
-
-		std::vector<MaterialComponent> materials;
-		materials.reserve(group.size());
+	using _MaterialTuple = std::tuple<std::vector<InstanceInfo>, std::vector<TransformComponent>, std::vector<Material>, std::vector<DrawDescriptorIndices>>;
+	_MaterialTuple Scene::_InstanceRenderablesMSM() {
+		std::vector<InstanceInfo> instanceInfos;
 		std::vector<TransformComponent> transforms;
-		transforms.reserve(group.size());
+		std::vector<Material> materials;
+		std::vector<DrawDescriptorIndices> drawDescriptorIndices;
+		std::unordered_map<hash_t, size_t, NoHash> materialIndexLookup;
 
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
+
+		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
+		instanceInfos.reserve(group.size());
+		transforms.reserve(group.size());
+		materials.reserve(group.size());
+		drawDescriptorIndices.reserve(group.size());
+		
 		for (auto it = group.begin(); it != group.end(); it++) {
-			auto& [mesh, shader, transform, material] = group.get<MeshComponent, ShaderComponent, TransformComponent, MaterialComponent>(*it);
+			auto& [mesh, shader, material] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*it);
+			const bool bHasTransform = m_registry.any_of<TransformComponent>(*it);
 
 			if (it != group.begin()) {
 				auto itPrev = it - 1;
-				auto& [prevMesh, prevShader] = group.get<MeshComponent, ShaderComponent>(*itPrev);
+				auto& [prevMesh, prevShader, prevMaterial] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*itPrev);
 
-				if (prevMesh == mesh && prevShader == shader) {
-					materials.push_back(material);
-					transforms.push_back(transform);
-				}
+				if (mesh == prevMesh && shader == prevShader && material == prevMaterial)
+					instanceInfos.back().uInstanceCount++;
 				else {
-					// render the previous batch
-					m_sceneRenderer.RenderBatch(prevMesh, prevShader, materials, transforms, _mainCamera);
-					materials.clear();
-					transforms.clear();
-					materials.push_back(material);
-					transforms.push_back(transform);
+					instanceInfos.emplace_back();
+					instanceInfos.back().hshMesh = mesh.hshMesh;
+					instanceInfos.back().hshShader = shader.hshShader;
+					instanceInfos.back().hshMaterial = material.hshMaterial;
 				}
 			}
 			else {
-				materials.push_back(material);
-				transforms.push_back(transform);
+				instanceInfos.emplace_back();
+				instanceInfos.back().hshMesh = mesh.hshMesh;
+				instanceInfos.back().hshShader = shader.hshShader;
+				instanceInfos.back().hshMaterial = material.hshMaterial;
+			}
+
+			// material indexing
+			if (materialIndexLookup.find(material.hshMaterial) == materialIndexLookup.end()) {
+				auto pMaterial = resourceManager.GetMaterial(material.hshMaterial);
+				DENG_ASSERT(pMaterial);
+
+				materials.emplace_back(*pMaterial);
+				materialIndexLookup[material.hshMaterial] = materials.size() - 1;
+			}
+
+
+			if (bHasTransform) {
+				auto& transform = m_registry.get<TransformComponent>(*it);
+				transforms.emplace_back(transform);
+				drawDescriptorIndices.emplace_back(
+					static_cast<int32_t>(transforms.size() - 1),
+					static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
+			}
+			else {
+				drawDescriptorIndices.emplace_back(-1, static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
 			}
 		}
 
-		if (materials.size() && transforms.size()) {
-			auto it = group.rbegin();
-			auto& [mesh, shader] = group.get<MeshComponent, ShaderComponent>(*it);
-			m_sceneRenderer.RenderBatch(mesh, shader, materials, transforms, _mainCamera);
-		}
-	}
-
-
-	void Scene::_DrawPrefabs(const CameraComponent& _mainCamera) {
-		auto view = m_registry.view<MeshComponent, ShaderComponent, PrefabMaterialComponents, PrefabTransformComponents>();
-
-		for (auto it = view.begin(); it != view.end(); it++) {
-			auto& [mesh, shader, transforms, materials] = view.get<MeshComponent, ShaderComponent, PrefabTransformComponents, PrefabMaterialComponents>(*it);
-			m_sceneRenderer.RenderBatch(mesh, shader, materials.materials, transforms.transforms, _mainCamera);
-		}
+		return std::make_tuple(instanceInfos, transforms, materials, drawDescriptorIndices);
 	}
 
 	void Scene::_UpdateScripts() {
@@ -95,40 +109,36 @@ namespace DENG {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
 			
-			_DrawPrefabs(camera);
-			_DrawImplicitlyInstancedMeshes(camera);
-
-			m_sceneRenderer.Finalize();
+			auto [instanceInfos, transforms, materials, drawDescriptors] = _InstanceRenderablesMSM();
+			m_sceneRenderer.RenderInstances(instanceInfos, transforms, materials, drawDescriptors, camera);
 		}
 	}
 
 	void Scene::AttachComponents() {
-		// calculate checksums for all mesh components
+		// sort entities that have MeshComponent, ShaderComponent and MaterialComponent
 		{
-			auto group = m_registry.group<MeshComponent, ShaderComponent>();
-			group.sort<MeshComponent, ShaderComponent>(
-				[](std::tuple<MeshComponent&, ShaderComponent&> t1, std::tuple<MeshComponent&, ShaderComponent&> t2) {
-					auto& mesh1 = std::get<MeshComponent&>(t1);
-					auto& mesh2 = std::get<MeshComponent&>(t2);
-					auto& shader1 = std::get<ShaderComponent&>(t1);
-					auto& shader2 = std::get<ShaderComponent&>(t2);
+			auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
+			
+			using _Tuple = std::tuple<MeshComponent, ShaderComponent, MaterialComponent>;
+			group.sort<MeshComponent, ShaderComponent, MaterialComponent>(
+				[](const _Tuple& _t1, const _Tuple& _t2) {
+					auto& [mesh1, shader1, material1] = _t1;
+					auto& [mesh2, shader2, material2] = _t2;
 
 					// mesh verification
-					if (mesh1.uDrawCommandHash != mesh2.uDrawCommandHash)
-						return mesh1.uDrawCommandHash < mesh2.uDrawCommandHash;
+					if (mesh1.hshMesh != mesh2.hshMesh)
+						return mesh1.hshMesh < mesh2.hshMesh;
 
 					// shader verification
-					if (shader1.pShader != shader2.pShader)
-						return shader1.pShader < shader2.pShader;
+					if (shader1.hshShader != shader2.hshShader)
+						return shader1.hshShader < shader2.hshShader;
+
+					// material verification
+					if (material1.hshMaterial != material2.hshMaterial)
+						return material1.hshMaterial < material2.hshMaterial;
 
 					return false;
 				});
-
-			auto view = m_registry.view<MeshComponent>();
-			for (Entity idMesh : view) {
-				MeshComponent& mesh = m_registry.get<MeshComponent>(idMesh);
-				mesh.uDrawCommandHash = MeshComponent::_Hash()(mesh);
-			}
 		}
 
 		{

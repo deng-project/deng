@@ -15,18 +15,18 @@ namespace DENG {
             VkDevice _hDevice, 
             VkRenderPass _hRenderPass,
             VkDescriptorSetLayout _hShaderDescriptorSetLayout,
-            VkDescriptorSetLayout _hMeshDescriptorSetLayout,
+            VkDescriptorSetLayout _hMaterialDescriptorSetLayout,
             VkSampleCountFlagBits _uSampleBits, 
             const Vulkan::PhysicalDeviceInformation& _information, 
-            const ShaderComponent& _shader) :
+            const IShader* _pShader) :
             m_hDevice(_hDevice),
             m_hShaderDescriptorSetLayout(_hShaderDescriptorSetLayout),
-            m_hMeshDescriptorSetLayout(_hMeshDescriptorSetLayout),
+            m_hMaterialDescriptorSetLayout(_hMaterialDescriptorSetLayout),
             m_uSampleBits(_uSampleBits),
             m_hRenderPass(_hRenderPass)
         {
             try {
-                _CreatePipelineLayout(_shader);
+                _CreatePipelineLayout(_pShader);
             }
             catch (const RendererException& e) {
                 DISPATCH_ERROR_MESSAGE("RendererException", e.what(), CRITICAL);
@@ -35,8 +35,8 @@ namespace DENG {
             VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
             pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
-            if (_shader.pShader->GetPipelineCacheStatus() & VULKAN_CACHE) {
-                auto cacheBytes = _shader.pShader->GetPipelineCache(RendererType::VULKAN);
+            if (_pShader->GetPipelineCacheStatus() & PipelineCacheStatusBit_VulkanCache) {
+                auto cacheBytes = _pShader->GetPipelineCache(RendererType::Vulkan);
                 
                 VkPipelineCacheHeaderVersionOne header = {};
                 memcpy(&header, cacheBytes.data(), sizeof(VkPipelineCacheHeaderVersionOne));
@@ -56,7 +56,7 @@ namespace DENG {
             }
 
             try {
-                _GeneratePipelineCreateInfo(_shader);
+                _GeneratePipelineCreateInfo(_pShader);
             }
             catch (const ShaderException&) {
                 throw RendererException("Could not create PipelineCreator. Shader source code is invalid.");
@@ -76,7 +76,7 @@ namespace DENG {
                 vector<char> cacheData(uCacheSize);
                 vkGetPipelineCacheData(m_hDevice, m_hPipelineCache, &uCacheSize, cacheData.data());
 
-                _shader.pShader->CachePipeline(RendererType::VULKAN, cacheData.data(), cacheData.size());
+                _pShader->CachePipeline(RendererType::Vulkan, cacheData.data(), cacheData.size());
             }
         }
 
@@ -99,14 +99,14 @@ namespace DENG {
             m_dynamicStateCreateInfo(_pc.m_dynamicStateCreateInfo),
             m_dynamicStates(move(_pc.m_dynamicStates)),
             m_hShaderDescriptorSetLayout(_pc.m_hShaderDescriptorSetLayout),
-            m_hMeshDescriptorSetLayout(_pc.m_hMeshDescriptorSetLayout),
+            m_hMaterialDescriptorSetLayout(_pc.m_hMaterialDescriptorSetLayout),
             m_hPipelineLayout(_pc.m_hPipelineLayout),
             m_hPipeline(_pc.m_hPipeline),
             m_hRenderPass(_pc.m_hRenderPass),
             m_hPipelineCache(_pc.m_hPipelineCache)
         {
             _pc.m_hShaderDescriptorSetLayout = VK_NULL_HANDLE;
-            _pc.m_hMeshDescriptorSetLayout = VK_NULL_HANDLE;
+            _pc.m_hMaterialDescriptorSetLayout = VK_NULL_HANDLE;
             _pc.m_hPipelineLayout = VK_NULL_HANDLE;
             _pc.m_hPipeline = VK_NULL_HANDLE;
             _pc.m_hPipelineCache = VK_NULL_HANDLE;
@@ -135,155 +135,155 @@ namespace DENG {
         }
 
         
-        void PipelineCreator::_FindInputBindingDescriptions(const ShaderComponent& _shader) {
-            DENG_ASSERT(_shader.attributes.size() == _shader.attributeStrides.size());
-            m_vertexInputBindingDescriptions.reserve(_shader.attributes.size());
+        void PipelineCreator::_FindInputBindingDescriptions(const IShader* _pShader) {
+            DENG_ASSERT(_pShader->GetAttributeTypes().size() == _pShader->GetAttributeStrides().size());
+            m_vertexInputBindingDescriptions.reserve(_pShader->GetAttributeTypes().size());
 
-            for (size_t i = 0; i < _shader.attributes.size(); i++) {
+            for (size_t i = 0; i < _pShader->GetAttributeTypes().size(); i++) {
                 m_vertexInputBindingDescriptions.emplace_back();
-                m_vertexInputBindingDescriptions.back().binding = static_cast<uint32_t>(i);;
-                m_vertexInputBindingDescriptions.back().stride = static_cast<uint32_t>(_shader.attributeStrides[i]);
+                m_vertexInputBindingDescriptions.back().binding = static_cast<uint32_t>(i);
+                m_vertexInputBindingDescriptions.back().stride = static_cast<uint32_t>(_pShader->GetAttributeStrides()[i]);
                 m_vertexInputBindingDescriptions.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
             }
         }
 
 
-        void PipelineCreator::_FindVertexInputAttributeDescriptions(const ShaderComponent &_shader) {
-            for(uint32_t i = 0; i < static_cast<uint32_t>(_shader.attributes.size()); i++) {
+        void PipelineCreator::_FindVertexInputAttributeDescriptions(const IShader* _pShader) {
+            for(uint32_t i = 0; i < static_cast<uint32_t>(_pShader->GetAttributeTypes().size()); i++) {
                 m_vertexInputAttributeDescriptions.push_back(VkVertexInputAttributeDescription{});
                 m_vertexInputAttributeDescriptions.back().binding = i;
                 m_vertexInputAttributeDescriptions.back().location = i;
 
-                switch(_shader.attributes[i]) {
+                switch(_pShader->GetAttributeTypes()[i]) {
                     // single element attributes
-                    case ATTRIBUTE_TYPE_FLOAT:
+                    case VertexAttributeType::Float:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_DOUBLE:
+                    case VertexAttributeType::Double:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R64_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_BYTE:
+                    case VertexAttributeType::Byte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8_SINT;
                         break;
 
-                    case ATTRIBUTE_TYPE_UBYTE:
+                    case VertexAttributeType::UnsignedByte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8_UINT;
                         break;
 
-                    case ATTRIBUTE_TYPE_SHORT:
+                    case VertexAttributeType::Short:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16_SINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_USHORT:
+                    case VertexAttributeType::UnsignedShort:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16_UINT;
                         break;
 
-                    case ATTRIBUTE_TYPE_UINT:
+                    case VertexAttributeType::UnsignedInt:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32_UINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_INT:
+                    case VertexAttributeType::Int:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32_SINT;
                         break;
 
                     // two element attributes
-                    case ATTRIBUTE_TYPE_VEC2_FLOAT:
+                    case VertexAttributeType::Vec2_Float:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC2_DOUBLE:
+                    case VertexAttributeType::Vec2_Double:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R64G64_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC2_BYTE:
+                    case VertexAttributeType::Vec2_Byte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8G8_SNORM;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC2_UBYTE:
+                    case VertexAttributeType::Vec2_UnsignedByte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8G8_UNORM;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC2_SHORT:
+                    case VertexAttributeType::Vec2_Short:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16G16_SINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_VEC2_USHORT:
+                    case VertexAttributeType::Vec2_UnsignedShort:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16G16_UINT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC2_UINT:
+                    case VertexAttributeType::Vec2_UnsignedInt:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32_UINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_VEC2_INT:
+                    case VertexAttributeType::Vec2_Int:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32_SINT;
                         break;
 
                     // three element attributes
-                    case ATTRIBUTE_TYPE_VEC3_FLOAT:
+                    case VertexAttributeType::Vec3_Float:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32B32_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC3_DOUBLE:
+                    case VertexAttributeType::Vec3_Double:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R64G64B64_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC3_BYTE:
+                    case VertexAttributeType::Vec3_Byte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8G8B8_SNORM;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC3_UBYTE:
+                    case VertexAttributeType::Vec3_UnsignedByte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8G8B8_UNORM;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC3_SHORT:
+                    case VertexAttributeType::Vec3_Short:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16G16B16_SINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_VEC3_USHORT:
+                    case VertexAttributeType::Vec3_UnsignedShort:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16G16B16_UINT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC3_UINT:
+                    case VertexAttributeType::Vec3_UnsignedInt:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32B32_UINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_VEC3_INT:
+                    case VertexAttributeType::Vec3_Int:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32B32_SINT;
                         break;
 
                     // four element attributes
-                    case ATTRIBUTE_TYPE_VEC4_FLOAT:
+                    case VertexAttributeType::Vec4_Float:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32B32A32_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC4_DOUBLE:
+                    case VertexAttributeType::Vec4_Double:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R64G64B64A64_SFLOAT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC4_BYTE:
+                    case VertexAttributeType::Vec4_Byte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8G8B8A8_SNORM;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC4_UBYTE:
+                    case VertexAttributeType::Vec4_UnsignedByte:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R8G8B8A8_UNORM;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC4_SHORT:
+                    case VertexAttributeType::Vec4_Short:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16G16B16A16_SINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_VEC4_USHORT:
+                    case VertexAttributeType::Vec4_UnsignedShort:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R16G16B16A16_UINT;
                         break;
 
-                    case ATTRIBUTE_TYPE_VEC4_UINT:
+                    case VertexAttributeType::Vec4_UnsignedInt:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32B32A32_UINT;
                         break;
                     
-                    case ATTRIBUTE_TYPE_VEC4_INT:
+                    case VertexAttributeType::Vec4_Int:
                         m_vertexInputAttributeDescriptions.back().format = VK_FORMAT_R32G32B32A32_SINT;
                         break;
                 }
@@ -307,34 +307,37 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_CreatePipelineLayout(const ShaderComponent& _shader) {
+        void PipelineCreator::_CreatePipelineLayout(const IShader* _pShader) {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             
             // 1. only per shader descriptor set layouts are present
             // 2. only per mesh descriptor set layouts are present
             // 3. all descriptor set layouts are present
-            VkDescriptorSetLayout descriptorSetLayouts[2] = { m_hShaderDescriptorSetLayout, m_hMeshDescriptorSetLayout };
+            VkDescriptorSetLayout descriptorSetLayouts[2] = { 
+                m_hShaderDescriptorSetLayout, 
+                m_hMaterialDescriptorSetLayout 
+            };
 
-            if(m_hShaderDescriptorSetLayout != VK_NULL_HANDLE && m_hMeshDescriptorSetLayout == VK_NULL_HANDLE) {
+            if(m_hShaderDescriptorSetLayout != VK_NULL_HANDLE && m_hMaterialDescriptorSetLayout == VK_NULL_HANDLE) {
                 pipelineLayoutCreateInfo.setLayoutCount = 1;
                 pipelineLayoutCreateInfo.pSetLayouts = &m_hShaderDescriptorSetLayout;
-            } else if(m_hShaderDescriptorSetLayout == VK_NULL_HANDLE && m_hMeshDescriptorSetLayout != VK_NULL_HANDLE) {
+            } else if(m_hShaderDescriptorSetLayout == VK_NULL_HANDLE && m_hMaterialDescriptorSetLayout != VK_NULL_HANDLE) {
                 pipelineLayoutCreateInfo.setLayoutCount = 1;
-                pipelineLayoutCreateInfo.pSetLayouts = &m_hMeshDescriptorSetLayout;
-            } else if (m_hShaderDescriptorSetLayout != VK_NULL_HANDLE && m_hMeshDescriptorSetLayout != VK_NULL_HANDLE) {
+                pipelineLayoutCreateInfo.pSetLayouts = &m_hMaterialDescriptorSetLayout;
+            } else if (m_hShaderDescriptorSetLayout != VK_NULL_HANDLE && m_hMaterialDescriptorSetLayout != VK_NULL_HANDLE) {
                 pipelineLayoutCreateInfo.setLayoutCount = 2;
                 pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
             }
 
             VkPushConstantRange pushConstantRange = {};
-            if (_shader.bEnablePushConstants) {
-                pushConstantRange.size = _shader.uPushConstantDataLength;
-                if (_shader.iPushConstantShaderStage & SHADER_STAGE_VERTEX)
+            if (_pShader->IsPropertySet(ShaderPropertyBit_EnablePushConstants)) {
+                pushConstantRange.size = _pShader->GetPushConstant().uLength;
+                if (_pShader->GetPushConstant().bmShaderStage & ShaderStageBit_Vertex)
                     pushConstantRange.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-                if (_shader.iPushConstantShaderStage & SHADER_STAGE_FRAGMENT)
+                if (_pShader->GetPushConstant().bmShaderStage & ShaderStageBit_Fragment)
                     pushConstantRange.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-                if (_shader.iPushConstantShaderStage & SHADER_STAGE_GEOMETRY)
+                if (_pShader->GetPushConstant().bmShaderStage & ShaderStageBit_Geometry)
                     pushConstantRange.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
 
                 pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
@@ -347,7 +350,7 @@ namespace DENG {
 
 
         // pipelines should be created from skratch only when there is no cache available
-        void PipelineCreator::_GeneratePipelineCreateInfo(const ShaderComponent& _shader, bool _bCreateShaderModules) {
+        void PipelineCreator::_GeneratePipelineCreateInfo(const IShader* _pShader, bool _bCreateShaderModules) {
             if(_bCreateShaderModules) {
                 // Create vertex and fragment shader modules
                 m_shaderModules.clear();
@@ -355,8 +358,8 @@ namespace DENG {
                 
                 std::vector<uint32_t> vertexShaderSpirv, geometryShaderSpirv, fragmentShaderSpirv;
                 try {
-                    vertexShaderSpirv = _shader.pShader->ReadVertexShaderSpirv();
-                    fragmentShaderSpirv = _shader.pShader->ReadFragmentShaderSpirv();
+                    vertexShaderSpirv = _pShader->GetVertexShaderSpirv();
+                    fragmentShaderSpirv = _pShader->GetFragmentShaderSpirv();
                 }
                 catch (const IOException& e) {
                     DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::NON_CRITICAL);
@@ -368,7 +371,7 @@ namespace DENG {
                 }
 
                 try {
-                    geometryShaderSpirv = _shader.pShader->ReadGeometryShaderSpirv();
+                    geometryShaderSpirv = _pShader->GetGeometryShaderSpirv();
                 }
                 catch (const IOException& e) {
                     DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::NON_CRITICAL);
@@ -411,8 +414,8 @@ namespace DENG {
                 m_shaderStageCreateInfos.back().pName = "main";
 
                 // Bind get binding descriptors and attribute descriptors for the current pipeline type
-                _FindInputBindingDescriptions(_shader);
-                _FindVertexInputAttributeDescriptions(_shader);
+                _FindInputBindingDescriptions(_pShader);
+                _FindVertexInputAttributeDescriptions(_pShader);
             }
 
             // Set up vertex input create_info object 
@@ -424,17 +427,20 @@ namespace DENG {
 
             // Set up input assembly create_info object
             m_inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-            switch(_shader.ePrimitiveMode) {
-                case PRIMITIVE_MODE_TRIANGLES:
+            switch(_pShader->GetPrimitiveMode()) {
+                case PrimitiveMode::Triangles:
                     m_inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
                     break;
 
-                case PRIMITIVE_MODE_LINES:
+                case PrimitiveMode::Lines:
                     m_inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
                     break;
 
-                case PRIMITIVE_MODE_POINTS:
+                case PrimitiveMode::Points:
                     m_inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+                    break;
+
+                default:
                     break;
             }
             m_inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
@@ -450,17 +456,17 @@ namespace DENG {
             m_rasterizationStateCreateInfo.lineWidth = 1.0f;
 
             // set up culling mode
-            switch(_shader.eCullMode) {
-                case CULL_MODE_NONE:
+            switch(_pShader->GetPipelineCullMode()) {
+                case PipelineCullMode::None:
                     m_rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
                     break;
 
-                case CULL_MODE_COUNTER_CLOCKWISE:
+                case PipelineCullMode::CounterClockwise:
                     m_rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
                     m_rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
                     break;
 
-                case CULL_MODE_CLOCKWISE:
+                case PipelineCullMode::Clockwise:
                     m_rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
                     m_rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
                     break;
@@ -475,7 +481,7 @@ namespace DENG {
             m_multisampleStateCreateInfo.rasterizationSamples = m_uSampleBits;
 
             // Set colorblend options if required
-            if(_shader.bEnableBlend) {
+            if(_pShader->IsPropertySet(ShaderPropertyBit_EnableBlend)) {
                 m_colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
                 m_colorBlendAttachmentState.blendEnable = VK_TRUE;
                 m_colorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
@@ -490,7 +496,7 @@ namespace DENG {
             }
             
             // Check if depth stencil is enabled and if it is set the create_info accordingly
-            if(_shader.bEnableDepthTesting) {
+            if(_pShader->IsPropertySet(ShaderPropertyBit_EnableDepthTesting)) {
                 m_depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
                 m_depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
                 m_depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;

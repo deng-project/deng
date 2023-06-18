@@ -18,14 +18,35 @@
 #include "trs/Quaternion.h"
 
 #include "deng/Api.h"
+#include "deng/SID.h"
 #include "deng/MathConstants.h"
 #include "deng/Event.h"
 #include "deng/ErrorDefinitions.h"
-#include "deng/ShaderComponent.h"
 
 namespace DENG {
 	class Scene;
 	typedef entt::entity Entity;
+
+	struct DrawDescriptorIndices {
+		int32_t iTransformIndex = -1;
+		int32_t iMaterialIndex = -1;
+		int32_t iPadding1;
+		int32_t iPadding2;
+
+		DrawDescriptorIndices() = default;
+		DrawDescriptorIndices(int32_t _iTransformIndex, int32_t _iMaterialIndex) :
+			iTransformIndex(_iTransformIndex),
+			iMaterialIndex(_iMaterialIndex),
+			iPadding1(0),
+			iPadding2(0) {}
+	};
+
+	struct InstanceInfo {
+		hash_t hshMesh = 0;
+		hash_t hshShader = 0;
+		hash_t hshMaterial = 0;
+		uint32_t uInstanceCount = 1;
+	};
 
 	template<typename T>
 	class Ref {
@@ -62,17 +83,44 @@ namespace DENG {
 		TRS::Vector4<float> vRotation = { 0.f, 0.f, 0.f, 0.f }; // in radians
 	};
 
+	struct MeshComponent {
+		MeshComponent() = default;
+		MeshComponent(const MeshComponent&) = default;
+		MeshComponent(hash_t _hshMesh) :
+			hshMesh(_hshMesh) {}
 
-	struct alignas(16) MaterialComponent {
+		hash_t hshMesh = 0;
+
+		inline bool operator==(const MeshComponent& _mesh) const {
+			return hshMesh == _mesh.hshMesh;
+		}
+	};
+
+	struct ShaderComponent {
+		ShaderComponent() = default;
+		ShaderComponent(const ShaderComponent&) = default;
+		ShaderComponent(hash_t _hshShader) :
+			hshShader(_hshShader) {}
+
+		hash_t hshShader = 0;
+
+		inline bool operator==(const ShaderComponent& _shader) const {
+			return hshShader == _shader.hshShader;
+		}
+	};
+
+
+	struct MaterialComponent {
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
+		MaterialComponent(hash_t _hshMaterial) :
+			hshMaterial(_hshMaterial) {}
 
-		TRS::Vector4<float> vAmbient = { 1.f, 1.f, 1.f, 0.f };
-		TRS::Vector4<float> vDiffuse;
-		TRS::Vector4<float> vSpecular;
-		// first: diffuse map id, second: specular map ids, third and fourth: padding
-		TRS::Vector4<uint32_t> vMaps;
-		float fShininess = 0.3f;
+		hash_t hshMaterial = 0;
+
+		inline bool operator==(const MaterialComponent& _material) const {
+			return hshMaterial == _material.hshMaterial;
+		}
 	};
 
 
@@ -135,19 +183,17 @@ namespace DENG {
 	};
 
 
-#define SCRIPT_DEFINE_CONSTRUCTOR(script) script::script(DENG::Entity _idEntity, DENG::EventManager& _eventManager, DENG::Scene& _scene) :\
-											 ScriptBehaviour(_idEntity, _eventManager, _scene, #script) {}
+#define SCRIPT_DEFINE_CONSTRUCTOR(script) script::script(DENG::Entity _idEntity, DENG::Scene& _scene) :\
+											 ScriptBehaviour(_idEntity, _scene, #script) {}
 	class DENG_API ScriptBehaviour {
 		protected:
 			const Entity m_idEntity = entt::null;
-			EventManager& m_eventManager;
 			Scene& m_scene;
 			const std::string m_sClassName;
 
 		public:
-			ScriptBehaviour(Entity _idEntity, EventManager& _eventManager, Scene& _scene, const std::string& _sClassName = "MyClass") :
+			ScriptBehaviour(Entity _idEntity, Scene& _scene, const std::string& _sClassName = "MyClass") :
 				m_idEntity(_idEntity),
-				m_eventManager(_eventManager),
 				m_scene(_scene),
 				m_sClassName(_sClassName) {}
 	};
@@ -185,8 +231,8 @@ namespace DENG {
 			PFN_OnDestroy OnDestroy = nullptr;
 
 			template<typename T, typename... Args>
-			inline void BindScript(Entity _idEntity, EventManager& _eventManager, Scene& _scene, Args... args) {
-				m_pScriptBehaviour = new T(_idEntity, _eventManager, _scene, std::forward<Args>(args)...);
+			inline void BindScript(Entity _idEntity, Scene& _scene, Args... args) {
+				m_pScriptBehaviour = new T(_idEntity, _scene, std::forward<Args>(args)...);
 
 				if constexpr (_ScriptBehaviourTest<T>::HAS_ON_ATTACH > 0) {
 					OnAttach = [](ScriptComponent& _scriptComponent) {
@@ -242,56 +288,6 @@ namespace DENG {
 		uint32_t uVertexBufferChunkSize = 0;
 		uint32_t uUniformBufferOffset = 0;
 		uint32_t uUniformBufferChunkSize = 0;
-	};
-
-
-	struct DrawCommand {
-		uint32_t uIndicesOffset = 0;
-		uint32_t uDrawCount = 0; // if used with indices, this property specifies index count, otherwise it describes attribute count
-		std::vector<std::size_t> attributeOffsets;
-		bool bWireframe = false;
-
-		struct {
-			TRS::Point2D<int32_t> offset = { INT32_MAX, INT32_MAX };
-			TRS::Point2D<uint32_t> extent = { INT32_MAX, INT32_MAX };
-			bool bEnabled = false;
-		} scissor;
-	};
-
-
-	struct MeshComponent {
-		MeshComponent() = default;
-		MeshComponent(const MeshComponent&) = default;
-		MeshComponent(const std::string& _sName, const std::vector<DrawCommand>& _drawCommands) :
-			sName(_sName),
-			drawCommands(_drawCommands) {}
-		~MeshComponent() {}
-
-		std::string sName = "MeshComponent";
-		std::vector<DrawCommand> drawCommands;
-		size_t uDrawCommandHash = 0;
-
-		bool operator==(const MeshComponent& _mesh) const {
-			return uDrawCommandHash == _mesh.uDrawCommandHash;
-		}
-
-		struct _Hash {
-			std::size_t operator()(const MeshComponent& _mesh) {
-				std::size_t uHash = 0;
-				std::hash<size_t> hasher;
-				const size_t uConstant = 0x9e3779b9;
-				
-				for (auto it = _mesh.drawCommands.begin(); it != _mesh.drawCommands.end(); it++) {
-					uHash ^= hasher(static_cast<size_t>(it->uDrawCount)) + uConstant + (uHash << 6) + (uHash >> 2);
-					uHash ^= hasher(static_cast<size_t>(it->bWireframe)) + uConstant + (uHash << 6) + (uHash >> 2);
-				
-					for (size_t j = 0; j < it->attributeOffsets.size(); j++)
-						uHash ^= hasher(static_cast<size_t>(it->attributeOffsets[j])) + uConstant + (uHash << 6) + (uHash >> 2);
-				}
-
-				return uHash;
-			}
-		};
 	};
 
 

@@ -6,109 +6,61 @@
 #ifndef IRENDERER_H
 #define IRENDERER_H
 
-#include <queue>
 #include <iostream>
 #include <vector>
-#include <list>
-#include <Windows.h>
-#include <vulkan/vulkan.h>
-#include <SDL2/SDL_opengl.h>
 
 #include "deng/Api.h"
+#include "deng/SID.h"
 #include "deng/IWindowContext.h"
 #include "deng/IFramebuffer.h"
-#include "deng/VulkanHelpers.h"
 #include "deng/GPUMemoryAllocator.h"
-#include "deng/Components.h"
-#include "deng/Missing.h"
 
 #ifndef MAX_FRAMES_IN_FLIGHT
 #define MAX_FRAMES_IN_FLIGHT 2
 #endif
 
-// hasher helper
-namespace std {
-	template<>
-	struct hash<list<DENG::ShaderComponent>::iterator> {
-		size_t operator()(const list<DENG::ShaderComponent>::iterator& it) const {
-			return hash<DENG::ShaderComponent*>()(&*it);
-		}
-	};
-}
+#ifndef DEFAULT_STAGING_BUFFER_SIZE
+#define DEFAULT_STAGING_BUFFER_SIZE (1 << 22)
+#endif
+
+#ifndef DEFAULT_BUFFER_SIZE
+#define DEFAULT_BUFFER_SIZE (1 << 24)
+#endif
 
 namespace DENG {
 
-	enum TextureResourceType {
-		TEXTURE_RESOURCE_UNKNOWN,
-		TEXTURE_RESOURCE_1D_IMAGE,
-		TEXTURE_RESOURCE_2D_IMAGE,
-		TEXTURE_RESOURCE_3D_IMAGE,
-		TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE,
-		TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_3D_IMAGE,
-		TEXTURE_RESOURCE_SWAPCHAIN_IMAGE,
-	};
-
-	enum TextureResourceLoadType {
-		TEXTURE_RESOURCE_LOAD_TYPE_UNKNOWN = 0x00,
-		TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED = 0x01,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_JPEG = 0x02,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_PNG = 0x04,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_TIFF = 0x08,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_BMP = 0x10,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_TGA = 0x20,
-		TEXTURE_RESOURCE_LOAD_TYPE_EXTERNAL_GIF = 0x40
-	};
-
-	struct TextureResource {
-		uint32_t uWidth = 0;
-		uint32_t uHeight = 0;
-		unsigned char uBitDepth = 0;
-
-		TextureResourceType eResourceType = TEXTURE_RESOURCE_UNKNOWN;
-		TextureResourceLoadType eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_UNKNOWN;
-
-		std::variant<Vulkan::TextureData, GLuint> apiTextureHandles;
-
-		// this data needs to be deleted manually
-		char* pRGBAData = nullptr;
-		bool bHeapAllocationFlag = false;
-	};
-
-    enum BufferDataType { VERTEX, INDEX, UNIFORM };
+    enum class BufferDataType { Vertex, Index, Uniform };
 
     class DENG_API IRenderer {
         protected:
-			static uint32_t m_uImageCounter;
-
 			IWindowContext* m_pWindowContext = nullptr;
             GPUMemoryAllocator m_gpuMemoryAllocator;
-            std::unordered_map<uint32_t, TextureResource> m_textureRegistry;
-			std::queue<uint32_t> m_addedTextureResourceQueue;
-			std::queue<uint32_t> m_deletedTextureResourceQueue;
             std::vector<IFramebuffer*> m_framebuffers;
 
-            uint32_t m_uMissing2DTextureId = 0;
-			uint32_t m_uMissing3DTextureId = 0;
+            hash_t m_hshMissing2DTexture = 0;
+			hash_t m_hshMissing3DTexture = 0;
 
         public:
             IRenderer() = default;
 			virtual ~IRenderer() {};
-
-			virtual uint32_t AddTextureResource(const TextureResource& _resource) = 0;
 			
-			inline void DeleteTextureResource(uint32_t _uTextureId) {
-				m_deletedTextureResourceQueue.push(_uTextureId);
-			}
-
-			virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
-            virtual void DestroyPipeline(Shader* _pShader) = 0;
+            virtual void DeleteTextureHandles() = 0;
+            virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
+            virtual void DestroyPipeline(hash_t _hshShader) = 0;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) = 0;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
 			virtual void DeallocateMemory(size_t _uOffset) = 0;
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
 			virtual bool SetupFrame() = 0;
-			virtual void DrawMesh(const MeshComponent& _mesh, const ShaderComponent& _Shader, IFramebuffer* _pFramebuffer, uint32_t _uInstanceCount, const std::vector<uint32_t>& _textureIds = {}) = 0;
+			virtual void DrawInstance(
+                hash_t _hshMesh, 
+                hash_t _hshShader, 
+                IFramebuffer* _pFramebuffer, 
+                uint32_t _uInstanceCount,
+                uint32_t _uFirstInstance = 0,
+                hash_t _hshMaterial = 0,
+                const std::vector<hash_t>& _textureIds = {}) = 0;
     };
 }
 

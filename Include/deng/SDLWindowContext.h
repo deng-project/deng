@@ -39,7 +39,7 @@ namespace DENG {
 			void _TranslateAndDispatchWindowEvent();
 
 		public:
-			SDLWindowContext(EventManager& _eventManager);
+			SDLWindowContext();
 			~SDLWindowContext();
 
 			virtual std::vector<const char*> QueryRequiredVulkanExtensions() override;

@@ -1,27 +1,31 @@
 // DENG: dynamic engine - small but powerful 2D and 3D game engine
 // licence: Apache, see LICENCE file
-// file: InstancedDemoApp.cpp - InstancedDemoApp class implementation and program's entry point
+// file: ComputeParticlesApp.cpp - Compute particles application class implementation
 // author: Karl-Mihkel Ott
 
-#define INSTANCED_DEMO_APP_CPP
-#include "InstancedDemoApp.h"
+#define COMPUTE_PARTICLES_APP_CPP
+#include "ComputeParticlesApp.h"
+
+using namespace DENG;
 
 #ifndef WIDTH
 #define WIDTH 1280
 #endif
+
 #ifndef HEIGHT
 #define HEIGHT 720
 #endif
 
 namespace Application {
-	InstancedDemoApp::InstancedDemoApp() {
-		IWindowContext* pWindowContext = SetWindowContext(new SDLWindowContext);
+
+	ComputeParticlesApp::ComputeParticlesApp() {
+		IWindowContext* pWindowContext = SetWindowContext(new SDLWindowContext(m_eventManager));
 		IRenderer* pRenderer = SetRenderer(new VulkanRenderer);
 		IFramebuffer* pMainFramebuffer = nullptr;
 		pWindowContext->SetHints(WindowHint_Shown | WindowHint_Vulkan | WindowHint_Resizeable);
 
 		try {
-			pWindowContext->Create("Instanced demo | Vulkan | SDL", WIDTH, HEIGHT);
+			pWindowContext->Create("Compute particles demu | Vulkan | SDL", WIDTH, HEIGHT);
 			pMainFramebuffer = SetMainFramebuffer(pRenderer->CreateContext(pWindowContext));
 		}
 		catch (const WindowContextException& e) {
@@ -34,11 +38,9 @@ namespace Application {
 			DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
 		}
 
-		auto cubeLayer = PushLayer<InstancedCubeLayer>(pRenderer, pMainFramebuffer);
-		PushLayer<ImGuiLayer>()->SetDrawCallback(&InstancedCubeLayer::OnImGuiDraw, cubeLayer);
+		// push layers
+		auto computeParticlesLayer = PushLayer<ComputeParticlesLayer>();
+		PushLayer<ImGuiLayer>()->SetDrawCallback(&ComputeParticlesLayer::OnImGuiDraw, computeParticlesLayer);
 		AttachLayers();
 	}
 }
-
-
-DENG_MAIN_DECLARATION(Application::InstancedDemoApp)

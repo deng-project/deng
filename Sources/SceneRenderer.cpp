@@ -35,7 +35,7 @@ namespace DENG {
 			// deallocate and allocate on device memory
 			if (m_arrLightOffsets[0] != SIZE_MAX)
 				m_pRenderer->DeallocateMemory(m_arrLightOffsets[0]);
-			m_arrLightOffsets[0] = m_pRenderer->AllocateMemory(m_uIntermediateStorageBufferSize, BufferDataType::UNIFORM);
+			m_arrLightOffsets[0] = m_pRenderer->AllocateMemory(m_uIntermediateStorageBufferSize, BufferDataType::Uniform);
 		}
 
 		size_t uOffset = 0;
@@ -79,81 +79,103 @@ namespace DENG {
 	}
 
 
-	void SceneRenderer::RenderBatch(
-		const MeshComponent& _mesh,
-		ShaderComponent& _shader,
-		const std::vector<MaterialComponent>& _materials,
+	void SceneRenderer::RenderInstances(
+		const std::vector<InstanceInfo>& _instanceInfos,
 		const std::vector<TransformComponent>& _transforms,
+		const std::vector<Material>& _materials,
+		const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
 		const CameraComponent& _camera)
 	{
-		DENG_ASSERT(m_batchSSBOOffsets.size() == m_batchSSBOSizes.size());
-		DENG_ASSERT(_materials.size() == _transforms.size());
+		if (m_uMaterialsSize < _materials.size() * MAX_FRAMES_IN_FLIGHT) {
+			m_uMaterialsSize = (_materials.size() * MAX_FRAMES_IN_FLIGHT * 3) >> 1;
+			if (m_uMaterialsOffset) {
+				m_pRenderer->DeallocateMemory(m_uMaterialsOffset);
+			}
 
-		const size_t cuSize = MAX_FRAMES_IN_FLIGHT * (_materials.size() * sizeof(MaterialComponent) + _transforms.size() * sizeof(TransformComponent));
-
-		// reallocation, reallocation, reallocation
-		if (m_uBatchCounter >= m_batchSSBOOffsets.size()) {
-			m_batchSSBOOffsets.push_back(
-				m_pRenderer->AllocateMemory(cuSize, BufferDataType::UNIFORM));
-			m_batchSSBOSizes.push_back(cuSize);
-		}
-		else if (m_batchSSBOSizes[m_uBatchCounter] < cuSize) {
-			m_pRenderer->DeallocateMemory(m_batchSSBOOffsets[m_uBatchCounter]);
-			m_batchSSBOOffsets[m_uBatchCounter] = m_pRenderer->AllocateMemory(cuSize, BufferDataType::UNIFORM);
-			m_batchSSBOSizes[m_uBatchCounter] = cuSize;
+			m_uMaterialsOffset = m_pRenderer->AllocateMemory(m_uMaterialsSize * sizeof(Material), BufferDataType::Uniform);
 		}
 
-		// intermediate storage reallocation check
-		if (m_uIntermediateStorageBufferSize < cuSize) {
-			delete[] m_pIntermediateStorageBuffer;
-			m_uIntermediateStorageBufferSize = (cuSize * 3) >> 1;
-			m_pIntermediateStorageBuffer = new char[m_uIntermediateStorageBufferSize];
-		}
-
-		if (_shader.uboDataLayouts.size() >= 1) {
-			_shader.uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_batchSSBOOffsets[m_uBatchCounter]);
-			_shader.uboDataLayouts[0].block.uSize = static_cast<uint32_t>(_transforms.size() * sizeof(TransformComponent));
-
-			// copy to intermediate buffer
-			size_t uOffset = 0;
+		if (_materials.size()) {
+			size_t uOffset = m_uMaterialsOffset;
 			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-				std::memcpy(m_pIntermediateStorageBuffer + uOffset, _transforms.data(), _transforms.size() * sizeof(TransformComponent));
+				m_pRenderer->UpdateBuffer(_materials.data(), _materials.size() * sizeof(Material), uOffset);
+				uOffset += _materials.size() * sizeof(Material);
+			}
+		}
+
+		if (m_uTransformsSize < _transforms.size()) {
+			m_uTransformsSize = (_transforms.size() * 3) >> 1;
+			if (m_uTransformsOffset) {
+				m_pRenderer->DeallocateMemory(m_uTransformsOffset);
+			}
+
+			m_uTransformsOffset = m_pRenderer->AllocateMemory(m_uTransformsSize * sizeof(TransformComponent), BufferDataType::Uniform);
+		}
+
+		if (_transforms.size()) {
+			size_t uOffset = m_uTransformsOffset;
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				m_pRenderer->UpdateBuffer(_transforms.data(), _transforms.size() * sizeof(TransformComponent), uOffset);
 				uOffset += _transforms.size() * sizeof(TransformComponent);
 			}
+		}
 
-			if (_shader.uboDataLayouts.size() >= 7) {
-				_shader.uboDataLayouts[1].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[0]);
-				_shader.uboDataLayouts[1].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
-				_shader.uboDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[1]);
-				_shader.uboDataLayouts[2].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
-				_shader.uboDataLayouts[3].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[2]);
-				_shader.uboDataLayouts[3].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
-				_shader.uboDataLayouts[4].block.uOffset = static_cast<uint32_t>(m_batchSSBOOffsets[m_uBatchCounter] + _transforms.size() * sizeof(TransformComponent) * MAX_FRAMES_IN_FLIGHT);
-				_shader.uboDataLayouts[4].block.uSize = static_cast<uint32_t>(_materials.size() * sizeof(MaterialComponent));
+		if (m_uDrawDescriptorIndicesCount < _drawDescriptorIndices.size()) {
+			m_uDrawDescriptorIndicesCount = (_drawDescriptorIndices.size() * 3) >> 1;
+			if (m_uDrawDescriptorIndicesOffset) {
+				m_pRenderer->DeallocateMemory(m_uDrawDescriptorIndicesOffset);
+			}
 
-				_shader.uPushConstantDataLength = sizeof(CameraComponent);
-				_shader.pPushConstantData = &_camera;
+			m_uDrawDescriptorIndicesOffset = m_pRenderer->AllocateMemory(m_uDrawDescriptorIndicesCount * sizeof(DrawDescriptorIndices), BufferDataType::Uniform);
+		}
 
-				for (size_t j = 0; j < MAX_FRAMES_IN_FLIGHT; j++) {
-					std::memcpy(m_pIntermediateStorageBuffer + uOffset, _materials.data(), _materials.size() * sizeof(MaterialComponent));
-					uOffset += _materials.size() * sizeof(MaterialComponent);
-				}
+		if (_drawDescriptorIndices.size()) {
+			size_t uOffset = m_uDrawDescriptorIndicesOffset;
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				m_pRenderer->UpdateBuffer(_drawDescriptorIndices.data(), _drawDescriptorIndices.size() * sizeof(DrawDescriptorIndices), uOffset);
+				uOffset += _drawDescriptorIndices.size() * sizeof(DrawDescriptorIndices);
 			}
 		}
 
-		// check if updating buffer is necessary
-		if (cuSize) {
-			m_pRenderer->UpdateBuffer(m_pIntermediateStorageBuffer, cuSize, m_batchSSBOOffsets[m_uBatchCounter]);
-		}
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
+		
+		uint32_t uFirstInstance = 0;
+		for (auto it = _instanceInfos.begin(); it != _instanceInfos.end(); it++) {
+			IShader* pShader = resourceManager.GetShader(it->hshShader);
+			DENG_ASSERT(pShader);
 
-		// check if any texture were bound
-		std::vector<uint32_t> textureIds = {};
-		if (_materials.size() && _materials[0].vMaps[0] && _materials[0].vMaps[1]) {
-			textureIds.push_back(_materials[0].vMaps[0]);
-			textureIds.push_back(_materials[0].vMaps[1]);
-		}
+			auto& uniformDataLayouts = pShader->GetUniformDataLayouts();
+		
+			if (uniformDataLayouts.size() >= 2) {
+				// draw descriptor indices
+				uniformDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_uDrawDescriptorIndicesOffset);
+				uniformDataLayouts[0].block.uSize = static_cast<uint32_t>(_drawDescriptorIndices.size() * sizeof(DrawDescriptorIndices));
+			
+				// transforms
+				uniformDataLayouts[1].block.uOffset = static_cast<uint32_t>(m_uTransformsOffset);
+				uniformDataLayouts[1].block.uSize = static_cast<uint32_t>(_transforms.size() * sizeof(TransformComponent));
 
-		const uint32_t uInstanceCount = static_cast<uint32_t>(_materials.size());
-		m_pRenderer->DrawMesh(_mesh, _shader, m_pFramebuffer, uInstanceCount, textureIds);
+				if (uniformDataLayouts.size() >= 6) {
+					// lights
+					uniformDataLayouts[2].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[0]);
+					uniformDataLayouts[2].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+					uniformDataLayouts[3].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[1]);
+					uniformDataLayouts[3].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+					uniformDataLayouts[4].block.uOffset = static_cast<uint32_t>(m_arrLightOffsets[2]);
+					uniformDataLayouts[4].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
+
+					// material
+					uniformDataLayouts[5].block.uOffset = static_cast<uint32_t>(m_uMaterialsOffset);
+					uniformDataLayouts[5].block.uSize = static_cast<uint32_t>(_materials.size() * sizeof(Material));
+				}
+			}
+
+			auto& pushConstant = pShader->GetPushConstant();
+			pushConstant.uLength = sizeof(CameraComponent);
+			pushConstant.pPushConstantData = &_camera;
+
+			m_pRenderer->DrawInstance(it->hshMesh, it->hshShader, m_pFramebuffer, it->uInstanceCount, uFirstInstance, it->hshMaterial);
+			uFirstInstance += it->uInstanceCount;
+		}
 	}
 }

@@ -19,9 +19,7 @@ namespace DENG {
 		MouseButton::None
 	};
 
-	SDLWindowContext::SDLWindowContext(EventManager& _eventManager) :
-		IWindowContext(_eventManager)
-	{
+	SDLWindowContext::SDLWindowContext() {
 		if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 			const std::string sMessage = "SDL_Init() video initialization failed: " + std::string(SDL_GetError());
 			throw WindowContextException(sMessage);
@@ -439,17 +437,18 @@ namespace DENG {
 
 
 	void SDLWindowContext::_TranslateAndDispatchWindowEvent() {
+		EventManager& eventManager = EventManager::GetInstance();
 		switch (m_event.window.event) {
 			case SDL_WINDOWEVENT_SHOWN:
-				m_eventManager.Dispatch<WindowShownEvent>(m_event.window.windowID);
+				eventManager.Dispatch<WindowShownEvent>(m_event.window.windowID);
 				break;
 
 			case SDL_WINDOWEVENT_HIDDEN: 
-				m_eventManager.Dispatch<WindowHiddenEvent>(m_event.window.windowID);
+				eventManager.Dispatch<WindowHiddenEvent>(m_event.window.windowID);
 				break;
 			
 			case SDL_WINDOWEVENT_EXPOSED: 
-				m_eventManager.Dispatch<WindowExposedEvent>(
+				eventManager.Dispatch<WindowExposedEvent>(
 					m_event.window.windowID,
 					m_event.window.data1,
 					m_event.window.data2);
@@ -457,44 +456,44 @@ namespace DENG {
 
 			case SDL_WINDOWEVENT_RESIZED:
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
-				m_eventManager.Dispatch<WindowResizedEvent>(
+				eventManager.Dispatch<WindowResizedEvent>(
 					m_event.window.windowID,
 					static_cast<uint32_t>(m_event.window.data1),
 					static_cast<uint32_t>(m_event.window.data2));
 				break;
 			
 			case SDL_WINDOWEVENT_MINIMIZED:
-				m_eventManager.Dispatch<WindowMinimizedEvent>(m_event.window.windowID);
+				eventManager.Dispatch<WindowMinimizedEvent>(m_event.window.windowID);
 				break;
 			
 			case SDL_WINDOWEVENT_MAXIMIZED:
-				m_eventManager.Dispatch<WindowMaximizedEvent>(m_event.window.windowID);
+				eventManager.Dispatch<WindowMaximizedEvent>(m_event.window.windowID);
 				break;
 			
 			case SDL_WINDOWEVENT_ENTER:
-				m_eventManager.Dispatch<WindowGainedMouseFocusEvent>(
+				eventManager.Dispatch<WindowGainedMouseFocusEvent>(
 					m_event.window.windowID,
 					m_event.window.data1,
 					m_event.window.data2);
 				break;
 
 			case SDL_WINDOWEVENT_LEAVE:
-				m_eventManager.Dispatch<WindowLostMouseFocusEvent>(
+				eventManager.Dispatch<WindowLostMouseFocusEvent>(
 					m_event.window.windowID,
 					m_event.window.data1,
 					m_event.window.data2);
 				break;
 			
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
-				m_eventManager.Dispatch<WindowGainedKeyboardFocusEvent>(m_event.window.windowID);
+				eventManager.Dispatch<WindowGainedKeyboardFocusEvent>(m_event.window.windowID);
 				break;
 			
 			case SDL_WINDOWEVENT_FOCUS_LOST: 
-				m_eventManager.Dispatch<WindowLostKeyboardFocusEvent>(m_event.window.windowID);
+				eventManager.Dispatch<WindowLostKeyboardFocusEvent>(m_event.window.windowID);
 				break;
 
 			case SDL_WINDOWEVENT_DISPLAY_CHANGED: 
-				m_eventManager.Dispatch<WindowDisplayChangedEvent>(m_event.window.windowID, m_event.window.data1);
+				eventManager.Dispatch<WindowDisplayChangedEvent>(m_event.window.windowID, m_event.window.data1);
 				break;
 			
 			default: 
@@ -583,6 +582,7 @@ namespace DENG {
 		DENG_ASSERT(m_pWindow);
 
 		// poll events that might've occured
+		EventManager& eventManager = EventManager::GetInstance();
 		while (SDL_PollEvent(&m_event) != 0) {
 			switch (m_event.type) {
 				case SDL_QUIT:
@@ -594,19 +594,19 @@ namespace DENG {
 					break;
 
 				case SDL_KEYDOWN:
-					m_eventManager.Dispatch<KeyPressedEvent>(
+					eventManager.Dispatch<KeyPressedEvent>(
 						_TranslateKeycode(m_event.key.keysym.scancode),
 						_TranslateKeyboardModifier(m_event.key.keysym.mod));
 					break;
 
 				case SDL_KEYUP:
-					m_eventManager.Dispatch<KeyReleasedEvent>(
+					eventManager.Dispatch<KeyReleasedEvent>(
 						_TranslateKeycode(m_event.key.keysym.scancode),
 						_TranslateKeyboardModifier(m_event.key.keysym.mod));
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
-					m_eventManager.Dispatch<MouseButtonPressedEvent>(
+					eventManager.Dispatch<MouseButtonPressedEvent>(
 						m_event.button.x,
 						m_event.button.y,
 						MOUSE_BUTTON_LOOKUP(m_event.button.button),
@@ -614,7 +614,7 @@ namespace DENG {
 					break;
 
 				case SDL_MOUSEBUTTONUP:
-					m_eventManager.Dispatch<MouseButtonReleasedEvent>(
+					eventManager.Dispatch<MouseButtonReleasedEvent>(
 						m_event.button.x,
 						m_event.button.y,
 						MOUSE_BUTTON_LOOKUP(m_event.button.button),
@@ -622,7 +622,7 @@ namespace DENG {
 					break;
 
 				case SDL_MOUSEWHEEL:
-					m_eventManager.Dispatch<MouseScrolledEvent>(
+					eventManager.Dispatch<MouseScrolledEvent>(
 						m_event.wheel.mouseX,
 						m_event.wheel.mouseY,
 						m_event.wheel.x,
@@ -630,7 +630,7 @@ namespace DENG {
 					break;
 
 				case SDL_MOUSEMOTION:
-					m_eventManager.Dispatch<MouseMovedEvent>(
+					eventManager.Dispatch<MouseMovedEvent>(
 						m_event.motion.x,
 						m_event.motion.y,
 						m_event.motion.xrel,
@@ -641,7 +641,7 @@ namespace DENG {
 				{
 					char szBuffer[20] = {};
 					std::strcat(szBuffer, m_event.text.text);
-					m_eventManager.Dispatch<KeyTypedEvent>(szBuffer);
+					eventManager.Dispatch<KeyTypedEvent>(szBuffer);
 					break;
 				}
 

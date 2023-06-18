@@ -15,11 +15,10 @@
 
 #ifdef INSTANCED_CUBE_LAYER_CPP
 using namespace DENG;
-#include <das/stb_image.h>
 #include "deng/ImGuiLayer.h"
 #include "deng/Exceptions.h"
 #include "../Utils/CameraScript.h"
-#include "../Utils/CubeVertices.h"
+#include "CubeResourceBuilders.h"
 #endif
 
 #define SQ(x) (x*x)
@@ -32,15 +31,14 @@ namespace Application {
 			DENG::Scene m_scene;
 			DENG::IRenderer* m_pRenderer = nullptr;
 			DENG::Entity m_prefabEntity = entt::null;
-			std::array<uint32_t, 2> m_mapIds = {};
+
+			std::array<DENG::Entity, SQ(ROW_LEN)> m_entities;
 
 		private:
-			uint32_t _LoadTexture(const std::string& _sPath, DENG::IRenderer* _pRenderer);
-			void _CreatePrefab(DENG::IRenderer* _pRenderer);
 			void _ApplyTransforms();
 
 		public:
-			InstancedCubeLayer(DENG::EventManager& _eventManager, DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer);
+			InstancedCubeLayer(DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer);
 			virtual void Attach(DENG::IRenderer* _pRenderer, DENG::IWindowContext* _pWindowContext) override;
 			virtual void Update(DENG::IFramebuffer* _pFramebuffer) override;
 

@@ -11,6 +11,7 @@
 #include <array>
 #include <chrono>
 #include <functional>
+#include <mutex>
 
 #include "deng/Api.h"
 
@@ -95,7 +96,9 @@ namespace DENG {
 
 	class DENG_API EventManager {
 		private:
+			std::mutex m_mutex;
 			std::array<std::list<EventListener>, static_cast<size_t>(EventType::EventCount)> m_eventHandlers;
+			static EventManager m_sEventManager;
 
 		private:
 			template<typename T>
@@ -115,15 +118,20 @@ namespace DENG {
 
 				return eventTypesToDispatch;
 			}
+			
+			EventManager() = default;
 
 		public:
-			EventManager() = default;
+			static EventManager& GetInstance() {
+				return m_sEventManager;
+			}
 
 			template<typename T, typename E>
 			using PFN_ListenerCallback_T = bool(T::*)(E&);
 
 			template<typename T, typename E>
 			inline void AddListener(PFN_ListenerCallback_T<T, E> _pfnCallback, T* _pClassInstance) {
+				std::scoped_lock lock(m_mutex);
 				m_eventHandlers[static_cast<size_t>(E::GetStaticType())].emplace_back(
 					_pClassInstance,
 					[=](IEvent& _event) {
@@ -134,6 +142,7 @@ namespace DENG {
 
 			template<typename T, typename E>
 			inline void RemoveListener(T* _pInstance) {
+				std::scoped_lock lock(m_mutex);
 				auto& listeners = m_eventHandlers[static_cast<size_t>(E::GetStaticType())];
 
 				for (auto it = listeners.begin(); it != listeners.end(); it++) {
@@ -147,6 +156,7 @@ namespace DENG {
 
 			template<typename T, typename... Args>
 			void Dispatch(Args... args) {
+				std::scoped_lock lock(m_mutex);
 				T event(std::forward<Args>(args)...);
 				
 				std::vector<EventType> eventTypesToDispatch = _GetEventTypesToDispatch(&event);

@@ -39,7 +39,6 @@
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
-    #include "deng/ShaderComponent.h"
     #include "deng/IWindowContext.h"
     #include "deng/VulkanHelpers.h"
 #endif

@@ -18,6 +18,8 @@
 #include "deng/InputEvents.h"
 
 #ifdef IMGUI_LAYER_CPP
+	#include "deng/ImGuiResourceBuilders.h"
+	#include "deng/RenderResources.h"	
 	#include "deng/Exceptions.h"
 	#include "deng/ErrorDefinitions.h"
 
@@ -48,9 +50,6 @@ namespace DENG {
 			size_t m_uDataBufferSize = 0;
 
 			uint32_t m_uTextureHandle = 0;
-			MeshComponent m_meshComponent;
-			ShaderComponent m_shaderComponent;
-
 			bool m_bIsInit = false;
 
 		private:
@@ -60,7 +59,7 @@ namespace DENG {
 			void _CreateDrawCommands(ImDrawData* _pDrawData, IFramebuffer* _pFramebuffer);
 
 		public:
-			ImGuiLayer(EventManager& _eventManager);
+			ImGuiLayer();
 			~ImGuiLayer();
 			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;

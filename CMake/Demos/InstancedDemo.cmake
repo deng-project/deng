@@ -5,11 +5,13 @@
 
 set(INSTANCED_DEMO_TARGET InstancedDemo)
 set(INSTANCED_DEMO_HEADERS 
+	Demos/InstancedDemo/CubeResourceBuilders.h
 	Demos/InstancedDemo/InstancedCubeLayer.h
 	Demos/InstancedDemo/InstancedDemoApp.h
 	Demos/Utils/CameraScript.h
 	Demos/Utils/CubeVertices.h)
 set(INSTANCED_DEMO_SOURCES
+	Demos/InstancedDemo/CubeResourceBuilders.cpp
 	Demos/InstancedDemo/InstancedCubeLayer.cpp
 	Demos/InstancedDemo/InstancedDemoApp.cpp
 	Demos/Utils/CameraScript.cpp)

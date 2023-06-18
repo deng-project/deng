@@ -12,6 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(VULKAN_VERSION "1.3.246.1" CACHE STRING "Vulkan SDK version to use")
 set(VULKAN_SDK_PATH "C:/VulkanSDK/${VULKAN_VERSION}" CACHE STRING "Vulkan SDK path to use")
+message(STATUS "Vulkan SDK path is ${VULKAN_SDK_PATH}")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
@@ -64,6 +65,8 @@ if(DENG_BUILD_TESTS)
     message(STATUS "Adding demo build configurations")
 	set(DEMO_APPS_DIR DemoApps)
 	
+	include(CMake/Demos/SIDTest.cmake)
+	include(CMake/Demos/ComputeParticles.cmake)
 	include(CMake/Demos/TriangleApp.cmake)
 	include(CMake/Demos/ImGuiApp.cmake)
 	include(CMake/Demos/BasicLightingDemo.cmake)

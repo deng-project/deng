@@ -28,22 +28,26 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Event.h
 	Include/deng/Exceptions.h
+	Include/deng/FileSystemShader.h
 	Include/deng/GPUMemoryAllocator.h
 	Include/deng/IFramebuffer.h
 	Include/deng/ILayer.h
 	Include/deng/ImGuiLayer.h
+	Include/deng/ImGuiResourceBuilders.h
 	Include/deng/InputEvents.h
 	Include/deng/IRenderer.h
+	Include/deng/IShader.h
 	Include/deng/IWindowContext.h
 	Include/deng/MathConstants.h
 	Include/deng/Missing.h
+	Include/deng/MissingTextureBuilder.h
 	Include/deng/ProgramFilesManager.h
+	Include/deng/RenderResources.h
 	Include/deng/Scene.h
 	Include/deng/SceneRenderer.h
 	Include/deng/SDLWindowContext.h
-	Include/deng/Shader.h
-	Include/deng/ShaderComponent.h
-	Include/deng/VulkanDescriptorAllocator.h
+	Include/deng/SID.h
+	Include/deng/UberShader.h
 	Include/deng/VulkanFramebuffer.h
 	Include/deng/VulkanHelpers.h
 	Include/deng/VulkanInstanceCreator.h
@@ -56,15 +60,18 @@ set(DENG_MINIMAL_SOURCES
 	Sources/App.cpp
 	Sources/CameraTransformer.cpp
 	Sources/ErrorDefinitions.cpp
+	Sources/FileSystemShader.cpp
 	Sources/GPUMemoryAllocator.cpp
 	Sources/ImGuiLayer.cpp
+	Sources/ImGuiResourceBuilders.cpp
 	Sources/Missing.cpp
+	Sources/MissingTextureBuilder.cpp
 	Sources/ProgramFilesManager.cpp
 	Sources/Scene.cpp
 	Sources/SceneRenderer.cpp
 	Sources/SDLWindowContext.cpp
-	Sources/Shader.cpp
-	Sources/VulkanDescriptorAllocator.cpp
+	Sources/Singletons.cpp
+	Sources/UberShader.cpp
 	Sources/VulkanFramebuffer.cpp
 	Sources/VulkanHelpers.cpp
 	Sources/VulkanInstanceCreator.cpp
@@ -100,6 +107,7 @@ endif()
 target_compile_definitions(${DENG_MINIMAL_TARGET}
 	PRIVATE DENG_COMPLETE_EXPORT_LIBRARY
 	PUBLIC ImDrawIdx=unsigned\ int
+	PUBLIC ImTextureID=size_t
 	PUBLIC NOMINMAX
 	PUBLIC SDL_MAIN_HANDLED)
 	

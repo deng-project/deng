@@ -31,16 +31,17 @@
     #include "das/TextureReader.h"
 
     #include "deng/Api.h"
+    #include "deng/SID.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
     #include "deng/Components.h"
     #include "deng/IWindowContext.h"
     #include "deng/VulkanHelpers.h"
+    #include "deng/RenderResources.h"
     #include "deng/IRenderer.h"
     #include "deng/VulkanInstanceCreator.h"
     #include "deng/VulkanSwapchainCreator.h"
     #include "deng/VulkanPipelineCreator.h"
-    #include "deng/VulkanDescriptorAllocator.h"
 #endif
 
 namespace DENG {
@@ -50,13 +51,14 @@ namespace DENG {
             private:
                 const InstanceCreator* m_pInstanceCreator = nullptr;
                 SwapchainCreator* m_pSwapchainCreator = nullptr;
-                std::unordered_map<uint32_t, TextureResource>& m_textureRegistry;
-                uint32_t(*m_pfnGetNewImageId)();
 
                 VkBuffer& m_hMainBuffer;
                 VkSampleCountFlagBits m_uSampleCountBits;
                 
-                std::unordered_map<Shader*, PipelineCreator> m_pipelineCreators;
+                Vulkan::TextureData m_framebufferImageHandles;
+                Vulkan::TextureData m_depthImageHandles;
+
+                std::unordered_map<hash_t, Vulkan::PipelineCreator, NoHash> m_pipelineCreators;
 
                 VkCommandPool m_hCommandPool;
                 std::vector<VkCommandBuffer> m_commandBuffers;
@@ -64,10 +66,6 @@ namespace DENG {
                 std::vector<VkSemaphore> m_imageAvailableSemaphores;
                 std::vector<VkFence> m_flightFences;
                 std::vector<VkFramebuffer> m_framebuffers;
-
-                // color resolve and depth image resources
-                uint32_t m_uDepthImageId = UINT32_MAX;
-                std::vector<uint32_t> m_framebufferImageIds;
 
                 VkRenderPass m_hRenderpass;
 
@@ -82,7 +80,7 @@ namespace DENG {
                 void _CreateSynchronisationPrimitives();
                 void _AllocateCommandBuffers();
                 void _RecreateSwapchain();
-                void _DestroyFramebuffer(bool _bRemoveImageResources = true);
+                void _DestroyFramebuffer();
 
             public:
                 Framebuffer(
@@ -90,23 +88,49 @@ namespace DENG {
                     VkBuffer& _hMainBuffer,
                     VkSampleCountFlagBits _uSampleCountBits,
                     TRS::Point2D<uint32_t> _extent,
-                    std::unordered_map<uint32_t, TextureResource>& _textureRegistry,
-                    uint32_t(*_pfnGetNewImageId)(),
-                    bool _bIsSwapchain = false
-                );
+                    bool _bIsSwapchain = false);
                 Framebuffer(Framebuffer &&_fb) noexcept = default;
                 ~Framebuffer();
 
                 void RecreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight);
 
-                inline void DestroyPipelineAllocator(Shader* _pShader) {
-                    m_pipelineCreators.erase(_pShader);
-                }
-
                 virtual void BeginCommandBufferRecording(TRS::Vector4<float> _vClearColor) override;
-                void Draw(const MeshComponent& _mesh, const ShaderComponent& _shaderComponent, DescriptorAllocator* _pDescriptorAllocator, uint32_t _uInstanceCount, const std::vector<uint32_t>& _textureIds = {});
+                void Draw(
+                    hash_t _hshMesh, 
+                    hash_t _hshShader, 
+                    uint32_t _uInstanceCount,
+                    uint32_t _uFirstInstance,
+                    VkDescriptorSet _hShaderDescriptorSet, 
+                    VkDescriptorSet _hMaterialDescriptorSet,
+                    VkDescriptorSetLayout _hShaderDescriptorSetLayout,
+                    VkDescriptorSetLayout _hMaterialDescriptorSetLayout);
                 virtual void EndCommandBufferRecording() override;
                 virtual void RenderToFramebuffer() override;
+
+                inline void UpdatePipelineCreator(hash_t _hshShader, VkDescriptorSetLayout _hShaderDescriptorSetLayout, VkDescriptorSetLayout _hMaterialDescriptorSetLayout) {
+                    if (m_pipelineCreators.find(_hshShader) == m_pipelineCreators.end()) {
+                        ResourceManager& resourceManager = ResourceManager::GetInstance();
+                        auto pShader = resourceManager.GetShader(_hshShader);
+                        DENG_ASSERT(pShader);
+
+                        m_pipelineCreators.emplace(
+                            std::piecewise_construct,
+                            std::forward_as_tuple(_hshShader),
+                            std::forward_as_tuple(
+                                m_pInstanceCreator->GetDevice(),
+                                m_hRenderpass,
+                                _hShaderDescriptorSetLayout,
+                                _hMaterialDescriptorSetLayout,
+                                m_uSampleCountBits,
+                                m_pInstanceCreator->GetPhysicalDeviceInformation(),
+                                pShader
+                            ));
+                    }
+                }
+
+                inline uint32_t GetCurrentFrameIndex() {
+                    return m_uCurrentFrameIndex;
+                }
 
                 inline SwapchainCreator* GetSwapchainCreator() {
                     return m_pSwapchainCreator;
@@ -120,8 +144,9 @@ namespace DENG {
                     return m_hRenderpass;
                 }
 
-                inline const std::vector<uint32_t> &GetFramebufferImageIds() const {
-                    return m_framebufferImageIds;
+                // returns null handles if framebuffer is swapchain framebuffer
+                inline const Vulkan::TextureData& GetFramebufferImageHandles() const {
+                    return m_framebufferImageHandles;
                 }
 
                 inline VkFence& GetCurrentFlightFence() {

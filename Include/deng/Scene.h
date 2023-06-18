@@ -7,11 +7,15 @@
 #define SCENE_H
 
 #include <chrono>
+#include <future>
 #include <type_traits>
 
 #include "deng/Api.h"
 #include "deng/IRenderer.h"
 #include "deng/SceneRenderer.h"
+#include "deng/IRenderer.h"
+#include "deng/IShader.h"
+#include "deng/RenderResources.h"
 
 #ifdef SCENE_CPP
 	#include "deng/ErrorDefinitions.h"
@@ -35,7 +39,6 @@ namespace DENG {
 
 			TRS::Vector3<float> m_vAmbient = { 0.3f, 0.3f, 0.3f };
 
-
 		private:
 			template <typename T>
 			void _ApplyLightSourceTransforms() {
@@ -43,10 +46,10 @@ namespace DENG {
 				for (Entity idLight : view) {
 					auto& [light, transform] = m_registry.get<T, TransformComponent>(idLight);
 					const TRS::Matrix4<float> cmTranslation = {
-					{ 1.f, 0.f, 0.f, transform.vTranslation.first },
-					{ 0.f, 1.f, 0.f, transform.vTranslation.second },
-					{ 0.f, 0.f, 1.f, transform.vTranslation.third },
-					{ 0.f, 0.f, 0.f, 1.f }
+						{ 1.f, 0.f, 0.f, transform.vTranslation.first },
+						{ 0.f, 1.f, 0.f, transform.vTranslation.second },
+						{ 0.f, 0.f, 1.f, transform.vTranslation.third },
+						{ 0.f, 0.f, 0.f, 1.f }
 					};
 
 					const TRS::Quaternion qX(std::sinf(transform.vRotation.first / 2.f), 0.f, 0.f, std::cosf(transform.vRotation.first / 2.f));
@@ -69,9 +72,9 @@ namespace DENG {
 				}
 			}
 
-			void _DrawImplicitlyInstancedMeshes(const CameraComponent& _mainCamera);
-			void _DrawPrefabs(const CameraComponent& _mainCamera);
-
+			using _MaterialTuple = std::tuple<std::vector<InstanceInfo>, std::vector<TransformComponent>, std::vector<Material>, std::vector<DrawDescriptorIndices>>;
+			_MaterialTuple _InstanceRenderablesMSM();
+			
 			void _UpdateScripts();
 			void _RenderLights();
 			void _DrawMeshes();

@@ -79,20 +79,20 @@ namespace DENG {
 		ImGuiKey_Menu
 	};
 
-	ImGuiLayer::ImGuiLayer(EventManager& _eventManager) :
-		ILayer(_eventManager)
-	{
-		m_eventManager.AddListener<ImGuiLayer, KeyboardEvent>(&ImGuiLayer::OnKeyboardEvent, this);
-		m_eventManager.AddListener<ImGuiLayer, MouseButtonEvent>(&ImGuiLayer::OnMouseButtonEvent, this);
-		m_eventManager.AddListener<ImGuiLayer, MouseMovedEvent>(&ImGuiLayer::OnMouseMovedEvent, this);
-		m_eventManager.AddListener<ImGuiLayer, MouseScrolledEvent>(&ImGuiLayer::OnMouseScrollEvent, this);
+	ImGuiLayer::ImGuiLayer() {
+		EventManager& eventManager = EventManager::GetInstance();
+		eventManager.AddListener<ImGuiLayer, KeyboardEvent>(&ImGuiLayer::OnKeyboardEvent, this);
+		eventManager.AddListener<ImGuiLayer, MouseButtonEvent>(&ImGuiLayer::OnMouseButtonEvent, this);
+		eventManager.AddListener<ImGuiLayer, MouseMovedEvent>(&ImGuiLayer::OnMouseMovedEvent, this);
+		eventManager.AddListener<ImGuiLayer, MouseScrolledEvent>(&ImGuiLayer::OnMouseScrollEvent, this);
 	}
 
 	ImGuiLayer::~ImGuiLayer() {
-		m_eventManager.RemoveListener<ImGuiLayer, KeyboardEvent>(this);
-		m_eventManager.RemoveListener<ImGuiLayer, MouseButtonEvent>(this);
-		m_eventManager.RemoveListener<ImGuiLayer, MouseMovedEvent>(this);
-		m_eventManager.RemoveListener<ImGuiLayer, MouseScrolledEvent>(this);
+		EventManager& eventManager = EventManager::GetInstance();
+		eventManager.RemoveListener<ImGuiLayer, KeyboardEvent>(this);
+		eventManager.RemoveListener<ImGuiLayer, MouseButtonEvent>(this);
+		eventManager.RemoveListener<ImGuiLayer, MouseMovedEvent>(this);
+		eventManager.RemoveListener<ImGuiLayer, MouseScrolledEvent>(this);
 
 		ImGui::SetCurrentContext(m_pImguiContext);
 		ImGui::DestroyContext();
@@ -107,7 +107,10 @@ namespace DENG {
 
 
 	void ImGuiLayer::_CreateDrawCommands(ImDrawData* _pDrawData, IFramebuffer* _pFramebuffer) {
-		m_meshComponent.drawCommands.clear();
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
+		auto pMesh = resourceManager.GetMesh(SID("__ImGui__"));
+		DENG_ASSERT(pMesh);
+		pMesh->drawCommands.clear();
 
 		if (m_uVertexRegionOffset)
 			m_pRenderer->DeallocateMemory(m_uVertexRegionOffset);
@@ -125,7 +128,7 @@ namespace DENG {
 		uVertexSize *= sizeof(ImDrawVert);
 		uIndexSize *= sizeof(ImDrawIdx);
 
-		m_uVertexRegionOffset = m_pRenderer->AllocateMemory(uVertexSize + uIndexSize, BufferDataType::VERTEX);
+		m_uVertexRegionOffset = m_pRenderer->AllocateMemory(uVertexSize + uIndexSize, BufferDataType::Vertex);
 		
 		// check if data buffer is big enough
 		if (uVertexSize + uIndexSize > m_uDataBufferSize) {
@@ -174,25 +177,24 @@ namespace DENG {
 					if (clip.z <= clip.x || clip.w <= clip.y)
 						continue;
 
-					m_meshComponent.drawCommands.emplace_back();
+					pMesh->drawCommands.emplace_back();
 					const size_t uBaseVertexOffset = uCommandVertexOffset + drawCommand.VtxOffset * sizeof(ImDrawVert);
 					const size_t uBaseIndexOffset = uCommandIndexOffset + drawCommand.IdxOffset * sizeof(ImDrawIdx);
-					m_meshComponent.drawCommands.back().attributeOffsets.push_back(uBaseVertexOffset + offsetof(ImDrawVert, pos));
-					m_meshComponent.drawCommands.back().attributeOffsets.push_back(uBaseVertexOffset + offsetof(ImDrawVert, uv));
-					m_meshComponent.drawCommands.back().attributeOffsets.push_back(uBaseVertexOffset + offsetof(ImDrawVert, col));
+					pMesh->drawCommands.back().attributeOffsets.push_back(uBaseVertexOffset + offsetof(ImDrawVert, pos));
+					pMesh->drawCommands.back().attributeOffsets.push_back(uBaseVertexOffset + offsetof(ImDrawVert, uv));
+					pMesh->drawCommands.back().attributeOffsets.push_back(uBaseVertexOffset + offsetof(ImDrawVert, col));
 
-					m_meshComponent.drawCommands.back().uIndicesOffset = static_cast<uint32_t>(uBaseIndexOffset);
-					m_meshComponent.drawCommands.back().uDrawCount = drawCommand.ElemCount;
+					pMesh->drawCommands.back().uIndicesOffset = static_cast<uint32_t>(uBaseIndexOffset);
+					pMesh->drawCommands.back().uDrawCount = drawCommand.ElemCount;
 					
-					m_meshComponent.drawCommands.back().scissor.offset = {
+					pMesh->drawCommands.back().scissor.offset = {
 						static_cast<int32_t>(clip.x),
 						static_cast<int32_t>(clip.y)
 					};
-					m_meshComponent.drawCommands.back().scissor.extent = {
+					pMesh->drawCommands.back().scissor.extent = {
 						static_cast<uint32_t>(clip.z - clip.x),
 						static_cast<uint32_t>(clip.w - clip.y)
 					};
-					m_meshComponent.drawCommands.back().scissor.bEnabled = true;
 				}
 			}
 
@@ -206,52 +208,23 @@ namespace DENG {
 
 
 	void ImGuiLayer::Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) {
-		m_uUniformRegionOffset = _pRenderer->AllocateMemory(sizeof(TRS::Point2D<float>), BufferDataType::UNIFORM);
+		m_uUniformRegionOffset = _pRenderer->AllocateMemory(sizeof(TRS::Point2D<float>), BufferDataType::Uniform);
 		
 		m_pImguiContext = ImGui::CreateContext();
 		ImGui::SetCurrentContext(m_pImguiContext);
 		m_pIO = &ImGui::GetIO();
 
-		m_shaderComponent.pShader = new Shader("ImGui", "ImGui");
-		m_shaderComponent.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-		m_shaderComponent.attributes.push_back(ATTRIBUTE_TYPE_VEC2_FLOAT);
-		m_shaderComponent.attributes.push_back(ATTRIBUTE_TYPE_VEC4_UBYTE);
-
-		m_shaderComponent.attributeStrides.push_back(sizeof(ImDrawVert));
-		m_shaderComponent.attributeStrides.push_back(sizeof(ImDrawVert));
-		m_shaderComponent.attributeStrides.push_back(sizeof(ImDrawVert));
-
-		m_shaderComponent.bEnableBlend = true;
-		m_shaderComponent.bEnableScissor = true;
-		m_shaderComponent.bEnable2DTextures = true;
-		
-		m_shaderComponent.uboDataLayouts.resize(2, {});
-		m_shaderComponent.uboDataLayouts[0].block.uBinding = 0;
-		m_shaderComponent.uboDataLayouts[0].block.uSize = static_cast<uint32_t>(sizeof(TRS::Point2D<float>));
-		m_shaderComponent.uboDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_uUniformRegionOffset);
-		m_shaderComponent.uboDataLayouts[0].iStage = SHADER_STAGE_VERTEX;
-		m_shaderComponent.uboDataLayouts[0].eType = UNIFORM_DATA_TYPE_BUFFER;
-
-		m_shaderComponent.uboDataLayouts[1].block.uBinding = 1;
-		m_shaderComponent.uboDataLayouts[1].iStage = SHADER_STAGE_FRAGMENT;
-		m_shaderComponent.uboDataLayouts[1].eType = UNIFORM_DATA_TYPE_2D_IMAGE_SAMPLER;
-		m_meshComponent.sName = "ImGuiLayer";
-
+		// query texture resources
 		unsigned char* pPixels = nullptr;
 		int iWidth = 0, iHeight = 0;
 		m_pIO->Fonts->GetTexDataAsRGBA32(&pPixels, &iWidth, &iHeight);
 
-		TextureResource textureResource;
-		textureResource.eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-		textureResource.uBitDepth = 4;
-		textureResource.uWidth = static_cast<uint32_t>(iWidth);
-		textureResource.uHeight = static_cast<uint32_t>(iHeight);
-		textureResource.bHeapAllocationFlag = false;
-		textureResource.pRGBAData = reinterpret_cast<char*>(pPixels);
-		textureResource.eResourceType = TEXTURE_RESOURCE_2D_IMAGE;
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
+		resourceManager.AddShader<ImGuiShaderBuilder>(SID("__ImGui__"), m_uUniformRegionOffset);
+		resourceManager.AddMesh<ImGuiMeshBuilder>(SID("__ImGui__"));
+		resourceManager.AddTexture<ImGuiTextureBuilder>(SID("__ImGui__"), iWidth, iHeight, pPixels);
 
-		m_uTextureHandle = _pRenderer->AddTextureResource(textureResource);
-		m_pIO->Fonts->SetTexID(&m_uTextureHandle);
+		m_pIO->Fonts->SetTexID(SID("__ImGui__"));
 
 		m_pRenderer = _pRenderer;
 		m_pWindowContext = _pWindowContext;
@@ -284,7 +257,11 @@ namespace DENG {
 		
 		m_pRenderer->UpdateBuffer(&m_uniform, sizeof(TRS::Point2D<float>), m_uUniformRegionOffset);
 		m_bIsInit = true;
-		m_pRenderer->DrawMesh(m_meshComponent, m_shaderComponent, _pFramebuffer, 1, { m_uTextureHandle });
+		m_pRenderer->DrawInstance(
+			SID("__ImGui__"), 
+			SID("__ImGui__"), 
+			_pFramebuffer, 1, 0, 0, 
+			{ SID("__ImGui__") });
 	}
 
 

@@ -8,6 +8,7 @@
 
 #include "deng/Api.h"
 #include "deng/IRenderer.h"
+#include "deng/RenderResources.h"
 #include "deng/Components.h"
 
 #ifdef SCENE_RENDERER_CPP
@@ -24,8 +25,12 @@ namespace DENG {
 			std::array<size_t, 3> m_arrLightOffsets = { SIZE_MAX, 0, 0 };
 			size_t m_uUsedLightsSize = 0;
 
-			std::vector<size_t> m_batchSSBOOffsets;
-			std::vector<size_t> m_batchSSBOSizes;
+			size_t m_uTransformsOffset = 0;
+			size_t m_uTransformsSize = 0;
+			size_t m_uMaterialsOffset = 0;
+			size_t m_uMaterialsSize = 0;
+			size_t m_uDrawDescriptorIndicesOffset = 0;
+			size_t m_uDrawDescriptorIndicesCount = 0;
 			size_t m_uBatchCounter = 0;
 
 			char* m_pIntermediateStorageBuffer = nullptr;
@@ -41,11 +46,11 @@ namespace DENG {
 				const std::vector<SpotlightComponent>& _spotLights,
 				const TRS::Vector3<float>& _vAmbient);
 			
-			void RenderBatch(const MeshComponent& _mesh, 
-							 ShaderComponent& _shader, 
-							 const std::vector<MaterialComponent>& _materials,
-							 const std::vector<TransformComponent>& _transform,
-							 const CameraComponent& _camera);
+			void RenderInstances(const std::vector<InstanceInfo>& _instanceInfos, 
+								 const std::vector<TransformComponent>& _transforms,
+								 const std::vector<Material>& _materials,
+								 const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
+								 const CameraComponent& _camera);
 
 			inline void Finalize() {
 				m_uBatchCounter = 0;

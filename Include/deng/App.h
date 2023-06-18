@@ -13,6 +13,7 @@
 #include "deng/IWindowContext.h"
 #include "deng/IRenderer.h"
 #include "deng/Event.h"
+#include "deng/RenderResources.h"
 
 // NOTE: OpenGL support is incomplete
 // #include "deng/OpenGLRenderer.h"
@@ -39,18 +40,14 @@ namespace DENG {
 			std::vector<ILayer*> m_layers;
 
 		protected:
-			EventManager m_eventManager;
-
-		protected:
 			virtual void AttachLayers();
 
 		public:
-			App() = default;
 			virtual ~App();
 
 			template <typename T, typename... Args>
 			T* PushLayer(Args&&... args) {
-				m_layers.push_back(new T(m_eventManager, std::forward<Args>(args)...));
+				m_layers.push_back(new T(std::forward<Args>(args)...));
 				return static_cast<T*>(m_layers.back());
 			}
 

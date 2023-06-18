@@ -1,355 +1,21 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: UberShader.cpp - shader requrest classes implementation
+// file: UberShader.h - uber shader class implementation
 // author: Karl-Mihkel Ott
 
-#define SHADER_CPP
-#include "deng/Shader.h"
+#define UBER_SHADER_CPP
+#include "deng/UberShader.h"
 
 using namespace std;
-namespace fs = filesystem;
-#define MD5LEN 16
 
 namespace DENG {
-
-	Shader::Shader(const string& _sSourceIdentifier, const string& _sBinaryIdentifier) :
-		m_csSourceIdentifier(_sSourceIdentifier),
-		m_sBinaryIdentifier(_sBinaryIdentifier)
-	{
-		if (m_sBinaryIdentifier.empty())
-			m_sBinaryIdentifier = m_csSourceIdentifier;
-	}
-
-
-	vector<uint32_t> Shader::_CompileVertexShaderToSpirv() {
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-		for (auto it = m_vertexShaderMacros.begin(); it != m_vertexShaderMacros.end(); it++) {
-			if (it->second != "")
-				options.AddMacroDefinition(it->first, it->second);
-			else options.AddMacroDefinition(it->first);
-		}
-
-		const string csVertexShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".vert";
-		
-		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csVertexShaderSourcePath);
-		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
-			sSourceCode.data(), 
-			sSourceCode.size(), 
-			shaderc_vertex_shader, 
-			fs::path(csVertexShaderSourcePath).filename().u8string().c_str(),
-			options);
-
-		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-			throw ShaderException(module.GetErrorMessage());
-			return {};
-		}
-
-		vector<uint32_t> spirv(module.cbegin(), module.cend());
-	
-		try {
-			m_programFilesManager.WriteProgramFile(
-				(const char*)spirv.data(),
-				spirv.size() * sizeof(uint32_t),
-				m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".vert.spv");
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::WARNING);
-		}
-
-		return spirv;
-	}
-
-
-	vector<uint32_t> Shader::_CompileGeometryShaderToSpirv() {
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-		for (auto it = m_geometryShaderMacros.begin(); it != m_geometryShaderMacros.end(); it++) {
-			if (it->second != "")
-				options.AddMacroDefinition(it->first, it->second);
-			else options.AddMacroDefinition(it->first);
-		}
-
-		const string csGeometryShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".geom";
-
-		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csGeometryShaderSourcePath);
-		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
-			sSourceCode.data(),
-			sSourceCode.size(),
-			shaderc_geometry_shader,
-			fs::path(csGeometryShaderSourcePath).filename().u8string().c_str(),
-			options);
-
-		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-			throw ShaderException(module.GetErrorMessage());
-			return {};
-		}
-
-		vector<uint32_t> spirv(module.cbegin(), module.cend());
-
-		try {
-			m_programFilesManager.WriteProgramFile(
-				(const char*)spirv.data(),
-				spirv.size() * sizeof(uint32_t),
-				m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".geom.spv");
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
-		}
-
-		return spirv;
-	}
-
-
-	vector<uint32_t> Shader::_CompileFragmentShaderToSpirv() {
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-		for (auto it = m_fragmentShaderMacros.begin(); it != m_fragmentShaderMacros.end(); it++) {
-			if (it->second != "")
-				options.AddMacroDefinition(it->first, it->second);
-			else options.AddMacroDefinition(it->first);
-		}
-
-		const string csFragmentShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".frag";
-		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csFragmentShaderSourcePath);
-		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
-			sSourceCode.data(),
-			sSourceCode.size(),
-			shaderc_fragment_shader,
-			fs::path(csFragmentShaderSourcePath).filename().u8string().c_str(),
-			options);
-
-		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-			throw ShaderException(module.GetErrorMessage());
-			return {};
-		}
-
-		vector<uint32_t> spirv(module.cbegin(), module.cend());
-
-		try {
-			m_programFilesManager.WriteProgramFile(
-				(const char*)spirv.data(),
-				spirv.size() * sizeof(uint32_t),
-				m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".frag.spv");
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
-		}
-
-		return spirv;
-	}
-
-
-	vector<uint32_t> Shader::ReadVertexShaderSpirv() {
-		const string csVertexShaderSpirvFilePath = 
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".vert.spv";
-		const string csVertexShaderSourceFilePath = 
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".vert";
-		
-		time_t tSpvWriteTimestamp = 0, tSourceWriteTimestamp = 0;
-		tSourceWriteTimestamp = m_programFilesManager.GetFileTimestamp(csVertexShaderSourceFilePath);
-
-		try {
-			tSpvWriteTimestamp = m_programFilesManager.GetFileTimestamp(csVertexShaderSpirvFilePath);
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::WARNING);
-		}
-
-		if (tSpvWriteTimestamp > tSourceWriteTimestamp) {
-			auto input = m_programFilesManager.GetProgramFileContent(csVertexShaderSpirvFilePath);
-			vector<uint32_t> output(input.size() / sizeof(uint32_t));
-			for (size_t i = 0; i < output.size(); i++)
-				output[i] = reinterpret_cast<uint32_t*>(input.data())[i];
-			
-			return output;
-		}
-		else {
-			return _CompileVertexShaderToSpirv();
-		}
-	}
-	
-	
-	vector<uint32_t> Shader::ReadGeometryShaderSpirv() {
-		const string csGeometryShaderSpirvFilePath =
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".geom.spv";
-		const string csGeometryShaderSourceFilePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".geom";
-
-		time_t tSpvWriteTimestamp = 0, tSourceWriteTimestamp = 0;
-		tSourceWriteTimestamp = m_programFilesManager.GetFileTimestamp(csGeometryShaderSourceFilePath);
-
-		try {
-			tSpvWriteTimestamp = m_programFilesManager.GetFileTimestamp(csGeometryShaderSpirvFilePath);
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), WARNING);
-		}
-	
-		if (tSpvWriteTimestamp > tSourceWriteTimestamp) {
-			auto input = m_programFilesManager.GetProgramFileContent(csGeometryShaderSpirvFilePath);
-			vector<uint32_t> output(input.size() / sizeof(uint32_t));
-			for (size_t i = 0; i < output.size(); i++)
-				output[i] = reinterpret_cast<uint32_t*>(input.data())[i];
-	
-			return output;
-		}
-		else {
-			return _CompileGeometryShaderToSpirv();
-		}
-	}
-	
-	
-	vector<uint32_t> Shader::ReadFragmentShaderSpirv() {
-		const string csFragmentShaderSpirvFilePath =
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".frag.spv";
-		const string csFragmentShaderSourceFilePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".frag";
-	
-		time_t tSpvWriteTimestamp = 0, tSourceWriteTimestamp = 0;
-		tSourceWriteTimestamp = m_programFilesManager.GetFileTimestamp(csFragmentShaderSourceFilePath);
-
-		try {
-			tSpvWriteTimestamp = m_programFilesManager.GetFileTimestamp(csFragmentShaderSpirvFilePath);
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), WARNING);
-		}
-
-		if (tSpvWriteTimestamp > tSourceWriteTimestamp) {
-			auto input = m_programFilesManager.GetProgramFileContent(csFragmentShaderSpirvFilePath);
-			vector<uint32_t> output(input.size() / sizeof(uint32_t));
-			for (size_t i = 0; i < output.size(); i++)
-				output[i] = reinterpret_cast<uint32_t*>(input.data())[i];
-	
-			return output;
-		}
-		else {
-			return _CompileFragmentShaderToSpirv();
-		}
-	}
-
-
-	vector<char> Shader::GetPipelineCache(RendererType _eRendererType) {
-		string sPipelineCacheFilePath = m_csPipelineCachePath;
-
-		switch (_eRendererType) {
-			case RendererType::OPENGL:
-				sPipelineCacheFilePath += "\\OpenGL";
-				break;
-
-			case RendererType::VULKAN:
-				sPipelineCacheFilePath += "\\Vulkan";
-				break;
-
-			case RendererType::DIRECTX:
-				sPipelineCacheFilePath += "\\DirectX";
-				break;
-
-			default:
-				return {};
-		}
-
-		sPipelineCacheFilePath += '\\' + m_sBinaryIdentifier + ".cache";
-
-		if (!m_programFilesManager.ExistsFile(sPipelineCacheFilePath)) {
-			stringstream ss;
-			ss << "Pipeline cache for shader module '" << m_sBinaryIdentifier << "' does not exist";
-			throw ShaderException(ss.str());
-			return {};
-		}
-
-		return m_programFilesManager.GetProgramFileContent(sPipelineCacheFilePath);
-	}
-
-
-	void Shader::CachePipeline(RendererType _eRendererType, const void* _pData, size_t _uLength) {
-		DENG_ASSERT(_eRendererType == RendererType::VULKAN || _eRendererType == RendererType::OPENGL || _eRendererType == RendererType::DIRECTX);
-		string sPipelineCacheFilePath = m_csPipelineCachePath;
-
-		switch (_eRendererType) {
-			case RendererType::VULKAN:
-				sPipelineCacheFilePath += "\\Vulkan";
-				break;
-
-			case RendererType::OPENGL:
-				sPipelineCacheFilePath += "\\OpenGL";
-				break;
-
-			case RendererType::DIRECTX:
-				sPipelineCacheFilePath += "\\DirectX";
-				break;
-		}
-
-		sPipelineCacheFilePath += "\\" + m_sBinaryIdentifier + ".cache";
-
-		try {
-			m_programFilesManager.WriteProgramFile((const char*)_pData, _uLength, sPipelineCacheFilePath);
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
-		}
-	}
-
-
-	uint16_t Shader::GetPipelineCacheStatus() {
-		uint16_t uMask = 0;
-		// check if pipeline cache exists
-		const string sDirectXPipelineCacheFilePath = m_csPipelineCachePath + "\\DirectX\\" + m_sBinaryIdentifier + ".cache";
-		const string sOpenGLPipelineCacheFilePath = m_csPipelineCachePath + "\\OpenGL\\" + m_sBinaryIdentifier + ".cache";
-		const string sVulkanPipelineCacheFilePath = m_csPipelineCachePath + "\\Vulkan\\" + m_sBinaryIdentifier + ".cache";
-		
-		if (m_programFilesManager.ExistsFile(sOpenGLPipelineCacheFilePath))
-			uMask |= OPENGL_CACHE;
-		else if (m_programFilesManager.ExistsFile(sVulkanPipelineCacheFilePath))
-			uMask |= VULKAN_CACHE;
-		else if (m_programFilesManager.ExistsFile(sDirectXPipelineCacheFilePath))
-			uMask |= DIRECTX_CACHE;
-
-		if (uMask) return uMask;
-		
-		// check if spirv exists
-		const string sVertexShaderSpirvPath = 
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".vert.spv";
-		const string sGeometryShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".geom";
-		const string sGeometryShaderSpirvPath = 
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".geom.spv";
-		const string sFragmentShaderSpirvPath =
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".frag.spv";
-		
-		if (m_programFilesManager.ExistsFile(sVertexShaderSpirvPath) &&
-			(!m_programFilesManager.ExistsFile(sGeometryShaderSourcePath) || m_programFilesManager.ExistsFile(sGeometryShaderSpirvPath)) &&
-			m_programFilesManager.ExistsFile(sFragmentShaderSpirvPath))
-		{
-			return SPIRV;
-		}
-		else if (m_programFilesManager.ExistsFile(sVertexShaderSpirvPath) ||
-			(!m_programFilesManager.ExistsFile(sGeometryShaderSourcePath) || m_programFilesManager.ExistsFile(sGeometryShaderSpirvPath)) ||
-			m_programFilesManager.ExistsFile(sFragmentShaderSpirvPath))
-		{
-			return PARTIAL_SPIRV;
-		}
-		else return NO_CACHE;
-	}
-
-
 	UberShader::UberShader(const Libdas::DasModel& _model, uint32_t _uMeshId) :
-		Shader("UberShader")
+		FileSystemShader("UberShader")
 	{
 		_CreateVertexShaderProperties(_model, _uMeshId);
 		_CreateGeometryShaderProperties(_model, _uMeshId);
 		_CreateFragmentShaderProperties(_model, _uMeshId);
-		
+
 		_CalculateMD5Hash(reinterpret_cast<char*>(&m_properties), sizeof(m_properties));
 		SetBinaryIdentifier(m_sMD5Hash);
 
@@ -371,7 +37,7 @@ namespace DENG {
 			stringstream ss;
 			ss << "CryptAcquireContext failed with code: 0x" << setfill('0') << setw(8) <<
 				hex << dwStatus << endl;
-			
+
 			throw SyscallException(ss.str());
 			return;
 		}
@@ -381,7 +47,7 @@ namespace DENG {
 			stringstream ss;
 			ss << "CryptCreateHash failed with code: 0x" << setfill('0') << setw(8) <<
 				hex << dwStatus << endl;
-			
+
 			throw SyscallException(ss.str());
 			return;
 		}
@@ -531,12 +197,12 @@ namespace DENG {
 	void UberShader::_AddVertexShaderMacroDefinitions() {
 		// vertex normals
 		if (m_properties.iVertexShaderNormalLocation != -1)
-			AddVertexShaderMacroDefinition("VERTEX_NORMALS", 
+			AddVertexShaderMacroDefinition("VERTEX_NORMALS",
 				to_string(m_properties.iVertexShaderNormalLocation));
 		if (m_properties.iVertexShaderNormalOutputLocation != -1)
 			AddVertexShaderMacroDefinition("OUTPUT_VERTEX_NORMALS",
 				to_string(m_properties.iVertexShaderNormalOutputLocation));
-		
+
 		// vertex tangents
 		if (m_properties.iVertexShaderTangentLocation != -1)
 			AddVertexShaderMacroDefinition("VERTEX_TANGENTS",
@@ -544,7 +210,7 @@ namespace DENG {
 		if (m_properties.iVertexShaderTangentOutputLocation != -1)
 			AddVertexShaderMacroDefinition("OUTPUT_VERTEX_TANGENTS",
 				to_string(m_properties.iVertexShaderTangentOutputLocation));
-		
+
 		// uv coordinates
 		if (m_properties.iVertexShaderUVCoordinatesLocation != -1)
 			AddVertexShaderMacroDefinition("UV_COORDINATES",
@@ -552,7 +218,7 @@ namespace DENG {
 		if (m_properties.iVertexShaderUVAttributeCount)
 			AddVertexShaderMacroDefinition("UV_ATTRIB_COUNT",
 				to_string(m_properties.iVertexShaderUVAttributeCount));
-		
+
 		// color multipliers
 		if (m_properties.iVertexShaderColorMultiplierLocation != -1)
 			AddVertexShaderMacroDefinition("COLOR_MULTIPLIERS",
@@ -560,7 +226,7 @@ namespace DENG {
 		if (m_properties.iVertexShaderColorMultiplierAttributeCount)
 			AddVertexShaderMacroDefinition("COLOR_MULTIPLIER_ATTRIB_COUNT",
 				to_string(m_properties.iVertexShaderColorMultiplierAttributeCount));
-		
+
 		// joint transforms
 		if (m_properties.bVertexShaderUseJointTransforms) {
 			AddVertexShaderMacroDefinition("USE_JOINT_TRANSFORMS");
@@ -573,7 +239,7 @@ namespace DENG {
 			AddVertexShaderMacroDefinition("JOINT_COUNT",
 				to_string(m_properties.iVertexShaderJointCount));
 		}
-		
+
 		// morph targets
 		if (m_properties.bVertexShaderUseMorphTargets) {
 			AddVertexShaderMacroDefinition("USE_MORPH_TARGETS");
@@ -583,7 +249,7 @@ namespace DENG {
 				to_string(m_properties.iVertexShaderMorphTargetCount));
 			AddVertexShaderMacroDefinition("MORPH_POSITIONS",
 				to_string(m_properties.iVertexShaderMorphPositionsLocation));
-			
+
 			if (m_properties.iVertexShaderMorphNormalsLocation != -1)
 				AddVertexShaderMacroDefinition("MORPH_NORMALS",
 					to_string(m_properties.iVertexShaderMorphNormalsLocation));
@@ -605,7 +271,7 @@ namespace DENG {
 		if (m_properties.iGeometryShaderUVCoordinatesOutputLocation != -1)
 			AddGeometryShaderMacroDefinition("OUTPUT_UV_COORDINATES",
 				to_string(m_properties.iGeometryShaderUVCoordinatesOutputLocation));
-	
+
 		// color multipliers
 		if (m_properties.iGeometryShaderColorMultipliersLocation != -1)
 			AddGeometryShaderMacroDefinition("COLOR_MULTIPLIERS",
@@ -624,12 +290,12 @@ namespace DENG {
 		if (m_properties.iFragmentShaderVertexNormalLocation != -1)
 			AddFragmentShaderMacroDefinition("VERTEX_NORMALS",
 				to_string(m_properties.iFragmentShaderVertexNormalLocation));
-		
+
 		// vertex tangents
 		if (m_properties.iFragmentShaderVertexTangentLocation != -1)
 			AddFragmentShaderMacroDefinition("VERTEX_TANGENTS",
 				to_string(m_properties.iFragmentShaderVertexTangentLocation));
-		
+
 		// uv coordinates
 		if (m_properties.iFragmentShaderUVCoordinatesLocation != -1)
 			AddFragmentShaderMacroDefinition("UV_COORDINATES",
@@ -637,7 +303,7 @@ namespace DENG {
 		if (m_properties.iFragmentShaderUVAttributeCount)
 			AddFragmentShaderMacroDefinition("UV_ATTRIB_COUNT",
 				to_string(m_properties.iFragmentShaderUVAttributeCount));
-		
+
 		// color multipliers
 		if (m_properties.iFragmentShaderColorMultipliersLocation != -1)
 			AddFragmentShaderMacroDefinition("COLOR_MULTIPLIERS",

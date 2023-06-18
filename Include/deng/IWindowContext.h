@@ -50,12 +50,8 @@ namespace DENG {
 
 			WindowHint m_uHints = 0;
 			bool m_bIsAlive = false;
-			EventManager& m_eventManager;
 
 		public:
-			IWindowContext(EventManager& _eventManager) :
-				m_eventManager(_eventManager) {}
-			
 			virtual void Create(const std::string& _sTitle, uint32_t _uWidth, uint32_t _uHeight) = 0;
 			virtual void* CreateVulkanSurface(void* _pInstance) = 0;
 			

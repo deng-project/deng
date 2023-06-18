@@ -15,10 +15,6 @@
 #include "deng/ImGuiLayer.h"
 
 #include "InstancedCubeLayer.h"
-
-#ifndef _DEBUG
-#pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-#endif
 #endif
 
 using namespace DENG;

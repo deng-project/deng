@@ -26,44 +26,56 @@ struct Transform {
 	vec4 vRotation;
 };
 
-layout(std430, set = 1, binding = 0) readonly buffer TransformSSBO {
+struct DrawDescriptorIndices {
+	ivec4 indices;
+};
+
+layout(std430, set = 0, binding = 0) readonly buffer DrawDescriptorIndicesSSBO {
+	DrawDescriptorIndices descriptors[];
+} uboIndices;
+
+layout(std430, set = 0, binding = 1) readonly buffer TransformSSBO {
 	Transform transforms[];
 } uboTransform;
 
 mat4 CalculateRotation() {
+	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].indices.x;
+	
 	mat4 mX = mat4(1.f);
-	mX[1][1] = cos(uboTransform.transforms[gl_InstanceIndex].vRotation.x);
+	mX[1][1] = cos(uboTransform.transforms[ciIndex].vRotation.x);
 	mX[2][2] = mX[1][1];
-	mX[1][2] = sin(uboTransform.transforms[gl_InstanceIndex].vRotation.x);
+	mX[1][2] = sin(uboTransform.transforms[ciIndex].vRotation.x);
 	mX[2][1] = -mX[1][2];
 	
 	mat4 mY = mat4(1.f);
-	mY[0][0] = cos(uboTransform.transforms[gl_InstanceIndex].vRotation.y);
+	mY[0][0] = cos(uboTransform.transforms[ciIndex].vRotation.y);
 	mY[2][2] = mY[0][0];
-	mY[2][0] = sin(uboTransform.transforms[gl_InstanceIndex].vRotation.y);
+	mY[2][0] = sin(uboTransform.transforms[ciIndex].vRotation.y);
 	mY[0][2] = -mY[2][0];
 	
 	mat4 mZ = mat4(1.f);
-	mZ[0][0] = cos(uboTransform.transforms[gl_InstanceIndex].vRotation.z);
+	mZ[0][0] = cos(uboTransform.transforms[ciIndex].vRotation.z);
 	mZ[1][1] = mZ[0][0];
-	mZ[0][1] = sin(uboTransform.transforms[gl_InstanceIndex].vRotation.z);
+	mZ[0][1] = sin(uboTransform.transforms[ciIndex].vRotation.z);
 	mZ[1][0] = -mZ[0][1];
 	
 	return mX * mY * mZ;
 }
 
 mat4 CalculateTransform() {
+	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].indices.x;
+	
 	mat4 mTranslation = mat4(1.f);
-	mTranslation[3][0] = uboTransform.transforms[gl_InstanceIndex].vTranslation.x;
-	mTranslation[3][1] = uboTransform.transforms[gl_InstanceIndex].vTranslation.y;
-	mTranslation[3][2] = uboTransform.transforms[gl_InstanceIndex].vTranslation.z;
+	mTranslation[3][0] = uboTransform.transforms[ciIndex].vTranslation.x;
+	mTranslation[3][1] = uboTransform.transforms[ciIndex].vTranslation.y;
+	mTranslation[3][2] = uboTransform.transforms[ciIndex].vTranslation.z;
 
 	mat4 mRotation = CalculateRotation();
 	
 	mat4 mScale = mat4(1.f);
-	mScale[0][0] = uboTransform.transforms[gl_InstanceIndex].vScale.x;
-	mScale[1][1] = uboTransform.transforms[gl_InstanceIndex].vScale.y;
-	mScale[2][2] = uboTransform.transforms[gl_InstanceIndex].vScale.z;
+	mScale[0][0] = uboTransform.transforms[ciIndex].vScale.x;
+	mScale[1][1] = uboTransform.transforms[ciIndex].vScale.y;
+	mScale[2][2] = uboTransform.transforms[ciIndex].vScale.z;
 	
 	return mTranslation * mRotation * mScale;
 }

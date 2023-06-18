@@ -15,18 +15,12 @@ namespace DENG {
             VkBuffer& _hMainBuffer, 
             VkSampleCountFlagBits _uSampleCountBits,
             TRS::Point2D<uint32_t> _extent,
-            std::unordered_map<uint32_t, TextureResource>& _textureRegistry,
-            uint32_t(*_pfnGetNewImageId)(),
             bool _bIsSwapchain) :
             IFramebuffer(_extent.x, _extent.y),
             m_pInstanceCreator(_pInstanceCreator),
-            m_textureRegistry(_textureRegistry),
-            m_pfnGetNewImageId(_pfnGetNewImageId),
             m_hMainBuffer(_hMainBuffer),
             m_uSampleCountBits(_uSampleCountBits)
         {
-            DENG_ASSERT(m_pfnGetNewImageId);
-
             try {
                 m_hRenderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_pInstanceCreator->GetDevice(), VK_FORMAT_DEFAULT_IMAGE, VK_SAMPLE_COUNT_1_BIT, !_bIsSwapchain);
 
@@ -35,21 +29,6 @@ namespace DENG {
                 }
                 else {
                     m_pSwapchainCreator = new SwapchainCreator(m_pInstanceCreator, m_uWidth, m_uHeight, m_uSampleCountBits);
-                    const std::vector<Vulkan::TextureData>& swapchainImageResources =
-                        m_pSwapchainCreator->GetSwapchainImageHandles();
-
-                    for (auto it = swapchainImageResources.begin(); it != swapchainImageResources.end(); it++) {
-                        TextureResource textureResource;
-                        textureResource.uWidth = m_uWidth;
-                        textureResource.uHeight = m_uHeight;
-                        textureResource.uBitDepth = 4;
-                        textureResource.eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-                        textureResource.eResourceType = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
-                        textureResource.apiTextureHandles = *it;
-
-                        m_framebufferImageIds.push_back(m_pfnGetNewImageId());
-                        m_textureRegistry[m_framebufferImageIds.back()] = textureResource;
-                    }
                 }
 
                 _CreateDepthResources();
@@ -68,7 +47,7 @@ namespace DENG {
 
 
         Framebuffer::~Framebuffer() {
-            _DestroyFramebuffer(true);
+            _DestroyFramebuffer();
             const VkDevice hDevice = m_pInstanceCreator->GetDevice();
 
             // free commandbuffers and -pools
@@ -76,7 +55,7 @@ namespace DENG {
             vkDestroyCommandPool(hDevice, m_hCommandPool, nullptr);
 
             // destroy synchronization primitives
-            for (size_t i = 0; i < m_framebufferImageIds.size(); i++) {
+            for (size_t i = 0; i < m_flightFences.size(); i++) {
                 if (m_pSwapchainCreator) {
                     vkDestroySemaphore(hDevice, m_renderFinishedSemaphores[i], nullptr);
                     vkDestroySemaphore(hDevice, m_imageAvailableSemaphores[i], nullptr);
@@ -98,19 +77,11 @@ namespace DENG {
             const VkDevice hDevice = m_pInstanceCreator->GetDevice();
             const VkPhysicalDevice hPhysicalDevice = m_pInstanceCreator->GetPhysicalDevice();
 
-            Vulkan::TextureData vkTextureData = {};
-            TextureResource textureResource;
-            textureResource.uWidth = m_uWidth;
-            textureResource.uHeight = m_uHeight;
-            textureResource.uBitDepth = 1;
-            textureResource.eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-            textureResource.eResourceType = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
-            
             VkMemoryRequirements memoryRequirements = Vulkan::_CreateImage(
                 hDevice, 
-                vkTextureData.hImage,
-                m_uWidth, 
-                m_uHeight, 
+                m_depthImageHandles.hImage,
+                m_uWidth,
+                m_uHeight,
                 1,
                 1,
                 VK_FORMAT_D32_SFLOAT, 
@@ -119,13 +90,20 @@ namespace DENG {
                 m_uSampleCountBits,
                 0);
 
-            Vulkan::_AllocateMemory(hDevice, hPhysicalDevice, memoryRequirements.size, vkTextureData.hMemory, memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            vkBindImageMemory(hDevice, vkTextureData.hImage, vkTextureData.hMemory, 0);
+            Vulkan::_AllocateMemory(
+                hDevice, 
+                hPhysicalDevice, 
+                memoryRequirements.size, 
+                m_depthImageHandles.hMemory, 
+                memoryRequirements.memoryTypeBits, 
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+            vkBindImageMemory(hDevice, m_depthImageHandles.hImage, m_depthImageHandles.hMemory, 0);
 
             // create image view info
             VkImageViewCreateInfo imageViewCreateInfo = {};
             imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            imageViewCreateInfo.image = vkTextureData.hImage;
+            imageViewCreateInfo.image = m_depthImageHandles.hImage;
             imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             imageViewCreateInfo.format = VK_FORMAT_D32_SFLOAT;
 
@@ -135,28 +113,25 @@ namespace DENG {
             imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
             imageViewCreateInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(hDevice, &imageViewCreateInfo, NULL, &vkTextureData.hImageView) != VK_SUCCESS)
+            if (vkCreateImageView(hDevice, &imageViewCreateInfo, NULL, &m_depthImageHandles.hImageView) != VK_SUCCESS)
                 throw RendererException("vkCreateImageView() could not create depth image view");
-            
-            textureResource.apiTextureHandles = vkTextureData;
-
-            if (m_textureRegistry.find(m_uDepthImageId) == m_textureRegistry.end())
-                m_uDepthImageId = m_pfnGetNewImageId();
-
-            m_textureRegistry[m_uDepthImageId] = textureResource;
         }
 
 
         void Framebuffer::_CreateFramebuffers() {
-            m_framebuffers.resize(m_framebufferImageIds.size());
+            if (m_pSwapchainCreator)
+                m_framebuffers.resize(m_pSwapchainCreator->GetSwapchainImageHandles().size());
+            else m_framebuffers.resize(1);
+
             std::array<VkImageView, 2> imageAttachments = {};
 
-            Vulkan::TextureData vkDepthImageData = std::get<0>(m_textureRegistry[m_uDepthImageId].apiTextureHandles);
-
-            for(size_t i = 0; i < m_framebufferImageIds.size(); i++) {
-                Vulkan::TextureData vkFramebufferImageData = std::get<0>(m_textureRegistry[m_framebufferImageIds[i]].apiTextureHandles);
+            for(size_t i = 0; i < m_framebuffers.size(); i++) {
+                Vulkan::TextureData framebufferImageData;
+                if (m_pSwapchainCreator)
+                    framebufferImageData = m_pSwapchainCreator->GetSwapchainImageHandles()[i];
+                else framebufferImageData = m_framebufferImageHandles;
                 
-                imageAttachments = { vkFramebufferImageData.hImageView, vkDepthImageData.hImageView };
+                imageAttachments = { framebufferImageData.hImageView, m_depthImageHandles.hImageView };
                 
                 VkFramebufferCreateInfo framebufferCreateInfo = {};
                 framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -180,19 +155,9 @@ namespace DENG {
 
 
         void Framebuffer::_CreateFramebufferImage() {
-            // create a framebuffer image
-            TextureResource textureResource;
-            textureResource.uWidth = m_uWidth;
-            textureResource.uHeight = m_uHeight;
-            textureResource.uBitDepth = 4;
-            textureResource.eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-            textureResource.eResourceType = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
-
-            Vulkan::TextureData vkTextureData = {};
-
             VkMemoryRequirements memoryRequirements = Vulkan::_CreateImage(
                 m_pInstanceCreator->GetDevice(),
-                vkTextureData.hImage,
+                m_framebufferImageHandles.hImage,
                 m_uWidth,
                 m_uHeight,
                 1,
@@ -207,25 +172,21 @@ namespace DENG {
                 m_pInstanceCreator->GetDevice(),
                 m_pInstanceCreator->GetPhysicalDevice(),
                 memoryRequirements.size,
-                vkTextureData.hMemory,
+                m_framebufferImageHandles.hMemory,
                 memoryRequirements.memoryTypeBits,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            vkBindImageMemory(m_pInstanceCreator->GetDevice(), vkTextureData.hImage, vkTextureData.hMemory, 0);
+            vkBindImageMemory(m_pInstanceCreator->GetDevice(), m_framebufferImageHandles.hImage, m_framebufferImageHandles.hMemory, 0);
 
             // create image view
-            VkImageViewCreateInfo imageViewCreateInfo = Vulkan::_GetImageViewInfo(vkTextureData.hImage, VK_FORMAT_DEFAULT_IMAGE, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
-            if (vkCreateImageView(m_pInstanceCreator->GetDevice(), &imageViewCreateInfo, nullptr, &vkTextureData.hImageView) != VK_SUCCESS)
+            VkImageViewCreateInfo imageViewCreateInfo = Vulkan::_GetImageViewInfo(m_framebufferImageHandles.hImage, VK_FORMAT_DEFAULT_IMAGE, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
+            if (vkCreateImageView(m_pInstanceCreator->GetDevice(), &imageViewCreateInfo, nullptr, &m_framebufferImageHandles.hImageView) != VK_SUCCESS)
                 throw RendererException("vkCreateImageView() could not create a Vulkan image view for custom framebuffer");
 
             // image sampler
-            vkTextureData.hSampler = Vulkan::_CreateTextureSampler(
+            m_framebufferImageHandles.hSampler = Vulkan::_CreateTextureSampler(
                 m_pInstanceCreator->GetDevice(), 
                 m_pInstanceCreator->GetPhysicalDeviceInformation().fMaxSamplerAnisotropy, 
                 1);
-
-            textureResource.apiTextureHandles = vkTextureData;
-            m_framebufferImageIds.push_back(m_pfnGetNewImageId());
-            m_textureRegistry[m_framebufferImageIds.back()] = textureResource;
         }
 
 
@@ -296,7 +257,7 @@ namespace DENG {
 
 
         void Framebuffer::_AllocateCommandBuffers() {
-            m_commandBuffers.resize(m_framebufferImageIds.size());
+            m_commandBuffers.resize(m_framebuffers.size());
 
             // Set up command buffer allocation info
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
@@ -319,14 +280,11 @@ namespace DENG {
         }
 
 
-        void Framebuffer::_DestroyFramebuffer(bool _bRemoveImageResources) {
+        void Framebuffer::_DestroyFramebuffer() {
             // destroy depth image resources
-            DENG_ASSERT(m_textureRegistry.find(m_uDepthImageId) != m_textureRegistry.end());
-
-            Vulkan::TextureData vkImageData = std::get<0>(m_textureRegistry[m_uDepthImageId].apiTextureHandles);
-            vkDestroyImageView(m_pInstanceCreator->GetDevice(), vkImageData.hImageView, nullptr);
-            vkDestroyImage(m_pInstanceCreator->GetDevice(), vkImageData.hImage, nullptr);
-            vkFreeMemory(m_pInstanceCreator->GetDevice(), vkImageData.hMemory, nullptr);
+            vkDestroyImageView(m_pInstanceCreator->GetDevice(), m_depthImageHandles.hImageView, nullptr);
+            vkDestroyImage(m_pInstanceCreator->GetDevice(), m_depthImageHandles.hImage, nullptr);
+            vkFreeMemory(m_pInstanceCreator->GetDevice(), m_depthImageHandles.hMemory, nullptr);
 
             // reset command pool, destroy framebuffers and pipelines
             vkResetCommandPool(m_pInstanceCreator->GetDevice(), m_hCommandPool, 0);
@@ -335,27 +293,12 @@ namespace DENG {
 
             // destroy framebuffer images if possible
             if (!m_pSwapchainCreator) {
-                for (size_t i = 0; i < m_framebufferImageIds.size(); i++) {
-                    vkImageData = std::get<Vulkan::TextureData>(m_textureRegistry[m_framebufferImageIds[i]].apiTextureHandles);
-                    vkDestroySampler(m_pInstanceCreator->GetDevice(), vkImageData.hSampler, nullptr);
-                    vkDestroyImageView(m_pInstanceCreator->GetDevice(), vkImageData.hImageView, nullptr);
-                    vkDestroyImage(m_pInstanceCreator->GetDevice(), vkImageData.hImage, nullptr);
-                    vkFreeMemory(m_pInstanceCreator->GetDevice(), vkImageData.hMemory, nullptr);
+                for (size_t i = 0; i < m_framebuffers.size(); i++) {
+                    vkDestroySampler(m_pInstanceCreator->GetDevice(), m_framebufferImageHandles.hSampler, nullptr);
+                    vkDestroyImageView(m_pInstanceCreator->GetDevice(), m_framebufferImageHandles.hImageView, nullptr);
+                    vkDestroyImage(m_pInstanceCreator->GetDevice(), m_framebufferImageHandles.hImage, nullptr);
+                    vkFreeMemory(m_pInstanceCreator->GetDevice(), m_framebufferImageHandles.hMemory, nullptr);
                 }
-
-                // check if registry removal is required
-                if (_bRemoveImageResources) {
-                    for (auto it = m_framebufferImageIds.begin(); it != m_framebufferImageIds.end(); it++) {
-                        m_textureRegistry.erase(*it);
-                    }
-
-                    m_framebufferImageIds.clear();
-                }
-            }
-
-            if (_bRemoveImageResources) {
-                m_textureRegistry.erase(m_uDepthImageId);
-                m_uDepthImageId = UINT32_MAX;
             }
         }
 
@@ -407,47 +350,46 @@ namespace DENG {
         }
 
 
-        void Framebuffer::Draw(const MeshComponent& _mesh, const ShaderComponent& _shader, DescriptorAllocator* _pDescriptorAllocator, uint32_t _uInstanceCount, const std::vector<uint32_t>& _textureIds) {
-            // check if pipeline creator exists for requested mesh
-            if (m_pipelineCreators.find(_shader.pShader) == m_pipelineCreators.end()) {
-                if (_pDescriptorAllocator) {
-                    m_pipelineCreators.emplace(
-                        std::piecewise_construct,
-                        std::forward_as_tuple(_shader.pShader),
-                        std::forward_as_tuple(
-                            m_pInstanceCreator->GetDevice(),
-                            m_hRenderpass,
-                            _pDescriptorAllocator->GetShaderDescriptorSetLayout(),
-                            _pDescriptorAllocator->GetMeshDescriptorSetLayout(),
-                            m_uSampleCountBits,
-                            m_pInstanceCreator->GetPhysicalDeviceInformation(),
-                            _shader));
-                }
-                else {
-                    m_pipelineCreators.emplace(
-                        std::piecewise_construct,
-                        std::forward_as_tuple(_shader.pShader),
-                        std::forward_as_tuple(
-                            m_pInstanceCreator->GetDevice(),
-                            m_hRenderpass,
-                            VK_NULL_HANDLE,
-                            VK_NULL_HANDLE,
-                            m_uSampleCountBits,
-                            m_pInstanceCreator->GetPhysicalDeviceInformation(),
-                            _shader));
-                }
+        void Framebuffer::Draw(
+            hash_t _hshMesh, 
+            hash_t _hshShader, 
+            uint32_t _uInstanceCount,
+            uint32_t _uFirstInstance,
+            VkDescriptorSet _hShaderDescriptorSet, 
+            VkDescriptorSet _hMaterialDescriptorSet,
+            VkDescriptorSetLayout _hShaderDescriptorSetLayout,
+            VkDescriptorSetLayout _hMaterialDescriptorSetLayout) 
+        {
+            ResourceManager& resourceManager = ResourceManager::GetInstance();
+            const IShader* pShader = resourceManager.GetShader(_hshShader);
+            const MeshCommands* pMesh = resourceManager.GetMesh(_hshMesh);
+
+            // check if pipeline creator needs to be created
+            if (m_pipelineCreators.find(_hshShader) == m_pipelineCreators.end()) {
+                m_pipelineCreators.emplace(
+                    std::piecewise_construct,
+                    std::forward_as_tuple(_hshShader),
+                    std::forward_as_tuple(
+                        m_pInstanceCreator->GetDevice(),
+                        m_hRenderpass,
+                        _hShaderDescriptorSetLayout,
+                        _hMaterialDescriptorSetLayout,
+                        m_uSampleCountBits,
+                        m_pInstanceCreator->GetPhysicalDeviceInformation(),
+                        pShader
+                    ));
             }
 
             // check if custom viewport should be used
-            if (_shader.bEnableCustomViewport) {
-                VkViewport vp = {};
-                vp.x = static_cast<float>(_shader.viewport.uX);
-                vp.y = static_cast<float>(_shader.viewport.uY);
-                vp.width = static_cast<float>(_shader.viewport.uWidth);
-                vp.height = static_cast<float>(_shader.viewport.uHeight);
-                vp.minDepth = 0.f;
-                vp.maxDepth = 1.f;
-                vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &vp);
+            if (pShader->IsPropertySet(ShaderPropertyBit_EnableCustomViewport)) {
+                VkViewport viewport = {};
+                viewport.x = static_cast<float>(pShader->GetViewport().uX);
+                viewport.y = static_cast<float>(pShader->GetViewport().uY);
+                viewport.width = static_cast<float>(pShader->GetViewport().uWidth);
+                viewport.height = static_cast<float>(pShader->GetViewport().uHeight);
+                viewport.minDepth = 0.f;
+                viewport.maxDepth = 1.f;
+                vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &viewport);
             }
             else {
                 VkViewport viewport = {};
@@ -460,40 +402,17 @@ namespace DENG {
                 vkCmdSetViewport(m_commandBuffers[m_uCurrentFrameIndex], 0, 1, &viewport);
             }
 
-            std::array<VkDescriptorSet, 2> descriptorSets = { VK_NULL_HANDLE, VK_NULL_HANDLE };
-            if (_pDescriptorAllocator) {
-                descriptorSets[0] = _pDescriptorAllocator->RequestShaderDescriptorSet(m_uCurrentFrameIndex);
-                descriptorSets[1] = _pDescriptorAllocator->RequestMeshDescriptorSet(_shader.uboDataLayouts);
-            }
-
-            // check if textures should be bound
-            if (descriptorSets[0]) {
-                _pDescriptorAllocator->UpdateDescriptorSet(
-                    m_hMainBuffer, 
-                    descriptorSets[0], 
-                    UNIFORM_USAGE_PER_SHADER,
-                    _shader.uboDataLayouts,
-                    m_uCurrentFrameIndex,
-                    _textureIds);
-            }
-            if (descriptorSets[1]) {
-                _pDescriptorAllocator->UpdateDescriptorSet(
-                    m_hMainBuffer, 
-                    descriptorSets[1],
-                    UNIFORM_USAGE_PER_MESH,
-                    _shader.uboDataLayouts,
-                    m_uCurrentFrameIndex,
-                    _textureIds);
-            }
-
+            std::array<VkDescriptorSet, 2> descriptorSets = { _hShaderDescriptorSet, _hMaterialDescriptorSet };
+            
             // submit each draw command in mesh
-            for (auto itCmd = _mesh.drawCommands.begin(); itCmd != _mesh.drawCommands.end(); itCmd++) {
+            for (auto itCmd = pMesh->drawCommands.begin(); itCmd != pMesh->drawCommands.end(); itCmd++) {
+                auto itPipelineCreator = m_pipelineCreators.find(_hshShader);
                 vkCmdBindPipeline(
                     m_commandBuffers[m_uCurrentFrameIndex], 
                     VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                    m_pipelineCreators.find(_shader.pShader)->second.GetPipeline());
+                    itPipelineCreator->second.GetPipeline());
 
-                std::vector<VkBuffer> buffers(_shader.attributes.size(), m_hMainBuffer);
+                std::vector<VkBuffer> buffers(pShader->GetAttributeTypes().size(), m_hMainBuffer);
                 
                 vkCmdBindVertexBuffers(
                     m_commandBuffers[m_uCurrentFrameIndex],
@@ -507,7 +426,7 @@ namespace DENG {
                     vkCmdBindDescriptorSets(
                         m_commandBuffers[m_uCurrentFrameIndex],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipelineCreators.find(_shader.pShader)->second.GetPipelineLayout(),
+                        itPipelineCreator->second.GetPipelineLayout(),
                         0,
                         2,
                         descriptorSets.data(),
@@ -518,7 +437,7 @@ namespace DENG {
                     vkCmdBindDescriptorSets(
                         m_commandBuffers[m_uCurrentFrameIndex],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipelineCreators.find(_shader.pShader)->second.GetPipelineLayout(),
+                        itPipelineCreator->second.GetPipelineLayout(),
                         0,
                         1,
                         &descriptorSets[0],
@@ -529,7 +448,7 @@ namespace DENG {
                     vkCmdBindDescriptorSets(
                         m_commandBuffers[m_uCurrentFrameIndex],
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        m_pipelineCreators.find(_shader.pShader)->second.GetPipelineLayout(),
+                        itPipelineCreator->second.GetPipelineLayout(),
                         0,
                         1,
                         &descriptorSets[1],
@@ -538,7 +457,7 @@ namespace DENG {
                 }
                     
                 // check if scissor technique should be used
-                if (_shader.bEnableScissor) {
+                if (pShader->IsPropertySet(ShaderPropertyBit_EnableScissor)) {
                     VkRect2D rect = {};
                     rect.offset = VkOffset2D { 
                         itCmd->scissor.offset.x, 
@@ -560,15 +479,14 @@ namespace DENG {
                 }
 
                 // check if push constants should be bound
-                if (_shader.bEnablePushConstants) {
-                    auto itPipelineCreator = m_pipelineCreators.find(_shader.pShader);
+                if (pShader->IsPropertySet(ShaderPropertyBit_EnablePushConstants)) {
                     VkShaderStageFlags bShaderStage = (VkShaderStageFlags)0;
 
-                    if (_shader.iPushConstantShaderStage & SHADER_STAGE_VERTEX)
+                    if (pShader->GetPushConstant().bmShaderStage & ShaderStageBit_Vertex)
                         bShaderStage |= VK_SHADER_STAGE_VERTEX_BIT;
-                    if (_shader.iPushConstantShaderStage & SHADER_STAGE_FRAGMENT)
+                    if (pShader->GetPushConstant().bmShaderStage & ShaderStageBit_Fragment)
                         bShaderStage |= VK_SHADER_STAGE_FRAGMENT_BIT;
-                    if (_shader.iPushConstantShaderStage & SHADER_STAGE_GEOMETRY)
+                    if (pShader->GetPushConstant().bmShaderStage & ShaderStageBit_Geometry)
                         bShaderStage |= VK_SHADER_STAGE_GEOMETRY_BIT;
 
                     vkCmdPushConstants(
@@ -576,16 +494,16 @@ namespace DENG {
                         itPipelineCreator->second.GetPipelineLayout(),
                         bShaderStage,
                         0,
-                        _shader.uPushConstantDataLength,
-                        _shader.pPushConstantData);
+                        pShader->GetPushConstant().uLength,
+                        pShader->GetPushConstant().pPushConstantData);
                 }
 
                 // check if indexed or unindexed draw call should be submitted
-                if (_shader.bEnableIndexing) {
+                if (pShader->IsPropertySet(ShaderPropertyBit_EnableIndexing)) {
                     vkCmdBindIndexBuffer(m_commandBuffers[m_uCurrentFrameIndex], m_hMainBuffer, static_cast<VkDeviceSize>(itCmd->uIndicesOffset), VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, 0, 0, 0);
+                    vkCmdDrawIndexed(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, _uFirstInstance, 0, 0);
                 } else {
-                    vkCmdDraw(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, 0, 0);
+                    vkCmdDraw(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, _uFirstInstance, 0);
                 }
            }
         }
@@ -646,7 +564,7 @@ namespace DENG {
             m_uHeight = _uHeight;
             
             // destroy previous resources
-            _DestroyFramebuffer(false);
+            _DestroyFramebuffer();
             _CreateDepthResources();
 
             if (!m_pSwapchainCreator) {
@@ -661,19 +579,7 @@ namespace DENG {
                 const std::vector<Vulkan::TextureData>& swapchainImageResources =
                     m_pSwapchainCreator->GetSwapchainImageHandles();
 
-                DENG_ASSERT(swapchainImageResources.size() == m_framebufferImageIds.size());
-
-                for (size_t i = 0; i < swapchainImageResources.size(); i++) {
-                    TextureResource textureResource;
-                    textureResource.uWidth = m_uWidth;
-                    textureResource.uHeight = m_uHeight;
-                    textureResource.uBitDepth = 4;
-                    textureResource.eLoadType = TEXTURE_RESOURCE_LOAD_TYPE_EMBEDDED;
-                    textureResource.eResourceType = TEXTURE_RESOURCE_INTERNAL_FRAMEBUFFER_2D_IMAGE;
-                    textureResource.apiTextureHandles = swapchainImageResources[i];
-
-                    m_textureRegistry[m_framebufferImageIds[i]] = textureResource;
-                }
+                DENG_ASSERT(swapchainImageResources.size() == m_framebuffers.size());
             }
 
             _CreateFramebuffers();

@@ -108,9 +108,10 @@ void CameraScript::OnAttach() {
 	auto& camera = m_scene.GetComponent<DENG::CameraComponent>(m_idEntity);
 	camera.mProjection = m_cameraTransformer.CalculateProjection(WIDTH, HEIGHT);
 
-	m_eventManager.AddListener<CameraScript, DENG::WindowResizedEvent>(&CameraScript::OnWindowResizedEvent, this);
-	m_eventManager.AddListener<CameraScript, DENG::KeyPressedEvent>(&CameraScript::OnKeyPressEvent, this);
-	m_eventManager.AddListener<CameraScript, DENG::KeyReleasedEvent>(&CameraScript::OnKeyReleasedEvent, this);
+	DENG::EventManager& eventManager = DENG::EventManager::GetInstance();
+	eventManager.AddListener<CameraScript, DENG::WindowResizedEvent>(&CameraScript::OnWindowResizedEvent, this);
+	eventManager.AddListener<CameraScript, DENG::KeyPressedEvent>(&CameraScript::OnKeyPressEvent, this);
+	eventManager.AddListener<CameraScript, DENG::KeyReleasedEvent>(&CameraScript::OnKeyReleasedEvent, this);
 
 	LOG("CameraScript::OnAttach() called");
 }
@@ -209,7 +210,8 @@ void CameraScript::OnUpdate(float _fTimestep) {
 void CameraScript::OnDestroy() {
 	LOG("CameraScript::OnDestroy() called");
 	
-	m_eventManager.RemoveListener<CameraScript, DENG::WindowResizedEvent>(this);
-	m_eventManager.RemoveListener<CameraScript, DENG::KeyPressedEvent>(this);
-	m_eventManager.RemoveListener<CameraScript, DENG::KeyReleasedEvent>(this);
+	DENG::EventManager& eventManager = DENG::EventManager::GetInstance();
+	eventManager.RemoveListener<CameraScript, DENG::WindowResizedEvent>(this);
+	eventManager.RemoveListener<CameraScript, DENG::KeyPressedEvent>(this);
+	eventManager.RemoveListener<CameraScript, DENG::KeyReleasedEvent>(this);
 }

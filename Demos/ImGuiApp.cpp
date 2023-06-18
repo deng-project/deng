@@ -15,12 +15,12 @@ class WindowResizeLayer : public DENG::ILayer {
 		DENG::IRenderer* m_pRenderer;
 
 	public:
-		WindowResizeLayer(DENG::EventManager& _eventManager, DENG::IRenderer* _pRenderer) :
-			ILayer(_eventManager),
+		WindowResizeLayer(DENG::IRenderer* _pRenderer) :
 			m_pRenderer(_pRenderer) {}
 
 		virtual void Attach(DENG::IRenderer*, DENG::IWindowContext*) override {
-			m_eventManager.AddListener<WindowResizeLayer, DENG::WindowResizedEvent>(&WindowResizeLayer::OnWindowResizedEvent, this);
+			DENG::EventManager& eventManager = DENG::EventManager::GetInstance();
+			eventManager.AddListener<WindowResizeLayer, DENG::WindowResizedEvent>(&WindowResizeLayer::OnWindowResizedEvent, this);
 		}
 
 		virtual void Update(DENG::IFramebuffer*) override {}
@@ -34,7 +34,7 @@ class WindowResizeLayer : public DENG::ILayer {
 class ImGuiApp : public DENG::App {
 	public:
 		ImGuiApp() {
-			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext(m_eventManager));
+			DENG::IWindowContext* pWindowContext = SetWindowContext(new DENG::SDLWindowContext);
 			DENG::IRenderer* pRenderer = SetRenderer(new DENG::VulkanRenderer);
 			pWindowContext->SetHints(DENG::WindowHint_Vulkan | DENG::WindowHint_Shown | DENG::WindowHint_Resizeable);
 			DENG::IFramebuffer* pMainFramebuffer = nullptr;
