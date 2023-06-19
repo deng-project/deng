@@ -14,34 +14,35 @@
 #include <mutex>
 
 #include "deng/Api.h"
+#include "deng/SID.h"
 
 namespace DENG {
 
-	enum class EventType {
-		None = 0,
-		Window,
-		WindowFocus,
-		WindowGainedMouseFocus, WindowLostMouseFocus, WindowGainedKeyboardFocus, WindowLostKeyboardFocus,
-		WindowShown, WindowHidden, WindowExposed, WindowResized, WindowMinimized, WindowMaximized,
-		WindowDisplayChanged,
-		Input,
-		Keyboard,
-		KeyPressed, KeyReleased, KeyTyped,
-		Mouse,
-		MouseMoved, MouseScrolled,
-		MouseButton,
-		MouseButtonPressed, MouseButtonReleased,
-		Gamepad,
-		GamepadButton,
-		GamepadButtonPressed, GamepadButtonReleased,
-		GamepadJoystickMoved,
-		EventCount
-	};
+	//enum class EventType {
+	//	None = 0,
+	//	Window,
+	//	WindowFocus,
+	//	WindowGainedMouseFocus, WindowLostMouseFocus, WindowGainedKeyboardFocus, WindowLostKeyboardFocus,
+	//	WindowShown, WindowHidden, WindowExposed, WindowResized, WindowMinimized, WindowMaximized,
+	//	WindowDisplayChanged,
+	//	Input,
+	//	Keyboard,
+	//	KeyPressed, KeyReleased, KeyTyped,
+	//	Mouse,
+	//	MouseMoved, MouseScrolled,
+	//	MouseButton,
+	//	MouseButtonPressed, MouseButtonReleased,
+	//	Gamepad,
+	//	GamepadButton,
+	//	GamepadButtonPressed, GamepadButtonReleased,
+	//	GamepadJoystickMoved,
+	//	EventCount
+	//};
 
-#define EVENT_CLASS_TYPE(type, parent)	static constexpr EventType GetStaticType() { return type; }\
-										virtual EventType GetEventType() const override { return GetStaticType(); }\
-										const parent* GetParent() const { return static_cast<const parent*>(this); }\
-										virtual const char* GetName() const override { return #type; }
+#define EVENT_CLASS_TYPE(str_type, parent)	static constexpr DENG::hash_t GetStaticType() { return SID(str_type); }\
+											virtual DENG::hash_t GetEventType() const override { return GetStaticType(); }\
+											const parent* GetParent() const { return static_cast<const parent*>(this); }\
+											virtual const char* GetName() const override { return str_type; }
 
 	class DENG_API IEvent {
 		private:
@@ -49,12 +50,12 @@ namespace DENG {
 				std::chrono::high_resolution_clock::now();
 
 		public:
-			static constexpr EventType GetStaticType() {
-				return EventType::None;
+			static constexpr hash_t GetStaticType() {
+				return 0;
 			}
 
-			virtual EventType GetEventType() const {
-				return EventType::None;
+			virtual hash_t GetEventType() const {
+				return IEvent::GetStaticType();
 			}
 
 			IEvent* GetParent() const {
@@ -97,21 +98,21 @@ namespace DENG {
 	class DENG_API EventManager {
 		private:
 			std::mutex m_mutex;
-			std::array<std::list<EventListener>, static_cast<size_t>(EventType::EventCount)> m_eventHandlers;
+			std::unordered_map<hash_t, std::list<EventListener>, NoHash> m_eventHandlers;
 			static EventManager m_sEventManager;
 
 		private:
 			template<typename T>
-			void _TraverseInheritanceHierarchy(T* _pEvent, std::vector<EventType>& _eventTypesToDispatch) {
+			constexpr void _TraverseInheritanceHierarchy(T* _pEvent, std::vector<hash_t>& _eventTypesToDispatch) {
 				_eventTypesToDispatch.push_back(T::GetStaticType());
 
-				if constexpr (T::GetStaticType() != EventType::None) {
+				if constexpr (T::GetStaticType() != 0) {
 					_TraverseInheritanceHierarchy(_pEvent->GetParent(), _eventTypesToDispatch);
 				}
 			}
 
 			template<typename T>
-			std::vector<EventType> _GetEventTypesToDispatch(T* _pEvent) {
+			constexpr std::vector<hash_t> _GetEventTypesToDispatch(T* _pEvent) {
 				std::vector<EventType> eventTypesToDispatch;
 
 				_TraverseInheritanceHierarchy(_pEvent, eventTypesToDispatch);
@@ -132,7 +133,7 @@ namespace DENG {
 			template<typename T, typename E>
 			inline void AddListener(PFN_ListenerCallback_T<T, E> _pfnCallback, T* _pClassInstance) {
 				std::scoped_lock lock(m_mutex);
-				m_eventHandlers[static_cast<size_t>(E::GetStaticType())].emplace_back(
+				m_eventHandlers[E::GetStaticType()].emplace_back(
 					_pClassInstance,
 					[=](IEvent& _event) {
 						return (*_pClassInstance.*_pfnCallback)(static_cast<E&>(_event));
@@ -143,7 +144,7 @@ namespace DENG {
 			template<typename T, typename E>
 			inline void RemoveListener(T* _pInstance) {
 				std::scoped_lock lock(m_mutex);
-				auto& listeners = m_eventHandlers[static_cast<size_t>(E::GetStaticType())];
+				auto& listeners = m_eventHandlers[E::GetStaticType()];
 
 				for (auto it = listeners.begin(); it != listeners.end(); it++) {
 					if (it->IsInstance(_pInstance)) {
@@ -159,10 +160,10 @@ namespace DENG {
 				std::scoped_lock lock(m_mutex);
 				T event(std::forward<Args>(args)...);
 				
-				std::vector<EventType> eventTypesToDispatch = _GetEventTypesToDispatch(&event);
+				std::vector<hash_t> eventTypesToDispatch = _GetEventTypesToDispatch(&event);
 
-				for (EventType eEventType : eventTypesToDispatch) {
-					auto& eventHandlers = m_eventHandlers[static_cast<size_t>(eEventType)];
+				for (hash_t hshEventType : eventTypesToDispatch) {
+					auto& eventHandlers = m_eventHandlers[hshEventType];
 
 					for (auto it = eventHandlers.rbegin(); it != eventHandlers.rend(); it++) {
 						if (it->OnEvent(event))

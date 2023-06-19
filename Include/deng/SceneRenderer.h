@@ -52,6 +52,10 @@ namespace DENG {
 								 const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
 								 const CameraComponent& _camera);
 
+			void UpdateStorageBuffers(const std::vector<TransformComponent>& _transforms,
+									  const std::vector<Material>& _materials,
+									  const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices);
+
 			inline void Finalize() {
 				m_uBatchCounter = 0;
 			}

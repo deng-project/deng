@@ -258,8 +258,8 @@ namespace DENG {
 		m_pRenderer->UpdateBuffer(&m_uniform, sizeof(TRS::Point2D<float>), m_uUniformRegionOffset);
 		m_bIsInit = true;
 		m_pRenderer->DrawInstance(
-			SID("__ImGui__"), 
-			SID("__ImGui__"), 
+			SID("__ImGui__"),
+			SID("__ImGui__"),
 			_pFramebuffer, 1, 0, 0, 
 			{ SID("__ImGui__") });
 	}

@@ -32,6 +32,11 @@ namespace DENG {
 			entt::registry m_registry;
 			Entity m_idMainCamera = entt::null;
 
+			std::vector<InstanceInfo> m_instanceInfos;
+			std::vector<TransformComponent> m_transforms;
+			std::vector<Material> m_materials;
+			std::vector<DrawDescriptorIndices> m_drawDescriptorIndices;
+
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_tpBegin =
 				std::chrono::high_resolution_clock::now();
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_tpEnd =
@@ -72,8 +77,7 @@ namespace DENG {
 				}
 			}
 
-			using _MaterialTuple = std::tuple<std::vector<InstanceInfo>, std::vector<TransformComponent>, std::vector<Material>, std::vector<DrawDescriptorIndices>>;
-			_MaterialTuple _InstanceRenderablesMSM();
+			void _InstanceRenderablesMSM();
 			
 			void _UpdateScripts();
 			void _RenderLights();

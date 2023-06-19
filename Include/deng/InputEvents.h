@@ -85,13 +85,13 @@ namespace DENG {
 
 	class DENG_API InputEvent : public IEvent {
 		public:
-			EVENT_CLASS_TYPE(EventType::Input, IEvent);
+			EVENT_CLASS_TYPE("InputEvent", IEvent);
 	};
 
 
 	class DENG_API KeyboardEvent : public InputEvent {
 		public:
-			EVENT_CLASS_TYPE(EventType::Keyboard, InputEvent);
+			EVENT_CLASS_TYPE("KeyboardEvent", InputEvent);
 	};
 
 
@@ -114,7 +114,7 @@ namespace DENG {
 				return m_keyModifier;
 			}
 
-			EVENT_CLASS_TYPE(EventType::KeyPressed, KeyboardEvent);
+			EVENT_CLASS_TYPE("KeyPressedEvent", KeyboardEvent);
 	};
 
 
@@ -137,7 +137,7 @@ namespace DENG {
 				return m_keyModifier;
 			}
 
-			EVENT_CLASS_TYPE(EventType::KeyReleased, KeyboardEvent);
+			EVENT_CLASS_TYPE("KeyReleasedEvent", KeyboardEvent);
 	};
 
 
@@ -155,7 +155,7 @@ namespace DENG {
 				return m_buffer;
 			}
 
-			EVENT_CLASS_TYPE(EventType::KeyTyped, KeyboardEvent);
+			EVENT_CLASS_TYPE("KeyTypedEvent", KeyboardEvent);
 	};
 
 
@@ -178,7 +178,7 @@ namespace DENG {
 				return m_iPositionY;
 			}
 
-			EVENT_CLASS_TYPE(EventType::Mouse, InputEvent);
+			EVENT_CLASS_TYPE("MouseEvent", InputEvent);
 	};
 
 
@@ -202,7 +202,7 @@ namespace DENG {
 				return m_iDeltaY;
 			}
 
-			EVENT_CLASS_TYPE(EventType::MouseMoved, MouseEvent);
+			EVENT_CLASS_TYPE("MouseMovedEvent", MouseEvent);
 	};
 
 
@@ -226,7 +226,7 @@ namespace DENG {
 				return m_uScrollDeltaY;
 			}
 
-			EVENT_CLASS_TYPE(EventType::MouseScrolled, MouseEvent);
+			EVENT_CLASS_TYPE("MouseScrolledEvent", MouseEvent);
 	};
 
 
@@ -261,7 +261,7 @@ namespace DENG {
 				return m_uKeyModifier;
 			}
 
-			EVENT_CLASS_TYPE(EventType::MouseButton, MouseEvent);
+			EVENT_CLASS_TYPE("MouseButtonEvent", MouseEvent);
 	};
 
 
@@ -276,7 +276,7 @@ namespace DENG {
 				MouseButtonEvent(_uPositionX, _uPositionY, _eButton, _uMouseModifier, _uKeyModifier) {}
 			MouseButtonPressedEvent(const MouseButtonPressedEvent&) = default;
 
-			EVENT_CLASS_TYPE(EventType::MouseButtonPressed, MouseButtonEvent);
+			EVENT_CLASS_TYPE("MouseButtonPressedEvent", MouseButtonEvent);
 	};
 
 
@@ -291,13 +291,13 @@ namespace DENG {
 				MouseButtonEvent(_uPositionX, _uPositionY, _eButton, _uMouseModifier, _uKeyModifier) {}
 			MouseButtonReleasedEvent(const MouseButtonReleasedEvent&) = default;
 
-			EVENT_CLASS_TYPE(EventType::MouseButtonReleased, MouseButtonEvent);
+			EVENT_CLASS_TYPE("MouseButtonReleasedEvent", MouseButtonEvent);
 	};
 
 
 	class DENG_API GamepadEvent : public InputEvent {
 		public:
-			EVENT_CLASS_TYPE(EventType::Gamepad, InputEvent);
+			EVENT_CLASS_TYPE("GamepadEvent", InputEvent);
 	};
 
 
@@ -314,7 +314,7 @@ namespace DENG {
 				return m_eButton;
 			}
 
-			EVENT_CLASS_TYPE(EventType::GamepadButton, GamepadEvent)
+			EVENT_CLASS_TYPE("GamepadButtonEvent", GamepadEvent)
 	};
 
 
@@ -324,7 +324,7 @@ namespace DENG {
 				GamepadButtonEvent(_eButton) {}
 			GamepadButtonPressedEvent(const GamepadButtonPressedEvent&) = default;
 
-			EVENT_CLASS_TYPE(EventType::GamepadButtonPressed, GamepadButtonEvent);
+			EVENT_CLASS_TYPE("GamepadButtonPressedEvent", GamepadButtonEvent);
 	};
 
 
@@ -334,7 +334,7 @@ namespace DENG {
 				GamepadButtonEvent(_eButton) {}
 			GamepadButtonReleasedEvent(const GamepadButtonReleasedEvent&) = default;
 
-			EVENT_CLASS_TYPE(EventType::GamepadButtonReleased, GamepadButtonEvent);
+			EVENT_CLASS_TYPE("GamepadButtonReleasedEvent", GamepadButtonEvent);
 	};
 
 
@@ -357,7 +357,7 @@ namespace DENG {
 				return m_iAxisY;
 			}
 
-			EVENT_CLASS_TYPE(EventType::GamepadJoystickMoved, GamepadEvent);
+			EVENT_CLASS_TYPE("GamepadJoystickMovedEvent", GamepadEvent);
 	};
 }
 

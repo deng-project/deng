@@ -121,6 +121,7 @@ namespace DENG {
 	class DENG_API ResourceManager {
 		private:
 			std::mutex m_mutex;
+
 			std::unordered_map<hash_t, MeshCommands, NoHash> m_meshes;
 			std::unordered_map<hash_t, Material, NoHash> m_materials;
 			std::unordered_map<hash_t, IShader*, NoHash> m_shaders;

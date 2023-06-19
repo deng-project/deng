@@ -27,6 +27,17 @@ namespace DENG {
 #endif
 #endif
 
+    // HACK: force constexpr crc64 result to be evaluated at compile time
+    template<typename T, T val>
+    struct ForceCompileTime {
+        enum class ValueHolder : T
+        {
+            VALUE = val
+        };
+    };
+
+    #define COMPILE_TIME(x) ((decltype(x))DENG::ForceCompileTime<decltype(x), x>::ValueHolder::VALUE)
+
 #if defined(ENV32)
     static constexpr uint32_t crc32_table[256] = {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,
@@ -187,20 +198,10 @@ namespace DENG {
         return 0xffffffffffffffff;
     }
 
-    // HACK: force constexpr crc64 result to be evaluated at compile time
-    template<typename T, T val>
-    struct _CompileTime {
-        enum class ValueHolder : T
-        {
-            VALUE = val
-        };
-    };
-
-    #define COMPILE_TIME(x) ((decltype(x))_CompileTime<decltype(x), x>::ValueHolder::VALUE)
     #define CONSTEXPR_SID(x) (DENG::crc64<sizeof(x) - 2>(x) ^ 0xffffffffffffffff)
-    #define SID(x) COMPILE_TIME(CONSTEXPR_SID(x))
 #endif
-
+    
+    #define SID(x) COMPILE_TIME(CONSTEXPR_SID(x))
     typedef std::size_t hash_t;
 
     struct NoHash {

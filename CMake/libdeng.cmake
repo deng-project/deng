@@ -24,6 +24,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/Api.h
 	Include/deng/App.h
 	Include/deng/CameraTransformer.h
+	Include/deng/CompileTimeMap.h
 	Include/deng/Components.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Event.h

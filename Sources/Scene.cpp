@@ -12,21 +12,16 @@ namespace DENG {
 		m_sceneRenderer(_pRenderer, _pFramebuffer) {}
 
 
-	using _MaterialTuple = std::tuple<std::vector<InstanceInfo>, std::vector<TransformComponent>, std::vector<Material>, std::vector<DrawDescriptorIndices>>;
-	_MaterialTuple Scene::_InstanceRenderablesMSM() {
-		std::vector<InstanceInfo> instanceInfos;
-		std::vector<TransformComponent> transforms;
-		std::vector<Material> materials;
-		std::vector<DrawDescriptorIndices> drawDescriptorIndices;
+	void Scene::_InstanceRenderablesMSM() {
+		m_instanceInfos.clear();
+		m_transforms.clear();
+		m_materials.clear();
+		m_drawDescriptorIndices.clear();
 		std::unordered_map<hash_t, size_t, NoHash> materialIndexLookup;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 
 		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
-		instanceInfos.reserve(group.size());
-		transforms.reserve(group.size());
-		materials.reserve(group.size());
-		drawDescriptorIndices.reserve(group.size());
 		
 		for (auto it = group.begin(); it != group.end(); it++) {
 			auto& [mesh, shader, material] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*it);
@@ -37,19 +32,19 @@ namespace DENG {
 				auto& [prevMesh, prevShader, prevMaterial] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*itPrev);
 
 				if (mesh == prevMesh && shader == prevShader && material == prevMaterial)
-					instanceInfos.back().uInstanceCount++;
+					m_instanceInfos.back().uInstanceCount++;
 				else {
-					instanceInfos.emplace_back();
-					instanceInfos.back().hshMesh = mesh.hshMesh;
-					instanceInfos.back().hshShader = shader.hshShader;
-					instanceInfos.back().hshMaterial = material.hshMaterial;
+					m_instanceInfos.emplace_back();
+					m_instanceInfos.back().hshMesh = mesh.hshMesh;
+					m_instanceInfos.back().hshShader = shader.hshShader;
+					m_instanceInfos.back().hshMaterial = material.hshMaterial;
 				}
 			}
 			else {
-				instanceInfos.emplace_back();
-				instanceInfos.back().hshMesh = mesh.hshMesh;
-				instanceInfos.back().hshShader = shader.hshShader;
-				instanceInfos.back().hshMaterial = material.hshMaterial;
+				m_instanceInfos.emplace_back();
+				m_instanceInfos.back().hshMesh = mesh.hshMesh;
+				m_instanceInfos.back().hshShader = shader.hshShader;
+				m_instanceInfos.back().hshMaterial = material.hshMaterial;
 			}
 
 			// material indexing
@@ -57,24 +52,22 @@ namespace DENG {
 				auto pMaterial = resourceManager.GetMaterial(material.hshMaterial);
 				DENG_ASSERT(pMaterial);
 
-				materials.emplace_back(*pMaterial);
-				materialIndexLookup[material.hshMaterial] = materials.size() - 1;
+				m_materials.emplace_back(*pMaterial);
+				materialIndexLookup[material.hshMaterial] = m_materials.size() - 1;
 			}
 
 
 			if (bHasTransform) {
 				auto& transform = m_registry.get<TransformComponent>(*it);
-				transforms.emplace_back(transform);
-				drawDescriptorIndices.emplace_back(
-					static_cast<int32_t>(transforms.size() - 1),
+				m_transforms.emplace_back(transform);
+				m_drawDescriptorIndices.emplace_back(
+					static_cast<int32_t>(m_transforms.size() - 1),
 					static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
 			}
 			else {
-				drawDescriptorIndices.emplace_back(-1, static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
+				m_drawDescriptorIndices.emplace_back(-1, static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
 			}
 		}
-
-		return std::make_tuple(instanceInfos, transforms, materials, drawDescriptorIndices);
 	}
 
 	void Scene::_UpdateScripts() {
@@ -109,8 +102,8 @@ namespace DENG {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
 			
-			auto [instanceInfos, transforms, materials, drawDescriptors] = _InstanceRenderablesMSM();
-			m_sceneRenderer.RenderInstances(instanceInfos, transforms, materials, drawDescriptors, camera);
+			_InstanceRenderablesMSM();
+			m_sceneRenderer.RenderInstances(m_instanceInfos, m_transforms, m_materials, m_drawDescriptorIndices, camera);
 		}
 	}
 
@@ -150,6 +143,9 @@ namespace DENG {
 					scriptComponent.OnAttach(scriptComponent);
 			}
 		}
+
+		_InstanceRenderablesMSM();
+		m_sceneRenderer.UpdateStorageBuffers(m_transforms, m_materials, m_drawDescriptorIndices);
 	}
 
 
