@@ -113,7 +113,7 @@ namespace DENG {
 
 			template<typename T>
 			constexpr std::vector<hash_t> _GetEventTypesToDispatch(T* _pEvent) {
-				std::vector<EventType> eventTypesToDispatch;
+				std::vector<hash_t> eventTypesToDispatch;
 
 				_TraverseInheritanceHierarchy(_pEvent, eventTypesToDispatch);
 

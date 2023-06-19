@@ -267,15 +267,15 @@ namespace DENG {
 
 	bool ImGuiLayer::OnKeyboardEvent(KeyboardEvent& _event) {
 		switch (_event.GetEventType()) {
-			case EventType::KeyPressed:
+			case SID("KeyPressedEvent"):
 				m_pIO->AddKeyEvent(KEYLOOKUP(static_cast<KeyPressedEvent&>(_event).GetKeycode()), true);
 				return true;
 
-			case EventType::KeyReleased:
+			case SID("KeyReleasedEvent"):
 				m_pIO->AddKeyEvent(KEYLOOKUP(static_cast<KeyReleasedEvent&>(_event).GetKeycode()), false);
 				return true;
 
-			case EventType::KeyTyped:
+			case SID("KeyTypedEvent"):
 				m_pIO->AddInputCharactersUTF8(static_cast<KeyTypedEvent&>(_event).GetBuffer());
 				return true;
 
@@ -287,11 +287,11 @@ namespace DENG {
 
 	bool ImGuiLayer::OnMouseButtonEvent(MouseButtonEvent& _event) {
 		switch (_event.GetEventType()) {
-			case EventType::MouseButtonPressed:
+			case SID("MouseButtonPressedEvent"):
 				m_pIO->AddMouseButtonEvent(MOUSE_BTN_LOOKUP(_event.GetMouseButton()), true);
 				return true;
 
-			case EventType::MouseButtonReleased:
+			case SID("MouseButtonReleasedEvent"):
 				m_pIO->AddMouseButtonEvent(MOUSE_BTN_LOOKUP(_event.GetMouseButton()), false);
 				return true;
 

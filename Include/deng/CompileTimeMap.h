@@ -346,6 +346,14 @@ namespace DENG {
 		}
 	};
 
+	template<typename T, hash_t _hsh>
+	static constexpr hash_t VerifyHash() {
+		static_assert(T{}.Has<Wrapper<_hsh>>(), "Undeclared hash requested");
+		return _hsh;
+	}
+
+#define ROSID(str, T) DENG::VerifyHash<T, SID(str)>()
+
 #define dDECLARE_RESOURCE_ID_TABLE(type) using type = DENG::CompileTimeMap <
 #define dRESOURCE_ID_ENTRY(str) DENG::Entry<DENG::HashWrapper<SID(str)>, DENG::StringWrapper<STRING_LITERAL(str)>>
 #define dEND_RESOURCE_ID_TABLE(type) >;

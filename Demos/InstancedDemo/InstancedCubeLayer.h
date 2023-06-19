@@ -16,6 +16,7 @@
 #ifdef INSTANCED_CUBE_LAYER_CPP
 using namespace DENG;
 #include "deng/ImGuiLayer.h"
+#include "deng/CompileTimeMap.h"
 #include "deng/Exceptions.h"
 #include "../Utils/CameraScript.h"
 #include "CubeResourceBuilders.h"

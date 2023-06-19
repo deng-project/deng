@@ -169,6 +169,7 @@ namespace DENG {
 				return &it->second;
 			}
 
+
 			template<typename Builder, typename... Args>
 			inline const Material& AddMaterial(hash_t _uHash, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
@@ -220,6 +221,7 @@ namespace DENG {
 			inline const std::unordered_map<std::size_t, IShader*, NoHash>& GetShaders() const {
 				return m_shaders;
 			}
+
 
 			template<typename Builder, typename... Args>
 			inline const Texture& AddTexture(hash_t _uHash, Args&&... args) {

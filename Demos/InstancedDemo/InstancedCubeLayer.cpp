@@ -6,8 +6,17 @@
 #define INSTANCED_CUBE_LAYER_CPP
 #include "InstancedCubeLayer.h"
 
+
 namespace Application {
-	
+
+	dDECLARE_RESOURCE_ID_TABLE(ResourceTable)
+		dRESOURCE_ID_ENTRY("CubeMesh"),
+		dRESOURCE_ID_ENTRY("CubeShader"),
+		dRESOURCE_ID_ENTRY("CubeDiffuseMap"),
+		dRESOURCE_ID_ENTRY("CubeSpecularMap"),
+		dRESOURCE_ID_ENTRY("CubeMaterial")
+	dEND_RESOURCE_ID_TABLE(ResourceTable)
+
 	InstancedCubeLayer::InstancedCubeLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer) :
 		m_scene(_pRenderer, _pFramebuffer),
 		m_pRenderer(_pRenderer) {}
@@ -45,16 +54,20 @@ namespace Application {
 		m_scene.SetMainCamera(idCamera);
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		resourceManager.AddMesh<CubePrefabMeshBuilder>(SID("InstancedCubeMesh"), _pRenderer);
-		resourceManager.AddShader<CubePrefabShaderBuilder>(SID("InstancedCubeShader"));
-		resourceManager.AddTexture<CubePrefabTextureBuilder>(SID("InstancedCubeDiffuseMap"), "Textures/Container/diffuse.png");
-		resourceManager.AddTexture<CubePrefabTextureBuilder>(SID("InstancedCubeSpecularMap"), "Textures/Container/specular.png");
-		resourceManager.AddMaterial<CubePrefabMaterialBuilder>(SID("InstancedCubeMaterial"), SID("InstancedCubeDiffuseMap"), SID("InstancedCubeSpecularMap"));
+		resourceManager.AddMesh<CubePrefabMeshBuilder>(ROSID("CubeMesh", ResourceTable), _pRenderer);
+		resourceManager.AddShader<CubePrefabShaderBuilder>(ROSID("CubeShader", ResourceTable));
+		resourceManager.AddTexture<CubePrefabTextureBuilder>(ROSID("CubeDiffuseMap", ResourceTable), "Textures/Container/diffuse.png");
+		resourceManager.AddTexture<CubePrefabTextureBuilder>(ROSID("CubeSpecularMap", ResourceTable), "Textures/Container/specular.png");
+		resourceManager.AddMaterial<CubePrefabMaterialBuilder>(
+			ROSID("CubeMaterial", ResourceTable), 
+			ROSID("CubeDiffuseMap", ResourceTable), 
+			ROSID("CubeSpecularMap", ResourceTable));
+		
 		for (size_t i = 0; i < m_entities.size(); i++) {
 			m_entities[i] = m_scene.CreateEntity();
-			m_scene.EmplaceComponent<MeshComponent>(m_entities[i], SID("InstancedCubeMesh"));
-			m_scene.EmplaceComponent<ShaderComponent>(m_entities[i], SID("InstancedCubeShader"));
-			m_scene.EmplaceComponent<MaterialComponent>(m_entities[i], SID("InstancedCubeMaterial"));
+			m_scene.EmplaceComponent<MeshComponent>(m_entities[i], ROSID("CubeMesh", ResourceTable));
+			m_scene.EmplaceComponent<ShaderComponent>(m_entities[i], ROSID("CubeShader", ResourceTable));
+			m_scene.EmplaceComponent<MaterialComponent>(m_entities[i], ROSID("CubeMaterial", ResourceTable));
 			m_scene.EmplaceComponent<TransformComponent>(m_entities[i]);
 		}
 
