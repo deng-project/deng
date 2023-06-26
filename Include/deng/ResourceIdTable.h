@@ -322,7 +322,7 @@ namespace DENG {
 	template<class T> constexpr Tag_T<T> tag{};
 
 	template<class... Entries>
-	struct CompileTimeMap : Entries... {
+	struct ResourceIdTable : Entries... {
 		template<class Key>
 		struct Lookup {
 			template<class Value>
@@ -330,7 +330,7 @@ namespace DENG {
 		};
 
 		template<class Key>
-		constexpr std::invoke_result_t<Lookup<Key>, CompileTimeMap> operator()(Tag_T<Key>) const { return{}; }
+		constexpr std::invoke_result_t<Lookup<Key>, ResourceIdTable> operator()(Tag_T<Key>) const { return{}; }
 	
 		template<class... Key>
 		constexpr std::false_type operator()(Tag_T<Key...>) const { return {}; }
@@ -342,7 +342,7 @@ namespace DENG {
 
 		template<class Key>
 		constexpr auto Has(Tag_T<Key> = {}) const {
-			return std::integral_constant<bool, !std::is_same<std::invoke_result_t<CompileTimeMap, Tag_T<Key>>, std::false_type>{} > {};
+			return std::integral_constant<bool, !std::is_same<std::invoke_result_t<ResourceIdTable, Tag_T<Key>>, std::false_type>{} > {};
 		}
 	};
 
@@ -352,11 +352,12 @@ namespace DENG {
 		return _hsh;
 	}
 
-#define ROSID(str, T) DENG::VerifyHash<T, SID(str)>()
+#define dRO_SID(str, T) DENG::VerifyHash<T, SID(str)>()
 
-#define dDECLARE_RESOURCE_ID_TABLE(type) using type = DENG::CompileTimeMap <
+#define dDECLARE_RESOURCE_ID_TABLE(type) using type = DENG::ResourceIdTable <
 #define dRESOURCE_ID_ENTRY(str) DENG::Entry<DENG::HashWrapper<SID(str)>, DENG::StringWrapper<STRING_LITERAL(str)>>
-#define dEND_RESOURCE_ID_TABLE(type) >;
+#define dEND_RESOURCE_ID_TABLE(x) >;
+
 }
 
 #endif

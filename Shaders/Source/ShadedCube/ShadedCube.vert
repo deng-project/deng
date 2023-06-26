@@ -21,6 +21,7 @@ layout(push_constant) uniform Camera {
 
 struct Transform {
 	mat4 mCustom;
+	mat4 mNormal;
 	vec4 vTranslation;
 	vec4 vScale;
 	vec4 vRotation;
@@ -105,10 +106,11 @@ mat4 CalculateViewMatrix() {
 void main() {
 	const mat4 mTransform = CalculateTransform();
 	const mat4 mView = CalculateViewMatrix();
+	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].indices.x;
 	
 	gl_Position = uboCamera.mProjection * mView * mTransform * vec4(vInputPosition, 1.0f);
 	vOutputPosition = vec3(mTransform * vec4(vInputPosition, 1.f));
-	vOutputNormal = mat3(transpose(inverse(mTransform))) * vInputNormal;
+	vOutputNormal = mat3(uboTransform.transforms[ciIndex].mNormal) * vInputNormal;
 	vOutputUV = vInputUV;
 	vOutputIndex = gl_InstanceIndex;
 }

@@ -18,31 +18,23 @@
 
 namespace DENG {
 
-	//enum class EventType {
-	//	None = 0,
-	//	Window,
-	//	WindowFocus,
-	//	WindowGainedMouseFocus, WindowLostMouseFocus, WindowGainedKeyboardFocus, WindowLostKeyboardFocus,
-	//	WindowShown, WindowHidden, WindowExposed, WindowResized, WindowMinimized, WindowMaximized,
-	//	WindowDisplayChanged,
-	//	Input,
-	//	Keyboard,
-	//	KeyPressed, KeyReleased, KeyTyped,
-	//	Mouse,
-	//	MouseMoved, MouseScrolled,
-	//	MouseButton,
-	//	MouseButtonPressed, MouseButtonReleased,
-	//	Gamepad,
-	//	GamepadButton,
-	//	GamepadButtonPressed, GamepadButtonReleased,
-	//	GamepadJoystickMoved,
-	//	EventCount
-	//};
 
-#define EVENT_CLASS_TYPE(str_type, parent)	static constexpr DENG::hash_t GetStaticType() { return SID(str_type); }\
-											virtual DENG::hash_t GetEventType() const override { return GetStaticType(); }\
-											const parent* GetParent() const { return static_cast<const parent*>(this); }\
-											virtual const char* GetName() const override { return str_type; }
+#define EVENT_CLASS_TYPE_NO_ID_CHECK(str_type, parent)	static constexpr DENG::hash_t GetStaticType() { return SID(str_type); }\
+														virtual DENG::hash_t GetEventType() const override { return GetStaticType(); }\
+														const parent* GetParent() const { return static_cast<const parent*>(this); }\
+														virtual const char* GetName() const override { return str_type; }
+
+#ifdef _DEBUG
+#define EVENT_CLASS_TYPE(table, str_type, parent)		static constexpr DENG::hash_t GetStaticType() {\
+															static_assert(table{}.Has<Wrapper<SID(str_type)>>(), "Unregistred event id");\
+															return SID(str_type);\
+														}\
+														virtual DENG::hash_t GetEventType() const override { return GetStaticType(); }\
+														const parent* GetParent() const { return static_cast<const parent*>(this); }\
+														virtual const char* GetName() const override { return str_type; }
+#else
+#define EVENT_CLASS_TYPE(table, str_type, parent) EVENT_CLASS_TYPE_NO_ID_CHECK(str_type, parent)
+#endif
 
 	class DENG_API IEvent {
 		private:

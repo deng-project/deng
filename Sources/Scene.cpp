@@ -9,14 +9,105 @@
 namespace DENG {
 
 	Scene::Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer) :
-		m_sceneRenderer(_pRenderer, _pFramebuffer) {}
+		m_sceneRenderer(_pRenderer, _pFramebuffer) 
+	{
+		EventManager& eventManager = EventManager::GetInstance();
+		eventManager.AddListener<Scene, ComponentModifiedEvent>(&Scene::OnComponentModifiedEvent, this);
+	}
 
+
+	std::vector<std::pair<std::size_t, std::size_t>> Scene::_MakeMemoryRegions(const std::set<std::size_t>& _updateSet) {
+		std::vector<std::pair<std::size_t, std::size_t>> memoryRegions;
+		std::size_t uPrevTransformId = 0;
+		for (auto it = m_modifiedTransforms.begin(); it != m_modifiedTransforms.end(); it++) {
+			if (it == m_modifiedDirLights.begin())
+				memoryRegions.emplace_back(std::make_pair(*it, *it));
+			else if (*it - uPrevTransformId < 3)
+				memoryRegions.back().second = *it;
+			else
+				memoryRegions.emplace_back(std::make_pair(*it, *it));
+
+			uPrevTransformId = *it;
+		}
+
+		return memoryRegions;
+	}
+
+	void Scene::_CorrectMeshResources() {
+		// check if meshes have to be reinstanced
+		if (m_bmCopyFlags & RendererCopyFlagBit_Reinstance) {
+			_InstanceRenderablesMSM();
+		}
+		else if (m_modifiedTransforms.size()) {
+			std::vector<std::pair<std::size_t, std::size_t>> transformUpdateAreas =
+				_MakeMemoryRegions(m_modifiedTransforms);
+
+			for (auto it = transformUpdateAreas.begin(); it != transformUpdateAreas.end(); it++) {
+				m_sceneRenderer.UpdateTransformRegion(
+					m_instances.transforms.data() + it->first,
+					it->first,
+					it->second - it->first + 1);
+			}
+
+			m_modifiedTransforms.clear();
+		}
+	}
+
+	void Scene::_CorrectLightResources() {
+
+		// check if light sources need to be recopied
+		if (m_bmCopyFlags & (RendererCopyFlagBit_CopyDirectionalLights | RendererCopyFlagBit_CopySpotLights | RendererCopyFlagBit_CopyPointLights)) {
+			_RenderLights();
+		}
+		else {
+			if (m_modifiedDirLights.size()) {
+				std::vector<std::pair<std::size_t, std::size_t>> dirLightUpdateAreas =
+					_MakeMemoryRegions(m_modifiedDirLights);
+
+				for (auto it = dirLightUpdateAreas.begin(); it != dirLightUpdateAreas.end(); it++) {
+					m_sceneRenderer.UpdateDirLightRegion(
+						m_lights.dirLights.data() + it->first,
+						it->first,
+						it->second - it->first + 1);
+				}
+			}
+
+			if (m_modifiedPointLights.size()) {
+				std::vector<std::pair<std::size_t, std::size_t>> ptLightUpdateAreas =
+					_MakeMemoryRegions(m_modifiedPointLights);
+
+				for (auto it = ptLightUpdateAreas.begin(); it != ptLightUpdateAreas.end(); it++) {
+					m_sceneRenderer.UpdatePointLightRegion(
+						m_lights.pointLights.data() + it->first,
+						it->first,
+						it->second - it->first + 1);
+				}
+			}
+
+			if (m_modifiedSpotLights.size()) {
+				std::vector<std::pair<std::size_t, std::size_t>> spotLightUpdateAreas =
+					_MakeMemoryRegions(m_modifiedSpotLights);
+
+				for (auto it = spotLightUpdateAreas.begin(); it != spotLightUpdateAreas.end(); it++) {
+					m_sceneRenderer.UpdateSpotLightRegion(
+						m_lights.spotLights.data() + it->first,
+						it->first,
+						it->second - it->first + 1);
+				}
+			}
+
+			m_modifiedDirLights.clear();
+			m_modifiedSpotLights.clear();
+			m_modifiedPointLights.clear();
+		}
+	}
 
 	void Scene::_InstanceRenderablesMSM() {
-		m_instanceInfos.clear();
-		m_transforms.clear();
-		m_materials.clear();
-		m_drawDescriptorIndices.clear();
+		m_instances.instanceInfos.clear();
+		m_instances.transforms.clear();
+		m_instances.materials.clear();
+		m_instances.drawDescriptorIndices.clear();
+		m_renderableInstanceLookup.clear();
 		std::unordered_map<hash_t, size_t, NoHash> materialIndexLookup;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
@@ -31,20 +122,32 @@ namespace DENG {
 				auto itPrev = it - 1;
 				auto& [prevMesh, prevShader, prevMaterial] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*itPrev);
 
-				if (mesh == prevMesh && shader == prevShader && material == prevMaterial)
-					m_instanceInfos.back().uInstanceCount++;
+				if (mesh == prevMesh && shader == prevShader && material == prevMaterial) {
+					m_renderableInstanceLookup[*it] = std::make_pair(
+						m_instances.instanceInfos.size() - 1,
+						static_cast<size_t>(m_instances.instanceInfos.back().uInstanceCount));
+					m_instances.instanceInfos.back().uInstanceCount++;
+				}
 				else {
-					m_instanceInfos.emplace_back();
-					m_instanceInfos.back().hshMesh = mesh.hshMesh;
-					m_instanceInfos.back().hshShader = shader.hshShader;
-					m_instanceInfos.back().hshMaterial = material.hshMaterial;
+					m_instances.instanceInfos.emplace_back();
+					m_instances.instanceInfos.back().hshMesh = mesh.hshMesh;
+					m_instances.instanceInfos.back().hshShader = shader.hshShader;
+					m_instances.instanceInfos.back().hshMaterial = material.hshMaterial;
+					m_instances.instanceInfos.back().uInstanceCount++;
+				
+					m_renderableInstanceLookup[*it] = std::make_pair(
+						m_instances.instanceInfos.size() - 1, 0);
 				}
 			}
 			else {
-				m_instanceInfos.emplace_back();
-				m_instanceInfos.back().hshMesh = mesh.hshMesh;
-				m_instanceInfos.back().hshShader = shader.hshShader;
-				m_instanceInfos.back().hshMaterial = material.hshMaterial;
+				m_instances.instanceInfos.emplace_back();
+				m_instances.instanceInfos.back().hshMesh = mesh.hshMesh;
+				m_instances.instanceInfos.back().hshShader = shader.hshShader;
+				m_instances.instanceInfos.back().hshMaterial = material.hshMaterial;
+				m_instances.instanceInfos.back().uInstanceCount++;
+
+				m_renderableInstanceLookup[*it] = std::make_pair(
+					m_instances.instanceInfos.size() - 1, 0);
 			}
 
 			// material indexing
@@ -52,23 +155,52 @@ namespace DENG {
 				auto pMaterial = resourceManager.GetMaterial(material.hshMaterial);
 				DENG_ASSERT(pMaterial);
 
-				m_materials.emplace_back(*pMaterial);
-				materialIndexLookup[material.hshMaterial] = m_materials.size() - 1;
+				m_instances.materials.emplace_back(*pMaterial);
+				materialIndexLookup[material.hshMaterial] = m_instances.materials.size() - 1;
 			}
 
 
 			if (bHasTransform) {
 				auto& transform = m_registry.get<TransformComponent>(*it);
-				m_transforms.emplace_back(transform);
-				m_drawDescriptorIndices.emplace_back(
-					static_cast<int32_t>(m_transforms.size() - 1),
+				transform.CalculateNormalMatrix();
+				m_instances.transforms.emplace_back(transform);
+				m_instances.drawDescriptorIndices.emplace_back(
+					static_cast<int32_t>(m_instances.transforms.size() - 1),
 					static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
 			}
 			else {
-				m_drawDescriptorIndices.emplace_back(-1, static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
+				m_instances.drawDescriptorIndices.emplace_back(-1, static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
 			}
 		}
+
+		m_sceneRenderer.UpdateStorageBuffers(m_instances.transforms, m_instances.materials, m_instances.drawDescriptorIndices);
 	}
+
+	void Scene::_SortRenderableGroup() {
+		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
+
+		using _Tuple = std::tuple<MeshComponent, ShaderComponent, MaterialComponent>;
+		group.sort<MeshComponent, ShaderComponent, MaterialComponent>(
+			[](const _Tuple& _t1, const _Tuple& _t2) {
+				auto& [mesh1, shader1, material1] = _t1;
+				auto& [mesh2, shader2, material2] = _t2;
+
+				// mesh verification
+				if (mesh1.hshMesh != mesh2.hshMesh)
+					return mesh1.hshMesh < mesh2.hshMesh;
+
+				// shader verification
+				if (shader1.hshShader != shader2.hshShader)
+					return shader1.hshShader < shader2.hshShader;
+
+				// material verification
+				if (material1.hshMaterial != material2.hshMaterial)
+					return material1.hshMaterial < material2.hshMaterial;
+
+				return false;
+			});
+	}
+
 
 	void Scene::_UpdateScripts() {
 		std::chrono::duration<float, std::milli> frametime;
@@ -101,39 +233,11 @@ namespace DENG {
 	void Scene::_DrawMeshes() {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
-			
-			_InstanceRenderablesMSM();
-			m_sceneRenderer.RenderInstances(m_instanceInfos, m_transforms, m_materials, m_drawDescriptorIndices, camera);
+			m_sceneRenderer.RenderInstances(m_instances.instanceInfos, m_instances.transforms, m_instances.materials, m_instances.drawDescriptorIndices, camera);
 		}
 	}
 
 	void Scene::AttachComponents() {
-		// sort entities that have MeshComponent, ShaderComponent and MaterialComponent
-		{
-			auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
-			
-			using _Tuple = std::tuple<MeshComponent, ShaderComponent, MaterialComponent>;
-			group.sort<MeshComponent, ShaderComponent, MaterialComponent>(
-				[](const _Tuple& _t1, const _Tuple& _t2) {
-					auto& [mesh1, shader1, material1] = _t1;
-					auto& [mesh2, shader2, material2] = _t2;
-
-					// mesh verification
-					if (mesh1.hshMesh != mesh2.hshMesh)
-						return mesh1.hshMesh < mesh2.hshMesh;
-
-					// shader verification
-					if (shader1.hshShader != shader2.hshShader)
-						return shader1.hshShader < shader2.hshShader;
-
-					// material verification
-					if (material1.hshMaterial != material2.hshMaterial)
-						return material1.hshMaterial < material2.hshMaterial;
-
-					return false;
-				});
-		}
-
 		{
 			// initialise all ScriptComponents
 			auto view = m_registry.view<ScriptComponent>();
@@ -144,17 +248,18 @@ namespace DENG {
 			}
 		}
 
+		_SortRenderableGroup();
+		_RenderLights();
 		_InstanceRenderablesMSM();
-		m_sceneRenderer.UpdateStorageBuffers(m_transforms, m_materials, m_drawDescriptorIndices);
 	}
 
 
 	void Scene::RenderScene() {
 		_UpdateScripts();
-		_ApplyLightSourceTransforms<PointLightComponent>();
-		_ApplyLightSourceTransforms<SpotlightComponent>();
-		_RenderLights();
+		_CorrectMeshResources();
+		_CorrectLightResources();
 		_DrawMeshes();
+		m_bmCopyFlags = RendererCopyFlagBit_None;
 	}
 
 
@@ -166,5 +271,43 @@ namespace DENG {
 				script.OnDestroy(script);
 			}
 		}
+	}
+
+	bool Scene::OnComponentModifiedEvent(ComponentModifiedEvent& _event) {
+		// renderable transform modified
+		if ((_event.GetComponentType() & ComponentType_Transform) && 
+			!m_registry.any_of<DirectionalLightComponent, PointLightComponent, SpotlightComponent>(_event.GetEntity())) 
+		{
+			DENG_ASSERT(m_renderableInstanceLookup.find(_event.GetEntity()) != m_renderableInstanceLookup.end());
+		
+			const std::size_t uDrawCallId = m_renderableInstanceLookup[_event.GetEntity()].first;
+			std::size_t uInstanceId = m_renderableInstanceLookup[_event.GetEntity()].second;
+		
+			for (std::size_t i = 0; i < uDrawCallId; i++) {
+				uInstanceId += static_cast<std::size_t>(m_instances.instanceInfos[i].uInstanceCount);
+			}
+
+			auto& transform = m_registry.get<TransformComponent>(_event.GetEntity());
+			transform.CalculateNormalMatrix();
+			m_instances.transforms[uInstanceId] = transform;
+			m_modifiedTransforms.insert(uInstanceId);
+		}
+		// other renderable component modified
+		else if (_event.GetComponentType() & ComponentType_Renderable) {
+			m_bmCopyFlags |= RendererCopyFlagBit_Reinstance;
+		}
+		// light modified
+		else if (_event.GetComponentType() & ComponentType_Light) {
+			DENG_ASSERT(m_lightLookup.find(_event.GetEntity()) != m_lightLookup.end());
+			
+			if (_event.GetComponentType() & ComponentType_DirectionalLight)
+				m_modifiedDirLights.insert(m_lightLookup[_event.GetEntity()]);
+			if (_event.GetComponentType() & ComponentType_PointLight)
+				m_modifiedPointLights.insert(m_lightLookup[_event.GetEntity()]);
+			if (_event.GetComponentType() & ComponentType_SpotLight)
+				m_modifiedSpotLights.insert(m_lightLookup[_event.GetEntity()]);
+		}
+
+		return true;
 	}
 }

@@ -27,6 +27,23 @@ namespace DENG {
 	class Scene;
 	typedef entt::entity Entity;
 
+	enum ComponentType_T : uint16_t {
+		ComponentType_None = 0,
+		ComponentType_Transform = (1 << 0),
+		ComponentType_Mesh = (1 << 1),
+		ComponentType_Shader = (1 << 2),
+		ComponentType_Material = (1 << 3),
+		ComponentType_Renderable = 14,
+		ComponentType_Script = (1 << 4),
+		ComponentType_PointLight = (1 << 5),
+		ComponentType_DirectionalLight = (1 << 6),
+		ComponentType_SpotLight = (1 << 7),
+		ComponentType_Light = 224,
+		ComponentType_Camera = (1 << 8)
+	};
+
+	typedef uint16_t ComponentType;
+
 	struct DrawDescriptorIndices {
 		int32_t iTransformIndex = -1;
 		int32_t iMaterialIndex = -1;
@@ -78,9 +95,17 @@ namespace DENG {
 		TransformComponent(const TransformComponent&) = default;
 
 		TRS::Matrix4<float> mCustomTransform;
+		TRS::Matrix4<float> mNormal;
 		TRS::Vector4<float> vTranslation = { 0.f, 0.f, 0.f, 1.f };
 		TRS::Vector4<float> vScale = { 1.f, 1.f, 1.f, 0.f };
 		TRS::Vector4<float> vRotation = { 0.f, 0.f, 0.f, 0.f }; // in radians
+
+		void CalculateNormalMatrix() {
+			TRS::Quaternion qX = { std::sinf(vRotation.first / 2.f), 0.f, 0.f, std::cosf(vRotation.first / 2.f) };
+			TRS::Quaternion qY = { 0.f, std::sinf(vRotation.second / 2.f), 0.f, std::cosf(vRotation.second / 2.f) };
+			TRS::Quaternion qZ = { 0.f, 0.f, std::sinf(vRotation.third / 2.f), std::cosf(vRotation.third / 2.f) };
+			mNormal = (qX * qY * qZ).ExpandToMatrix4().Inverse();
+		}
 	};
 
 	struct MeshComponent {
@@ -90,6 +115,10 @@ namespace DENG {
 			hshMesh(_hshMesh) {}
 
 		hash_t hshMesh = 0;
+
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_Mesh;
+		}
 
 		inline bool operator==(const MeshComponent& _mesh) const {
 			return hshMesh == _mesh.hshMesh;
@@ -104,6 +133,10 @@ namespace DENG {
 
 		hash_t hshShader = 0;
 
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_Shader;
+		}
+
 		inline bool operator==(const ShaderComponent& _shader) const {
 			return hshShader == _shader.hshShader;
 		}
@@ -117,6 +150,10 @@ namespace DENG {
 			hshMaterial(_hshMaterial) {}
 
 		hash_t hshMaterial = 0;
+
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_Material;
+		}
 
 		inline bool operator==(const MaterialComponent& _material) const {
 			return hshMaterial == _material.hshMaterial;
@@ -143,6 +180,10 @@ namespace DENG {
 		// first: constant, second: linear, third: quadric
 		Vec3 vK;
 		float _pad = 0.f;
+
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_PointLight;
+		}
 	};
 
 
@@ -159,6 +200,10 @@ namespace DENG {
 		Vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
 		Vec4 vDiffuse;
 		Vec4 vSpecular;
+
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_DirectionalLight;
+		}
 	};
 
 
@@ -180,6 +225,10 @@ namespace DENG {
 		float fInnerCutoff = MF_SQRT3 / 2.f; // 30 degrees
 		float fOuterCutoff = 0.819152f;		 // 35 degrees
 		float _pad[2] = {};
+
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_SpotLight;
+		}
 	};
 
 
@@ -230,6 +279,10 @@ namespace DENG {
 			PFN_OnUpdate OnUpdate = nullptr;
 			PFN_OnDestroy OnDestroy = nullptr;
 
+			static constexpr ComponentType GetComponentType() {
+				return ComponentType_Script;
+			}
+
 			template<typename T, typename... Args>
 			inline void BindScript(Entity _idEntity, Scene& _scene, Args... args) {
 				m_pScriptBehaviour = new T(_idEntity, _scene, std::forward<Args>(args)...);
@@ -253,6 +306,7 @@ namespace DENG {
 				}
 			}
 
+
 			template<typename T>
 			T* GetScriptBehaviour() {
 				return static_cast<T*>(m_pScriptBehaviour);
@@ -269,6 +323,10 @@ namespace DENG {
 		TRS::Vector4<float> vCameraUp;
 		TRS::Vector4<float> vCameraDirection;
 		TRS::Vector4<float> vPosition;
+
+		static constexpr ComponentType GetComponentType() {
+			return ComponentType_Camera;
+		}
 	};
 
 
@@ -290,15 +348,6 @@ namespace DENG {
 		uint32_t uUniformBufferChunkSize = 0;
 	};
 
-
-	struct PrefabTransformComponents {
-		std::vector<TransformComponent> transforms;
-	};
-
-
-	struct PrefabMaterialComponents {
-		std::vector<MaterialComponent> materials;
-	};
 	
 	struct SkeletalJointComponent {
 		SkeletalJointComponent() = default;

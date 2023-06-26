@@ -1,5 +1,5 @@
 #include <iostream>
-#include "deng/CompileTimeMap.h"
+#include "deng/ResourceIdTable.h"
 #include <iomanip>
 
 using namespace DENG;

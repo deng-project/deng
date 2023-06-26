@@ -54,24 +54,26 @@ namespace Application {
 		m_scene.SetMainCamera(idCamera);
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		resourceManager.AddMesh<CubePrefabMeshBuilder>(ROSID("CubeMesh", ResourceTable), _pRenderer);
-		resourceManager.AddShader<CubePrefabShaderBuilder>(ROSID("CubeShader", ResourceTable));
-		resourceManager.AddTexture<CubePrefabTextureBuilder>(ROSID("CubeDiffuseMap", ResourceTable), "Textures/Container/diffuse.png");
-		resourceManager.AddTexture<CubePrefabTextureBuilder>(ROSID("CubeSpecularMap", ResourceTable), "Textures/Container/specular.png");
+		resourceManager.AddMesh<CubePrefabMeshBuilder>(dRO_SID("CubeMesh", ResourceTable), _pRenderer);
+		resourceManager.AddShader<CubePrefabShaderBuilder>(dRO_SID("CubeShader", ResourceTable));
+		resourceManager.AddTexture<CubePrefabTextureBuilder>(dRO_SID("CubeDiffuseMap", ResourceTable), "Textures/Container/diffuse.png");
+		resourceManager.AddTexture<CubePrefabTextureBuilder>(dRO_SID("CubeSpecularMap", ResourceTable), "Textures/Container/specular.png");
 		resourceManager.AddMaterial<CubePrefabMaterialBuilder>(
-			ROSID("CubeMaterial", ResourceTable), 
-			ROSID("CubeDiffuseMap", ResourceTable), 
-			ROSID("CubeSpecularMap", ResourceTable));
+			dRO_SID("CubeMaterial", ResourceTable), 
+			dRO_SID("CubeDiffuseMap", ResourceTable), 
+			dRO_SID("CubeSpecularMap", ResourceTable));
 		
 		for (size_t i = 0; i < m_entities.size(); i++) {
 			m_entities[i] = m_scene.CreateEntity();
-			m_scene.EmplaceComponent<MeshComponent>(m_entities[i], ROSID("CubeMesh", ResourceTable));
-			m_scene.EmplaceComponent<ShaderComponent>(m_entities[i], ROSID("CubeShader", ResourceTable));
-			m_scene.EmplaceComponent<MaterialComponent>(m_entities[i], ROSID("CubeMaterial", ResourceTable));
+			m_scene.EmplaceComponent<MeshComponent>(m_entities[i], dRO_SID("CubeMesh", ResourceTable));
+			m_scene.EmplaceComponent<ShaderComponent>(m_entities[i], dRO_SID("CubeShader", ResourceTable));
+			m_scene.EmplaceComponent<MaterialComponent>(m_entities[i], dRO_SID("CubeMaterial", ResourceTable));
 			m_scene.EmplaceComponent<TransformComponent>(m_entities[i]);
 		}
 
 		_ApplyTransforms();
+
+		eventManager.Dispatch<ComponentAddedEvent>(m_entities[0], ComponentType_Mesh | ComponentType_Shader | ComponentType_Material | ComponentType_Transform);
 		m_scene.AttachComponents();
 	}
 

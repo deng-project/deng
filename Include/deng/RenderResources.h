@@ -117,6 +117,13 @@ namespace DENG {
 		bool bHeapAllocationFlag = false;
 	};
 
+	enum class ResourceType {
+		None,
+		Mesh,
+		Shader,
+		Material,
+		Texture
+	};
 
 	class DENG_API ResourceManager {
 		private:

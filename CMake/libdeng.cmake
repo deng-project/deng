@@ -24,7 +24,6 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/Api.h
 	Include/deng/App.h
 	Include/deng/CameraTransformer.h
-	Include/deng/CompileTimeMap.h
 	Include/deng/Components.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Event.h
@@ -44,7 +43,10 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/MissingTextureBuilder.h
 	Include/deng/ProgramFilesManager.h
 	Include/deng/RenderResources.h
+	Include/deng/ResourceEvents.h
+	Include/deng/ResourceIdTable.h
 	Include/deng/Scene.h
+	Include/deng/SceneEvents.h
 	Include/deng/SceneRenderer.h
 	Include/deng/SDLWindowContext.h
 	Include/deng/SID.h

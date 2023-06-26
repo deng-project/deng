@@ -128,6 +128,29 @@ namespace DENG {
 		}
 	}
 
+	void SceneRenderer::UpdateTransformRegion(const TransformComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount) {
+		DENG_ASSERT(_uDstOffset + _uCount < m_uTransformsSize);
+		m_pRenderer->UpdateBuffer(_pData, _uCount * sizeof(TransformComponent), m_uTransformsOffset + _uDstOffset * sizeof(TransformComponent));
+	}
+
+
+	void SceneRenderer::UpdateDirLightRegion(const DirectionalLightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount) {
+		DENG_ASSERT(_uDstOffset + _uCount < m_arrLightOffsets[1]);
+		m_pRenderer->UpdateBuffer(_pData, _uCount * sizeof(DirectionalLightComponent), m_arrLightOffsets[1] + _uDstOffset * sizeof(DirectionalLightComponent));
+	}
+
+
+	void SceneRenderer::UpdatePointLightRegion(const PointLightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount) {
+		DENG_ASSERT(_uDstOffset + _uCount < m_arrLightOffsets[0]);
+		m_pRenderer->UpdateBuffer(_pData, _uCount * sizeof(PointLightComponent), m_arrLightOffsets[0] + _uDstOffset * sizeof(PointLightComponent));
+	}
+
+
+	void SceneRenderer::UpdateSpotLightRegion(const SpotlightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount) {
+		DENG_ASSERT(_uDstOffset + _uCount < m_arrLightOffsets[2]);
+		m_pRenderer->UpdateBuffer(_pData, _uCount * sizeof(SpotlightComponent), m_arrLightOffsets[2] + _uDstOffset * sizeof(SpotlightComponent));
+	}
+
 
 	void SceneRenderer::UpdateStorageBuffers(
 		const std::vector<TransformComponent>& _transforms, 

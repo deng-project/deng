@@ -22,6 +22,9 @@ namespace DENG {
 			IRenderer* m_pRenderer = nullptr;
 			IFramebuffer* m_pFramebuffer = nullptr;
 
+			// [0] - point lights offset
+			// [1] - directional lights offset
+			// [2] - spot lights offset
 			std::array<size_t, 3> m_arrLightOffsets = { SIZE_MAX, 0, 0 };
 			size_t m_uUsedLightsSize = 0;
 
@@ -51,6 +54,11 @@ namespace DENG {
 								 const std::vector<Material>& _materials,
 								 const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
 								 const CameraComponent& _camera);
+
+			void UpdateTransformRegion(const TransformComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
+			void UpdateDirLightRegion(const DirectionalLightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
+			void UpdatePointLightRegion(const PointLightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
+			void UpdateSpotLightRegion(const SpotlightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
 
 			void UpdateStorageBuffers(const std::vector<TransformComponent>& _transforms,
 									  const std::vector<Material>& _materials,

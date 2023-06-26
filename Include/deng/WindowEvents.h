@@ -23,7 +23,7 @@ namespace DENG {
 				return m_uWindowId;
 			}
 
-			EVENT_CLASS_TYPE("WindowEvent", IEvent)
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowEvent", IEvent)
 	};
 
 
@@ -33,7 +33,7 @@ namespace DENG {
 				WindowEvent(_uWindowId) {}
 			WindowShownEvent(const WindowShownEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowShownEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowShownEvent", WindowEvent);
 	};
 
 	
@@ -43,7 +43,7 @@ namespace DENG {
 				WindowEvent(_uWindowId) {}
 			WindowHiddenEvent(const WindowHiddenEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowHiddenEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowHiddenEvent", WindowEvent);
 	};
 
 
@@ -67,7 +67,7 @@ namespace DENG {
 				return m_uHeight;
 			}
 
-			EVENT_CLASS_TYPE("WindowExposedEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowExposedEvent", WindowEvent);
 	};
 
 
@@ -91,7 +91,7 @@ namespace DENG {
 				return m_uHeight;
 			}
 
-			EVENT_CLASS_TYPE("WindowResizedEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowResizedEvent", WindowEvent);
 	};
 
 
@@ -101,7 +101,7 @@ namespace DENG {
 				WindowEvent(_uWindowId) {}
 			WindowMinimizedEvent(const WindowMinimizedEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowMinimizedEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowMinimizedEvent", WindowEvent);
 	};
 
 
@@ -111,7 +111,7 @@ namespace DENG {
 				WindowEvent(_uWindowId) {}
 			WindowMaximizedEvent(const WindowMaximizedEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowMaximizedEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowMaximizedEvent", WindowEvent);
 	};
 
 
@@ -129,7 +129,7 @@ namespace DENG {
 				return m_uDisplayIndex;
 			}
 
-			EVENT_CLASS_TYPE("WindowDisplayChangedEvent", WindowEvent)
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowDisplayChangedEvent", WindowEvent)
 	};
 
 
@@ -139,7 +139,7 @@ namespace DENG {
 				WindowEvent(_uWindowId) {}
 			WindowFocusEvent(const WindowFocusEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowFocusEvent", WindowEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowFocusEvent", WindowEvent);
 	};
 
 
@@ -163,7 +163,7 @@ namespace DENG {
 				return m_uMouseY;
 			}
 
-			EVENT_CLASS_TYPE("WindowGainedMouseFocusEvent", WindowFocusEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowGainedMouseFocusEvent", WindowFocusEvent);
 	};
 
 
@@ -187,7 +187,7 @@ namespace DENG {
 				return m_uMouseY;
 			}
 
-			EVENT_CLASS_TYPE("WindowLostMouseFocusEvent", WindowFocusEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowLostMouseFocusEvent", WindowFocusEvent);
 	};
 
 
@@ -197,7 +197,7 @@ namespace DENG {
 				WindowFocusEvent(_uWindowId) {}
 			WindowGainedKeyboardFocusEvent(const WindowGainedKeyboardFocusEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowGainedKeyboardFocusEvent", WindowFocusEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowGainedKeyboardFocusEvent", WindowFocusEvent);
 	};
 
 
@@ -207,7 +207,7 @@ namespace DENG {
 				WindowFocusEvent(_uWindowId) {}
 			WindowLostKeyboardFocusEvent(const WindowLostKeyboardFocusEvent&) = default;
 
-			EVENT_CLASS_TYPE("WindowLostKeyboardFocusEvent", WindowFocusEvent);
+			EVENT_CLASS_TYPE_NO_ID_CHECK("WindowLostKeyboardFocusEvent", WindowFocusEvent);
 	};
 }
 

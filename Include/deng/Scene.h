@@ -9,6 +9,7 @@
 #include <chrono>
 #include <future>
 #include <type_traits>
+#include <set>
 
 #include "deng/Api.h"
 #include "deng/IRenderer.h"
@@ -16,6 +17,7 @@
 #include "deng/IRenderer.h"
 #include "deng/IShader.h"
 #include "deng/RenderResources.h"
+#include "deng/SceneEvents.h"
 
 #ifdef SCENE_CPP
 	#include "deng/ErrorDefinitions.h"
@@ -25,6 +27,29 @@ namespace DENG {
 
 	typedef entt::entity Entity;
 
+	struct Instances {
+		std::vector<InstanceInfo> instanceInfos;
+		std::vector<TransformComponent> transforms;
+		std::vector<Material> materials;
+		std::vector<DrawDescriptorIndices> drawDescriptorIndices;
+	};
+
+	struct Lights {
+		std::vector<DirectionalLightComponent> dirLights;
+		std::vector<PointLightComponent> pointLights;
+		std::vector<SpotlightComponent> spotLights;
+	};
+
+	enum RendererCopyFlagBits_T : uint8_t {
+		RendererCopyFlagBit_None = 0,
+		RendererCopyFlagBit_Reinstance = (1 << 0),
+		RendererCopyFlagBit_CopyDirectionalLights = (1 << 1),
+		RendererCopyFlagBit_CopySpotLights = (1 << 2),
+		RendererCopyFlagBit_CopyPointLights = (1 << 3)
+	};
+
+	typedef uint8_t RendererCopyFlagBits;
+
 	class DENG_API Scene {
 		private:
 			SceneRenderer m_sceneRenderer;
@@ -32,10 +57,16 @@ namespace DENG {
 			entt::registry m_registry;
 			Entity m_idMainCamera = entt::null;
 
-			std::vector<InstanceInfo> m_instanceInfos;
-			std::vector<TransformComponent> m_transforms;
-			std::vector<Material> m_materials;
-			std::vector<DrawDescriptorIndices> m_drawDescriptorIndices;
+			Instances m_instances;
+			Lights m_lights;
+
+			std::unordered_map<Entity, std::pair<std::size_t, std::size_t>> m_renderableInstanceLookup;
+			std::set<std::size_t> m_modifiedTransforms;
+
+			std::unordered_map<Entity, std::size_t> m_lightLookup;
+			std::set<std::size_t> m_modifiedDirLights;
+			std::set<std::size_t> m_modifiedSpotLights;
+			std::set<std::size_t> m_modifiedPointLights;
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_tpBegin =
 				std::chrono::high_resolution_clock::now();
@@ -44,26 +75,33 @@ namespace DENG {
 
 			TRS::Vector3<float> m_vAmbient = { 0.3f, 0.3f, 0.3f };
 
+			RendererCopyFlagBits m_bmCopyFlags = RendererCopyFlagBit_None;
+
 		private:
 			template <typename T>
 			void _ApplyLightSourceTransforms() {
 				auto view = m_registry.view<T, TransformComponent>();
 				for (Entity idLight : view) {
-					auto& [light, transform] = m_registry.get<T, TransformComponent>(idLight);
-					const TRS::Matrix4<float> cmTranslation = {
+					_ApplyLightSourceTransform<T>(idLight);
+				}
+			}
+
+			template <typename T>
+			void _ApplyLightSourceTransform(Entity _idEntity) {
+				auto& [light, transform] = m_registry.get<T, TransformComponent>(_idEntity);
+				const TRS::Matrix4<float> cmTranslation = {
 						{ 1.f, 0.f, 0.f, transform.vTranslation.first },
 						{ 0.f, 1.f, 0.f, transform.vTranslation.second },
 						{ 0.f, 0.f, 1.f, transform.vTranslation.third },
 						{ 0.f, 0.f, 0.f, 1.f }
-					};
+				};
 
-					const TRS::Quaternion qX(std::sinf(transform.vRotation.first / 2.f), 0.f, 0.f, std::cosf(transform.vRotation.first / 2.f));
-					const TRS::Quaternion qY(0.f, std::sinf(transform.vRotation.second / 2.f), 0.f, std::cosf(transform.vRotation.second / 2.f));
-					const TRS::Quaternion qZ(0.f, 0.f, std::sinf(transform.vRotation.third / 2.f), std::cosf(transform.vRotation.third / 2.f));
-					const TRS::Matrix4<float> cmRotation = (qX * qY * qZ).ExpandToMatrix4();
+				const TRS::Quaternion qX(std::sinf(transform.vRotation.first / 2.f), 0.f, 0.f, std::cosf(transform.vRotation.first / 2.f));
+				const TRS::Quaternion qY(0.f, std::sinf(transform.vRotation.second / 2.f), 0.f, std::cosf(transform.vRotation.second / 2.f));
+				const TRS::Quaternion qZ(0.f, 0.f, std::sinf(transform.vRotation.third / 2.f), std::cosf(transform.vRotation.third / 2.f));
+				const TRS::Matrix4<float> cmRotation = (qX * qY * qZ).ExpandToMatrix4();
 
-					light.vPosition = cmRotation * cmTranslation * TRS::Vector4<float>(0.f, 0.f, 0.f, 1.f);
-				}
+				light.vPosition = cmRotation * cmTranslation * TRS::Vector4<float>(0.f, 0.f, 0.f, 1.f);
 			}
 
 			template <typename T>
@@ -77,8 +115,11 @@ namespace DENG {
 				}
 			}
 
+			std::vector<std::pair<std::size_t, std::size_t>> _MakeMemoryRegions(const std::set<std::size_t>& _updateSet);
+			void _CorrectMeshResources();
+			void _CorrectLightResources();
 			void _InstanceRenderablesMSM();
-			
+			void _SortRenderableGroup();
 			void _UpdateScripts();
 			void _RenderLights();
 			void _DrawMeshes();
@@ -123,6 +164,8 @@ namespace DENG {
 			void AttachComponents();
 			void RenderScene();
 			void DestroyComponents();
+
+			bool OnComponentModifiedEvent(ComponentModifiedEvent& _event);
 	};
 }
 
