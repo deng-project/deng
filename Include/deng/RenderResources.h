@@ -70,6 +70,10 @@ namespace DENG {
 
 
 	struct alignas(16) Material {
+		Material() = default;
+		Material(const Material&) = default;
+		Material(Material&&) = default;
+
 		TRS::Vector4<float> vAmbient = { 1.f, 1.f, 1.f, 0.f };
 		TRS::Vector4<float> vDiffuse;
 		TRS::Vector4<float> vSpecular;

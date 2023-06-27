@@ -4,10 +4,10 @@
 // author: Karl-Mihkel Ott
 
 #define INSTANCED_CUBE_LAYER_CPP
-#include "InstancedCubeLayer.h"
+#include "deng/Layers/InstancedCubeLayer.h"
 
 
-namespace Application {
+namespace DENG {
 
 	dDECLARE_RESOURCE_ID_TABLE(ResourceTable)
 		dRESOURCE_ID_ENTRY("CubeMesh"),
@@ -53,12 +53,15 @@ namespace Application {
 		m_scene.EmplaceComponent<ScriptComponent>(idCamera).BindScript<CameraScript>(idCamera, m_scene);
 		m_scene.SetMainCamera(idCamera);
 
+		std::size_t uVertexOffset = m_pRenderer->AllocateMemory(sizeof(g_cCubeVertices), BufferDataType::Vertex);
+		m_pRenderer->UpdateBuffer(g_cCubeVertices, sizeof(g_cCubeVertices), uVertexOffset);
+
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		resourceManager.AddMesh<CubePrefabMeshBuilder>(dRO_SID("CubeMesh", ResourceTable), _pRenderer);
-		resourceManager.AddShader<CubePrefabShaderBuilder>(dRO_SID("CubeShader", ResourceTable));
-		resourceManager.AddTexture<CubePrefabTextureBuilder>(dRO_SID("CubeDiffuseMap", ResourceTable), "Textures/Container/diffuse.png");
-		resourceManager.AddTexture<CubePrefabTextureBuilder>(dRO_SID("CubeSpecularMap", ResourceTable), "Textures/Container/specular.png");
-		resourceManager.AddMaterial<CubePrefabMaterialBuilder>(
+		resourceManager.AddMesh<CubeMeshBuilder>(dRO_SID("CubeMesh", ResourceTable), uVertexOffset);
+		resourceManager.AddShader<CubeShaderBuilder>(dRO_SID("CubeShader", ResourceTable));
+		resourceManager.AddTexture<CubeTextureBuilder>(dRO_SID("CubeDiffuseMap", ResourceTable), "Textures/Container/diffuse.png");
+		resourceManager.AddTexture<CubeTextureBuilder>(dRO_SID("CubeSpecularMap", ResourceTable), "Textures/Container/specular.png");
+		resourceManager.AddMaterial<CubeMaterialBuilder>(
 			dRO_SID("CubeMaterial", ResourceTable), 
 			dRO_SID("CubeDiffuseMap", ResourceTable), 
 			dRO_SID("CubeSpecularMap", ResourceTable));

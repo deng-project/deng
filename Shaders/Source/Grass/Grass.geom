@@ -91,6 +91,7 @@ void CreateQuad(mat4 mView, vec4 vBase, mat4 mModel) {
 	vPositions[2] = vec4(-0.3f, 0.7f, 0.f, 0.f);
 	vPositions[3] = vec4(0.3f, 0.7f, 0.f, 0.f);
 	
+	// UV coordinates
 	vec2 vUVCoords[4];
 	vUVCoords[0] = vec2(0.f, 1.f);
 	vUVCoords[1] = vec2(1.f, 1.f);

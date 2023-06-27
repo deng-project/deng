@@ -16,18 +16,18 @@
 using namespace DENG;
 #include "deng/FileTextureBuilder.h"
 #include "deng/ResourceIdTable.h"
-#include "../Utils/CameraScript.h"
-#include "GrassResourceBuilders.h"
+#include "deng/Layers/CameraScript.h"
+#include "deng/Layers/GrassResourceBuilders.h"
 #endif
 
-namespace Application {
+namespace DENG {
 
-	class GrassLayer : public DENG::ILayer {
+	class GrassLayer : public ILayer {
 		private:
-			DENG::Scene m_scene;
-			DENG::IRenderer* m_pRenderer = nullptr;
-			DENG::Entity m_idGrass = entt::null;
-			DENG::Entity m_idCamera = entt::null;
+			Scene m_scene;
+			IRenderer* m_pRenderer = nullptr;
+			Entity m_idGrass = entt::null;
+			Entity m_idCamera = entt::null;
 			std::size_t m_uTimerOffset = 0;
 
 			const std::chrono::time_point<std::chrono::high_resolution_clock> m_begTimestamp = 
@@ -36,11 +36,11 @@ namespace Application {
 				std::chrono::high_resolution_clock::now();
 
 		public:
-			GrassLayer(DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer);
-			virtual void Attach(DENG::IRenderer* _pRenderer, DENG::IWindowContext* _pWindowContext) override;
-			virtual void Update(DENG::IFramebuffer* _pFramebuffer) override;
+			GrassLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Update(IFramebuffer* _pFramebuffer) override;
 
-			bool OnWindowResizedEvent(DENG::WindowResizedEvent& _event);
+			bool OnWindowResizedEvent(WindowResizedEvent& _event);
 	};
 }
 

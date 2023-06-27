@@ -1,5 +1,5 @@
 #define CAMERA_SCRIPT_CPP
-#include "CameraScript.h"
+#include "deng/Layers/CameraScript.h"
 
 
 bool CameraScript::OnWindowResizedEvent(DENG::WindowResizedEvent& _event) {
@@ -106,7 +106,7 @@ bool CameraScript::OnKeyReleasedEvent(DENG::KeyReleasedEvent& _event) {
 
 void CameraScript::OnAttach() {
 	auto& camera = m_scene.GetComponent<DENG::CameraComponent>(m_idEntity);
-	camera.mProjection = m_cameraTransformer.CalculateProjection(WIDTH, HEIGHT);
+	camera.mProjection = m_cameraTransformer.CalculateProjection(1280, 720);
 
 	DENG::EventManager& eventManager = DENG::EventManager::GetInstance();
 	eventManager.AddListener<CameraScript, DENG::WindowResizedEvent>(&CameraScript::OnWindowResizedEvent, this);

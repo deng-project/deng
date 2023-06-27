@@ -4,11 +4,11 @@
 // author: Karl-Mihkel Ott
 
 #define GRASS_RESOURCE_BUILDERS_CPP
-#include "GrassResourceBuilders.h"
+#include "deng/Layers/GrassResourceBuilders.h"
 
 #define GRASS_BOUND 20.f
 
-namespace Application {
+namespace DENG {
 
 	DENG::MeshCommands GrassMeshBuilder::Get() {
 		std::vector<TRS::Vector3<float>> positions;

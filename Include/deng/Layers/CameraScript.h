@@ -6,8 +6,6 @@
 #include "deng/InputEvents.h"
 #include "deng/CameraTransformer.h"
 
-#define WIDTH 1280
-#define HEIGHT 720
 
 #ifdef CAMERA_SCRIPT_CPP
 #include "deng/Scene.h"

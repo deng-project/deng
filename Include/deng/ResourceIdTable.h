@@ -340,6 +340,11 @@ namespace DENG {
 			return { { Entries::key::Value, Entries::value::Value }... };
 		}
 
+		template<class Key, class Value, class Hasher = std::hash<Value>>
+		std::unordered_map<Value, Key, Hasher> MakeReverseUnorderedMap() const {
+			return { { Entries::value::Value, Entries::key::Value }... };
+		}
+
 		template<class Key>
 		constexpr auto Has(Tag_T<Key> = {}) const {
 			return std::integral_constant<bool, !std::is_same<std::invoke_result_t<ResourceIdTable, Tag_T<Key>>, std::false_type>{} > {};

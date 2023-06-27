@@ -35,6 +35,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/ILayer.h
 	Include/deng/ImGuiLayer.h
 	Include/deng/ImGuiResourceBuilders.h
+	Include/deng/InitializerListBuilder.h
 	Include/deng/InputEvents.h
 	Include/deng/IRenderer.h
 	Include/deng/IShader.h

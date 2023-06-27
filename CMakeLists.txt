@@ -59,6 +59,8 @@ target_include_directories(dxml
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/trs/include)
 
 include(CMake/libdeng.cmake)
+include(CMake/layers.cmake)
+include(CMake/Sandbox.cmake)
 
 # Non-experimental tests
 if(DENG_BUILD_TESTS)
@@ -67,10 +69,6 @@ if(DENG_BUILD_TESTS)
 	
 	include(CMake/Demos/SIDTest.cmake)
 	include(CMake/Demos/CompileTimeMapTest.cmake)
-	include(CMake/Demos/ComputeParticles.cmake)
-	include(CMake/Demos/GrassDemo.cmake)
 	include(CMake/Demos/TriangleApp.cmake)
 	include(CMake/Demos/ImGuiApp.cmake)
-	include(CMake/Demos/BasicLightingDemo.cmake)
-	include(CMake/Demos/InstancedDemo.cmake)
 endif()

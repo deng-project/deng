@@ -4,9 +4,9 @@
 // author: Karl-Mihkel Ott
 
 #define GRASS_LAYER_CPP
-#include "GrassLayer.h"
+#include "deng/Layers/GrassLayer.h"
 
-namespace Application {
+namespace DENG {
 
 	dDECLARE_RESOURCE_ID_TABLE(ResourceTable)
 		dRESOURCE_ID_ENTRY("GrassMesh"),

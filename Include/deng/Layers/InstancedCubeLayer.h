@@ -14,37 +14,37 @@
 #include "deng/Scene.h"
 
 #ifdef INSTANCED_CUBE_LAYER_CPP
-using namespace DENG;
 #include "deng/ImGuiLayer.h"
 #include "deng/ResourceIdTable.h"
 #include "deng/BuiltInTables.h"
 #include "deng/Exceptions.h"
-#include "../Utils/CameraScript.h"
+#include "deng/Layers/CameraScript.h"
+#include "deng/Layers/CubeVertices.h"
 #include "CubeResourceBuilders.h"
 #endif
 
 #define SQ(x) (x*x)
 #define ROW_LEN	316
 
-namespace Application {
+namespace DENG {
 
-	class InstancedCubeLayer : public DENG::ILayer {
+	class InstancedCubeLayer : public ILayer {
 		private:
-			DENG::Scene m_scene;
-			DENG::IRenderer* m_pRenderer = nullptr;
-			DENG::Entity m_prefabEntity = entt::null;
+			Scene m_scene;
+			IRenderer* m_pRenderer = nullptr;
+			Entity m_prefabEntity = entt::null;
 
-			std::array<DENG::Entity, SQ(ROW_LEN)> m_entities;
+			std::array<Entity, SQ(ROW_LEN)> m_entities;
 
 		private:
 			void _ApplyTransforms();
 
 		public:
-			InstancedCubeLayer(DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer);
-			virtual void Attach(DENG::IRenderer* _pRenderer, DENG::IWindowContext* _pWindowContext) override;
-			virtual void Update(DENG::IFramebuffer* _pFramebuffer) override;
+			InstancedCubeLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Update(IFramebuffer* _pFramebuffer) override;
 
-			bool OnWindowResizedEvent(DENG::WindowResizedEvent& _event);
+			bool OnWindowResizedEvent(WindowResizedEvent& _event);
 			void OnImGuiDraw();
 	};
 }

@@ -1,3 +1,5 @@
+
+
 // DENG: dynamic engine - small but powerful 2D and 3D game engine
 // licence: Apache, see LICENCE file
 // file: CubeResourceBuilders.h - header for cube resource builders
@@ -14,52 +16,52 @@
 #include "deng/ProgramFilesManager.h"
 #include "deng/FileSystemShader.h"
 #include "das/stb_image.h"
-#include "../Utils/CubeVertices.h"
+#include "deng/Layers/CubeVertices.h"
 #endif
 
-namespace Application {
+namespace DENG {
 
-	class CubePrefabMeshBuilder {
+	class CubeMeshBuilder {
 		private:
-			DENG::IRenderer* m_pRenderer;
+			std::size_t m_uVertexOffset;
 
 		public:
-			CubePrefabMeshBuilder(DENG::IRenderer* _pRenderer) :
-				m_pRenderer(_pRenderer) {}
+			CubeMeshBuilder(std::size_t _uVertexOffset) :
+				m_uVertexOffset(_uVertexOffset) {}
 
-			DENG::MeshCommands Get();
+			MeshCommands Get();
 	};
 
-	class CubePrefabShaderBuilder {
+	class CubeShaderBuilder {
 		public:
-			CubePrefabShaderBuilder() = default;
-			DENG::IShader* Get();
+			CubeShaderBuilder() = default;
+			IShader* Get();
 	};
 
 
-	class CubePrefabMaterialBuilder {
+	class CubeMaterialBuilder {
 		private:
-			DENG::hash_t m_hshDiffuse;
-			DENG::hash_t m_hshSpecular;
+			hash_t m_hshDiffuse;
+			hash_t m_hshSpecular;
 
 		public:
-			CubePrefabMaterialBuilder(DENG::hash_t _hshDiffuse, DENG::hash_t _hshSpecular) :
+			CubeMaterialBuilder(hash_t _hshDiffuse, hash_t _hshSpecular) :
 				m_hshDiffuse(_hshDiffuse),
 				m_hshSpecular(_hshSpecular) {}
 
-			DENG::Material Get();
+			Material Get();
 	};
 
 
-	class CubePrefabTextureBuilder {
+	class CubeTextureBuilder {
 		private:
 			const std::string m_sFileName;
 
 		public:
-			CubePrefabTextureBuilder(const std::string& _sFileName) :
+			CubeTextureBuilder(const std::string& _sFileName) :
 				m_sFileName(_sFileName) {}
 
-			DENG::Texture Get();
+			Texture Get();
 	};
 }
 

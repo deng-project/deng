@@ -1,31 +1,32 @@
 // DENG: dynamic engine - small but powerful 2D and 3D game engine
 // licence: Apache, see LICENCE file
-// file: GrassApp.h - GrassApp class header
+// file: Sandbox.h - Sandbox application header
 // author: Karl-Mihkel Ott
 
-#ifndef GRASS_APP_H
-#define GRASS_APP_H
+#ifndef SANDBOX_H
+#define SANDBOX_H
 
 #include "deng/App.h"
 
-#ifdef GRASS_APP_CPP
+#ifdef SANDBOX_CPP
 #include "deng/SDLWindowContext.h"
 #include "deng/VulkanRenderer.h"
 #include "deng/Exceptions.h"
 #include "deng/ImGuiLayer.h"
-
-#include "GrassLayer.h"
 #endif
 
-using namespace DENG;
+#include "deng/Layers/Layers.h"
 
-namespace Application {
+namespace DENG {
+	namespace Sandbox {
 
-	class GrassApp : public App {
-		public:
-			GrassApp();
-			void OnImGuiDraw();
-	};
+		class SandboxApp : public App {
+			public:
+				SandboxApp();
+				void OnImGuiDraw();
+		};
+
+	}
 }
 
 #endif
