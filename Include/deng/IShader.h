@@ -9,6 +9,7 @@
 #include <mutex>
 #include <vector>
 #include "deng/Api.h"
+#include "deng/SID.h"
 
 namespace DENG {
 
@@ -86,7 +87,8 @@ namespace DENG {
 		ShaderPropertyBit_EnableStencilTesting	= 1 << 6,
 		ShaderPropertyBit_EnableBlend			= 1 << 7,
 		ShaderPropertyBit_EnableIndexing		= 1 << 8,
-		ShaderPropertyBit_EnableMaterial		= 1 << 9
+		ShaderPropertyBit_EnableMaterial		= 1 << 9,
+		ShaderPropertyBit_NonStandardShader		= 1 << 10
 	};
 
 	typedef uint32_t ShaderPropertyBits;
@@ -124,6 +126,8 @@ namespace DENG {
 			PipelineCullMode m_ePipelineCullMode = PipelineCullMode::None;
 			PrimitiveMode m_ePrimitiveMode = PrimitiveMode::Triangles;
 			ShaderPropertyBits m_bmShaderProperties = ShaderPropertyBit_None;
+			
+			std::vector<hash_t> m_textureHashes;
 
 		protected:
 			std::mutex m_fsMutex;
@@ -174,6 +178,25 @@ namespace DENG {
 			}
 			inline bool IsPropertySet(ShaderPropertyBits _bmPropertyBits) const { return m_bmShaderProperties & _bmPropertyBits; }
 	
+			inline std::size_t PushTextureHash(hash_t _hshTexture) { 
+				m_textureHashes.push_back(_hshTexture);
+				return m_textureHashes.size() - 1;
+			}
+
+			inline hash_t ReplaceTextureHash(size_t _uSamplerId, hash_t _hshTexture) {
+				if (m_textureHashes.size() <= _uSamplerId)
+					return 0;
+				m_textureHashes[_uSamplerId] = _hshTexture;
+				return _hshTexture;
+			}
+
+			inline hash_t GetTextureHash(size_t _uSamplerId) const { 
+				if (m_textureHashes.size() <= _uSamplerId)
+					return 0;
+				return m_textureHashes[_uSamplerId]; 
+			}
+
+
 			virtual std::vector<uint32_t> GetVertexShaderSpirv() const = 0;
 			virtual std::vector<uint32_t> GetGeometryShaderSpirv() const { return {}; }
 			virtual std::vector<uint32_t> GetFragmentShaderSpirv() const = 0;

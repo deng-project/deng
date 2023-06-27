@@ -1,0 +1,33 @@
+// DENG: dynamic engine - small but powerful 2D and 3D game engine
+// licence: Apache, see LICENCE file
+// file: FileTextureBuilder.cpp - FileTextureBuilder class implementation
+// author: Karl-Mihkel Ott
+
+#define FILE_TEXTURE_BUILDER_CPP
+#include "deng/FileTextureBuilder.h"
+
+namespace DENG {
+
+	Texture FileTextureBuilder::Get() {
+		Texture texture;
+		ProgramFilesManager programFilesManager;
+
+		auto imageData = programFilesManager.GetProgramFileContent(m_sFileName);
+
+		int x, y, depth;
+		stbi_uc* pTexels = stbi_load_from_memory(
+			(stbi_uc*)imageData.data(),
+			static_cast<int>(imageData.size()),
+			&x, &y, &depth, 4);
+
+		texture.bHeapAllocationFlag = true;
+		texture.pRGBAData = reinterpret_cast<char*>(pTexels);
+		texture.eLoadType = TextureLoadType::External_PNG;
+		texture.eResourceType = TextureType::Image_2D;
+		texture.uWidth = static_cast<uint32_t>(x);
+		texture.uHeight = static_cast<uint32_t>(y);
+		texture.uBitDepth = 4;
+
+		return texture;
+	}
+}

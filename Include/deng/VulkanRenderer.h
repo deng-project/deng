@@ -93,7 +93,7 @@ namespace DENG {
             void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, hash_t _hshShader);
             void _AllocateShaderDescriptors(hash_t _hshShader);
             void _AllocateMaterialDescriptors(hash_t _hshMaterial);
-            void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const std::vector<UniformDataLayout>& _uniformDataLayouts, const std::vector<hash_t>& _textureHashes);
+            void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const IShader* _pShader);
             void _AllocateDescriptorPool();
             void _CheckAndAllocateDescriptorPool(size_t _uRequest);
 
@@ -117,8 +117,7 @@ namespace DENG {
                 IFramebuffer* _pFramebuffer, 
                 uint32_t _uInstanceCount, 
                 uint32_t _uFirstInstance,
-                hash_t _hshMaterial = 0, 
-                const std::vector<hash_t>& _textureIds = {}) override;
+                hash_t _hshMaterial = 0) override;
     };
 }
 

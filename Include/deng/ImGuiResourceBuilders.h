@@ -20,10 +20,12 @@ namespace DENG {
 	class DENG_API ImGuiShaderBuilder {
 		private:
 			size_t m_uUniformOffset = 0;
+			hash_t m_hshTexture = 0;
 
 		public:
-			ImGuiShaderBuilder(size_t _uUniformOffset) :
-				m_uUniformOffset(_uUniformOffset) {}
+			ImGuiShaderBuilder(size_t _uUniformOffset, hash_t _hshTexture) :
+				m_uUniformOffset(_uUniformOffset),
+				m_hshTexture(_hshTexture) {}
 
 			IShader* Get();
 	};

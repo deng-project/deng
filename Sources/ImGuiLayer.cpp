@@ -220,7 +220,7 @@ namespace DENG {
 		m_pIO->Fonts->GetTexDataAsRGBA32(&pPixels, &iWidth, &iHeight);
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		resourceManager.AddShader<ImGuiShaderBuilder>(SID("__ImGui__"), m_uUniformRegionOffset);
+		resourceManager.AddShader<ImGuiShaderBuilder>(SID("__ImGui__"), m_uUniformRegionOffset, SID("__ImGui__"));
 		resourceManager.AddMesh<ImGuiMeshBuilder>(SID("__ImGui__"));
 		resourceManager.AddTexture<ImGuiTextureBuilder>(SID("__ImGui__"), iWidth, iHeight, pPixels);
 
@@ -260,8 +260,7 @@ namespace DENG {
 		m_pRenderer->DrawInstance(
 			SID("__ImGui__"),
 			SID("__ImGui__"),
-			_pFramebuffer, 1, 0, 0, 
-			{ SID("__ImGui__") });
+			_pFramebuffer, 1, 0, 0);
 	}
 
 

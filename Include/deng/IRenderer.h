@@ -59,8 +59,7 @@ namespace DENG {
                 IFramebuffer* _pFramebuffer, 
                 uint32_t _uInstanceCount,
                 uint32_t _uFirstInstance = 0,
-                hash_t _hshMaterial = 0,
-                const std::vector<hash_t>& _textureIds = {}) = 0;
+                hash_t _hshMaterial = 0) = 0;
     };
 }
 

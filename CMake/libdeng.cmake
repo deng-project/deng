@@ -28,6 +28,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Event.h
 	Include/deng/Exceptions.h
+	Include/deng/FileTextureBuilder.h
 	Include/deng/FileSystemShader.h
 	Include/deng/GPUMemoryAllocator.h
 	Include/deng/IFramebuffer.h
@@ -63,6 +64,7 @@ set(DENG_MINIMAL_SOURCES
 	Sources/App.cpp
 	Sources/CameraTransformer.cpp
 	Sources/ErrorDefinitions.cpp
+	Sources/FileTextureBuilder.cpp
 	Sources/FileSystemShader.cpp
 	Sources/GPUMemoryAllocator.cpp
 	Sources/ImGuiLayer.cpp

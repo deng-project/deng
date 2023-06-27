@@ -95,7 +95,7 @@ namespace DENG {
 
 			auto& uniformDataLayouts = pShader->GetUniformDataLayouts();
 		
-			if (uniformDataLayouts.size() >= 2) {
+			if (uniformDataLayouts.size() >= 2 && !pShader->IsPropertySet(ShaderPropertyBit_NonStandardShader)) {
 				// draw descriptor indices
 				uniformDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_uDrawDescriptorIndicesOffset);
 				uniformDataLayouts[0].block.uSize = static_cast<uint32_t>(_drawDescriptorIndices.size() * sizeof(DrawDescriptorIndices));
@@ -119,9 +119,11 @@ namespace DENG {
 				}
 			}
 
-			auto& pushConstant = pShader->GetPushConstant();
-			pushConstant.uLength = sizeof(CameraComponent);
-			pushConstant.pPushConstantData = &_camera;
+			if (pShader->IsPropertySet(ShaderPropertyBit_EnablePushConstants)) {
+				auto& pushConstant = pShader->GetPushConstant();
+				pushConstant.uLength = sizeof(CameraComponent);
+				pushConstant.pPushConstantData = &_camera;
+			}
 
 			m_pRenderer->DrawInstance(it->hshMesh, it->hshShader, m_pFramebuffer, it->uInstanceCount, uFirstInstance, it->hshMaterial);
 			uFirstInstance += it->uInstanceCount;

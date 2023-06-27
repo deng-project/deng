@@ -151,7 +151,7 @@ namespace DENG {
 			}
 
 			// material indexing
-			if (materialIndexLookup.find(material.hshMaterial) == materialIndexLookup.end()) {
+			if (material.hshMaterial && materialIndexLookup.find(material.hshMaterial) == materialIndexLookup.end()) {
 				auto pMaterial = resourceManager.GetMaterial(material.hshMaterial);
 				DENG_ASSERT(pMaterial);
 

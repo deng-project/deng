@@ -33,6 +33,7 @@ namespace DENG {
 			UniformDataType::ImageSampler2D,
 			ShaderStageBit_Fragment,
 			1);
+		pShader->PushTextureHash(m_hshTexture);
 
 		return pShader;
 	}

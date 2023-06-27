@@ -446,16 +446,15 @@ namespace DENG {
 
     void VulkanRenderer::_UpdateShaderDescriptorSet(
         VkDescriptorSet _hDescriptorSet, 
-        const std::vector<UniformDataLayout>& _uniformDataLayouts, 
-        const std::vector<hash_t>& _textureIds) 
+        const IShader* _pShader) 
     {
         std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
         std::vector<VkDescriptorImageInfo> descriptorImageInfos;
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 
-        descriptorBufferInfos.reserve(_uniformDataLayouts.size());
-        descriptorImageInfos.reserve(_uniformDataLayouts.size());
-        writeDescriptorSets.reserve(_uniformDataLayouts.size());
+        descriptorBufferInfos.reserve(_pShader->GetUniformDataLayouts().size());
+        descriptorImageInfos.reserve(_pShader->GetUniformDataLayouts().size());
+        writeDescriptorSets.reserve(_pShader->GetUniformDataLayouts().size());
 
         auto missing2DTextureHandles = m_textureHandles.find(m_hshMissing2DTexture);
         auto missing3DTextureHandles = m_textureHandles.find(m_hshMissing3DTexture);
@@ -464,27 +463,27 @@ namespace DENG {
         DENG_ASSERT(missing3DTextureHandles != m_textureHandles.end());
 
         size_t uTextureCounter = 0;
-        for (size_t i = 0; i < _uniformDataLayouts.size(); i++) {
-            switch (_uniformDataLayouts[i].eType) {
+        for (size_t i = 0; i < _pShader->GetUniformDataLayouts().size(); i++) {
+            switch (_pShader->GetUniformDataLayouts()[i].eType) {
                 case UniformDataType::Buffer:
                 case UniformDataType::StorageBuffer:
                     descriptorBufferInfos.emplace_back();
                     descriptorBufferInfos.back().buffer = m_mainBuffer.hBuffer;
-                    descriptorBufferInfos.back().offset = _uniformDataLayouts[i].block.uOffset;
-                    descriptorBufferInfos.back().range = _uniformDataLayouts[i].block.uSize;
+                    descriptorBufferInfos.back().offset = _pShader->GetUniformDataLayouts()[i].block.uOffset;
+                    descriptorBufferInfos.back().range = _pShader->GetUniformDataLayouts()[i].block.uSize;
                     break;
 
                 case UniformDataType::ImageSampler2D:
                 {
                     descriptorImageInfos.emplace_back();
                     descriptorImageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    auto textureHandles = m_textureHandles.find(_textureIds[uTextureCounter]);
                     
-                    if (textureHandles == m_textureHandles.end()) {
+                    if (!_pShader->GetTextureHash(uTextureCounter) || m_textureHandles.find(_pShader->GetTextureHash(uTextureCounter)) == m_textureHandles.end()) {
                         descriptorImageInfos.back().imageView = missing2DTextureHandles->second.hImageView;
                         descriptorImageInfos.back().sampler = missing2DTextureHandles->second.hSampler;
                     }
                     else {
+                        auto textureHandles = m_textureHandles.find(_pShader->GetTextureHash(uTextureCounter));
                         descriptorImageInfos.back().imageView = textureHandles->second.hImageView;
                         descriptorImageInfos.back().sampler = textureHandles->second.hSampler;
                     }
@@ -496,18 +495,18 @@ namespace DENG {
                 {
                     descriptorImageInfos.emplace_back();
                     descriptorImageInfos.back().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    auto textureHandles = m_textureHandles.find(_textureIds[uTextureCounter]);
 
-                    if (textureHandles == m_textureHandles.end()) {
+                    if (!_pShader->GetTextureHash(uTextureCounter) || m_textureHandles.find(_pShader->GetTextureHash(uTextureCounter)) == m_textureHandles.end()) {
                         descriptorImageInfos.back().imageView = missing3DTextureHandles->second.hImageView;
                         descriptorImageInfos.back().sampler = missing3DTextureHandles->second.hSampler;
                     }
                     else {
+                        auto textureHandles = m_textureHandles.find(_pShader->GetTextureHash(uTextureCounter));
                         descriptorImageInfos.back().imageView = textureHandles->second.hImageView;
                         descriptorImageInfos.back().sampler = textureHandles->second.hSampler;
                     }
 
-                    uTextureCounter++;
+                    ++uTextureCounter;
                     break;
                 }
 
@@ -520,15 +519,15 @@ namespace DENG {
         size_t uBufferCounter = 0;
         uTextureCounter = 0;
 
-        for (size_t i = 0; i < _uniformDataLayouts.size(); i++) {
+        for (size_t i = 0; i < _pShader->GetUniformDataLayouts().size(); i++) {
             writeDescriptorSets.emplace_back();
             writeDescriptorSets.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSets.back().dstSet = _hDescriptorSet;
-            writeDescriptorSets.back().dstBinding = _uniformDataLayouts[i].block.uBinding;
+            writeDescriptorSets.back().dstBinding = _pShader->GetUniformDataLayouts()[i].block.uBinding;
             writeDescriptorSets.back().dstArrayElement = 0;
             writeDescriptorSets.back().descriptorCount = 1;
 
-            switch (_uniformDataLayouts[i].eType) {
+            switch (_pShader->GetUniformDataLayouts()[i].eType) {
                 case UniformDataType::Buffer:
                     writeDescriptorSets.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                     writeDescriptorSets.back().pBufferInfo = &descriptorBufferInfos[uBufferCounter++];
@@ -782,21 +781,22 @@ namespace DENG {
         IFramebuffer* _pFramebuffer, 
         uint32_t _uInstanceCount,
         uint32_t _uFirstInstance,
-        hash_t _hshMaterial,
-        const std::vector<hash_t>& _textureHashes) 
+        hash_t _hshMaterial) 
     {
         DENG_ASSERT(_pFramebuffer);
         ResourceManager& resourceManager = ResourceManager::GetInstance();
+        auto pShader = resourceManager.GetShader(_hshShader);
+        DENG_ASSERT(pShader);
 
         // check if any requested textures are not handles
-        for (hash_t hshTexture : _textureHashes) {
-            const Texture* texture = resourceManager.GetTexture(hshTexture);
+        for (size_t i = 0; pShader->GetTextureHash(i) != 0; i++) {
+            const Texture* texture = resourceManager.GetTexture(pShader->GetTextureHash(i));
             DENG_ASSERT(texture);
 
             if ((texture->eResourceType == TextureType::Image_2D || texture->eResourceType == TextureType::Image_3D) &&
-                m_textureHandles.find(hshTexture) == m_textureHandles.end())
+                m_textureHandles.find(pShader->GetTextureHash(i)) == m_textureHandles.end())
             {
-                _CreateApiImageHandles(hshTexture);
+                _CreateApiImageHandles(pShader->GetTextureHash(i));
             }
         }
 
@@ -804,8 +804,6 @@ namespace DENG {
             return;
         
         Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
-        auto pShader = resourceManager.GetShader(_hshShader);
-        DENG_ASSERT(pShader);
 
         // shader descriptor sets are required but do not exist
         if (pShader->GetUniformDataLayouts().size() && m_shaderDescriptors.find(_hshShader) == m_shaderDescriptors.end()) {
@@ -814,7 +812,7 @@ namespace DENG {
         }
 
         if (pShader->GetUniformDataLayouts().size()) {
-            _UpdateShaderDescriptorSet(m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], pShader->GetUniformDataLayouts(), _textureHashes);
+            _UpdateShaderDescriptorSet(m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], pShader);
         }
 
         // check if material should be added

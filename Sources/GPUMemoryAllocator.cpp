@@ -119,6 +119,7 @@ namespace DENG {
 				m_storageFragments.push_back({
 					itPreviousRegion,
 					itPushedRegion,
+					itPreviousRegion->uOffset + itPreviousRegion->uSize,
 					itPushedRegion->uOffset - itPreviousRegion->uOffset - itPreviousRegion->uSize });
 				make_heap(m_storageFragments.begin(), m_storageFragments.end(), UnusedMemoryFragment::Compare());
 			}
