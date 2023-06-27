@@ -28,6 +28,12 @@ namespace Application {
 			DENG::IRenderer* m_pRenderer = nullptr;
 			DENG::Entity m_idGrass = entt::null;
 			DENG::Entity m_idCamera = entt::null;
+			std::size_t m_uTimerOffset = 0;
+
+			const std::chrono::time_point<std::chrono::high_resolution_clock> m_begTimestamp = 
+				std::chrono::high_resolution_clock::now();
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_endTimestamp =
+				std::chrono::high_resolution_clock::now();
 
 		public:
 			GrassLayer(DENG::IRenderer* _pRenderer, DENG::IFramebuffer* _pFramebuffer);

@@ -6,7 +6,7 @@
 #define GRASS_RESOURCE_BUILDERS_CPP
 #include "GrassResourceBuilders.h"
 
-#define GRASS_BOUND 10.f
+#define GRASS_BOUND 20.f
 
 namespace Application {
 
@@ -39,11 +39,19 @@ namespace Application {
 							 DENG::ShaderPropertyBit_EnableBlend |
 							 DENG::ShaderPropertyBit_EnablePushConstants |
 							 DENG::ShaderPropertyBit_NonStandardShader);
-		pShader->SetPushConstant(0, DENG::ShaderStageBit_Vertex, nullptr);
+		pShader->SetPushConstant(0, DENG::ShaderStageBit_Geometry, nullptr);
 		pShader->SetPrimitiveMode(DENG::PrimitiveMode::Points);
 
 		pShader->PushUniformDataLayout(DENG::UniformDataType::ImageSampler2D, DENG::ShaderStageBit_Fragment, 0);
-		pShader->PushTextureHash(m_hshTexture);
+		pShader->PushUniformDataLayout(DENG::UniformDataType::ImageSampler2D, DENG::ShaderStageBit_Geometry, 1);
+		pShader->PushUniformDataLayout(DENG::UniformDataType::Buffer, 
+									   DENG::ShaderStageBit_Geometry, 
+									   2, 
+									   static_cast<uint32_t>(sizeof(float)), 
+									   static_cast<uint32_t>(m_uTimerOffset));
+
+		pShader->PushTextureHash(m_hshGrassTexture);
+		pShader->PushTextureHash(m_hshWindTexture);
 		return pShader;
 	}
 }

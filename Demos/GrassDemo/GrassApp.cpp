@@ -19,7 +19,7 @@ namespace Application {
 		IWindowContext* pWindowContext = SetWindowContext(new SDLWindowContext);
 		IRenderer* pRenderer = SetRenderer(new VulkanRenderer);
 		IFramebuffer* pMainFramebuffer = nullptr;
-		pWindowContext->SetHints(WindowHint_Shown | WindowHint_Vulkan | WindowHint_Resizeable);
+		pWindowContext->SetHints(WindowHint_Shown | WindowHint_Vulkan | WindowHint_FullScreen);
 	
 		try {
 			pWindowContext->Create("Grass demo | Vulkan | SDL", WIDTH, HEIGHT);

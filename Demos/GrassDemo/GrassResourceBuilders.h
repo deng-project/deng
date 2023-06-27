@@ -30,11 +30,15 @@ namespace Application {
 
 	class GrassShaderBuilder {
 		private:
-			DENG::hash_t m_hshTexture;
+			std::size_t m_uTimerOffset;
+			DENG::hash_t m_hshGrassTexture;
+			DENG::hash_t m_hshWindTexture;
 
 		public:
-			GrassShaderBuilder(DENG::hash_t _hshTexture) :
-				m_hshTexture(_hshTexture) {}
+			GrassShaderBuilder(size_t _uTimerOffset, DENG::hash_t _hshGrassTexture, DENG::hash_t _hshWindTexture) :
+				m_uTimerOffset(_uTimerOffset),
+				m_hshGrassTexture(_hshGrassTexture),
+				m_hshWindTexture(_hshWindTexture) {}
 
 			DENG::IShader* Get();
 	};
