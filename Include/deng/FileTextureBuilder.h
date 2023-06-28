@@ -31,6 +31,18 @@ namespace DENG {
 	};
 
 
+	class DENG_API FileMonochromeTextureBuilder {
+		private:
+			const std::string m_sFileName;
+
+		public:
+			FileMonochromeTextureBuilder(const std::string& _sFileName) :
+				m_sFileName(_sFileName) {}
+
+			Texture Get();
+	};
+
+
 	class DENG_API FileMonolithicCubeTextureBuilder {
 		private:
 			const std::string m_sFileName;

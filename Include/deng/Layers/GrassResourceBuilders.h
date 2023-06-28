@@ -28,17 +28,33 @@ namespace DENG {
 	};
 
 
+	class TerrainShaderBuilder {
+		private:
+			hash_t m_hshTerrainHeightTexture;
+			hash_t m_hshTerrainTexture;
+
+		public:
+			TerrainShaderBuilder(hash_t _hshTerrainHeightTexture, hash_t _hshTerrainTexture) :
+				m_hshTerrainHeightTexture(_hshTerrainHeightTexture),
+				m_hshTerrainTexture(_hshTerrainTexture) {}
+
+			IShader* Get();
+	};
+
+
 	class GrassShaderBuilder {
 		private:
 			std::size_t m_uTimerOffset;
 			hash_t m_hshGrassTexture;
 			hash_t m_hshWindTexture;
+			hash_t m_hshHeightTexture;
 
 		public:
-			GrassShaderBuilder(size_t _uTimerOffset, hash_t _hshGrassTexture, hash_t _hshWindTexture) :
+			GrassShaderBuilder(size_t _uTimerOffset, hash_t _hshGrassTexture, hash_t _hshWindTexture, hash_t _hshHeightTexture) :
 				m_uTimerOffset(_uTimerOffset),
 				m_hshGrassTexture(_hshGrassTexture),
-				m_hshWindTexture(_hshWindTexture) {}
+				m_hshWindTexture(_hshWindTexture),
+				m_hshHeightTexture(_hshHeightTexture) {}
 
 			IShader* Get();
 	};

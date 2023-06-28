@@ -107,6 +107,7 @@ bool CameraScript::OnKeyReleasedEvent(DENG::KeyReleasedEvent& _event) {
 void CameraScript::OnAttach() {
 	auto& camera = m_scene.GetComponent<DENG::CameraComponent>(m_idEntity);
 	camera.mProjection = m_cameraTransformer.CalculateProjection(1280, 720);
+	m_cameraTransformer.AbsoluteMoveY(1.5f);
 
 	DENG::EventManager& eventManager = DENG::EventManager::GetInstance();
 	eventManager.AddListener<CameraScript, DENG::WindowResizedEvent>(&CameraScript::OnWindowResizedEvent, this);

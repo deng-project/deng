@@ -10,7 +10,7 @@
 
 namespace DENG {
 
-	DENG::MeshCommands GrassMeshBuilder::Get() {
+	MeshCommands GrassMeshBuilder::Get() {
 		std::vector<TRS::Vector3<float>> positions;
 		for (float x = -GRASS_BOUND; x < GRASS_BOUND; x += 0.2f) {
 			for (float z = -GRASS_BOUND; z < GRASS_BOUND; z += 0.2f) {
@@ -18,10 +18,10 @@ namespace DENG {
 			}
 		}
 
-		std::size_t uOffset = m_pRenderer->AllocateMemory(positions.size() * sizeof(TRS::Vector3<float>), DENG::BufferDataType::Vertex);
+		std::size_t uOffset = m_pRenderer->AllocateMemory(positions.size() * sizeof(TRS::Vector3<float>), BufferDataType::Vertex);
 		m_pRenderer->UpdateBuffer(positions.data(), positions.size() * sizeof(TRS::Vector3<float>), uOffset);
 
-		DENG::MeshCommands meshCommands;
+		MeshCommands meshCommands;
 		meshCommands.sName = "Grass";
 		meshCommands.drawCommands.emplace_back();
 		meshCommands.drawCommands.back().attributeOffsets.push_back(uOffset);
@@ -30,28 +30,51 @@ namespace DENG {
 		return meshCommands;
 	}
 
-	DENG::IShader* GrassShaderBuilder::Get() {
-		DENG::FileSystemShader* pShader = new DENG::FileSystemShader("Grass", "Grass");
-		pShader->PushAttributeType(DENG::VertexAttributeType::Vec3_Float);
+	IShader* TerrainShaderBuilder::Get() {
+		FileSystemShader* pShader = new FileSystemShader("Terrain", "Terrain");
+		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
+		pShader->PushAttributeStride(sizeof(TRS::Vector3<float>));
+		pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
+							 ShaderPropertyBit_EnableBlend |
+							 ShaderPropertyBit_EnablePushConstants |
+							 ShaderPropertyBit_NonStandardShader);
+	
+		pShader->SetPushConstant(0, ShaderStageBit_Geometry, nullptr);
+		pShader->SetPrimitiveMode(PrimitiveMode::Points);
+
+		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Geometry, 0);
+		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Fragment, 1);
+
+		pShader->PushTextureHash(m_hshTerrainHeightTexture);
+		pShader->PushTextureHash(m_hshTerrainTexture);
+
+		return pShader;
+	}
+
+	IShader* GrassShaderBuilder::Get() {
+		FileSystemShader* pShader = new FileSystemShader("Grass", "Grass");
+		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->PushAttributeStride(sizeof(TRS::Vector3<float>));
 
-		pShader->SetProperty(DENG::ShaderPropertyBit_EnableDepthTesting |
-							 DENG::ShaderPropertyBit_EnableBlend |
-							 DENG::ShaderPropertyBit_EnablePushConstants |
-							 DENG::ShaderPropertyBit_NonStandardShader);
-		pShader->SetPushConstant(0, DENG::ShaderStageBit_Geometry, nullptr);
-		pShader->SetPrimitiveMode(DENG::PrimitiveMode::Points);
+		pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
+							 ShaderPropertyBit_EnableBlend |
+							 ShaderPropertyBit_EnablePushConstants |
+							 ShaderPropertyBit_NonStandardShader);
+		pShader->SetPushConstant(0, ShaderStageBit_Geometry, nullptr);
+		pShader->SetPrimitiveMode(PrimitiveMode::Points);
 
-		pShader->PushUniformDataLayout(DENG::UniformDataType::ImageSampler2D, DENG::ShaderStageBit_Fragment, 0);
-		pShader->PushUniformDataLayout(DENG::UniformDataType::ImageSampler2D, DENG::ShaderStageBit_Geometry, 1);
-		pShader->PushUniformDataLayout(DENG::UniformDataType::Buffer, 
-									   DENG::ShaderStageBit_Geometry, 
-									   2, 
+		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Fragment, 0);
+		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Geometry, 1);
+		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Geometry, 2);
+		pShader->PushUniformDataLayout(UniformDataType::Buffer, 
+									   ShaderStageBit_Geometry, 
+									   3, 
 									   static_cast<uint32_t>(sizeof(float)), 
 									   static_cast<uint32_t>(m_uTimerOffset));
 
 		pShader->PushTextureHash(m_hshGrassTexture);
 		pShader->PushTextureHash(m_hshWindTexture);
+		pShader->PushTextureHash(m_hshHeightTexture);
 		return pShader;
 	}
 }

@@ -14,13 +14,17 @@ layout(push_constant) uniform Camera {
 } uboCamera;
 
 layout(set = 0, binding = 1) uniform sampler2D smpWind;
-layout(set = 0, binding = 2) uniform Wind {
+layout(set = 0, binding = 2) uniform sampler2D smpHeight;
+layout(set = 0, binding = 3) uniform Wind {
 	float fTime;
 } uboTime;
 
 // constants
-const float PI = 3.141592653589793;
-const float MIN_SIZE = 0.4f;
+#define PI 3.141592653589793f
+#define MIN_SIZE 0.4f
+#define BOUNDS 20.f
+#define MAX_HEIGHT 5.f
+#define WIND_STRENGTH 0.05f
 
 mat4 CalculateViewMatrix() {
 	mat4 mLookAt = mat4(1.f);
@@ -73,10 +77,16 @@ float random (vec2 st) {
     return fract(sin(dot(st.xy,vec2(12.9898,78.233)))*43758.5453123);
 }
 
+float SampleHeight(in vec2 vPosition) {
+	vec2 vUV = vec2((vPosition.x + BOUNDS) / (2*BOUNDS), (vPosition.y + BOUNDS) / (2*BOUNDS));
+	vUV = clamp(vUV, 0.0f, 1.f);
+	vec4 vHeight = texture(smpHeight, vUV);
+	return vHeight.x;
+}
+
 mat4 CalculateWind(vec3 vBase) {
 	const vec2 vWindDirection = vec2(1.f, 1.f);
-	const float fWindStrength = 0.15f;
-	vec2 vUV = vBase.xz / 10.f + vWindDirection * fWindStrength * uboTime.fTime;
+	vec2 vUV = vBase.xz / 10.f + vWindDirection * WIND_STRENGTH * uboTime.fTime;
 	vUV.x = mod(vUV.x, 1.f);
 	vUV.y = mod(vUV.y, 1.f);
 	
@@ -103,11 +113,18 @@ void CreateQuad(mat4 mView, vec4 vBase, mat4 mModel) {
 	
 	mat4 mWind = CalculateWind(vBase.xyz);
 	
+	vec4 vTranslation = vec4(0.f, MAX_HEIGHT * SampleHeight(vBase.xz), 0.f, 0.f);
+	
+	// temporary
+	if (vTranslation.y > 2.0f)
+		return;
+	
 	for (int i = 0; i < 4; i++) {
 		mat4 mWindApply = mat4(1.f);
 		if (i >= 2) mWindApply = mWind;
 		
-		gl_Position = uboCamera.mProjection * mView * (vBase + mWindApply * randY * mModel * (fGrassSize * vPositions[i]));
+		vec4 vGrass = vTranslation + vBase + (mWindApply * randY * mModel * (fGrassSize * vPositions[i]));
+		gl_Position = uboCamera.mProjection * mView * vGrass;
 		vOutputUV = vUVCoords[i];
 		EmitVertex();
 	}

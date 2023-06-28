@@ -14,6 +14,7 @@
 
 #ifdef GRASS_LAYER_CPP
 #include "deng/FileTextureBuilder.h"
+#include "deng/Exceptions.h"
 #include "deng/SkyboxBuilders.h"
 #include "deng/ResourceIdTable.h"
 #include "deng/Layers/CameraScript.h"
@@ -28,6 +29,7 @@ namespace DENG {
 			IRenderer* m_pRenderer = nullptr;
 			Entity m_idGrass = entt::null;
 			Entity m_idCamera = entt::null;
+			Entity m_idTerrain = entt::null;
 			Entity m_idSkybox = entt::null;
 			std::size_t m_uTimerOffset = 0;
 

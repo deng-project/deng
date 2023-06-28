@@ -13,6 +13,7 @@ namespace DENG {
 		std::ifstream stream(_sFileName);
 
 		stream.read(bytes, 4);
+		stream.close();
 
 		// check magic bytes
 		if (bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[2] == 0xff && bytes[3] == 0xe0)
@@ -53,6 +54,31 @@ namespace DENG {
 		texture.uHeight = static_cast<uint32_t>(y);
 		texture.uBitDepth = 4;
 
+		return texture;
+	}
+
+	Texture FileMonochromeTextureBuilder::Get() {
+		Texture texture;
+		ProgramFilesManager programFilesManager;
+
+		auto imageData = programFilesManager.GetProgramFileContent(m_sFileName);
+		if (imageData.empty())
+			throw IOException("Failed to read contents from " + m_sFileName);
+
+		int x, y, depth;
+		stbi_uc* pTexels = stbi_load_from_memory(
+			(stbi_uc*)imageData.data(),
+			static_cast<int>(imageData.size()),
+			&x, &y, &depth, 1);
+
+		texture.bHeapAllocationFlag = true;
+		texture.pRGBAData = reinterpret_cast<char*>(pTexels);
+		texture.eLoadType = GetLoadType(m_sFileName);
+		texture.eResourceType = TextureType::Image_2D;
+		texture.uWidth = static_cast<uint32_t>(x);
+		texture.uHeight = static_cast<uint32_t>(y);
+		texture.uBitDepth = 1;
+		
 		return texture;
 	}
 

@@ -51,9 +51,28 @@ namespace DENG {
         DENG_ASSERT(pImage->pRGBAData);
 
         Vulkan::TextureData vulkanTextureData;
-        VkFormat eFormat = VK_FORMAT_DEFAULT_IMAGE;
-        if (pImage->uBitDepth == 3)
-            eFormat = VK_FORMAT_R8G8B8_UNORM;
+        VkFormat eFormat = VK_FORMAT_UNDEFINED;
+        switch (pImage->uBitDepth) {
+            case 1:
+                eFormat = VK_FORMAT_R8_UNORM;
+                break;
+
+            case 2:
+                eFormat = VK_FORMAT_R8G8_UNORM;
+                break;
+
+            case 3:
+                eFormat = VK_FORMAT_R8G8B8_UNORM;
+                break;
+
+            case 4:
+                eFormat = VK_FORMAT_R8G8B8A8_UNORM;
+                break;
+
+            default:
+                DENG_ASSERT(false);
+                break;
+        }
 
         VkDeviceSize uSize = 0;
         VkImageCreateFlagBits bImageBits = (VkImageCreateFlagBits)0;
