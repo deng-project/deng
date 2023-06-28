@@ -67,6 +67,12 @@ namespace DENG {
                 break;
 
             case TextureType::Image_3D:
+                uSize = static_cast<VkDeviceSize>(pImage->uWidth * pImage->uHeight * pImage->uBitDepth);
+                uArrayCount = 6;
+                bImageBits = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+                break;
+
+            case TextureType::Image_3D_Array:
                 uSize = static_cast<VkDeviceSize>(pImage->uWidth * pImage->uHeight * pImage->uBitDepth * 6u);
                 uArrayCount = 6;
                 bImageBits = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
@@ -793,7 +799,7 @@ namespace DENG {
             const Texture* texture = resourceManager.GetTexture(pShader->GetTextureHash(i));
             DENG_ASSERT(texture);
 
-            if ((texture->eResourceType == TextureType::Image_2D || texture->eResourceType == TextureType::Image_3D) &&
+            if ((texture->eResourceType == TextureType::Image_2D || texture->eResourceType == TextureType::Image_3D || texture->eResourceType == TextureType::Image_3D_Array) &&
                 m_textureHandles.find(pShader->GetTextureHash(i)) == m_textureHandles.end())
             {
                 _CreateApiImageHandles(pShader->GetTextureHash(i));

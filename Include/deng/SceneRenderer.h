@@ -28,6 +28,7 @@ namespace DENG {
 			std::array<size_t, 3> m_arrLightOffsets = { SIZE_MAX, 0, 0 };
 			size_t m_uUsedLightsSize = 0;
 
+			// asset pipeline
 			size_t m_uTransformsOffset = 0;
 			size_t m_uTransformsSize = 0;
 			size_t m_uMaterialsOffset = 0;
@@ -35,6 +36,9 @@ namespace DENG {
 			size_t m_uDrawDescriptorIndicesOffset = 0;
 			size_t m_uDrawDescriptorIndicesCount = 0;
 			size_t m_uBatchCounter = 0;
+
+			// skybox
+			size_t m_uSkyboxScaleOffset = 0;
 
 			char* m_pIntermediateStorageBuffer = nullptr;
 			size_t m_uIntermediateStorageBufferSize = 0;
@@ -63,6 +67,8 @@ namespace DENG {
 			void UpdateStorageBuffers(const std::vector<TransformComponent>& _transforms,
 									  const std::vector<Material>& _materials,
 									  const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices);
+			void UpdateSkyboxScale(const TRS::Vector4<float>& _vScale);
+			void RenderSkybox(const CameraComponent& _camera, const SkyboxComponent& _skybox);
 
 			inline void Finalize() {
 				m_uBatchCounter = 0;

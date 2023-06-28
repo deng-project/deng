@@ -3,7 +3,7 @@
 # file: layers.cmake - premade layers library configuration
 # author: Karl-Mihkel Ott
 
-set(LAYERS_TARGET layers)
+set(LAYERS_TARGET deng-layers)
 set(LAYERS_HEADERS
 	Include/deng/Layers/BasicLightingLayer.h
 	Include/deng/Layers/CameraScript.h

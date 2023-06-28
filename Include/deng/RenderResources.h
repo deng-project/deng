@@ -92,6 +92,7 @@ namespace DENG {
 		None,
 		Image_1D,
 		Image_2D,
+		Image_3D_Array,
 		Image_3D,
 		InternalFramebufferImage_2D,
 		InternalFramebufferImage_3D,

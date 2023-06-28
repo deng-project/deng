@@ -19,8 +19,8 @@ namespace DENG {
 	std::vector<std::pair<std::size_t, std::size_t>> Scene::_MakeMemoryRegions(const std::set<std::size_t>& _updateSet) {
 		std::vector<std::pair<std::size_t, std::size_t>> memoryRegions;
 		std::size_t uPrevTransformId = 0;
-		for (auto it = m_modifiedTransforms.begin(); it != m_modifiedTransforms.end(); it++) {
-			if (it == m_modifiedDirLights.begin())
+		for (auto it = _updateSet.begin(); it != _updateSet.end(); it++) {
+			if (it == _updateSet.begin())
 				memoryRegions.emplace_back(std::make_pair(*it, *it));
 			else if (*it - uPrevTransformId < 3)
 				memoryRegions.back().second = *it;
@@ -179,6 +179,7 @@ namespace DENG {
 	void Scene::_SortRenderableGroup() {
 		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
 
+		// assets
 		using _Tuple = std::tuple<MeshComponent, ShaderComponent, MaterialComponent>;
 		group.sort<MeshComponent, ShaderComponent, MaterialComponent>(
 			[](const _Tuple& _t1, const _Tuple& _t2) {
@@ -234,6 +235,11 @@ namespace DENG {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
 			m_sceneRenderer.RenderInstances(m_instances.instanceInfos, m_instances.transforms, m_instances.materials, m_instances.drawDescriptorIndices, camera);
+			
+			if (m_idSkybox != entt::null) {
+				auto& skybox = m_registry.get<SkyboxComponent>(m_idSkybox);
+				m_sceneRenderer.RenderSkybox(camera, skybox);
+			}
 		}
 	}
 
@@ -251,6 +257,11 @@ namespace DENG {
 		_SortRenderableGroup();
 		_RenderLights();
 		_InstanceRenderablesMSM();
+
+		if (m_idSkybox != entt::null) {
+			auto& skybox = m_registry.get<SkyboxComponent>(m_idSkybox);
+			m_sceneRenderer.UpdateSkyboxScale(skybox.vScale);
+		}
 	}
 
 
@@ -306,6 +317,11 @@ namespace DENG {
 				m_modifiedPointLights.insert(m_lightLookup[_event.GetEntity()]);
 			if (_event.GetComponentType() & ComponentType_SpotLight)
 				m_modifiedSpotLights.insert(m_lightLookup[_event.GetEntity()]);
+		}
+		// skybox modified
+		else if (_event.GetComponentType() & ComponentType_Skybox) {
+			auto& skybox = m_registry.get<SkyboxComponent>(_event.GetEntity());
+			m_sceneRenderer.UpdateSkyboxScale(skybox.vScale);
 		}
 
 		return true;

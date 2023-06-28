@@ -39,7 +39,8 @@ namespace DENG {
 		ComponentType_DirectionalLight = (1 << 6),
 		ComponentType_SpotLight = (1 << 7),
 		ComponentType_Light = 224,
-		ComponentType_Camera = (1 << 8)
+		ComponentType_Camera = (1 << 8),
+		ComponentType_Skybox = (1 << 9)
 	};
 
 	typedef uint16_t ComponentType;
@@ -90,6 +91,20 @@ namespace DENG {
 	};
 
 
+	struct SkyboxComponent {
+		SkyboxComponent() = default;
+		SkyboxComponent(const SkyboxComponent&) = default;
+		SkyboxComponent(const TRS::Vector4<float>& _vScale, hash_t _hshMesh, hash_t _hshShader) :
+			vScale(_vScale),
+			hshMesh(_hshMesh),
+			hshShader(_hshShader) {}
+
+		TRS::Vector4<float> vScale;
+		hash_t hshMesh;
+		hash_t hshShader;
+	};
+
+
 	struct TransformComponent {
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
@@ -108,6 +123,7 @@ namespace DENG {
 		}
 	};
 
+
 	struct MeshComponent {
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
@@ -124,6 +140,7 @@ namespace DENG {
 			return hshMesh == _mesh.hshMesh;
 		}
 	};
+
 
 	struct ShaderComponent {
 		ShaderComponent() = default;

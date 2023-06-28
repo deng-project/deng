@@ -210,4 +210,25 @@ namespace DENG {
 			}
 		}
 	}
+
+	void SceneRenderer::UpdateSkyboxScale(const TRS::Vector4<float>& _vScale) {
+		if (!m_uSkyboxScaleOffset)
+			m_uSkyboxScaleOffset = m_pRenderer->AllocateMemory(sizeof(TRS::Vector4<float>), BufferDataType::Vertex);
+	
+		m_pRenderer->UpdateBuffer(&_vScale, sizeof(TRS::Vector4<float>), m_uSkyboxScaleOffset);
+	}
+
+	void SceneRenderer::RenderSkybox(const CameraComponent& _camera, const SkyboxComponent& _skybox) {
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
+		auto pShader = resourceManager.GetShader(_skybox.hshShader);
+		DENG_ASSERT(pShader);
+		DENG_ASSERT(m_uSkyboxScaleOffset != SIZE_MAX);
+
+		pShader->GetUniformDataLayouts()[0].block.uOffset = static_cast<uint32_t>(m_uSkyboxScaleOffset);
+		pShader->GetUniformDataLayouts()[0].block.uSize = static_cast<uint32_t>(sizeof(TRS::Vector4<float>));
+		
+		pShader->GetPushConstant().uLength = sizeof(CameraComponent);
+		pShader->GetPushConstant().pPushConstantData = &_camera;
+		m_pRenderer->DrawInstance(_skybox.hshMesh, _skybox.hshShader, m_pFramebuffer, 1);
+	}
 }

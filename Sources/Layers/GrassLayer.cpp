@@ -12,7 +12,10 @@ namespace DENG {
 		dRESOURCE_ID_ENTRY("GrassMesh"),
 		dRESOURCE_ID_ENTRY("GrassShader"),
 		dRESOURCE_ID_ENTRY("GrassTexture"),
-		dRESOURCE_ID_ENTRY("WindTexture")
+		dRESOURCE_ID_ENTRY("WindTexture"),
+		dRESOURCE_ID_ENTRY("SkyboxMesh"),
+		dRESOURCE_ID_ENTRY("SkyboxShader"),
+		dRESOURCE_ID_ENTRY("SkyboxTexture")
 	dEND_RESOURCE_ID_TABLE(ResourceTable)
 	
 	GrassLayer::GrassLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer) :
@@ -27,6 +30,18 @@ namespace DENG {
 		m_uTimerOffset = m_pRenderer->AllocateMemory(sizeof(float), BufferDataType::Uniform);
 		
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
+		// skybox
+		resourceManager.AddMesh<SkyboxMeshBuilder>(dRO_SID("SkyboxMesh", ResourceTable), m_pRenderer);
+		resourceManager.AddShader<SkyboxShaderBuilder>(dRO_SID("SkyboxShader", ResourceTable), dRO_SID("SkyboxTexture", ResourceTable));
+		resourceManager.AddTexture<FileCubeTextureBuilder>(dRO_SID("SkyboxTexture", ResourceTable), 
+			"Textures/Skybox/right.jpg",
+			"Textures/Skybox/left.jpg",
+			"Textures/Skybox/top.jpg",
+			"Textures/Skybox/bottom.jpg",
+			"Textures/Skybox/front.jpg",
+			"Textures/Skybox/back.jpg");
+
+		// grass terrain resources
 		resourceManager.AddMesh<GrassMeshBuilder>(dRO_SID("GrassMesh", ResourceTable), m_pRenderer);
 		resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("GrassTexture", ResourceTable), "Textures/Grass/grass_texture.png");
 		resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("WindTexture", ResourceTable), "Textures/Grass/wind.png");
@@ -34,6 +49,14 @@ namespace DENG {
 													  m_uTimerOffset, 
 													  dRO_SID("GrassTexture", ResourceTable),
 													  dRO_SID("WindTexture", ResourceTable));
+
+		
+		m_idSkybox = m_scene.CreateEntity();
+		auto& skybox = m_scene.EmplaceComponent<SkyboxComponent>(m_idSkybox);
+		skybox.vScale = { 20.f, 20.f, 20.f, 1.f };
+		skybox.hshMesh = dRO_SID("SkyboxMesh", ResourceTable);
+		skybox.hshShader = dRO_SID("SkyboxShader", ResourceTable);
+		m_scene.SetSkybox(m_idSkybox);
 
 		m_idCamera = m_scene.CreateEntity();
 		m_scene.EmplaceComponent<CameraComponent>(m_idCamera);

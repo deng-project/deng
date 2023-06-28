@@ -56,6 +56,7 @@ namespace DENG {
 
 			entt::registry m_registry;
 			Entity m_idMainCamera = entt::null;
+			Entity m_idSkybox = entt::null;
 
 			Instances m_instances;
 			Lights m_lights;
@@ -143,6 +144,10 @@ namespace DENG {
 
 			inline void SetMainCamera(Entity _idEntity) {
 				m_idMainCamera = _idEntity;
+			}
+
+			inline void SetSkybox(Entity _idEntity) {
+				m_idSkybox = _idEntity;
 			}
 
 			inline entt::registry& GetRegistry() {

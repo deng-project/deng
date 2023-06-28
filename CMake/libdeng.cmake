@@ -52,6 +52,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/SceneRenderer.h
 	Include/deng/SDLWindowContext.h
 	Include/deng/SID.h
+	Include/deng/SkyboxBuilders.h
 	Include/deng/UberShader.h
 	Include/deng/VulkanFramebuffer.h
 	Include/deng/VulkanHelpers.h
@@ -77,6 +78,7 @@ set(DENG_MINIMAL_SOURCES
 	Sources/SceneRenderer.cpp
 	Sources/SDLWindowContext.cpp
 	Sources/Singletons.cpp
+	Sources/SkyboxBuilders.cpp
 	Sources/UberShader.cpp
 	Sources/VulkanFramebuffer.cpp
 	Sources/VulkanHelpers.cpp

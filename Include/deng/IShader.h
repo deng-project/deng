@@ -87,8 +87,7 @@ namespace DENG {
 		ShaderPropertyBit_EnableStencilTesting	= 1 << 6,
 		ShaderPropertyBit_EnableBlend			= 1 << 7,
 		ShaderPropertyBit_EnableIndexing		= 1 << 8,
-		ShaderPropertyBit_EnableMaterial		= 1 << 9,
-		ShaderPropertyBit_NonStandardShader		= 1 << 10
+		ShaderPropertyBit_NonStandardShader		= 1 << 9
 	};
 
 	typedef uint32_t ShaderPropertyBits;
