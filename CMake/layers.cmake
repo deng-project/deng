@@ -5,23 +5,24 @@
 
 set(LAYERS_TARGET deng-layers)
 set(LAYERS_HEADERS
-	Include/deng/Layers/BasicLightingLayer.h
 	Include/deng/Layers/CameraScript.h
 	Include/deng/Layers/CubeResourceBuilders.h
 	Include/deng/Layers/CubeVertices.h
 	Include/deng/Layers/GrassLayer.h
 	Include/deng/Layers/GrassResourceBuilders.h
-	Include/deng/Layers/InstancedCubeLayer.h
-	Include/deng/Layers/LightSourceBuilders.h)
+	Include/deng/Layers/Layers.h
+	Include/deng/Layers/LightSourceBuilders.h
+	Include/deng/Layers/PBRLayer.h
+	Include/deng/Layers/PBRResourceBuilders.h)
 	
 set(LAYERS_SOURCES
-	Sources/Layers/BasicLightingLayer.cpp
 	Sources/Layers/CameraScript.cpp
 	Sources/Layers/CubeResourceBuilders.cpp
 	Sources/Layers/GrassLayer.cpp
 	Sources/Layers/GrassResourceBuilders.cpp
-	Sources/Layers/InstancedCubeLayer.cpp
-	Sources/Layers/LightSourceBuilders.cpp)
+	Sources/Layers/LightSourceBuilders.cpp
+	Sources/Layers/PBRLayer.cpp
+	Sources/Layers/PBRResourceBuilders.cpp)
 	
 add_library(${LAYERS_TARGET} STATIC
 	${LAYERS_HEADERS}

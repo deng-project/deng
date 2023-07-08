@@ -9,5 +9,6 @@
 #include "deng/Layers/BasicLightingLayer.h"
 #include "deng/Layers/GrassLayer.h"
 #include "deng/Layers/InstancedCubeLayer.h"
+#include "deng/Layers/PBRLayer.h"
 
 #endif

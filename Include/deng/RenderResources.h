@@ -39,7 +39,7 @@ namespace DENG {
 		Vertex() = default;
 		Vertex(const Attr& _val, Next&&... _next) :
 			val(_val),
-			next(_next) {}
+			next(std::forward<Next>(_next)...) {}
 	};
 
 	template<typename T>
@@ -74,18 +74,10 @@ namespace DENG {
 		Material(const Material&) = default;
 		Material(Material&&) = default;
 
-		TRS::Vector4<float> vAmbient = { 1.f, 1.f, 1.f, 0.f };
-		TRS::Vector4<float> vDiffuse;
-		TRS::Vector4<float> vSpecular;
-		hash_t hshDiffuseMap = 0;
-#ifdef ENV32
-		hash_t _pad = 0;
-#endif
-		hash_t hshSpecularMap = 0;
-#ifdef ENV32
-		hash_t _pad1 = 0;
-#endif
-		float fShininess = 0.3f;
+		TRS::Vector4<float> vAlbedoFactor = {1.f, 1.f, 1.f, 1.f};
+		TRS::Vector4<float> vEmissiveFactor = { 0.f, 0.f, 0.f, 1.f };
+		float fRoughness = 0.7f;
+		float fMetallic = 0.4f;
 	};
 
 	enum class TextureType {

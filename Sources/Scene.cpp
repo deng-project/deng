@@ -13,6 +13,13 @@ namespace DENG {
 	{
 		EventManager& eventManager = EventManager::GetInstance();
 		eventManager.AddListener<Scene, ComponentModifiedEvent>(&Scene::OnComponentModifiedEvent, this);
+		eventManager.AddListener<Scene, ResourceModifiedEvent>(&Scene::OnResourceModifiedEvent, this);
+	}
+
+	Scene::~Scene() {
+		EventManager& eventManager = EventManager::GetInstance();
+		eventManager.RemoveListener<Scene, ComponentModifiedEvent>(this);
+		eventManager.RemoveListener<Scene, ResourceModifiedEvent>(this);
 	}
 
 
@@ -158,7 +165,6 @@ namespace DENG {
 				m_instances.materials.emplace_back(*pMaterial);
 				materialIndexLookup[material.hshMaterial] = m_instances.materials.size() - 1;
 			}
-
 
 			if (bHasTransform) {
 				auto& transform = m_registry.get<TransformComponent>(*it);
@@ -324,6 +330,11 @@ namespace DENG {
 			m_sceneRenderer.UpdateSkyboxScale(skybox.vScale);
 		}
 
+		return true;
+	}
+
+	bool Scene::OnResourceModifiedEvent(ResourceModifiedEvent& _event) {
+		m_bmCopyFlags |= RendererCopyFlagBit_Reinstance;
 		return true;
 	}
 }

@@ -184,19 +184,13 @@ namespace DENG {
 
 		using Vec4 = TRS::Vector4<float>;
 		using Vec3 = TRS::Vector3<float>;
-		PointLightComponent(const Vec4& _vPosition, const Vec4& _vDiffuse, const Vec4& _vSpecular, const Vec3& _vK) :
+		PointLightComponent(const Vec4& _vPosition, const Vec4& _vColor) :
 			vPosition(_vPosition),
-			vDiffuse(_vDiffuse),
-			vSpecular(_vSpecular),
-			vK(_vK) {}
+			vColor(_vColor) {}
 		
 		Vec4 vPosition = { 0.f, 0.f, 0.f, 1.f };
-		Vec4 vDiffuse;
-		Vec4 vSpecular;
+		Vec4 vColor = { 1.f, 1.f, 1.f, 1.f };
 
-		// first: constant, second: linear, third: quadric
-		Vec3 vK;
-		float _pad = 0.f;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_PointLight;
@@ -209,14 +203,12 @@ namespace DENG {
 		DirectionalLightComponent(const DirectionalLightComponent&) = default;
 		
 		using Vec4 = TRS::Vector4<float>;
-		DirectionalLightComponent(const Vec4& _vDirection, const Vec4& _vDiffuse, const Vec4& _vSpecular) :
+		DirectionalLightComponent(const Vec4& _vDirection, const Vec4& _vColor) :
 			vDirection(_vDirection),
-			vDiffuse(_vDiffuse),
-			vSpecular(_vSpecular) {}
+			vColor(_vColor) {}
 
 		Vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
-		Vec4 vDiffuse;
-		Vec4 vSpecular;
+		Vec4 vColor;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_DirectionalLight;
@@ -229,16 +221,16 @@ namespace DENG {
 		SpotlightComponent(const SpotlightComponent&) = default;
 
 		using Vec4 = TRS::Vector4<float>;
-		SpotlightComponent(const Vec4& _vPosition, const Vec4& _vDirection, float _fInnerCutoff, float _fOuterCutoff) :
+		SpotlightComponent(const Vec4& _vPosition, const Vec4& _vDirection, const Vec4& _vColor, float _fInnerCutoff, float _fOuterCutoff) :
 			vPosition(_vPosition),
 			vDirection(_vDirection),
+			vColor(_vColor),
 			fInnerCutoff(_fInnerCutoff),
 			fOuterCutoff(_fOuterCutoff) {}
 
 		Vec4 vPosition;
 		Vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
-		Vec4 vDiffuse;
-		Vec4 vSpecular;
+		Vec4 vColor = { 1.f, 0.f, 0.f, 1.f };
 		float fInnerCutoff = MF_SQRT3 / 2.f; // 30 degrees
 		float fOuterCutoff = 0.819152f;		 // 35 degrees
 		float _pad[2] = {};
@@ -301,7 +293,7 @@ namespace DENG {
 			}
 
 			template<typename T, typename... Args>
-			inline void BindScript(Entity _idEntity, Scene& _scene, Args... args) {
+			inline T& BindScript(Entity _idEntity, Scene& _scene, Args... args) {
 				m_pScriptBehaviour = new T(_idEntity, _scene, std::forward<Args>(args)...);
 
 				if constexpr (_ScriptBehaviourTest<T>::HAS_ON_ATTACH > 0) {
@@ -321,6 +313,8 @@ namespace DENG {
 						_scriptComponent.GetScriptBehaviour<T>()->OnDestroy();
 					};
 				}
+
+				return *static_cast<T*>(m_pScriptBehaviour);
 			}
 
 

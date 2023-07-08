@@ -18,6 +18,7 @@
 #include "deng/IShader.h"
 #include "deng/RenderResources.h"
 #include "deng/SceneEvents.h"
+#include "deng/ResourceEvents.h"
 
 #ifdef SCENE_CPP
 	#include "deng/ErrorDefinitions.h"
@@ -74,7 +75,7 @@ namespace DENG {
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_tpEnd =
 				std::chrono::high_resolution_clock::now();
 
-			TRS::Vector3<float> m_vAmbient = { 0.3f, 0.3f, 0.3f };
+			TRS::Vector3<float> m_vAmbient = { 0.01f, 0.01f, 0.01f };
 
 			RendererCopyFlagBits m_bmCopyFlags = RendererCopyFlagBit_None;
 
@@ -127,6 +128,7 @@ namespace DENG {
 
 		public:
 			Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
+			~Scene();
 
 			inline Entity CreateEntity() {
 				return m_registry.create();
@@ -171,6 +173,7 @@ namespace DENG {
 			void DestroyComponents();
 
 			bool OnComponentModifiedEvent(ComponentModifiedEvent& _event);
+			bool OnResourceModifiedEvent(ResourceModifiedEvent& _event);
 	};
 }
 

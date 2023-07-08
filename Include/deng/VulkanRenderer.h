@@ -92,7 +92,7 @@ namespace DENG {
             void _CreateMaterialDescriptorSetLayout();
             void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, hash_t _hshShader);
             void _AllocateShaderDescriptors(hash_t _hshShader);
-            void _AllocateMaterialDescriptors(hash_t _hshMaterial);
+            //void _AllocateMaterialDescriptors(hash_t _hshMaterial);
             void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const IShader* _pShader);
             void _AllocateDescriptorPool();
             void _CheckAndAllocateDescriptorPool(size_t _uRequest);

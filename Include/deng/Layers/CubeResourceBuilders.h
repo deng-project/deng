@@ -1,5 +1,3 @@
-
-
 // DENG: dynamic engine - small but powerful 2D and 3D game engine
 // licence: Apache, see LICENCE file
 // file: CubeResourceBuilders.h - header for cube resource builders
@@ -30,12 +28,6 @@ namespace DENG {
 				m_uVertexOffset(_uVertexOffset) {}
 
 			MeshCommands Get();
-	};
-
-	class CubeShaderBuilder {
-		public:
-			CubeShaderBuilder() = default;
-			IShader* Get();
 	};
 
 

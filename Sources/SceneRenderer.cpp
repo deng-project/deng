@@ -43,8 +43,8 @@ namespace DENG {
 		m_arrLightOffsets[2] = m_arrLightOffsets[0];
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			TRS::Vector4<float> vCombined = { _vAmbient[0], _vAmbient[1], _vAmbient[2], 0.f };
-			std::memcpy(m_pIntermediateStorageBuffer + uOffset, &vCombined, sizeof(TRS::Vector4<float>));
+			TRS::Vector4<float> vAmbient = { _vAmbient[0], _vAmbient[1], _vAmbient[2], 0.f };
+			std::memcpy(m_pIntermediateStorageBuffer + uOffset, &vAmbient, sizeof(TRS::Vector4<float>));
 			uOffset += sizeof(TRS::Vector4<float>);
 			TRS::Vector4<uint32_t> vLightCounts = {
 				static_cast<uint32_t>(_pointLights.size()),

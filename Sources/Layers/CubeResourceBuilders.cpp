@@ -20,44 +20,8 @@ namespace DENG {
 		return meshCommands;
 	}
 
-
-	IShader* CubeShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("ShadedCube", "ShadedCube");
-		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
-		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
-		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
-
-		pShader->PushAttributeStride(8u * sizeof(float));
-		pShader->PushAttributeStride(8u * sizeof(float));
-		pShader->PushAttributeStride(8u * sizeof(float));
-
-		pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
-							 ShaderPropertyBit_EnableBlend |
-							 ShaderPropertyBit_EnablePushConstants);
-		pShader->SetPushConstant(0, ShaderStageBit_Vertex | ShaderStageBit_Fragment, nullptr);
-		
-		// [DrawDescriptorIndices]
-		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex | ShaderStageBit_Fragment, 0);
-		// [TransformComponent]
-		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex, 1);
-		// [PointLightComponent]
-		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 2);
-		// [DirectionalLightComponent]
-		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 3);
-		// [SpotlightComponent]
-		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 4);
-		// [Material]
-		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 5);
-		
-		return pShader;
-	}
-
-
 	Material CubeMaterialBuilder::Get() {
 		Material material;
-		material.hshDiffuseMap = m_hshDiffuse;
-		material.hshSpecularMap = m_hshSpecular;
-
 		return material;
 	}
 
