@@ -54,9 +54,9 @@ namespace DENG {
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
 			virtual bool SetupFrame() = 0;
 			virtual void DrawInstance(
-                hash_t _hshMesh, 
-                hash_t _hshShader, 
-                IFramebuffer* _pFramebuffer, 
+                hash_t _hshMesh,
+                hash_t _hshShader,
+                IFramebuffer* _pFramebuffer,
                 uint32_t _uInstanceCount,
                 uint32_t _uFirstInstance = 0,
                 hash_t _hshMaterial = 0) = 0;

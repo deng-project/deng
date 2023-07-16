@@ -31,8 +31,10 @@ namespace DENG {
 			// asset pipeline
 			size_t m_uTransformsOffset = 0;
 			size_t m_uTransformsSize = 0;
-			size_t m_uMaterialsOffset = 0;
-			size_t m_uMaterialsSize = 0;
+			size_t m_uPbrMaterialsOffset = 0;
+			size_t m_uPbrMaterialsSize = 0;
+			size_t m_uPhongMaterialsOffset = 0;
+			size_t m_uPhongMaterialsSize = 0;
 			size_t m_uDrawDescriptorIndicesOffset = 0;
 			size_t m_uDrawDescriptorIndicesCount = 0;
 			size_t m_uBatchCounter = 0;
@@ -52,10 +54,11 @@ namespace DENG {
 				const std::vector<DirectionalLightComponent>& _dirLights, 
 				const std::vector<SpotlightComponent>& _spotLights,
 				const TRS::Vector3<float>& _vAmbient);
-			
+
 			void RenderInstances(const std::vector<InstanceInfo>& _instanceInfos, 
 								 const std::vector<TransformComponent>& _transforms,
-								 const std::vector<Material>& _materials,
+								 const std::vector<MaterialPBR>& _pbrMaterials,
+								 const std::vector<MaterialPhong>& _phongMaterials,
 								 const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
 								 const CameraComponent& _camera);
 
@@ -65,7 +68,8 @@ namespace DENG {
 			void UpdateSpotLightRegion(const SpotlightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
 
 			void UpdateStorageBuffers(const std::vector<TransformComponent>& _transforms,
-									  const std::vector<Material>& _materials,
+									  const std::vector<MaterialPBR>& _pbrMaterials,
+									  const std::vector<MaterialPhong>& _phongMaterials,
 									  const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices);
 			void UpdateSkyboxScale(const TRS::Vector4<float>& _vScale);
 			void RenderSkybox(const CameraComponent& _camera, const SkyboxComponent& _skybox);

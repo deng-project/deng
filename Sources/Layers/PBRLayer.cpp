@@ -8,12 +8,6 @@
 
 namespace DENG {
 
-	dDECLARE_RESOURCE_ID_TABLE(PBRTable)
-		dRESOURCE_ID_ENTRY("RedMaterial"),
-		dRESOURCE_ID_ENTRY("SphereMesh"),
-		dRESOURCE_ID_ENTRY("PBRShader")
-	dEND_RESOURCE_ID_TABLE(PBRTable)
-
 	PBRLayer::PBRLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer) :
 		m_pRenderer(_pRenderer),
 		m_scene(_pRenderer, _pFramebuffer) {}
@@ -41,12 +35,18 @@ namespace DENG {
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		resourceManager.AddMesh<PBRSphereBuilder>(dRO_SID("SphereMesh", PBRTable), m_pRenderer);
 		resourceManager.AddShader<PBRShaderBuilder>(dRO_SID("PBRShader", PBRTable));
-		resourceManager.AddMaterial<InitializerListBuilder<Material>>(dRO_SID("RedMaterial", PBRTable),
-			Material {
-				TRS::Vector4<float>{ 1.f, 0.f, 0.f, 1.f },
-				TRS::Vector4<float>{ 0.0f, 0.f, 0.f, 1.f },
-				0.7f,
-				0.4f
+		resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("RustAlbedo", PBRTable), "Textures/RustPBR/rustediron2_basecolor.png");
+		resourceManager.AddTexture<FileMonochromeTextureBuilder>(dRO_SID("RustMetallic", PBRTable), "Textures/RustPBR/rustediron2_metallic.png");
+		//resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("RustNormal", PBRTable), "Textures/RustPBR/rustediron2_normal.png");
+		resourceManager.AddTexture<FileMonochromeTextureBuilder>(dRO_SID("RustRoughness", PBRTable), "Textures/RustPBR/rustediron2_roughness.png");
+		resourceManager.AddMaterialPBR<PBRMaterialBuilder>(dRO_SID("RedMaterial", PBRTable),
+			std::array<hash_t, MAX_PBR_SAMPLERS>{ 
+				dRO_SID("RustAlbedo", PBRTable), 
+				SID("__MissingTexture2D__"),
+				SID("__MissingTexture2D__"),
+				dRO_SID("RustMetallic", PBRTable),
+				dRO_SID("RustRoughness", PBRTable),
+				SID("__MissingTexture2D__")
 			});
 
 		m_sphere = m_scene.CreateEntity();
@@ -75,14 +75,14 @@ namespace DENG {
 		
 		EventManager& eventManager = EventManager::GetInstance();
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		auto pMaterial = resourceManager.GetMaterial(dRO_SID("RedMaterial", PBRTable));
+		auto pMaterial = resourceManager.GetMaterialPBR(dRO_SID("RedMaterial", PBRTable));
 		
-		if (ImGui::SliderFloat("Roughness", &pMaterial->fRoughness, 0.0f, 1.f)) {
-			eventManager.Dispatch<ResourceModifiedEvent>(dRO_SID("RedMaterial", PBRTable), ResourceType::Material);
+		if (ImGui::SliderFloat("Roughness", &pMaterial->material.fRoughness, 0.0f, 1.f)) {
+			eventManager.Dispatch<ResourceModifiedEvent>(dRO_SID("RedMaterial", PBRTable), ResourceType::Material_PBR);
 		}
 
-		if (ImGui::SliderFloat("Metallic", &pMaterial->fMetallic, 0.0f, 1.f)) {
-			eventManager.Dispatch<ResourceModifiedEvent>(dRO_SID("RedMaterial", PBRTable), ResourceType::Material);
+		if (ImGui::SliderFloat("Metallic", &pMaterial->material.fMetallic, 0.0f, 1.f)) {
+			eventManager.Dispatch<ResourceModifiedEvent>(dRO_SID("RedMaterial", PBRTable), ResourceType::Material_PBR);
 		}
 
 		ImGui::End();

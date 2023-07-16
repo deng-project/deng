@@ -15,7 +15,9 @@
 #include "deng/ImGuiLayer.h"
 #include "deng/SID.h"
 #include "deng/ResourceIdTable.h"
+#include "deng/Layers/PBRTable.h"
 #include "deng/InitializerListBuilder.h"
+#include "deng/FileTextureBuilder.h"
 #include "deng/Layers/CameraScript.h"
 #include "deng/Layers/PBRResourceBuilders.h"
 #endif

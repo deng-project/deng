@@ -82,7 +82,8 @@ namespace DENG {
 	void SceneRenderer::RenderInstances(
 		const std::vector<InstanceInfo>& _instanceInfos,
 		const std::vector<TransformComponent>& _transforms,
-		const std::vector<Material>& _materials,
+		const std::vector<MaterialPBR>& _pbrMaterials,
+		const std::vector<MaterialPhong>& _phongMaterials,
 		const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
 		const CameraComponent& _camera)
 	{
@@ -114,8 +115,15 @@ namespace DENG {
 					uniformDataLayouts[4].block.uSize = static_cast<uint32_t>(m_uUsedLightsSize / MAX_FRAMES_IN_FLIGHT);
 
 					// material
-					uniformDataLayouts[5].block.uOffset = static_cast<uint32_t>(m_uMaterialsOffset);
-					uniformDataLayouts[5].block.uSize = static_cast<uint32_t>(_materials.size() * sizeof(Material));
+					ResourceManager& resourceManager = ResourceManager::GetInstance();
+					if (resourceManager.ExistsMaterialPBR(it->hshMaterial)) {
+						uniformDataLayouts[5].block.uOffset = static_cast<uint32_t>(m_uPbrMaterialsOffset);
+						uniformDataLayouts[5].block.uSize = static_cast<uint32_t>(_pbrMaterials.size() * sizeof(MaterialPBR));
+					}
+					else if (resourceManager.ExistsMaterialPhong(it->hshMaterial)) {
+						uniformDataLayouts[5].block.uOffset = static_cast<uint32_t>(m_uPhongMaterialsOffset);
+						uniformDataLayouts[5].block.uSize = static_cast<uint32_t>(_phongMaterials.size() * sizeof(MaterialPhong));
+					}
 				}
 			}
 
@@ -156,23 +164,43 @@ namespace DENG {
 
 	void SceneRenderer::UpdateStorageBuffers(
 		const std::vector<TransformComponent>& _transforms, 
-		const std::vector<Material>& _materials, 
+		const std::vector<MaterialPBR>& _pbrMaterials, 
+		const std::vector<MaterialPhong>& _phongMaterials,
 		const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices)
 	{
-		if (m_uMaterialsSize < _materials.size() * MAX_FRAMES_IN_FLIGHT) {
-			m_uMaterialsSize = (_materials.size() * MAX_FRAMES_IN_FLIGHT * 3) >> 1;
-			if (m_uMaterialsOffset) {
-				m_pRenderer->DeallocateMemory(m_uMaterialsOffset);
+		// pbr
+		if (m_uPbrMaterialsSize < _pbrMaterials.size() * MAX_FRAMES_IN_FLIGHT) {
+			m_uPbrMaterialsSize = (_pbrMaterials.size() * MAX_FRAMES_IN_FLIGHT * 3) >> 1;
+			if (m_uPbrMaterialsOffset) {
+				m_pRenderer->DeallocateMemory(m_uPbrMaterialsOffset);
 			}
 
-			m_uMaterialsOffset = m_pRenderer->AllocateMemory(m_uMaterialsSize * sizeof(Material), BufferDataType::Uniform);
+			m_uPbrMaterialsOffset = m_pRenderer->AllocateMemory(m_uPbrMaterialsSize * sizeof(MaterialPBR), BufferDataType::Uniform);
 		}
 
-		if (_materials.size()) {
-			size_t uOffset = m_uMaterialsOffset;
+		if (_pbrMaterials.size()) {
+			size_t uOffset = m_uPbrMaterialsOffset;
 			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-				m_pRenderer->UpdateBuffer(_materials.data(), _materials.size() * sizeof(Material), uOffset);
-				uOffset += _materials.size() * sizeof(Material);
+				m_pRenderer->UpdateBuffer(_pbrMaterials.data(), _pbrMaterials.size() * sizeof(MaterialPBR), uOffset);
+				uOffset += _pbrMaterials.size() * sizeof(MaterialPBR);
+			}
+		}
+
+		// phong
+		if (m_uPhongMaterialsSize < _phongMaterials.size() * MAX_FRAMES_IN_FLIGHT) {
+			m_uPhongMaterialsSize = (_phongMaterials.size() * MAX_FRAMES_IN_FLIGHT * 3) >> 1;
+			if (m_uPhongMaterialsOffset) {
+				m_pRenderer->DeallocateMemory(m_uPhongMaterialsOffset);
+			}
+
+			m_uPhongMaterialsOffset = m_pRenderer->AllocateMemory(m_uPhongMaterialsSize * sizeof(MaterialPhong), BufferDataType::Uniform);
+		}
+
+		if (_phongMaterials.size()) {
+			size_t uOffset = m_uPhongMaterialsOffset;
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				m_pRenderer->UpdateBuffer(_phongMaterials.data(), _phongMaterials.size() * sizeof(MaterialPhong), uOffset);
+				uOffset += _phongMaterials.size() * sizeof(MaterialPhong);
 			}
 		}
 

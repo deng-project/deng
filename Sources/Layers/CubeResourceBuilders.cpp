@@ -20,9 +20,8 @@ namespace DENG {
 		return meshCommands;
 	}
 
-	Material CubeMaterialBuilder::Get() {
-		Material material;
-		return material;
+	Material<MaterialPhong, MAX_PHONG_SAMPLERS> CubeMaterialBuilder::Get() {
+		return Material<MaterialPhong, MAX_PHONG_SAMPLERS>();
 	}
 
 

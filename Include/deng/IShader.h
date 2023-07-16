@@ -78,16 +78,16 @@ namespace DENG {
 
 	enum ShaderPropertyBits_T : uint32_t {
 		ShaderPropertyBit_None					= 0,
-		ShaderPropertyBit_EnablePushConstants	= 1 << 0,
-		ShaderPropertyBit_EnableCustomViewport	= 1 << 1,
-		ShaderPropertyBit_Enable2DTextures		= 1 << 2,
-		ShaderPropertyBit_Enable3DTextures		= 1 << 3,
-		ShaderPropertyBit_EnableScissor			= 1 << 4,
-		ShaderPropertyBit_EnableDepthTesting	= 1 << 5,
-		ShaderPropertyBit_EnableStencilTesting	= 1 << 6,
-		ShaderPropertyBit_EnableBlend			= 1 << 7,
-		ShaderPropertyBit_EnableIndexing		= 1 << 8,
-		ShaderPropertyBit_NonStandardShader		= 1 << 9
+		ShaderPropertyBit_EnablePushConstants	= (1 << 0),
+		ShaderPropertyBit_EnableCustomViewport	= (1 << 1),
+		ShaderPropertyBit_Enable2DTextures		= (1 << 2),
+		ShaderPropertyBit_Enable3DTextures		= (1 << 3),
+		ShaderPropertyBit_EnableScissor			= (1 << 4),
+		ShaderPropertyBit_EnableDepthTesting	= (1 << 5),
+		ShaderPropertyBit_EnableStencilTesting	= (1 << 6),
+		ShaderPropertyBit_EnableBlend			= (1 << 7),
+		ShaderPropertyBit_EnableIndexing		= (1 << 8),
+		ShaderPropertyBit_NonStandardShader		= (1 << 9)
 	};
 
 	typedef uint32_t ShaderPropertyBits;
@@ -126,6 +126,8 @@ namespace DENG {
 			PrimitiveMode m_ePrimitiveMode = PrimitiveMode::Triangles;
 			ShaderPropertyBits m_bmShaderProperties = ShaderPropertyBit_None;
 			
+			size_t m_uMaterialSamplerCount = 0;
+
 			std::vector<hash_t> m_textureHashes;
 
 		protected:
@@ -176,7 +178,13 @@ namespace DENG {
 				else m_bmShaderProperties &= ~_bmPropertyBits;
 			}
 			inline bool IsPropertySet(ShaderPropertyBits _bmPropertyBits) const { return m_bmShaderProperties & _bmPropertyBits; }
-	
+			
+			constexpr void SetMaterialSamplerCount(uint32_t _uMaterialSamplerCount) {
+				m_uMaterialSamplerCount = _uMaterialSamplerCount;
+			}
+
+			constexpr size_t GetMaterialSamplerCount() { return m_uMaterialSamplerCount; }
+
 			inline std::size_t PushTextureHash(hash_t _hshTexture) { 
 				m_textureHashes.push_back(_hshTexture);
 				return m_textureHashes.size() - 1;

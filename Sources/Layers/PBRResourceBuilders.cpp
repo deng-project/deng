@@ -99,6 +99,8 @@ namespace DENG {
 		pShader->SetPushConstant(0, ShaderStageBit_Vertex | ShaderStageBit_Fragment, nullptr);
 		pShader->SetPipelineCullMode(PipelineCullMode::None);
 
+		pShader->SetMaterialSamplerCount(MAX_PBR_SAMPLERS);
+
 		// [DrawDescriptorIndices]
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex | ShaderStageBit_Fragment, 0);
 		// [TransformComponent]
@@ -113,5 +115,20 @@ namespace DENG {
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 5);
 
 		return pShader;
+	}
+
+
+	Material<MaterialPBR, MAX_PBR_SAMPLERS> PBRMaterialBuilder::Get() {
+		Material<MaterialPBR, MAX_PBR_SAMPLERS> material;
+
+		for (uint32_t i = 0; i < MAX_PBR_SAMPLERS; i++) {
+			material.textures[i] = m_textures[i];
+
+			if (m_textures[i] != SID("__MissingTexture2D__")) {
+				material.material.uSamplerBits |= (1 << i);
+			}
+		}
+
+		return material;
 	}
 }

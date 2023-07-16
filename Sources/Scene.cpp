@@ -61,7 +61,6 @@ namespace DENG {
 	}
 
 	void Scene::_CorrectLightResources() {
-
 		// check if light sources need to be recopied
 		if (m_bmCopyFlags & (RendererCopyFlagBit_CopyDirectionalLights | RendererCopyFlagBit_CopySpotLights | RendererCopyFlagBit_CopyPointLights)) {
 			_RenderLights();
@@ -112,13 +111,13 @@ namespace DENG {
 	void Scene::_InstanceRenderablesMSM() {
 		m_instances.instanceInfos.clear();
 		m_instances.transforms.clear();
-		m_instances.materials.clear();
+		m_instances.pbrMaterials.clear();
+		m_instances.phongMaterials.clear();
 		m_instances.drawDescriptorIndices.clear();
 		m_renderableInstanceLookup.clear();
+		
 		std::unordered_map<hash_t, size_t, NoHash> materialIndexLookup;
-
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-
 		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
 		
 		for (auto it = group.begin(); it != group.end(); it++) {
@@ -159,11 +158,16 @@ namespace DENG {
 
 			// material indexing
 			if (material.hshMaterial && materialIndexLookup.find(material.hshMaterial) == materialIndexLookup.end()) {
-				auto pMaterial = resourceManager.GetMaterial(material.hshMaterial);
-				DENG_ASSERT(pMaterial);
-
-				m_instances.materials.emplace_back(*pMaterial);
-				materialIndexLookup[material.hshMaterial] = m_instances.materials.size() - 1;
+				if (resourceManager.ExistsMaterialPBR(material.hshMaterial)) {
+					auto pMaterial = resourceManager.GetMaterialPBR(material.hshMaterial);
+					m_instances.pbrMaterials.emplace_back(pMaterial->material);
+					materialIndexLookup[material.hshMaterial] = m_instances.pbrMaterials.size() - 1;
+				}
+				else if (resourceManager.ExistsMaterialPhong(material.hshMaterial)) {
+					auto pMaterial = resourceManager.GetMaterialPhong(material.hshMaterial);
+					m_instances.phongMaterials.emplace_back(pMaterial->material);
+					materialIndexLookup[material.hshMaterial] = m_instances.phongMaterials.size() - 1;
+				}
 			}
 
 			if (bHasTransform) {
@@ -179,7 +183,11 @@ namespace DENG {
 			}
 		}
 
-		m_sceneRenderer.UpdateStorageBuffers(m_instances.transforms, m_instances.materials, m_instances.drawDescriptorIndices);
+		m_sceneRenderer.UpdateStorageBuffers(
+			m_instances.transforms, 
+			m_instances.pbrMaterials,
+			m_instances.phongMaterials,
+			m_instances.drawDescriptorIndices);
 	}
 
 	void Scene::_SortRenderableGroup() {
@@ -240,7 +248,13 @@ namespace DENG {
 	void Scene::_DrawMeshes() {
 		if (m_idMainCamera != entt::null) {
 			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
-			m_sceneRenderer.RenderInstances(m_instances.instanceInfos, m_instances.transforms, m_instances.materials, m_instances.drawDescriptorIndices, camera);
+			m_sceneRenderer.RenderInstances(
+				m_instances.instanceInfos, 
+				m_instances.transforms, 
+				m_instances.pbrMaterials, 
+				m_instances.phongMaterials,
+				m_instances.drawDescriptorIndices, 
+				camera);
 			
 			if (m_idSkybox != entt::null) {
 				auto& skybox = m_registry.get<SkyboxComponent>(m_idSkybox);

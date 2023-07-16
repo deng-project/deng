@@ -31,7 +31,8 @@ namespace DENG {
 	struct Instances {
 		std::vector<InstanceInfo> instanceInfos;
 		std::vector<TransformComponent> transforms;
-		std::vector<Material> materials;
+		std::vector<MaterialPBR> pbrMaterials;
+		std::vector<MaterialPhong> phongMaterials;
 		std::vector<DrawDescriptorIndices> drawDescriptorIndices;
 	};
 

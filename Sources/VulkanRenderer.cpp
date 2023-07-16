@@ -22,7 +22,9 @@ namespace DENG {
             for (VkDescriptorPool hPool : m_fullDescriptorPools)
                 vkDestroyDescriptorPool(m_pInstanceCreator->GetDevice(), hPool, nullptr);
 
-            vkDestroyDescriptorSetLayout(m_pInstanceCreator->GetDevice(), m_hMaterialDescriptorSetLayout, nullptr);
+            for (auto pairDescriptorSetLayout : m_materialDescriptorSetLayouts)
+                vkDestroyDescriptorSetLayout(m_pInstanceCreator->GetDevice(), pairDescriptorSetLayout.second, nullptr);
+
             for (auto it = m_shaderDescriptors.begin(); it != m_shaderDescriptors.end(); it++) {
                 vkDestroyDescriptorSetLayout(m_pInstanceCreator->GetDevice(), it->second.hDescriptorSetLayout, nullptr);
             }
@@ -296,29 +298,26 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_CreateMaterialDescriptorSetLayout() {
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings = {};
-
-        // diffuse map binding
-        bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        bindings[0].binding = 0;
-        bindings[0].descriptorCount = 1;
-        bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-        // specular map binding
-        bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        bindings[1].binding = 1;
-        bindings[1].descriptorCount = 1;
-        bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    void VulkanRenderer::_CreateMaterialDescriptorSetLayout(size_t _uCount) {
+        std::vector<VkDescriptorSetLayoutBinding> bindings(_uCount);
+        for (size_t i = 0; i < _uCount; i++) {
+            bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[i].binding = static_cast<uint32_t>(i);
+            bindings[i].descriptorCount = 1;
+            bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
 
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
         descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorSetLayoutCreateInfo.bindingCount = 2;
+        descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(_uCount);
         descriptorSetLayoutCreateInfo.pBindings = bindings.data();
 
-        if (vkCreateDescriptorSetLayout(m_pInstanceCreator->GetDevice(), &descriptorSetLayoutCreateInfo, nullptr, &m_hMaterialDescriptorSetLayout) != VK_SUCCESS)
-            throw RendererException("vkCreateDescriptorSetLayout() failed to create a material descriptor set layout");
-        LOG("Created material descriptor set layout");
+        VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
+        if (vkCreateDescriptorSetLayout(m_pInstanceCreator->GetDevice(), &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+            throw RendererException("vkCreateDescriptorSetLayout() failed to create descriptor set layout for material with " + std::to_string(_uCount) + " samplers");
+        LOG("Created material descriptor set layout (" << _uCount << ')');
+
+        m_materialDescriptorSetLayouts[_uCount] = descriptorSetLayout;
     }
 
 
@@ -397,77 +396,6 @@ namespace DENG {
             throw RendererException("vkAllocateDescriptorSets() failed to allocate shader descriptor sets");
     }
 
-
-    //void VulkanRenderer::_AllocateMaterialDescriptors(hash_t _hshMaterial) {
-    //    m_materialDescriptors.emplace(
-    //        std::piecewise_construct,
-    //        std::forward_as_tuple(_hshMaterial),
-    //        std::forward_as_tuple());
-    //
-    //    auto& descriptorSets = m_materialDescriptors[_hshMaterial];
-    //    DENG_ASSERT(m_hMaterialDescriptorSetLayout != VK_NULL_HANDLE);
-    //
-    //    _CheckAndAllocateDescriptorPool(MAX_FRAMES_IN_FLIGHT);
-    //
-    //    // check if diffuse and specular maps have image handles
-    //    ResourceManager& resourceManager = ResourceManager::GetInstance();
-    //    auto pMaterial = resourceManager.GetMaterial(_hshMaterial);
-    //    DENG_ASSERT(pMaterial);
-    //
-    //    if (pMaterial->hshDiffuseMap && m_textureHandles.find(pMaterial->hshDiffuseMap) == m_textureHandles.end())
-    //        _CreateApiImageHandles(pMaterial->hshDiffuseMap);
-    //    if (pMaterial->hshSpecularMap && m_textureHandles.find(pMaterial->hshSpecularMap) == m_textureHandles.end())
-    //        _CreateApiImageHandles(pMaterial->hshSpecularMap);
-    //
-    //    std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> descriptorSetLayouts;
-    //    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    //        descriptorSetLayouts[i] = m_hMaterialDescriptorSetLayout;
-    //
-    //    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
-    //    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    //    descriptorSetAllocateInfo.descriptorPool = m_hMainDescriptorPool;
-    //    descriptorSetAllocateInfo.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
-    //    descriptorSetAllocateInfo.pSetLayouts = descriptorSetLayouts.data();
-    //
-    //    if (vkAllocateDescriptorSets(m_pInstanceCreator->GetDevice(), &descriptorSetAllocateInfo, descriptorSets.data()) != VK_SUCCESS)
-    //        throw RendererException("vkAllocateDescriptorSets() failed to allocate material descriptor sets");
-    //
-    //    // query texture resources
-    //    Vulkan::TextureData& diffuse = pMaterial->hshDiffuseMap ? m_textureHandles[pMaterial->hshDiffuseMap] : m_textureHandles[m_hshMissing2DTexture];
-    //    Vulkan::TextureData& specular = pMaterial->hshSpecularMap ? m_textureHandles[pMaterial->hshSpecularMap] : m_textureHandles[m_hshMissing2DTexture];
-    //
-    //    std::array<VkDescriptorImageInfo, 2> descriptorImageInfos = {};
-    //    descriptorImageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    //    descriptorImageInfos[0].imageView = diffuse.hImageView;
-    //    descriptorImageInfos[0].sampler = diffuse.hSampler;
-    //
-    //    descriptorImageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    //    descriptorImageInfos[1].imageView = specular.hImageView;
-    //    descriptorImageInfos[1].sampler = diffuse.hSampler;
-    //
-    //    std::array<VkWriteDescriptorSet, 2 * MAX_FRAMES_IN_FLIGHT> writeDescriptors = {};
-    //    for (size_t i = 0; i < m_materialDescriptors[_hshMaterial].size(); i++) {
-    //        writeDescriptors[i * 2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    //        writeDescriptors[i * 2].dstSet = m_materialDescriptors[_hshMaterial][i];
-    //        writeDescriptors[i * 2].dstBinding = 0;
-    //        writeDescriptors[i * 2].descriptorCount = 1;
-    //        writeDescriptors[i * 2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    //        writeDescriptors[i * 2].pImageInfo = &descriptorImageInfos[0];
-    //
-    //        writeDescriptors[i * 2 + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    //        writeDescriptors[i * 2 + 1].dstSet = m_materialDescriptors[_hshMaterial][i];
-    //        writeDescriptors[i * 2 + 1].dstBinding = 1;
-    //        writeDescriptors[i * 2 + 1].descriptorCount = 1;
-    //        writeDescriptors[i * 2 + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    //        writeDescriptors[i * 2 + 1].pImageInfo = &descriptorImageInfos[1];
-    //    }
-    //
-    //    vkUpdateDescriptorSets(
-    //        m_pInstanceCreator->GetDevice(),
-    //        static_cast<uint32_t>(writeDescriptors.size()),
-    //        writeDescriptors.data(),
-    //        0, nullptr);
-    //}
 
     void VulkanRenderer::_UpdateShaderDescriptorSet(
         VkDescriptorSet _hDescriptorSet, 
@@ -711,7 +639,6 @@ namespace DENG {
         _CreateApiImageHandles(m_hshMissing3DTexture);
 
         // create material descriptor set layout
-        _CreateMaterialDescriptorSetLayout();
         _AllocateDescriptorPool();
 
         return pFramebuffer;
@@ -841,11 +768,22 @@ namespace DENG {
         }
 
         // check if material should be added
-        //if (_hshMaterial && m_materialDescriptors.find(_hshMaterial) == m_materialDescriptors.end()) {
-        //    _AllocateMaterialDescriptors(_hshMaterial);
-        //}
+        if (_hshMaterial && m_materialDescriptors.find(_hshMaterial) == m_materialDescriptors.end()) {
+            if (resourceManager.ExistsMaterialPBR(_hshMaterial))
+                _AllocateMaterialDescriptors<MaterialPBR, MAX_PBR_SAMPLERS>(_hshMaterial, *resourceManager.GetMaterialPBR(_hshMaterial));
+            else if (resourceManager.ExistsMaterialPhong(_hshMaterial))
+                _AllocateMaterialDescriptors<MaterialPhong, MAX_PHONG_SAMPLERS>(_hshMaterial, *resourceManager.GetMaterialPhong(_hshMaterial));
+        }
 
+        VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
         
+        // check if material descriptor set is required
+        if (pShader->GetMaterialSamplerCount() != 0 && m_materialDescriptorSetLayouts.find(pShader->GetMaterialSamplerCount()) == m_materialDescriptorSetLayouts.end())
+            _CreateMaterialDescriptorSetLayout(pShader->GetMaterialSamplerCount());
+        
+        if (pShader->GetMaterialSamplerCount() != 0)
+            materialDescriptorSetLayout = m_materialDescriptorSetLayouts[pShader->GetMaterialSamplerCount()];
+
         if (m_shaderDescriptors.find(_hshShader) != m_shaderDescriptors.end() && _hshMaterial) {
             vulkanFramebuffer->Draw(
                 _hshMesh, 
@@ -853,10 +791,9 @@ namespace DENG {
                 _uInstanceCount,
                 _uFirstInstance,
                 m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], 
-                //m_materialDescriptors[_hshMaterial][vulkanFramebuffer->GetCurrentFrameIndex()],
-                VK_NULL_HANDLE,
+                m_materialDescriptors[_hshMaterial][vulkanFramebuffer->GetCurrentFrameIndex()],
                 m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
-                m_hMaterialDescriptorSetLayout);
+                materialDescriptorSetLayout);
         }
         else if (m_shaderDescriptors.find(_hshShader) != m_shaderDescriptors.end()) {
             vulkanFramebuffer->Draw(
@@ -867,7 +804,7 @@ namespace DENG {
                 m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()],
                 VK_NULL_HANDLE,
                 m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
-                m_hMaterialDescriptorSetLayout);
+                materialDescriptorSetLayout);
         }
         else if (m_shaderDescriptors.find(_hshShader) == m_shaderDescriptors.end() && _hshMaterial) {
             vulkanFramebuffer->Draw(
@@ -876,10 +813,9 @@ namespace DENG {
                 _uInstanceCount,
                 _uFirstInstance,
                 VK_NULL_HANDLE,
-                VK_NULL_HANDLE,
-                //m_materialDescriptors[_hshMaterial][vulkanFramebuffer->GetCurrentFrameIndex()],
+                m_materialDescriptors[_hshMaterial][vulkanFramebuffer->GetCurrentFrameIndex()],
                 m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
-                m_hMaterialDescriptorSetLayout);
+                materialDescriptorSetLayout);
         }
         else {
             vulkanFramebuffer->Draw(
@@ -890,7 +826,7 @@ namespace DENG {
                 VK_NULL_HANDLE,
                 VK_NULL_HANDLE,
                 m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
-                m_hMaterialDescriptorSetLayout);
+                materialDescriptorSetLayout);
         }
     }
 }

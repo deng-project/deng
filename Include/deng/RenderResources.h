@@ -12,12 +12,15 @@
 #include "deng/Api.h"
 #include "deng/IShader.h"
 #include "deng/SID.h"
+#include "deng/ResourceEvents.h"
 
 #include <mutex>
 #include <unordered_map>
 #include <vector>
 #include <optional>
 
+#define MAX_PBR_SAMPLERS	6
+#define MAX_PHONG_SAMPLERS	2
 namespace DENG {
 
 	template<typename... Attrs>
@@ -68,16 +71,47 @@ namespace DENG {
 		std::vector<MeshDrawCommand> drawCommands;
 	};
 
+	enum PBRSamplerBits_T : uint32_t {
+		PBRSamplerBit_None = 0,
+		PBRSamplerBit_AlbedoMap = (1 << 0),
+		PBRSamplerBit_EmissionMap = (1 << 1),
+		PBRSamplerBit_NormalMap = (1 << 2),
+		PBRSamplerBit_MetallicMap = (1 << 3),
+		PBRSamplerBit_RoughnessMap = (1 << 4),
+		PBRSamplerBit_AmbientOcclusionMap = (1 << 5)
+	};
 
-	struct alignas(16) Material {
-		Material() = default;
-		Material(const Material&) = default;
-		Material(Material&&) = default;
+	typedef uint32_t PBRSamplerBits;
 
-		TRS::Vector4<float> vAlbedoFactor = {1.f, 1.f, 1.f, 1.f};
+	struct alignas(16) MaterialPBR {
+		MaterialPBR() = default;
+		MaterialPBR(const MaterialPBR&) = default;
+		MaterialPBR(MaterialPBR&&) = default;
+
+		TRS::Vector4<float> vAlbedoFactor = { 1.f, 1.f, 1.f, 1.f };
 		TRS::Vector4<float> vEmissiveFactor = { 0.f, 0.f, 0.f, 1.f };
-		float fRoughness = 0.7f;
-		float fMetallic = 0.4f;
+		float fRoughness = 0.0f;
+		float fMetallic = 0.0f;
+		float fAmbientOcclusion = 1.f;
+		PBRSamplerBits uSamplerBits = PBRSamplerBit_None;
+	};
+
+	enum PhongSamplerBits_T : uint32_t {
+		PhongSamplerBit_None = 0,
+		PhongSamplerBit_DiffuseMap = (1 << 0),
+		PhongSamplerBit_SpecularMap = (1 << 1)
+	};
+
+	typedef uint32_t PhongSamplerBits;
+
+	struct alignas(16) MaterialPhong {
+		MaterialPhong() = default;
+		MaterialPhong(const MaterialPhong&) = default;
+		MaterialPhong(MaterialPhong&&) = default;
+
+		TRS::Vector4<float> vDiffuse = { 1.0f, 0.f, 0.f, 1.f };
+		TRS::Vector4<float> vSpecular = { 1.0f, 0.f, 0.f, 1.f };
+		PhongSamplerBits uSamplerBits = PhongSamplerBit_None;
 	};
 
 	enum class TextureType {
@@ -114,12 +148,10 @@ namespace DENG {
 		bool bHeapAllocationFlag = false;
 	};
 
-	enum class ResourceType {
-		None,
-		Mesh,
-		Shader,
-		Material,
-		Texture
+	template<typename T, size_t N>
+	struct Material {
+		T material;
+		std::array<hash_t, N> textures {};
 	};
 
 	class DENG_API ResourceManager {
@@ -127,14 +159,16 @@ namespace DENG {
 			std::mutex m_mutex;
 
 			std::unordered_map<hash_t, MeshCommands, NoHash> m_meshes;
-			std::unordered_map<hash_t, Material, NoHash> m_materials;
+			std::unordered_map<hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, NoHash> m_pbrMaterials;
+			std::unordered_map<hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, NoHash> m_phongMaterials;
 			std::unordered_map<hash_t, IShader*, NoHash> m_shaders;
 			std::unordered_map<hash_t, Texture, NoHash> m_textures;
 
+			EventManager& m_eventManager;
 			static ResourceManager m_sResourceManager;
 
 		private:
-			ResourceManager() = default;
+			ResourceManager() : m_eventManager(EventManager::GetInstance()) {}
 
 		public:
 			~ResourceManager() {
@@ -148,14 +182,16 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const MeshCommands& AddMesh(hash_t _uHash, Args&&... args) {
+			inline const MeshCommands& AddMesh(hash_t _hshMesh, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder meshBuilder(std::forward<Args>(args)...);
-				m_meshes.insert(std::make_pair(_uHash, meshBuilder.Get()));
-				return m_meshes[_uHash];
+				m_meshes.insert(std::make_pair(_hshMesh, meshBuilder.Get()));
+
+				m_eventManager.Dispatch<ResourceAddedEvent>(_hshMesh, ResourceType::Mesh);
+				return m_meshes[_hshMesh];
 			}
 
-			inline const std::unordered_map<std::size_t, MeshCommands, NoHash>& GetMeshes() const {
+			inline const std::unordered_map<hash_t, MeshCommands, NoHash>& GetMeshes() const {
 				return m_meshes;
 			}
 
@@ -173,43 +209,92 @@ namespace DENG {
 				return &it->second;
 			}
 
+			inline bool ExistsMesh(hash_t _hshMesh) const {
+				return m_meshes.find(_hshMesh) != m_meshes.end();
+			}
+
+			inline void RemoveMesh(hash_t _hshMesh) {
+				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshMesh, ResourceType::Mesh);
+				m_meshes.erase(_hshMesh);
+			}
 
 			template<typename Builder, typename... Args>
-			inline const Material& AddMaterial(hash_t _uHash, Args&&... args) {
+			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>& AddMaterialPBR(hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
-				m_materials.insert(std::make_pair(_uHash, materialBuilder.Get()));
-				return m_materials[_uHash];
+				m_pbrMaterials.insert(std::make_pair(_hshMaterial, materialBuilder.Get()));
+
+				m_eventManager.Dispatch<ResourceAddedEvent>(_hshMaterial, ResourceType::Material_PBR);
+				return m_pbrMaterials[_hshMaterial];
 			}
 
-			inline const std::unordered_map<std::size_t, Material, NoHash>& GetMaterials() const {
-				return m_materials;
+			inline const std::unordered_map<hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, NoHash>& GetPBRMaterials() const {
+				return m_pbrMaterials;
 			}
 
-			inline const Material* GetMaterial(hash_t _uHash) const {
-				auto it = m_materials.find(_uHash);
-				if (it == m_materials.end())
+			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(hash_t _hshMaterial) const {
+				auto it = m_pbrMaterials.find(_hshMaterial);
+				if (it == m_pbrMaterials.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			Material* GetMaterial(hash_t _hshMaterial) {
-				auto it = m_materials.find(_hshMaterial);
-				if (it == m_materials.end())
+			Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(hash_t _hshMaterial) {
+				auto it = m_pbrMaterials.find(_hshMaterial);
+				if (it == m_pbrMaterials.end())
 					return nullptr;
 				return &it->second;
+			}
+
+			inline bool ExistsMaterialPBR(hash_t _hshMaterial) {
+				return m_pbrMaterials.find(_hshMaterial) != m_pbrMaterials.end();
+			}
+
+			inline void RemoveMaterialPBR(hash_t _hshMaterial) {
+				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshMaterial, ResourceType::Material_PBR);
+				m_pbrMaterials.erase(_hshMaterial);
 			}
 
 			template<typename Builder, typename... Args>
-			inline const IShader* AddShader(hash_t _uHash, Args&&... args) {
+			inline const Material<MaterialPhong, MAX_PHONG_SAMPLERS>& AddMaterialPhong(hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
-				Builder shaderBuilder(std::forward<Args>(args)...);
-				m_shaders.insert(std::make_pair(_uHash, shaderBuilder.Get()));
-				return m_shaders[_uHash];
+				Builder materialBuilder(std::forward<Args>(args)...);
+				m_phongMaterials.insert(std::make_pair(_uHash, materialBuilder.Get()));
+
+				m_eventManager.Dispatch<ResourceAddedEvent>(_hshMaterial, ResourceType::Material_Phong);
+				return m_phongMaterials[_uHash];
 			}
 
-			inline const IShader* GetShader(hash_t _uHash) const {
-				auto it = m_shaders.find(_uHash);
+			inline const std::unordered_map<hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, NoHash>& GetPhongMaterials() const {
+				return m_phongMaterials;
+			}
+
+			Material<MaterialPhong, MAX_PHONG_SAMPLERS>* GetMaterialPhong(hash_t _hshMaterial) {
+				auto it = m_phongMaterials.find(_hshMaterial);
+				if (it == m_phongMaterials.end())
+					return nullptr;
+				return &it->second;
+			}
+
+			inline bool ExistsMaterialPhong(hash_t _hshMaterial) {
+				return m_phongMaterials.find(_hshMaterial) != m_phongMaterials.end();
+			}
+
+			inline void RemoveMaterialPhong(hash_t _hshMaterial) {
+				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshMaterial, ResourceType::Material_Phong);
+				m_phongMaterials.erase(_hshMaterial);
+			}
+
+			template<typename Builder, typename... Args>
+			inline const IShader* AddShader(hash_t _hshShader, Args&&... args) {
+				std::scoped_lock lock(m_mutex);
+				Builder shaderBuilder(std::forward<Args>(args)...);
+				m_shaders.insert(std::make_pair(_hshShader, shaderBuilder.Get()));
+				return m_shaders[_hshShader];
+			}
+
+			inline const IShader* GetShader(hash_t _hshShader) const {
+				auto it = m_shaders.find(_hshShader);
 				if (it == m_shaders.end())
 					return nullptr;
 				return it->second;
@@ -226,17 +311,30 @@ namespace DENG {
 				return m_shaders;
 			}
 
-
-			template<typename Builder, typename... Args>
-			inline const Texture& AddTexture(hash_t _uHash, Args&&... args) {
-				std::scoped_lock lock(m_mutex);
-				Builder textureBuilder(std::forward<Args>(args)...);
-				m_textures.insert(std::make_pair(_uHash, textureBuilder.Get()));
-				return m_textures[_uHash];
+			inline bool ExistsShader(hash_t _hshShader) {
+				return m_shaders.find(_hshShader) != m_shaders.end();
 			}
 
-			inline const Texture* GetTexture(hash_t _uHash) const {
-				auto it = m_textures.find(_uHash);
+			inline void RemoveShader(hash_t _hshShader) {
+				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshShader, ResourceType::Shader);
+				
+				if (m_shaders.find(_hshShader) != m_shaders.end())
+					delete m_shaders[_hshShader];
+				m_shaders.erase(_hshShader);
+			}
+
+			template<typename Builder, typename... Args>
+			inline const Texture& AddTexture(hash_t _hshTexture, Args&&... args) {
+				std::scoped_lock lock(m_mutex);
+				Builder textureBuilder(std::forward<Args>(args)...);
+				m_textures.insert(std::make_pair(_hshTexture, textureBuilder.Get()));
+				
+				m_eventManager.Dispatch<ResourceAddedEvent>(_hshTexture, ResourceType::Texture);
+				return m_textures[_hshTexture];
+			}
+
+			inline const Texture* GetTexture(hash_t _hshTexture) const {
+				auto it = m_textures.find(_hshTexture);
 				if (it == m_textures.end())
 					return nullptr;
 				return &it->second;
@@ -244,6 +342,15 @@ namespace DENG {
 
 			inline const std::unordered_map<hash_t, Texture, NoHash>& GetTextures() const {
 				return m_textures;
+			}
+
+			inline bool ExistsTexture(hash_t _hshTexture) {
+				return m_textures.find(_hshTexture) != m_textures.end();
+			}
+
+			inline void RemoveTexture(hash_t _hshTexture) {
+				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshTexture, ResourceType::Texture);
+				m_textures.erase(_hshTexture);
 			}
 
 			inline void FreeTextureHeapData(hash_t _hshTexture) {

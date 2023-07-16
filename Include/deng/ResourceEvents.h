@@ -7,9 +7,17 @@
 #define RESOURCE_EVENTS_H
 
 #include "deng/Event.h"
-#include "deng/RenderResources.h"
 
 namespace DENG {
+
+	enum class ResourceType {
+		None,
+		Mesh,
+		Shader,
+		Material_PBR,
+		Material_Phong,
+		Texture
+	};
 
 	class DENG_API ResourceEvent : public IEvent {
 		private:
