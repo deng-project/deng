@@ -13,7 +13,8 @@ set(LAYERS_HEADERS
 	Include/deng/Layers/Layers.h
 	Include/deng/Layers/LightSourceBuilders.h
 	Include/deng/Layers/PBRLayer.h
-	Include/deng/Layers/PBRResourceBuilders.h)
+	Include/deng/Layers/PBRResourceBuilders.h
+	Include/deng/Layers/PBRTable.h)
 	
 set(LAYERS_SOURCES
 	Sources/Layers/CameraScript.cpp

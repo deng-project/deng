@@ -29,8 +29,8 @@ namespace DENG {
 				DISPATCH_ERROR_MESSAGE("HardwareException", e.what(), ErrorSeverity::CRITICAL);
 			}
 
-			auto mainLayer = PushLayer<PBRLayer>(pRenderer, pMainFramebuffer);
-			PushLayer<ImGuiLayer>()->SetDrawCallback(&PBRLayer::OnImGuiDraw, mainLayer);
+			auto mainLayer = PushLayer<GrassLayer>(pRenderer, pMainFramebuffer);
+			PushLayer<ImGuiLayer>()->SetDrawCallback(&SandboxApp::OnImGuiDraw, this);
 			AttachLayers();
 		}
 

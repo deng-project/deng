@@ -25,6 +25,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/App.h
 	Include/deng/CameraTransformer.h
 	Include/deng/Components.h
+	Include/deng/CVars.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Event.h
 	Include/deng/Exceptions.h
@@ -65,6 +66,7 @@ set(DENG_MINIMAL_HEADERS
 set(DENG_MINIMAL_SOURCES
 	Sources/App.cpp
 	Sources/CameraTransformer.cpp
+	Sources/CVars.cpp
 	Sources/ErrorDefinitions.cpp
 	Sources/FileTextureBuilder.cpp
 	Sources/FileSystemShader.cpp
@@ -77,6 +79,7 @@ set(DENG_MINIMAL_SOURCES
 	Sources/Scene.cpp
 	Sources/SceneRenderer.cpp
 	Sources/SDLWindowContext.cpp
+	Sources/SID.cpp
 	Sources/Singletons.cpp
 	Sources/SkyboxBuilders.cpp
 	Sources/UberShader.cpp

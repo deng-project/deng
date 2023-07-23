@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <string>
 
 namespace DENG {
 
@@ -117,8 +118,10 @@ namespace DENG {
         return 0xffffffff;
     }
 
-    #define SID(x) (DENG::crc32<sizeof(x) - 2>(x) ^ 0xffffffff)
+    uint32_t RuntimeCrc32(const std::string& _str);
 
+    #define SID(x) (DENG::crc32<sizeof(x) - 2>(x) ^ 0xffffffff)
+    #define RUNTIME_CRC(x) RuntimeCrc32(x)
 #elif defined(ENV64)
     static constexpr uint64_t crc64_table[256] = {
         0x0000000000000000, 0xb32e4cbe03a75f6f, 0xf4843657a840a05b, 0x47aa7ae9abe7ff34,
@@ -198,7 +201,10 @@ namespace DENG {
         return 0xffffffffffffffff;
     }
 
+    uint64_t RuntimeCrc64(const std::string& _str);
+
     #define CONSTEXPR_SID(x) (DENG::crc64<sizeof(x) - 2>(x) ^ 0xffffffffffffffff)
+    #define RUNTIME_CRC(x) RuntimeCrc64(x)
 #endif
     
     #define SID(x) COMPILE_TIME(CONSTEXPR_SID(x))

@@ -68,6 +68,7 @@ if(DENG_BUILD_TESTS)
 	set(DEMO_APPS_DIR DemoApps)
 	
 	include(CMake/Demos/SIDTest.cmake)
+	include(CMake/Demos/CVarTest.cmake)
 	include(CMake/Demos/CompileTimeMapTest.cmake)
 	include(CMake/Demos/TriangleApp.cmake)
 	include(CMake/Demos/ImGuiApp.cmake)
