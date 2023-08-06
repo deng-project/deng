@@ -648,15 +648,17 @@ namespace DENG {
         DENG_ASSERT(m_pInstanceCreator);
 
         switch (_eType) {
-            case BufferDataType::Vertex:
-                return m_gpuMemoryAllocator.RequestMemory(_uSize, sizeof(uint32_t)).uOffset;
+        case BufferDataType::Vertex:
+            return m_gpuMemoryAllocator.RequestMemory(_uSize, sizeof(uint32_t)).uOffset;
 
-            case BufferDataType::Index:
-                return m_gpuMemoryAllocator.RequestMemory(_uSize, sizeof(uint32_t)).uOffset;
+        case BufferDataType::Index:
+            return m_gpuMemoryAllocator.RequestMemory(_uSize, sizeof(uint32_t)).uOffset;
 
-            case BufferDataType::Uniform:
-                return m_gpuMemoryAllocator.RequestMemory(_uSize, m_pInstanceCreator->GetPhysicalDeviceInformation().uMinimalUniformBufferAlignment).uOffset;
-        
+        case BufferDataType::Uniform:
+        {
+            size_t uOffset = m_gpuMemoryAllocator.RequestMemory(_uSize, m_pInstanceCreator->GetPhysicalDeviceInformation().uMinimalUniformBufferAlignment).uOffset;
+            return uOffset;
+        }
             default:
                 break;
         }

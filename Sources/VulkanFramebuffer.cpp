@@ -12,7 +12,7 @@ namespace DENG {
 
         Framebuffer::Framebuffer(
             const InstanceCreator* _pInstanceCreator, 
-            VkBuffer& _hMainBuffer, 
+            VkBuffer& _hMainBuffer,
             VkSampleCountFlagBits _uSampleCountBits,
             TRS::Point2D<uint32_t> _extent,
             bool _bIsSwapchain) :
@@ -22,13 +22,14 @@ namespace DENG {
             m_uSampleCountBits(_uSampleCountBits)
         {
             try {
-                m_hRenderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_pInstanceCreator->GetDevice(), VK_FORMAT_DEFAULT_IMAGE, VK_SAMPLE_COUNT_1_BIT, !_bIsSwapchain);
 
                 if (!_bIsSwapchain) {
                     _CreateFramebufferImage();
+                    m_hRenderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_pInstanceCreator->GetDevice(), VK_FORMAT_DEFAULT_IMAGE, VK_SAMPLE_COUNT_1_BIT, !_bIsSwapchain);
                 }
                 else {
                     m_pSwapchainCreator = new SwapchainCreator(m_pInstanceCreator, m_uWidth, m_uHeight, m_uSampleCountBits);
+                    m_hRenderpass = Vulkan::SwapchainCreator::CreateRenderPass(m_pInstanceCreator->GetDevice(), m_pSwapchainCreator->GetSwapchainFormat(), VK_SAMPLE_COUNT_1_BIT, !_bIsSwapchain);
                 }
 
                 _CreateDepthResources();

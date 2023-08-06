@@ -241,7 +241,7 @@ namespace DENG {
 
 	void SceneRenderer::UpdateSkyboxScale(const TRS::Vector4<float>& _vScale) {
 		if (!m_uSkyboxScaleOffset)
-			m_uSkyboxScaleOffset = m_pRenderer->AllocateMemory(sizeof(TRS::Vector4<float>), BufferDataType::Vertex);
+			m_uSkyboxScaleOffset = m_pRenderer->AllocateMemory(sizeof(TRS::Vector4<float>), BufferDataType::Uniform);
 	
 		m_pRenderer->UpdateBuffer(&_vScale, sizeof(TRS::Vector4<float>), m_uSkyboxScaleOffset);
 	}

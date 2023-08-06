@@ -59,7 +59,6 @@ namespace DENG {
             const VkSampleCountFlagBits m_uSampleCountBits = VK_SAMPLE_COUNT_1_BIT;
 
             Vulkan::InstanceCreator* m_pInstanceCreator = nullptr;
-            Vulkan::SwapchainCreator* m_pSwapchainCreator = nullptr;
             std::unordered_map<hash_t, Vulkan::PipelineCreator, NoHash> m_pipelineCreators;
             std::unordered_map<hash_t, Vulkan::TextureData, NoHash> m_textureHandles;
 
