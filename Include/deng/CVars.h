@@ -21,42 +21,10 @@
 #include "deng/ErrorDefinitions.h"
 #include <queue>
 #include <fstream>
+#include <stack>
 #endif
 
 namespace DENG {
-
-	struct CVar_Color {
-		CVar_Color(
-			float _r,
-			float _g,
-			float _b,
-			float _a) :
-			r(_r), g(_g), b(_b), a(_a) {}
-
-		float r; float g; float b; float a;
-	};
-
-	inline std::ostream& operator<<(std::ostream& _stream, const CVar_Color& _color) {
-		int r = int(255 * _color.r);
-		int g = int(255 * _color.g);
-		int b = int(255 * _color.b);
-		int a = int(255 * _color.a);
-		_stream << "[ " << r << ", " << g << ", " << b << ", " << a << " ]";
-		return _stream;
-	}
-
-	inline std::istream& operator>>(std::istream& _stream, CVar_Color& _color) {
-		int r = 0, g = 0, b = 0, a = 0;
-		char str[1024]{0};
-		_stream.readsome(str, 1024);
-		(void) std::sscanf(str, "[ %d, %d, %d, %d ]", &r, &g, &b, &a);
-		_color.r = static_cast<float>(r) / 255.f;
-		_color.g = static_cast<float>(g) / 255.f;
-		_color.b = static_cast<float>(b) / 255.f;
-		_color.a = static_cast<float>(a) / 255.f;
-		return _stream;
-	}
-
 
 	class CVar_String {
 		private:
@@ -73,9 +41,14 @@ namespace DENG {
 				m_hshString(RUNTIME_CRC(m_string)) {}
 			CVar_String(const CVar_String&) = default;
 			CVar_String(CVar_String&&) = default;
-	
-			operator std::string&() { return m_string; }
-			operator const std::string&() const { return m_string; }
+
+			operator std::string& () { return m_string; }
+			operator const std::string& () const { return m_string; }
+
+			bool operator==(const CVar_String& _str) const {
+				return m_hshString == _str.Hash();
+			}
+
 			void operator=(const std::string& _str) {
 				m_string = _str;
 				m_hshString = RUNTIME_CRC(m_string);
@@ -99,144 +72,162 @@ namespace DENG {
 		_stream << _str.String();
 		return _stream;
 	}
+}
 
+template <>
+struct std::hash<DENG::CVar_String> {
+	inline std::size_t operator()(const DENG::CVar_String& _str) const {
+		return _str.Hash();
+	}
+};
+
+namespace DENG {
 	typedef int32_t CVar_Int;
 	typedef float CVar_Float;
 	typedef bool CVar_Bool;
 
-	struct CVar_Description {
-		CVar_String str;
+	class CVar_List;
+	class CVar_Object;
+	typedef std::variant<std::monostate, CVar_Int, CVar_Float, CVar_Bool, CVar_String, std::shared_ptr<CVar_List>, std::shared_ptr<CVar_Object>> CVar_ListItem;
 
-		CVar_Description() = default;
-		CVar_Description(const CVar_String& _str) :
-			str(_str) {}
-	};
-
-	std::ostream& operator<<(std::ostream& _stream, CVar_Description& _desc);
-
-	template<typename T>
-	class CVar {
+	class CVar_List {
 		private:
-			CVar_String m_key;
-			CVar_Description m_description;
-			T m_value;
+			std::vector<CVar_ListItem> m_items;
 
 		public:
-			CVar(const CVar_String& _key, const CVar_String& _desc, const T& _val) :
-				m_key(_key),
-				m_description(_desc),
-				m_value(_val) {}
-			CVar() = default;
+			CVar_List() = default;
+			CVar_List(const CVar_List& _list) : 
+				m_items(_list.m_items) {}
+			CVar_List(CVar_List&& _list) :
+				m_items(std::move(_list.m_items)) {}
+			CVar_List(std::initializer_list<CVar_ListItem> _initList) {
+				m_items.reserve(_initList.size());
+				for (auto it = _initList.begin(); it != _initList.end(); it++) {
+					m_items.push_back(*it);
+				}
+			}
 
-			inline CVar_String& GetKey() { return m_key; }
-			inline CVar_Description& GetDescription() { return m_description; }
-			inline const T& GetValue() { return m_value; }
-			inline void Set(const T& _val) { m_value = _val; }
+			template <typename T>
+			inline void PushBack(const T& _val) { m_items.push_back(_val); }
+			inline size_t Size() const { return m_items.size(); }
+			inline auto Begin() const { return m_items.begin(); }
+			inline auto End() const { return m_items.end(); }
+			inline auto ReverseBegin() const { return m_items.rbegin(); }
+			inline auto ReverseEnd() const { return m_items.rend(); }
 	};
 
-	template <typename T>
-	std::string MakeCVarString(const CVar_String& _sKey, const CVar_String& _sDesc, const T& _val) {
-		// find the indentation level
-		size_t uIndent = std::count(_sKey.String().begin(), _sKey.String().end(), '.');
-		std::stringstream sStream;
-		
-		bool bNextIndent = false;
-		for (size_t i = 0; i < _sDesc.String().size(); i++) {
-			if (_sDesc.String()[i] != '\n' && i) {
-				if (bNextIndent) {
-					sStream << std::setfill('\t') << std::setw(uIndent) << "" << "# ";
-					bNextIndent = false;
-				}
-				sStream << _sDesc.String()[i];
+	typedef std::variant<std::monostate, CVar_Int, CVar_Float, CVar_Bool, CVar_String, CVar_List, std::shared_ptr<CVar_Object>> CVar_Value;
+	struct CVar_Descriptor {
+		CVar_String description;
+		CVar_Value val;
+	};
+
+	class CVar_Object {
+		private:
+			using _Content = std::unordered_map<CVar_String, CVar_Descriptor>;
+
+			// .first - comment/help text
+			// .second - CVar_Value to use
+			_Content m_contents;
+		public:
+			CVar_Object() = default;
+
+			inline void PushNode(const CVar_String& _key, const CVar_String& _description, const CVar_Value& _val) {
+				m_contents.emplace(std::make_pair(_key, CVar_Descriptor{ _description, _val }));
 			}
-			else if (!i)
-				sStream << std::setfill('\t') << std::setw(uIndent) << "" << "# " << _sDesc.String()[i];
-			else {
-				bNextIndent = true;
-				sStream << _sDesc.String()[i];
-			}
-		}
 
-		if (_sDesc.String().size() && _sDesc.String().back() != '\n')
-			sStream << '\n';
+			inline _Content& GetContents() { return m_contents; }
+			inline const _Content& GetContents() const { return m_contents; }
+	};
 
-		const std::string sNodeName = (_sKey.String().rfind('.') == std::string::npos ? _sKey.String() : _sKey.String().substr(_sKey.String().rfind('.') + 1));
-		sStream << std::setfill('\t') << std::setw(uIndent) << "" << sNodeName << ": " << _val;
-	
-		return sStream.str();
-	}
-
-	template<typename T>
-	inline std::ostream& operator<<(std::ostream& _stream, CVar<T>& _val) {
-		_stream << MakeCVarString(_val.GetKey(), _val.GetDescription().str, _val.GetValue());
-		return _stream;
-	}
-
-
-	struct TrieNode {
-		CVar_String sId;
-		hash_t hshParent = 0;
-		std::unordered_map<hash_t, TrieNode, NoHash> childNodes;
-		std::variant<std::monostate, CVar<CVar_Int>, CVar<CVar_Float>, CVar<CVar_Bool>, CVar<CVar_String>, CVar<CVar_Color>> value;
+	enum CVarType : size_t {
+		CVarType_None,
+		CVarType_Int,
+		CVarType_Float,
+		CVarType_Bool,
+		CVarType_String,
+		CVarType_List,
+		CVarType_Object
 	};
 
 	class CVarSystem {
 		private:
-			using _Variant_T = std::variant<std::monostate, CVar<CVar_Int>, CVar<CVar_Float>, CVar<CVar_Bool>, CVar<CVar_String>, CVar<CVar_Color>>;
-			std::unordered_map<hash_t, TrieNode, NoHash> m_rootNodes;
+			std::unordered_map<CVar_String, CVar_Descriptor> m_root;
 
 		private:
 			CVarSystem() = default;
 			std::vector<CVar_String> _HashKeyWords(const std::string& _key);
-			TrieNode* _FindNode(const std::string& _key);
+			CVar_Descriptor* _FindNode(const std::string& _key);
 
 		public:
 			static CVarSystem& GetInstance();
 
-			void Serialize(const std::string& _sFileName);
-			void Unserialize(const std::string& _sFileName);
+			template <typename T>
+			void Serialize(const std::string& _sFileName) {
+				T serializer;
+				serializer.Serialize(m_tree, _sFileName);
+			}
+
+			template <typename T>
+			void Unserialize(const std::string& _sFileName) {
+				T unserializer;
+				unserializer.Unserialize(m_tree, _sFileName);
+			}
+
+			inline CVar_String* GetDescription(const std::string& _key) {
+				CVar_Descriptor* pNode = _FindNode(_key);
+				if (pNode)
+					return &pNode->description;
+				return nullptr;
+			}
+
+			inline CVar_Value* GetValue(const std::string& _key) {
+				CVar_Descriptor* pNode = _FindNode(_key);
+				if (pNode)
+					return &pNode->val;
+				return nullptr;
+			}
 			
 			template<typename T>
-			CVar<T>* Get(const std::string& _key) {
-				TrieNode* pNode = _FindNode(_key);
+			inline T* Get(const std::string& _key) {
+				CVar_Descriptor* pNode = _FindNode(_key);
 				if (pNode)
-					return std::get_if<CVar<T>>(&pNode->value);
+					return std::get_if<T>(&pNode->val);
 				return nullptr;
 			}
 
 			template<typename T>
-			CVar<T>* Set(const CVar_String& _key, const CVar_String& _desc, const T& _val) {
+			bool Set(const CVar_String& _key, const CVar_String& _description, const T& _val) {
 				std::vector<CVar_String> cvarStrings = _HashKeyWords(_key);
-				std::unordered_map<hash_t, TrieNode, NoHash>* pTable = &m_rootNodes;
+				std::unordered_map<CVar_String, CVar_Descriptor>* pTable = &m_root;
 
-				hash_t hshPrev = 0;
 				for (size_t i = 0; i < cvarStrings.size() - 1; i++) {
-					if (i) hshPrev = cvarStrings[i - 1].Hash();
-
-					if (pTable->find(cvarStrings[i].Hash()) == pTable->end()) {
-						pTable->insert(std::make_pair(cvarStrings[i].Hash(), TrieNode{
-							cvarStrings[i],
-							hshPrev,
-							std::unordered_map<hash_t, TrieNode, NoHash>(),
-							std::monostate{}
+					if (pTable->find(cvarStrings[i]) == pTable->end()) {
+						pTable->insert(std::make_pair(cvarStrings[i], CVar_Descriptor{
+							CVar_String(),
+							std::make_shared<CVar_Object>()
 							}));
 					}
-					pTable = &pTable->find(cvarStrings[i].Hash())->second.childNodes;
+					auto pObject = std::get_if<std::shared_ptr<CVar_Object>>(&pTable->find(cvarStrings[i])->second.val);
+					if (!pObject) return false;
+					pTable = &pObject->get()->GetContents();
 				}
 
-				if (cvarStrings.size() > 1)
-					hshPrev = cvarStrings[cvarStrings.size() - 2].Hash();
+				pTable->insert(std::make_pair(cvarStrings.back(), CVar_Descriptor{ _description, _val }));
 
-				pTable->insert(std::make_pair(cvarStrings.back().Hash(), TrieNode {
-					cvarStrings.back(),
-					hshPrev,
-					std::unordered_map<hash_t, TrieNode, NoHash>(),
-					CVar<T>(_key, _desc, _val)
-					}));
-
-				return std::get_if<CVar<T>>(&pTable->find(cvarStrings.back().Hash())->second.value);
+				return true;
 			}
 	};
+
+
+	inline std::ostream& operator<<(std::ostream& _stream, CVar_String& _str) {
+		_stream << _str.String();
+		return _stream;
+	}
+
+	// console syntax
+	std::ostream& operator<<(std::ostream& _stream, CVar_List& _str);
+	std::ostream& operator<<(std::ostream& _stream, CVar_Object& _obj);
 }
 
 #endif

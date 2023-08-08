@@ -8,31 +8,6 @@
 
 namespace DENG {
 
-	std::ostream& operator<<(std::ostream& _stream, CVar_Description& _desc) {
-		auto& str = _desc.str.String();
-		std::queue<std::string> qDesc;
-		
-		size_t uPos = 0;
-		size_t uBeginPos = 0;
-
-		const char cDelim = '\n';
-		while ((uPos = str.find(cDelim, uBeginPos)) != std::string::npos) {
-			qDesc.push(str.substr(uBeginPos, uPos));
-			uBeginPos = uPos + 1;
-		}
-
-		if (uBeginPos != str.size())
-			qDesc.push(str.substr(uBeginPos));
-
-		while (!qDesc.empty()) {
-			_stream << "# " << qDesc.front() << '\n';
-			qDesc.pop();
-		}
-
-		return _stream;
-	}
-
-
 	std::vector<CVar_String> CVarSystem::_HashKeyWords(const std::string& _key) {
 		std::queue<std::string> qKeyWords;
 
@@ -60,16 +35,21 @@ namespace DENG {
 	}
 
 
-	TrieNode* CVarSystem::_FindNode(const std::string& _key) {
+	CVar_Descriptor* CVarSystem::_FindNode(const std::string& _key) {
 		auto hashes = _HashKeyWords(_key);
-		TrieNode* pNode = nullptr;
-		std::unordered_map<hash_t, TrieNode, NoHash>* pNodeTable = &m_rootNodes;
+		CVar_Descriptor* pNode = nullptr;
+		std::unordered_map<CVar_String, CVar_Descriptor>* pNodeTable = &m_root;
 
 		for (size_t i = 0; i < hashes.size(); i++) {
-			auto itNode = pNodeTable->find(hashes[i].Hash());
+			auto itNode = pNodeTable->find(hashes[i]);
 			if (itNode != pNodeTable->end()) {
-				pNodeTable = &itNode->second.childNodes;
 				pNode = &itNode->second;
+				auto pObject = std::get_if<std::shared_ptr<CVar_Object>>(&pNode->val);
+				
+				if (i != hashes.size() - 1 && !pObject)
+					return nullptr;
+				else if (i != hashes.size() - 1) 
+					pNodeTable = &pObject->get()->GetContents();
 			}
 			else 
 				return nullptr;
@@ -83,67 +63,117 @@ namespace DENG {
 		return system;
 	}
 
-	struct _TraversalNode {
-		std::unordered_map<hash_t, TrieNode, NoHash>::iterator itNode;
-		size_t uNTabs = 0;
-		std::unordered_map<hash_t, TrieNode, NoHash>* pTable = nullptr;
-	};
+	// ostream operators
+	std::ostream& operator<<(std::ostream& _stream, CVar_List& _list) {
+		std::stack<CVar_List*> stckList;
+		stckList.push(&_list);
 
-	void CVarSystem::Serialize(const std::string& _sFileName) {
-		std::ofstream stream(_sFileName);
-		
-		std::deque<_TraversalNode> qNodes;
+		while (!stckList.empty()) {
+			_stream << '[';
+			auto pList = stckList.top();
 
-		for (auto it = m_rootNodes.begin(); it != m_rootNodes.end(); it++) {
-			qNodes.push_back({ it, 0, &m_rootNodes });
-		}
-
-		while (!qNodes.empty()) {
-			auto node = qNodes.front();
-			qNodes.pop_front();
-
-			// check if the current TrieNode* instance has a value
-			if (node.itNode->second.value.index() != 0) {
-				switch (node.itNode->second.value.index()) {
-					// CVar<CVar_Int>
-					case 1:
-						stream << std::get<1>(node.itNode->second.value) << '\n';
+			for (auto it = pList->Begin(); it != pList->End(); it++) {
+				switch (it->index()) {
+					case CVarType_Bool:
+						_stream << (std::get<CVar_Bool>(*it) ? "true" : "false");
 						break;
 
-					// CVar<CVar_Float>
-					case 2:
-						stream << std::get<2>(node.itNode->second.value) << '\n';
+					case CVarType_Float:
+						_stream << std::get<CVar_Float>(*it);
 						break;
 
-					// CVar<CVar_Bool>
-					case 3:
-						stream << std::get<3>(node.itNode->second.value) << '\n';
+					case CVarType_Int:
+						_stream << std::get<CVar_Int>(*it);
 						break;
 
-					// CVar<CVar_String>
-					case 4:
-						stream << std::get<4>(node.itNode->second.value) << '\n';
+					case CVarType_List:
+						_stream << '[';
+						stckList.push(std::get<std::shared_ptr<CVar_List>>(*it).get());
 						break;
 
-					// CVar<CVar_Color>
-					case 5:
-						stream << std::get<5>(node.itNode->second.value) << '\n';
+					case CVarType_Object:
+						_stream << *std::get<std::shared_ptr<CVar_Object>>(*it).get();
+						break;
+
+					case CVarType_String:
+						_stream << '\"' << std::get<CVar_String>(*it) << '\"';
 						break;
 
 					default:
 						DENG_ASSERT(false);
 						break;
 				}
-			}
-			else {
-				stream << std::setfill('\t') << std::setw(node.uNTabs) << "" << node.itNode->second.sId.String() << ":\n";
 
-				for (auto it = node.itNode->second.childNodes.begin(); it != node.itNode->second.childNodes.end(); it++)
-					qNodes.push_front({ it, node.uNTabs + 1, &node.itNode->second.childNodes });
+				if (it != (_list.End() - 1))
+					_stream << ", ";
+				else _stream << ']';
 			}
+
+			stckList.pop();
+			if (!stckList.empty())
+				_stream << ", ";
 		}
 
-		stream.close();
+		return _stream;
 	}
 
+	std::ostream& operator<<(std::ostream& _stream, CVar_Object& _obj) {
+		std::stack<std::pair<CVar_Object*, std::unordered_map<CVar_String, CVar_Descriptor>::iterator>> stckObjects;
+		stckObjects.push(std::make_pair(&_obj, _obj.GetContents().begin()));
+
+		_stream << '{';
+		while (!stckObjects.empty()) {
+			BEGIN:
+			auto& obj = stckObjects.top();
+
+			for (auto it = obj.second; it != obj.first->GetContents().end(); it++) {
+				_stream << '\"' << it->first << "\": ";
+				switch (it->second.val.index()) {
+					case CVarType_Bool:
+						_stream << (std::get<CVar_Bool>(it->second.val) ? "true" : "false");
+						break;
+
+					case CVarType_Float:
+						_stream << std::get<CVar_Float>(it->second.val);
+						break;
+
+					case CVarType_Int:
+						_stream << std::get<CVar_Int>(it->second.val);
+						break;
+
+					case CVarType_List:
+						_stream << std::get<CVar_List>(it->second.val);
+						break;
+
+					case CVarType_Object:
+					{
+						_stream << '{';
+						auto pObject = std::get<std::shared_ptr<CVar_Object>>(it->second.val).get();
+						it++;
+						obj.second = it;
+						stckObjects.push(std::make_pair(pObject, pObject->GetContents().begin()));
+						goto BEGIN;
+					}
+
+					case CVarType_String:
+						_stream << '\"' << std::get<CVar_String>(it->second.val) << '\"';
+						break;
+
+					default:
+						DENG_ASSERT(false);
+						break;
+				}
+
+				auto it2 = obj.first->GetContents().end();
+				it2--;
+				if (it != it2)
+					_stream << ", ";
+			}
+			
+			_stream << '}';
+			stckObjects.pop();
+		}
+
+		return _stream;
+	}
 }

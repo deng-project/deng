@@ -30,7 +30,7 @@ namespace DENG {
 			}
 
 			auto mainLayer = PushLayer<GrassLayer>(pRenderer, pMainFramebuffer);
-			PushLayer<ImGuiLayer>()->SetDrawCallback(&SandboxApp::OnImGuiDraw, this);
+			PushLayer<PBRLayer>();
 			AttachLayers();
 		}
 
