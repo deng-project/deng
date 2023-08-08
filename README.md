@@ -31,3 +31,11 @@ mkdir build
 cd Build
 cmake ..
 ```
+
+## Implemented features so far
+
+* PBR shaders
+* [DAS](https://git.dengproject.org/deng/libdas) intermediate 3D model format
+* ECS scene management
+* Layered application stack
+
