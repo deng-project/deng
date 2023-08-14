@@ -4,9 +4,6 @@
 [submodule "ThirdParty/libdas"]
 	path = ThirdParty/libdas
 	url = https://git.dengproject.org/deng/libdas
-[submodule "ThirdParty/dxml"]
-	path = ThirdParty/dxml
-	url = https://git.dengproject.org/deng/dengxml
 [submodule "ThirdParty/mar"]
 	path = ThirdParty/mar
 	url = https://git.dengproject.org/deng/minimal-ascii-reader
