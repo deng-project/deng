@@ -1,12 +1,22 @@
 import os
+import sys
 import subprocess
 
 VCPKG_PATH = "./ThirdParty/vcpkg"
+PLATFORM = ""
+
+if sys.platform.startswith("linux"):
+    PLATFORM = "linux";
+elif sys.platform.startswith("win32"):
+    PLATFORM = "windows"
+elif sys.platform.startswith("darwin"):
+    PLATFORM = "osx"
+
 VCPKG_PACKAGES = [
-    "entt:x64-windows",
-    "shaderc:x64-windows",
-    "sdl2[vulkan]:x64-windows",
-    "bullet3:x64-windows",
+    f"entt:x64-{PLATFORM}",
+    f"shaderc:x64-{PLATFORM}",
+    f"sdl2[vulkan]:x64-{PLATFORM}",
+    f"bullet3:x64-{PLATFORM}"
 ]
 
 def check_and_install_vcpkg():

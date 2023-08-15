@@ -51,13 +51,6 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/libdas)
 target_include_directories(das-static
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/trs/include)
 
-# dengxml configuration
-set(DENGXML_BUILD_TESTS OFF CACHE BOOL "Build dengxml tests")
-set(DENGXML_BUILD_DEPENDENCIES OFF CACHE BOOL "Build all dengxml dependencies")
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/dxml)
-target_include_directories(dxml
-	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/trs/include)
-
 include(CMake/libdeng.cmake)
 include(CMake/layers.cmake)
 include(CMake/Sandbox.cmake)

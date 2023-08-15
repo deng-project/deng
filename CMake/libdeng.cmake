@@ -151,8 +151,7 @@ target_link_directories(${DENG_MINIMAL_TARGET}
 
 add_dependencies(${DENG_MINIMAL_TARGET}
     das-static
-    dastool
-	dxml)
+    dastool)
 	
 # Linking
 target_link_libraries(${DENG_MINIMAL_TARGET}
@@ -163,7 +162,6 @@ target_link_libraries(${DENG_MINIMAL_TARGET}
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
 	$<IF:$<TARGET_EXISTS:SDL2::SDL2-static>,SDL2::SDL2-static,SDL2::SDL2>
 	PUBLIC das-static
-	PUBLIC dxml
 	PRIVATE vulkan-1)
 			
 
