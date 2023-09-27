@@ -5,6 +5,7 @@
 
 set(LAYERS_TARGET deng-layers)
 set(LAYERS_HEADERS
+	Include/deng/Layers/BulletPhysicsDemo.h
 	Include/deng/Layers/CameraScript.h
 	Include/deng/Layers/CubeResourceBuilders.h
 	Include/deng/Layers/CubeVertices.h
@@ -17,6 +18,7 @@ set(LAYERS_HEADERS
 	Include/deng/Layers/PBRTable.h)
 	
 set(LAYERS_SOURCES
+	Sources/Layers/BulletPhysicsDemo.cpp
 	Sources/Layers/CameraScript.cpp
 	Sources/Layers/CubeResourceBuilders.cpp
 	Sources/Layers/GrassLayer.cpp

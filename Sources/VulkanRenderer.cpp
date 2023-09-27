@@ -725,6 +725,11 @@ namespace DENG {
             m_deletedBuffers.clear();
         }
 
+        // reset descriptor update table
+        for (auto it = m_shaderDescriptorUpdateTable.begin(); it != m_shaderDescriptorUpdateTable.end(); it++) {
+            it->second = false;
+        }
+
         return true;
     }
 
@@ -763,10 +768,12 @@ namespace DENG {
         if (pShader->GetUniformDataLayouts().size() && m_shaderDescriptors.find(_hshShader) == m_shaderDescriptors.end()) {
             _CreateShaderDescriptorSetLayout(&m_shaderDescriptors[_hshShader].hDescriptorSetLayout, _hshShader);
             _AllocateShaderDescriptors(_hshShader);
+            m_shaderDescriptorUpdateTable[_hshShader] = false;
         }
 
-        if (pShader->GetUniformDataLayouts().size()) {
+        if (pShader->GetUniformDataLayouts().size() && !m_shaderDescriptorUpdateTable[_hshShader]) {
             _UpdateShaderDescriptorSet(m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], pShader);
+            m_shaderDescriptorUpdateTable[_hshShader] = true;
         }
 
         // check if material should be added

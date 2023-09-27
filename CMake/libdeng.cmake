@@ -157,7 +157,7 @@ add_dependencies(${DENG_MINIMAL_TARGET}
 target_link_libraries(${DENG_MINIMAL_TARGET}
 	PRIVATE mar
 	PRIVATE unofficial::shaderc::shaderc
-	PRIVATE ${BULLET_LIBRARIES}
+	PUBLIC ${BULLET_LIBRARIES}
 	PRIVATE
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
 	$<IF:$<TARGET_EXISTS:SDL2::SDL2-static>,SDL2::SDL2-static,SDL2::SDL2>

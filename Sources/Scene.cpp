@@ -139,7 +139,6 @@ namespace DENG {
 					m_instances.instanceInfos.back().hshMesh = mesh.hshMesh;
 					m_instances.instanceInfos.back().hshShader = shader.hshShader;
 					m_instances.instanceInfos.back().hshMaterial = material.hshMaterial;
-					m_instances.instanceInfos.back().uInstanceCount++;
 				
 					m_renderableInstanceLookup[*it] = std::make_pair(
 						m_instances.instanceInfos.size() - 1, 0);
@@ -150,7 +149,6 @@ namespace DENG {
 				m_instances.instanceInfos.back().hshMesh = mesh.hshMesh;
 				m_instances.instanceInfos.back().hshShader = shader.hshShader;
 				m_instances.instanceInfos.back().hshMaterial = material.hshMaterial;
-				m_instances.instanceInfos.back().uInstanceCount++;
 
 				m_renderableInstanceLookup[*it] = std::make_pair(
 					m_instances.instanceInfos.size() - 1, 0);

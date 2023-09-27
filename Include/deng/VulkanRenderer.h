@@ -73,6 +73,7 @@ namespace DENG {
 
             std::unordered_map<size_t, VkDescriptorSetLayout> m_materialDescriptorSetLayouts;
             std::unordered_map<hash_t, std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT>, NoHash> m_materialDescriptors;
+            std::unordered_map<hash_t, bool, NoHash> m_shaderDescriptorUpdateTable;
 
             std::vector<VkDescriptorPool> m_fullDescriptorPools;
             std::vector<Vulkan::BufferData> m_deletedBuffers;
