@@ -97,7 +97,8 @@ namespace DENG {
             // Create image
             if(vkCreateImage(_dev, &image_createinfo, nullptr, &_img) != VK_SUCCESS) 
                 VK_BUFFER_ERR("failed to create image!");
-
+            
+            LOG("Successfully created image 0x" << std::hex << _img);
             // Get memory requirements for this image
             VkMemoryRequirements memory_requirement;
             vkGetImageMemoryRequirements(_dev, _img, &memory_requirement);

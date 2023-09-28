@@ -27,6 +27,7 @@ set(LAYERS_SOURCES
 	Sources/Layers/PBRLayer.cpp
 	Sources/Layers/PBRResourceBuilders.cpp)
 	
+	
 add_library(${LAYERS_TARGET} STATIC
 	${LAYERS_HEADERS}
 	${LAYERS_SOURCES})

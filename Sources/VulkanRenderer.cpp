@@ -106,6 +106,7 @@ namespace DENG {
         _CheckAndReallocateBufferResources(uSize, 0);
         Vulkan::_CopyToBufferMemory(m_pInstanceCreator->GetDevice(), uSize, pImage->pRGBAData, m_stagingBuffer.hMemory, 0);
         
+        LOG("Creating vulkan image handle for texture " << _hshImage);
         VkMemoryRequirements memoryRequirements = Vulkan::_CreateImage(
             m_pInstanceCreator->GetDevice(),
             vulkanTextureData.hImage,

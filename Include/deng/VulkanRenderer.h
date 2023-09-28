@@ -108,7 +108,8 @@ namespace DENG {
 
                 // create api texture handles if necessary
                 for (auto it = _material.textures.begin(); it != _material.textures.end(); it++) {
-                    _CreateApiImageHandles(*it);
+                    if (m_textureHandles.find(*it) == m_textureHandles.end())
+                        _CreateApiImageHandles(*it);
                 }
 
                 std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> descriptorSetLayouts = {};
