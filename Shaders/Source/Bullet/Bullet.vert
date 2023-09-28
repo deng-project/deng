@@ -27,7 +27,10 @@ struct Transform {
 };
 
 struct DrawDescriptorIndices {
-	ivec4 indices;
+	int iTransformIndex;
+	int iMaterialIndex;
+	int padding_0;
+	int padding_1;
 };
 
 layout (std430, set = 0, binding = 0) readonly buffer DrawDescriptorIndicesSSBO {
@@ -39,7 +42,7 @@ layout (std430, set = 0, binding = 1) readonly buffer TransformSSBO {
 } uboTransform;
 
 mat4 CalculateRotation() {
-	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].indices.x;
+	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].iTransformIndex;
 	
 	mat4 mX = mat4(1.f);
 	mX[1][1] = cos(uboTransform.transforms[ciIndex].vRotation.x);
@@ -63,7 +66,7 @@ mat4 CalculateRotation() {
 }
 
 mat4 CalculateTransform() {
-	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].indices.x;
+	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].iTransformIndex;
 	
 	mat4 mTranslation = mat4(1.f);
 	mTranslation[3][0] = uboTransform.transforms[ciIndex].vTranslation.x;
@@ -102,11 +105,12 @@ mat4 CalculateViewMatrix() {
 }
 
 void main() {
+	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].iTransformIndex;
 	const mat4 mTransform = CalculateTransform();
 	const mat4 mView = CalculateViewMatrix();
-	const int ciIndex = uboIndices.descriptors[gl_InstanceIndex].indices.x;
 
 	gl_Position = uboCamera.mProjection * mView * mTransform * vec4(vInputPosition, 1.f);
+
 	vOutputPosition = vec3(mTransform * vec4(vInputPosition, 1.f));
 	vOutputNormal = mat3(uboTransform.transforms[ciIndex].mNormal) * vInputNormal;
 	vOutputUV = vec2(0.f, 0.f);

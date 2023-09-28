@@ -504,7 +504,7 @@ namespace DENG {
                     vkCmdBindIndexBuffer(m_commandBuffers[m_uCurrentFrameIndex], m_hMainBuffer, static_cast<VkDeviceSize>(itCmd->uIndicesOffset), VK_INDEX_TYPE_UINT32);
                     vkCmdDrawIndexed(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, _uFirstInstance, 0, 0);
                 } else {
-                    vkCmdDraw(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, _uFirstInstance, 0);
+                    vkCmdDraw(m_commandBuffers[m_uCurrentFrameIndex], itCmd->uDrawCount, _uInstanceCount, 0, _uFirstInstance);
                 }
            }
         }

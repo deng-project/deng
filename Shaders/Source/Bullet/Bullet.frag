@@ -38,6 +38,8 @@ struct SpotLight {
 struct DrawDescriptorIndices {
 	int iTransformIndex;
 	int iMaterialIndex;
+	int padding_0;
+	int padding_1;
 };
 
 layout(std430, set = 0, binding = 0) readonly buffer DrawDescriptorIndicesSSBO {
@@ -243,7 +245,7 @@ void main() {
 		fRoughness = texture(smpRoughness, vInputUV).r;
 	if ((ssboMaterial.materials[iMaterialIndex].uSamplerBits & bAmbientOcclusionMap) != 0)
 		fAmbientOcclusion = texture(smpAmbientOcclusion, vInputUV).r;
-
+	
 	vF0 = mix(vec3(0.04), vAlbedo, fMetallic);
 	fAlpha = SQ(fRoughness);
 	fK = fAlpha / 2.0;

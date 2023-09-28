@@ -21,13 +21,13 @@
 
 static const float g_arrPlaneVertices[] = {
 	// positions			// normals
-	25.f, 0.f, 25.f,		0.f, 1.f, 0.f,
-	-25.f, 0.f, -25.f,		0.f, 1.f, 0.f,
-	25.f, 0.f, 25.f,		0.f, 1.f, 0.f,
+	-25.f, 0.f, -25.f,	0.f, 1.f, 0.f,
+	25.f, 0.f, -25.f,	0.f, 1.f, 0.f,
+	25.f, 0.f, 25.f,	0.f, 1.f, 0.f,
 
-	25.f, 0.f, 25.f,		0.f, 1.f, 0.f,
-	-25.f, 0.f, 25.f,		0.f, 1.f, 0.f,
-	25.f, 0.f, 25.f,		0.f, 1.f, 0.f
+	-25.f, 0.f, -25.f,	0.f, 1.f, 0.f,
+	25.f, 0.f, 25.f,	0.f, 1.f, 0.f,
+	-25.f, 0.f, 25.f,	0.f, 1.f, 0.f
 };
 
 static const float g_arrCubeVertices[] = {
@@ -95,8 +95,8 @@ namespace DENG {
 				pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 				pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 
-				pShader->PushAttributeStride(6u * sizeof(float));
-				pShader->PushAttributeStride(6u * sizeof(float));
+				pShader->PushAttributeStride(2 * sizeof(TRS::Vector3<float>));
+				pShader->PushAttributeStride(2 * sizeof(TRS::Vector3<float>));
 				
 				pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
 									 ShaderPropertyBit_EnableBlend |
@@ -146,7 +146,7 @@ namespace DENG {
 				meshCommands.drawCommands.emplace_back();
 				meshCommands.drawCommands.back().uDrawCount = 6;
 				meshCommands.drawCommands.back().attributeOffsets.push_back(m_uVertexOffset);
-				meshCommands.drawCommands.back().attributeOffsets.push_back(m_uVertexOffset + 3ull * sizeof(float));
+				meshCommands.drawCommands.back().attributeOffsets.push_back(m_uVertexOffset + sizeof(TRS::Vector3<float>));
 
 				return meshCommands;
 			}
@@ -185,10 +185,10 @@ namespace DENG {
 			BulletPlaneMaterialBuilder() = default;
 			Material<MaterialPBR, MAX_PBR_SAMPLERS> Get() {
 				Material<MaterialPBR, MAX_PBR_SAMPLERS> material;
-				material.material.fMetallic = 0.1f;
-				material.material.vAlbedoFactor = { 0.164f, 0.006f, 0.002f, 0.0f };
-				material.material.fRoughness = 0.9f;
-				material.material.fAmbientOcclusion = 0.95f;
+				material.material.fMetallic = 0.4f;
+				material.material.vAlbedoFactor = { 0.988f, 0.98f, 0.455f, 1.0f };
+				material.material.fRoughness = 0.6f;
+				material.material.fAmbientOcclusion = 1.f;
 
 				for (auto it = material.textures.begin(); it != material.textures.end(); it++) {
 					*it = SID("__MissingTexture2D__");
@@ -281,7 +281,7 @@ namespace DENG {
 
 		// create a dynamic rigid body
 		{
-			btCollisionShape* pShape = new btSphereShape(btScalar(1.));
+			btCollisionShape* pShape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
 			m_collisionShapes.push_back(pShape);
 
 			btTransform startTransform;
@@ -289,7 +289,7 @@ namespace DENG {
 			startTransform.setOrigin(btVector3(0, 20, 0));
 
 			btScalar mass = 1.f;
-			btVector3 localInertia(0, 0, 0);
+			btVector3 localInertia(0, 0.f, 0);
 			pShape->calculateLocalInertia(mass, localInertia);
 
 			btDefaultMotionState* pMotionState = new btDefaultMotionState(startTransform);
@@ -391,14 +391,13 @@ namespace DENG {
 			Entity ent = static_cast<Entity>(pObj->getUserIndex());
 			auto& entTransform = m_scene.GetComponent<TransformComponent>(ent);
 			
-			std::array<btScalar, 16> openGlArray = {};
-			trans.getOpenGLMatrix(openGlArray.data());
-			entTransform.vTranslation = TRS::Vector4<float>();
+			btVector3& origin = trans.getOrigin();
+			btQuaternion& rotation = trans.getRotation();
 
-			size_t j = 0;
-			for (auto it = entTransform.mCustomTransform.BeginRowMajor(); it != entTransform.mCustomTransform.EndRowMajor(); it++, j++) {
-				*it = openGlArray[j];
-			}
+			entTransform.vTranslation = { origin.getX(), origin.getY(), origin.getZ(), 1.f };
+			TRS::Quaternion qRot = { rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getZ() };
+
+			entTransform.mCustomTransform = qRot.ExpandToMatrix4();
 
 			EventManager& eventManager = EventManager::GetInstance();
 			eventManager.Dispatch<ComponentModifiedEvent>(ent, ComponentType_Transform);

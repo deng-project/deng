@@ -31,7 +31,7 @@ namespace DENG {
 			try {
 				bool bSuccessBit = m_pRenderer->SetupFrame();
 				if (bSuccessBit) {
-					m_pMainFramebuffer->BeginCommandBufferRecording({ 0.0f, 0.0f, 0.0f, 1.f });
+					m_pMainFramebuffer->BeginCommandBufferRecording({ 0.5f, 0.5f, 1.0f, 1.f });
 					for (ILayer* pLayer : m_layers)
 						pLayer->Update(m_pMainFramebuffer);
 					m_pMainFramebuffer->EndCommandBufferRecording();

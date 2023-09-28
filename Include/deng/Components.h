@@ -48,15 +48,13 @@ namespace DENG {
 	struct DrawDescriptorIndices {
 		int32_t iTransformIndex = -1;
 		int32_t iMaterialIndex = -1;
-		int32_t iPadding1;
-		int32_t iPadding2;
+		int32_t iPadding0 = 0;
+		int32_t iPadding1 = 0;
 
 		DrawDescriptorIndices() = default;
 		DrawDescriptorIndices(int32_t _iTransformIndex, int32_t _iMaterialIndex) :
 			iTransformIndex(_iTransformIndex),
-			iMaterialIndex(_iMaterialIndex),
-			iPadding1(0),
-			iPadding2(0) {}
+			iMaterialIndex(_iMaterialIndex) {}
 	};
 
 	struct InstanceInfo {
