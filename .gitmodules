@@ -1,9 +1,6 @@
 [submodule "ThirdParty/vcpkg"]
 	path = ThirdParty/vcpkg
 	url = https://github.com/Microsoft/vcpkg
-[submodule "ThirdParty/libdas"]
-	path = ThirdParty/libdas
-	url = https://git.dengproject.org/deng/libdas
 [submodule "ThirdParty/mar"]
 	path = ThirdParty/mar
 	url = https://git.dengproject.org/deng/minimal-ascii-reader

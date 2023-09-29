@@ -64,30 +64,72 @@ namespace DENG {
 		uint32_t uInstanceCount = 1;
 	};
 
-	template<typename T>
-	class Ref {
-		private:
-			Entity m_owner;
-			Scene& m_scene;
+	/*	Note: for das2 structures the ECS representation would look something like this
+		[ ModelComponent, HierarchyComponent ] - das2::Header & das2::Model
+		[ MeshComponent ] - das2::MorphTarget & das2::Mesh
+		[ NameComponent, HierarchyComponent, ShaderComponent ] - das2::MeshGroup
+		[ BindComponent ] - das2::Node
+		[ NameComponent, HierarchyComponent, TransformComponent ] - das2::Node & das2::Scene & das2::SkeletonJoint & das2::Skeleton
+		[ NameComponent, HierarchyComponent ] - das2::Animation
+		[ AnimationChannelComponent ] - das2::AnimationChannel
+	 */
 
-		public:
-			Ref(Entity _owner, Scene& _scene) noexcept :
-				m_owner(_owner),
-				m_scene(_scene) {}
-			Ref(Ref<T>&& _other) noexcept :
-				m_owner(_other.m_owner),
-				m_scene(_other.m_scene) {}
-			~Ref() = default;
+	struct ModelComponent {
+		ModelComponent() = default;
+		ModelComponent(const ModelComponent&) = default;
+		ModelComponent(ModelComponent&&) = default;
+		ModelComponent(const std::string& _sAuthorName, const std::string& _sComment) :
+			sAuthorName(_sAuthorName),
+			sComment(_sComment) {}
 
-			inline T& Get() { return m_scene.GetComponent<T>(m_owner); }
-			inline const T& Get() const { return m_scene.GetComponent<T>(m_owner); }
-			inline Entity GetOwner() const { return m_owner; }
-
-			// implicit cast
-			inline operator T& () { return Get(); }
-			inline operator const T& () const { return Get(); }
+		std::string sAuthorName;
+		std::string sComment;
 	};
 
+	struct NameComponent {
+		NameComponent() = default;
+		NameComponent(const NameComponent&) = default;
+		NameComponent(NameComponent&&) = default;
+		NameComponent(const std::string& _sName) :
+			sName(_sName) {}
+
+		std::string sName;
+	};
+
+	// mainly required to represent scene hierarchies
+	struct HierarchyComponent {
+		HierarchyComponent() = default;
+		HierarchyComponent(const HierarchyComponent&) = default;
+		HierarchyComponent(std::size_t _uChildrenCount, Entity _idFirst, Entity _idPrev, Entity _idNext, Entity _idParent) :
+			uChildrenCount(_uChildrenCount),
+			idFirst(_idFirst),
+			idPrev(_idPrev),
+			idNext(_idNext),
+			idParent(_idParent) {}
+
+		std::size_t uChildrenCount{};
+		Entity idFirst{ entt::null };
+		Entity idPrev{ entt::null };
+		Entity idNext{ entt::null };
+		Entity idParent{ entt::null };
+	};
+
+
+	struct BindComponent {
+		BindComponent() = default;
+		BindComponent(const BindComponent&) = default;
+		BindComponent(Entity _idMeshGroup, Entity _idSkeleton) :
+			idMeshGroup(_idMeshGroup),
+			idSkeleton(_idSkeleton) {}
+
+		Entity idMeshGroup = entt::null;
+		Entity idSkeleton = entt::null;
+	};
+
+	struct AnimationChannelComponent {
+		Entity idNode = entt::null;
+		Entity idJoint = entt::null;
+	};
 
 	struct SkyboxComponent {
 		SkyboxComponent() = default;
