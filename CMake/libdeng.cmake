@@ -54,7 +54,6 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/SDLWindowContext.h
 	Include/deng/SID.h
 	Include/deng/SkyboxBuilders.h
-	Include/deng/UberShader.h
 	Include/deng/VulkanFramebuffer.h
 	Include/deng/VulkanHelpers.h
 	Include/deng/VulkanInstanceCreator.h
@@ -82,7 +81,6 @@ set(DENG_MINIMAL_SOURCES
 	Sources/SID.cpp
 	Sources/Singletons.cpp
 	Sources/SkyboxBuilders.cpp
-	Sources/UberShader.cpp
 	Sources/VulkanFramebuffer.cpp
 	Sources/VulkanHelpers.cpp
 	Sources/VulkanInstanceCreator.cpp
@@ -140,7 +138,8 @@ find_package(unofficial-shaderc CONFIG REQUIRED)
 target_include_directories(${DENG_MINIMAL_TARGET}
 	PUBLIC ${VULKAN_SDK_PATH}/Include
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/libdas/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/stb
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/libdas/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/mar/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/trs/include
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imgui
@@ -150,18 +149,18 @@ target_link_directories(${DENG_MINIMAL_TARGET}
 	PUBLIC ${VULKAN_SDK_PATH}/Lib)
 
 add_dependencies(${DENG_MINIMAL_TARGET}
-    das-static
-    dastool)
+    cvar
+	das2)
 	
 # Linking
 target_link_libraries(${DENG_MINIMAL_TARGET}
-	PRIVATE mar
+	PRIVATE cvar
+	PRIVATE das2
 	PRIVATE unofficial::shaderc::shaderc
 	PUBLIC ${BULLET_LIBRARIES}
 	PRIVATE
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
 	$<IF:$<TARGET_EXISTS:SDL2::SDL2-static>,SDL2::SDL2-static,SDL2::SDL2>
-	PUBLIC das-static
 	PRIVATE vulkan-1)
 			
 

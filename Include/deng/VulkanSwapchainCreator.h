@@ -25,9 +25,6 @@
     #include "trs/Matrix.h"
     #include "trs/Quaternion.h"
 
-    #include "das/Api.h"
-    #include "das/DasStructures.h"
-
     #include "deng/Api.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"

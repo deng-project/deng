@@ -26,10 +26,6 @@
     #include "trs/Matrix.h"
     #include "trs/Quaternion.h"
 
-    #include "das/Api.h"
-    #include "das/DasStructures.h"
-    #include "das/TextureReader.h"
-
     #include "deng/Api.h"
     #include "deng/SID.h"
     #include "deng/ErrorDefinitions.h"

@@ -13,7 +13,7 @@
 #ifdef CUBE_RESOURCE_BUILDERS_CPP
 #include "deng/ProgramFilesManager.h"
 #include "deng/FileSystemShader.h"
-#include "das/stb_image.h"
+#include <stb_image.h>
 #include "deng/Layers/CubeVertices.h"
 #endif
 

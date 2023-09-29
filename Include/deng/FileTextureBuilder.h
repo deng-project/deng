@@ -14,7 +14,7 @@
 	#include <array>
 	#include "deng/Exceptions.h"
 	#include "deng/ProgramFilesManager.h"
-	#include "das/stb_image.h"
+	#include <stb_image.h>
 #endif
 
 namespace DENG {
