@@ -12,13 +12,14 @@
 #include <vector>
 #include <entt/entt.hpp>
 
+#include <cvar/SID.h>
+
 #include "trs/Points.h"
 #include "trs/Vector.h"
 #include "trs/Matrix.h"
 #include "trs/Quaternion.h"
 
 #include "deng/Api.h"
-#include "deng/SID.h"
 #include "deng/MathConstants.h"
 #include "deng/Event.h"
 #include "deng/ErrorDefinitions.h"
@@ -58,21 +59,31 @@ namespace DENG {
 	};
 
 	struct InstanceInfo {
-		hash_t hshMesh = 0;
-		hash_t hshShader = 0;
-		hash_t hshMaterial = 0;
+		cvar::hash_t hshMesh = 0;
+		cvar::hash_t hshShader = 0;
+		cvar::hash_t hshMaterial = 0;
 		uint32_t uInstanceCount = 1;
 	};
 
 	/*	Note: for das2 structures the ECS representation would look something like this
 		[ ModelComponent, HierarchyComponent ] - das2::Header & das2::Model
-		[ MeshComponent ] - das2::MorphTarget & das2::Mesh
+		[ MeshComponent, HierarchyComponent ] - das2::Mesh
+		[ MorphTargetComponent, HierarchyComponent ] - das2::MorphTarget
 		[ NameComponent, HierarchyComponent, ShaderComponent ] - das2::MeshGroup
-		[ BindComponent ] - das2::Node
-		[ NameComponent, HierarchyComponent, TransformComponent ] - das2::Node & das2::Scene & das2::SkeletonJoint & das2::Skeleton
-		[ NameComponent, HierarchyComponent ] - das2::Animation
+		[ NameComponent, HierarchyComponent, TransformComponent, BindComponent ] - das2::Node
+		[ NameComponent, HierarchyComponent, TransformComponent ] - das2::SkeletonJoint
+		[ NameComponent, HierarchyComponent ] - das2::Animation & das2::Skeleton & das2::Scene
 		[ AnimationChannelComponent ] - das2::AnimationChannel
 	 */
+
+	struct MorphTargetComponent {
+		MorphTargetComponent() = default;
+		MorphTargetComponent(const MorphTargetComponent&) = default;
+		MorphTargetComponent(cvar::hash_t _hshMorphTarget) :
+			hshMorphTarget(_hshMorphTarget) {}
+
+		cvar::hash_t hshMorphTarget = 0;
+	};
 
 	struct ModelComponent {
 		ModelComponent() = default;
@@ -107,11 +118,11 @@ namespace DENG {
 			idNext(_idNext),
 			idParent(_idParent) {}
 
-		std::size_t uChildrenCount{};
-		Entity idFirst{ entt::null };
-		Entity idPrev{ entt::null };
-		Entity idNext{ entt::null };
-		Entity idParent{ entt::null };
+		std::size_t uChildrenCount{};	// number of children for the given entity
+		Entity idFirst{ entt::null };	// the entity identifier of the first child, if any
+		Entity idPrev{ entt::null };	// the previous sibling in the list of children for the parent
+		Entity idNext{ entt::null };	// the next sibling in the list of chilren for the parent
+		Entity idParent{ entt::null };	// the entity identifier of the parent, if any
 	};
 
 
@@ -134,14 +145,14 @@ namespace DENG {
 	struct SkyboxComponent {
 		SkyboxComponent() = default;
 		SkyboxComponent(const SkyboxComponent&) = default;
-		SkyboxComponent(const TRS::Vector4<float>& _vScale, hash_t _hshMesh, hash_t _hshShader) :
+		SkyboxComponent(const TRS::Vector4<float>& _vScale, cvar::hash_t _hshMesh, cvar::hash_t _hshShader) :
 			vScale(_vScale),
 			hshMesh(_hshMesh),
 			hshShader(_hshShader) {}
 
 		TRS::Vector4<float> vScale;
-		hash_t hshMesh;
-		hash_t hshShader;
+		cvar::hash_t hshMesh;
+		cvar::hash_t hshShader;
 	};
 
 
@@ -167,10 +178,10 @@ namespace DENG {
 	struct MeshComponent {
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
-		MeshComponent(hash_t _hshMesh) :
+		MeshComponent(cvar::hash_t _hshMesh) :
 			hshMesh(_hshMesh) {}
 
-		hash_t hshMesh = 0;
+		cvar::hash_t hshMesh = 0;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_Mesh;
@@ -185,10 +196,10 @@ namespace DENG {
 	struct ShaderComponent {
 		ShaderComponent() = default;
 		ShaderComponent(const ShaderComponent&) = default;
-		ShaderComponent(hash_t _hshShader) :
+		ShaderComponent(cvar::hash_t _hshShader) :
 			hshShader(_hshShader) {}
 
-		hash_t hshShader = 0;
+		cvar::hash_t hshShader = 0;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_Shader;
@@ -203,10 +214,10 @@ namespace DENG {
 	struct MaterialComponent {
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent&) = default;
-		MaterialComponent(hash_t _hshMaterial) :
+		MaterialComponent(cvar::hash_t _hshMaterial) :
 			hshMaterial(_hshMaterial) {}
 
-		hash_t hshMaterial = 0;
+		cvar::hash_t hshMaterial = 0;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_Material;

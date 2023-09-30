@@ -1,9 +1,6 @@
 [submodule "ThirdParty/vcpkg"]
 	path = ThirdParty/vcpkg
 	url = https://github.com/Microsoft/vcpkg
-[submodule "ThirdParty/mar"]
-	path = ThirdParty/mar
-	url = https://git.dengproject.org/deng/minimal-ascii-reader
 [submodule "ThirdParty/trs"]
 	path = ThirdParty/trs
 	url = https://git.dengproject.org/deng/trs-headers
@@ -14,8 +11,8 @@
 [submodule "ThirdParty/das2"]
 	path = ThirdParty/das2
 	url = https://git.dengproject.org/deng/das2
-[submodule "Thirdparty/cvar"]
-	path = Thirdparty/cvar
+[submodule "ThirdParty/cvar"]
+	path = ThirdParty/cvar
 	url = https://git.dengproject.org/deng/cvar
 [submodule "ThirdParty/stb"]
 	path = ThirdParty/stb
