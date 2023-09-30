@@ -32,10 +32,10 @@ namespace DENG {
 
 	class DENG_API SkyboxShaderBuilder {
 		private:
-			hash_t m_hshTexture;
+			cvar::hash_t m_hshTexture;
 
 		public:
-			SkyboxShaderBuilder(hash_t _hshTexture) :
+			SkyboxShaderBuilder(cvar::hash_t _hshTexture) :
 				m_hshTexture(_hshTexture) {}
 			IShader* Get();
 	};

@@ -14,22 +14,22 @@
 #include <mutex>
 
 #include "deng/Api.h"
-#include "deng/SID.h"
+#include <cvar/SID.h>
 
 namespace DENG {
 
 
-#define EVENT_CLASS_TYPE_NO_ID_CHECK(str_type, parent)	static constexpr DENG::hash_t GetStaticType() { return SID(str_type); }\
-														virtual DENG::hash_t GetEventType() const override { return GetStaticType(); }\
+#define EVENT_CLASS_TYPE_NO_ID_CHECK(str_type, parent)	static constexpr cvar::hash_t GetStaticType() { return SID(str_type); }\
+														virtual cvar::hash_t GetEventType() const override { return GetStaticType(); }\
 														const parent* GetParent() const { return static_cast<const parent*>(this); }\
 														virtual const char* GetName() const override { return str_type; }
 
 #ifdef _DEBUG
-#define EVENT_CLASS_TYPE(table, str_type, parent)		static constexpr DENG::hash_t GetStaticType() {\
+#define EVENT_CLASS_TYPE(table, str_type, parent)		static constexpr cvar::hash_t GetStaticType() {\
 															static_assert(table{}.Has<Wrapper<SID(str_type)>>(), "Unregistred event id");\
 															return SID(str_type);\
 														}\
-														virtual DENG::hash_t GetEventType() const override { return GetStaticType(); }\
+														virtual cvar::hash_t GetEventType() const override { return GetStaticType(); }\
 														const parent* GetParent() const { return static_cast<const parent*>(this); }\
 														virtual const char* GetName() const override { return str_type; }
 #else
@@ -42,11 +42,11 @@ namespace DENG {
 				std::chrono::high_resolution_clock::now();
 
 		public:
-			static constexpr hash_t GetStaticType() {
+			static constexpr cvar::hash_t GetStaticType() {
 				return 0;
 			}
 
-			virtual hash_t GetEventType() const {
+			virtual cvar::hash_t GetEventType() const {
 				return IEvent::GetStaticType();
 			}
 
@@ -90,12 +90,12 @@ namespace DENG {
 	class DENG_API EventManager {
 		private:
 			std::mutex m_mutex;
-			std::unordered_map<hash_t, std::list<EventListener>, NoHash> m_eventHandlers;
+			std::unordered_map<cvar::hash_t, std::list<EventListener>, cvar::NoHash> m_eventHandlers;
 			static EventManager m_sEventManager;
 
 		private:
 			template<typename T>
-			constexpr void _TraverseInheritanceHierarchy(T* _pEvent, std::vector<hash_t>& _eventTypesToDispatch) {
+			constexpr void _TraverseInheritanceHierarchy(T* _pEvent, std::vector<cvar::hash_t>& _eventTypesToDispatch) {
 				_eventTypesToDispatch.push_back(T::GetStaticType());
 
 				if constexpr (T::GetStaticType() != 0) {
@@ -104,8 +104,8 @@ namespace DENG {
 			}
 
 			template<typename T>
-			constexpr std::vector<hash_t> _GetEventTypesToDispatch(T* _pEvent) {
-				std::vector<hash_t> eventTypesToDispatch;
+			constexpr std::vector<cvar::hash_t> _GetEventTypesToDispatch(T* _pEvent) {
+				std::vector<cvar::hash_t> eventTypesToDispatch;
 
 				_TraverseInheritanceHierarchy(_pEvent, eventTypesToDispatch);
 
@@ -152,9 +152,9 @@ namespace DENG {
 				std::scoped_lock lock(m_mutex);
 				T event(std::forward<Args>(args)...);
 				
-				std::vector<hash_t> eventTypesToDispatch = _GetEventTypesToDispatch(&event);
+				std::vector<cvar::hash_t> eventTypesToDispatch = _GetEventTypesToDispatch(&event);
 
-				for (hash_t hshEventType : eventTypesToDispatch) {
+				for (cvar::hash_t hshEventType : eventTypesToDispatch) {
 					auto& eventHandlers = m_eventHandlers[hshEventType];
 
 					for (auto it = eventHandlers.rbegin(); it != eventHandlers.rend(); it++) {

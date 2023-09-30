@@ -25,7 +25,6 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/App.h
 	Include/deng/CameraTransformer.h
 	Include/deng/Components.h
-	Include/deng/CVars.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Event.h
 	Include/deng/Exceptions.h
@@ -52,7 +51,6 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/SceneEvents.h
 	Include/deng/SceneRenderer.h
 	Include/deng/SDLWindowContext.h
-	Include/deng/SID.h
 	Include/deng/SkyboxBuilders.h
 	Include/deng/VulkanFramebuffer.h
 	Include/deng/VulkanHelpers.h
@@ -65,7 +63,6 @@ set(DENG_MINIMAL_HEADERS
 set(DENG_MINIMAL_SOURCES
 	Sources/App.cpp
 	Sources/CameraTransformer.cpp
-	Sources/CVars.cpp
 	Sources/ErrorDefinitions.cpp
 	Sources/FileTextureBuilder.cpp
 	Sources/FileSystemShader.cpp
@@ -78,7 +75,6 @@ set(DENG_MINIMAL_SOURCES
 	Sources/Scene.cpp
 	Sources/SceneRenderer.cpp
 	Sources/SDLWindowContext.cpp
-	Sources/SID.cpp
 	Sources/Singletons.cpp
 	Sources/SkyboxBuilders.cpp
 	Sources/VulkanFramebuffer.cpp
@@ -154,7 +150,7 @@ add_dependencies(${DENG_MINIMAL_TARGET}
 	
 # Linking
 target_link_libraries(${DENG_MINIMAL_TARGET}
-	PRIVATE cvar
+	PUBLIC cvar
 	PRIVATE das2
 	PRIVATE unofficial::shaderc::shaderc
 	PUBLIC ${BULLET_LIBRARIES}

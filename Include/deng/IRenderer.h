@@ -9,8 +9,9 @@
 #include <iostream>
 #include <vector>
 
+#include <cvar/SID.h>
+
 #include "deng/Api.h"
-#include "deng/SID.h"
 #include "deng/IWindowContext.h"
 #include "deng/IFramebuffer.h"
 #include "deng/GPUMemoryAllocator.h"
@@ -37,8 +38,8 @@ namespace DENG {
             GPUMemoryAllocator m_gpuMemoryAllocator;
             std::vector<IFramebuffer*> m_framebuffers;
 
-            hash_t m_hshMissing2DTexture = 0;
-			hash_t m_hshMissing3DTexture = 0;
+            cvar::hash_t m_hshMissing2DTexture = 0;
+			cvar::hash_t m_hshMissing3DTexture = 0;
 
         public:
             IRenderer() = default;
@@ -46,7 +47,7 @@ namespace DENG {
 			
             virtual void DeleteTextureHandles() = 0;
             virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
-            virtual void DestroyPipeline(hash_t _hshShader) = 0;
+            virtual void DestroyPipeline(cvar::hash_t _hshShader) = 0;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) = 0;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
@@ -54,12 +55,12 @@ namespace DENG {
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
 			virtual bool SetupFrame() = 0;
 			virtual void DrawInstance(
-                hash_t _hshMesh,
-                hash_t _hshShader,
+                cvar::hash_t _hshMesh,
+                cvar::hash_t _hshShader,
                 IFramebuffer* _pFramebuffer,
                 uint32_t _uInstanceCount,
                 uint32_t _uFirstInstance = 0,
-                hash_t _hshMaterial = 0) = 0;
+                cvar::hash_t _hshMaterial = 0) = 0;
     };
 }
 

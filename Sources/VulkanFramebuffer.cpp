@@ -352,8 +352,8 @@ namespace DENG {
 
 
         void Framebuffer::Draw(
-            hash_t _hshMesh, 
-            hash_t _hshShader, 
+            cvar::hash_t _hshMesh, 
+            cvar::hash_t _hshShader, 
             uint32_t _uInstanceCount,
             uint32_t _uFirstInstance,
             VkDescriptorSet _hShaderDescriptorSet, 

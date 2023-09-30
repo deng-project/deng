@@ -44,10 +44,10 @@ namespace DENG {
 
 	class PBRMaterialBuilder {
 		private:
-			std::array<hash_t, MAX_PBR_SAMPLERS> m_textures;
+			std::array<cvar::hash_t, MAX_PBR_SAMPLERS> m_textures;
 
 		public:
-			PBRMaterialBuilder(const std::array<hash_t, MAX_PBR_SAMPLERS>& _textures) :
+			PBRMaterialBuilder(const std::array<cvar::hash_t, MAX_PBR_SAMPLERS>& _textures) :
 				m_textures(_textures) {}
 			Material<MaterialPBR, MAX_PBR_SAMPLERS> Get();
 	};

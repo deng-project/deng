@@ -12,8 +12,9 @@
 #include "deng/WindowEvents.h"
 
 #ifdef PBR_LAYER_CPP
+#include <cvar/SID.h>
+
 #include "deng/ImGuiLayer.h"
-#include "deng/SID.h"
 #include "deng/ResourceIdTable.h"
 #include "deng/Layers/PBRTable.h"
 #include "deng/InitializerListBuilder.h"

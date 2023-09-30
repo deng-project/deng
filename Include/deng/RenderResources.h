@@ -9,9 +9,10 @@
 #include "trs/Points.h"
 #include "trs/Vector.h"
 
+#include <cvar/SID.h>
+
 #include "deng/Api.h"
 #include "deng/IShader.h"
-#include "deng/SID.h"
 #include "deng/ResourceEvents.h"
 
 #include <mutex>
@@ -151,18 +152,18 @@ namespace DENG {
 	template<typename T, size_t N>
 	struct Material {
 		T material;
-		std::array<hash_t, N> textures {};
+		std::array<cvar::hash_t, N> textures {};
 	};
 
 	class DENG_API ResourceManager {
 		private:
 			std::mutex m_mutex;
 
-			std::unordered_map<hash_t, MeshCommands, NoHash> m_meshes;
-			std::unordered_map<hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, NoHash> m_pbrMaterials;
-			std::unordered_map<hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, NoHash> m_phongMaterials;
-			std::unordered_map<hash_t, IShader*, NoHash> m_shaders;
-			std::unordered_map<hash_t, Texture, NoHash> m_textures;
+			std::unordered_map<cvar::hash_t, MeshCommands, cvar::NoHash> m_meshes;
+			std::unordered_map<cvar::hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, cvar::NoHash> m_pbrMaterials;
+			std::unordered_map<cvar::hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, cvar::NoHash> m_phongMaterials;
+			std::unordered_map<cvar::hash_t, IShader*, cvar::NoHash> m_shaders;
+			std::unordered_map<cvar::hash_t, Texture, cvar::NoHash> m_textures;
 
 			EventManager& m_eventManager;
 			static ResourceManager m_sResourceManager;
@@ -182,7 +183,7 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const MeshCommands& AddMesh(hash_t _hshMesh, Args&&... args) {
+			inline const MeshCommands& AddMesh(cvar::hash_t _hshMesh, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder meshBuilder(std::forward<Args>(args)...);
 				m_meshes.insert(std::make_pair(_hshMesh, meshBuilder.Get()));
@@ -191,35 +192,35 @@ namespace DENG {
 				return m_meshes[_hshMesh];
 			}
 
-			inline const std::unordered_map<hash_t, MeshCommands, NoHash>& GetMeshes() const {
+			inline const std::unordered_map<cvar::hash_t, MeshCommands, cvar::NoHash>& GetMeshes() const {
 				return m_meshes;
 			}
 
-			inline const MeshCommands* GetMesh(hash_t _uHash) const {
+			inline const MeshCommands* GetMesh(cvar::hash_t _uHash) const {
 				auto it = m_meshes.find(_uHash);
 				if (it == m_meshes.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			inline MeshCommands* GetMesh(hash_t _hshMesh) {
+			inline MeshCommands* GetMesh(cvar::hash_t _hshMesh) {
 				auto it = m_meshes.find(_hshMesh);
 				if (it == m_meshes.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			inline bool ExistsMesh(hash_t _hshMesh) const {
+			inline bool ExistsMesh(cvar::hash_t _hshMesh) const {
 				return m_meshes.find(_hshMesh) != m_meshes.end();
 			}
 
-			inline void RemoveMesh(hash_t _hshMesh) {
+			inline void RemoveMesh(cvar::hash_t _hshMesh) {
 				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshMesh, ResourceType::Mesh);
 				m_meshes.erase(_hshMesh);
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>& AddMaterialPBR(hash_t _hshMaterial, Args&&... args) {
+			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>& AddMaterialPBR(cvar::hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
 				m_pbrMaterials.insert(std::make_pair(_hshMaterial, materialBuilder.Get()));
@@ -228,35 +229,35 @@ namespace DENG {
 				return m_pbrMaterials[_hshMaterial];
 			}
 
-			inline const std::unordered_map<hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, NoHash>& GetPBRMaterials() const {
+			inline const std::unordered_map<cvar::hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, cvar::NoHash>& GetPBRMaterials() const {
 				return m_pbrMaterials;
 			}
 
-			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(hash_t _hshMaterial) const {
+			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(cvar::hash_t _hshMaterial) const {
 				auto it = m_pbrMaterials.find(_hshMaterial);
 				if (it == m_pbrMaterials.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(hash_t _hshMaterial) {
+			Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(cvar::hash_t _hshMaterial) {
 				auto it = m_pbrMaterials.find(_hshMaterial);
 				if (it == m_pbrMaterials.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			inline bool ExistsMaterialPBR(hash_t _hshMaterial) {
+			inline bool ExistsMaterialPBR(cvar::hash_t _hshMaterial) {
 				return m_pbrMaterials.find(_hshMaterial) != m_pbrMaterials.end();
 			}
 
-			inline void RemoveMaterialPBR(hash_t _hshMaterial) {
+			inline void RemoveMaterialPBR(cvar::hash_t _hshMaterial) {
 				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshMaterial, ResourceType::Material_PBR);
 				m_pbrMaterials.erase(_hshMaterial);
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Material<MaterialPhong, MAX_PHONG_SAMPLERS>& AddMaterialPhong(hash_t _hshMaterial, Args&&... args) {
+			inline const Material<MaterialPhong, MAX_PHONG_SAMPLERS>& AddMaterialPhong(cvar::hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
 				m_phongMaterials.insert(std::make_pair(_uHash, materialBuilder.Get()));
@@ -265,57 +266,57 @@ namespace DENG {
 				return m_phongMaterials[_uHash];
 			}
 
-			inline const std::unordered_map<hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, NoHash>& GetPhongMaterials() const {
+			inline const std::unordered_map<cvar::hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, cvar::NoHash>& GetPhongMaterials() const {
 				return m_phongMaterials;
 			}
 
-			Material<MaterialPhong, MAX_PHONG_SAMPLERS>* GetMaterialPhong(hash_t _hshMaterial) {
+			Material<MaterialPhong, MAX_PHONG_SAMPLERS>* GetMaterialPhong(cvar::hash_t _hshMaterial) {
 				auto it = m_phongMaterials.find(_hshMaterial);
 				if (it == m_phongMaterials.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			inline bool ExistsMaterialPhong(hash_t _hshMaterial) {
+			inline bool ExistsMaterialPhong(cvar::hash_t _hshMaterial) {
 				return m_phongMaterials.find(_hshMaterial) != m_phongMaterials.end();
 			}
 
-			inline void RemoveMaterialPhong(hash_t _hshMaterial) {
+			inline void RemoveMaterialPhong(cvar::hash_t _hshMaterial) {
 				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshMaterial, ResourceType::Material_Phong);
 				m_phongMaterials.erase(_hshMaterial);
 			}
 
 			template<typename Builder, typename... Args>
-			inline const IShader* AddShader(hash_t _hshShader, Args&&... args) {
+			inline const IShader* AddShader(cvar::hash_t _hshShader, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder shaderBuilder(std::forward<Args>(args)...);
 				m_shaders.insert(std::make_pair(_hshShader, shaderBuilder.Get()));
 				return m_shaders[_hshShader];
 			}
 
-			inline const IShader* GetShader(hash_t _hshShader) const {
+			inline const IShader* GetShader(cvar::hash_t _hshShader) const {
 				auto it = m_shaders.find(_hshShader);
 				if (it == m_shaders.end())
 					return nullptr;
 				return it->second;
 			}
 
-			inline IShader* GetShader(hash_t _hshShader) {
+			inline IShader* GetShader(cvar::hash_t _hshShader) {
 				auto it = m_shaders.find(_hshShader);
 				if (it == m_shaders.end())
 					return nullptr;
 				return it->second;
 			}
 
-			inline const std::unordered_map<std::size_t, IShader*, NoHash>& GetShaders() const {
+			inline const std::unordered_map<std::size_t, IShader*, cvar::NoHash>& GetShaders() const {
 				return m_shaders;
 			}
 
-			inline bool ExistsShader(hash_t _hshShader) {
+			inline bool ExistsShader(cvar::hash_t _hshShader) {
 				return m_shaders.find(_hshShader) != m_shaders.end();
 			}
 
-			inline void RemoveShader(hash_t _hshShader) {
+			inline void RemoveShader(cvar::hash_t _hshShader) {
 				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshShader, ResourceType::Shader);
 				
 				if (m_shaders.find(_hshShader) != m_shaders.end())
@@ -324,7 +325,7 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Texture& AddTexture(hash_t _hshTexture, Args&&... args) {
+			inline const Texture& AddTexture(cvar::hash_t _hshTexture, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder textureBuilder(std::forward<Args>(args)...);
 				m_textures.insert(std::make_pair(_hshTexture, textureBuilder.Get()));
@@ -333,27 +334,27 @@ namespace DENG {
 				return m_textures[_hshTexture];
 			}
 
-			inline const Texture* GetTexture(hash_t _hshTexture) const {
+			inline const Texture* GetTexture(cvar::hash_t _hshTexture) const {
 				auto it = m_textures.find(_hshTexture);
 				if (it == m_textures.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			inline const std::unordered_map<hash_t, Texture, NoHash>& GetTextures() const {
+			inline const std::unordered_map<cvar::hash_t, Texture, cvar::NoHash>& GetTextures() const {
 				return m_textures;
 			}
 
-			inline bool ExistsTexture(hash_t _hshTexture) {
+			inline bool ExistsTexture(cvar::hash_t _hshTexture) {
 				return m_textures.find(_hshTexture) != m_textures.end();
 			}
 
-			inline void RemoveTexture(hash_t _hshTexture) {
+			inline void RemoveTexture(cvar::hash_t _hshTexture) {
 				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshTexture, ResourceType::Texture);
 				m_textures.erase(_hshTexture);
 			}
 
-			inline void FreeTextureHeapData(hash_t _hshTexture) {
+			inline void FreeTextureHeapData(cvar::hash_t _hshTexture) {
 				delete[] m_textures[_hshTexture].pRGBAData;
 			}
 	};

@@ -8,8 +8,8 @@
 
 #include <mutex>
 #include <vector>
+#include <cvar/SID.h>
 #include "deng/Api.h"
-#include "deng/SID.h"
 
 namespace DENG {
 
@@ -128,7 +128,7 @@ namespace DENG {
 			
 			size_t m_uMaterialSamplerCount = 0;
 
-			std::vector<hash_t> m_textureHashes;
+			std::vector<cvar::hash_t> m_textureHashes;
 
 		protected:
 			std::mutex m_fsMutex;
@@ -185,19 +185,19 @@ namespace DENG {
 
 			constexpr size_t GetMaterialSamplerCount() { return m_uMaterialSamplerCount; }
 
-			inline std::size_t PushTextureHash(hash_t _hshTexture) { 
+			inline std::size_t PushTextureHash(cvar::hash_t _hshTexture) { 
 				m_textureHashes.push_back(_hshTexture);
 				return m_textureHashes.size() - 1;
 			}
 
-			inline hash_t ReplaceTextureHash(size_t _uSamplerId, hash_t _hshTexture) {
+			inline cvar::hash_t ReplaceTextureHash(size_t _uSamplerId, cvar::hash_t _hshTexture) {
 				if (m_textureHashes.size() <= _uSamplerId)
 					return 0;
 				m_textureHashes[_uSamplerId] = _hshTexture;
 				return _hshTexture;
 			}
 
-			inline hash_t GetTextureHash(size_t _uSamplerId) const { 
+			inline cvar::hash_t GetTextureHash(size_t _uSamplerId) const { 
 				if (m_textureHashes.size() <= _uSamplerId)
 					return 0;
 				return m_textureHashes[_uSamplerId]; 

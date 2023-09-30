@@ -40,7 +40,7 @@ namespace DENG {
 		//resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("RustNormal", PBRTable), "Textures/RustPBR/rustediron2_normal.png");
 		resourceManager.AddTexture<FileMonochromeTextureBuilder>(dRO_SID("RustRoughness", PBRTable), "Textures/RustPBR/rustediron2_roughness.png");
 		resourceManager.AddMaterialPBR<PBRMaterialBuilder>(dRO_SID("RedMaterial", PBRTable),
-			std::array<hash_t, MAX_PBR_SAMPLERS>{ 
+			std::array<cvar::hash_t, MAX_PBR_SAMPLERS>{ 
 				dRO_SID("RustAlbedo", PBRTable), 
 				SID("__MissingTexture2D__"),
 				SID("__MissingTexture2D__"),

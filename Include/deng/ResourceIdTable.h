@@ -6,7 +6,7 @@
 #ifndef COMPILE_TIME_MAP_H
 #define COMPILE_TIME_MAP_H
 
-#include "deng/SID.h"
+#include <cvar/SID.h>
 #include <string_view>
 #include <typeinfo>
 #include <typeindex>
@@ -305,7 +305,7 @@ namespace DENG {
 	template<auto val>
 	struct Wrapper { constexpr static auto Value = val; };
 
-	template <hash_t val>
+	template <cvar::hash_t val>
 	using HashWrapper = Wrapper<val>;
 
 	template <const char* val>
@@ -351,8 +351,8 @@ namespace DENG {
 		}
 	};
 
-	template<typename T, hash_t _hsh>
-	static constexpr hash_t VerifyHash() {
+	template<typename T, cvar::hash_t _hsh>
+	static constexpr cvar::hash_t VerifyHash() {
 		static_assert(T{}.Has<Wrapper<_hsh>>(), "Undeclared hash requested");
 		return _hsh;
 	}

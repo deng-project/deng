@@ -116,7 +116,7 @@ namespace DENG {
 		m_instances.drawDescriptorIndices.clear();
 		m_renderableInstanceLookup.clear();
 		
-		std::unordered_map<hash_t, size_t, NoHash> materialIndexLookup;
+		std::unordered_map<cvar::hash_t, size_t, cvar::NoHash> materialIndexLookup;
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
 		

@@ -44,7 +44,7 @@ namespace DENG {
 			Entity m_idShadedCube = entt::null;
 			std::array<uint32_t, 2> m_mapIds = {};
 
-			const std::unordered_map<const char*, hash_t> m_hshLookup;
+			const std::unordered_map<const char*, cvar::hash_t> m_hshLookup;
 
 		private:
 			void _SetupMaterials();

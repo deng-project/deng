@@ -21,16 +21,16 @@ namespace DENG {
 
 	class DENG_API ResourceEvent : public IEvent {
 		private:
-			hash_t m_hshResource;
+			cvar::hash_t m_hshResource;
 			ResourceType m_eType;
 
 		public:
-			ResourceEvent(hash_t _hshResource, ResourceType _eType) :
+			ResourceEvent(cvar::hash_t _hshResource, ResourceType _eType) :
 				m_hshResource(_hshResource),
 				m_eType(_eType) {}
 			ResourceEvent(const ResourceEvent&) = default;
 
-			inline hash_t GetResourceHash() {
+			inline cvar::hash_t GetResourceHash() {
 				return m_hshResource;
 			}
 
@@ -43,7 +43,7 @@ namespace DENG {
 
 	class DENG_API ResourceModifiedEvent : public ResourceEvent {
 		public:
-			ResourceModifiedEvent(hash_t _hshResource, ResourceType _eType) :
+			ResourceModifiedEvent(cvar::hash_t _hshResource, ResourceType _eType) :
 				ResourceEvent(_hshResource, _eType) {}
 			ResourceModifiedEvent(const ResourceModifiedEvent&) = default;
 
@@ -52,7 +52,7 @@ namespace DENG {
 
 	class DENG_API ResourceAddedEvent : public ResourceEvent {
 		public:
-			ResourceAddedEvent(hash_t _hshResource, ResourceType _eType) :
+			ResourceAddedEvent(cvar::hash_t _hshResource, ResourceType _eType) :
 				ResourceEvent(_hshResource, _eType) {}
 			ResourceAddedEvent(const ResourceAddedEvent&) = default;
 
@@ -61,7 +61,7 @@ namespace DENG {
 
 	class DENG_API ResourceRemoveEvent : public ResourceEvent {
 		public:
-			ResourceRemoveEvent(hash_t _hshResource, ResourceType _eType) :
+			ResourceRemoveEvent(cvar::hash_t _hshResource, ResourceType _eType) :
 				ResourceEvent(_hshResource, _eType) {}
 			ResourceRemoveEvent(const ResourceRemoveEvent&) = default;
 	

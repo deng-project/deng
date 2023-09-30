@@ -26,8 +26,9 @@
     #include "trs/Matrix.h"
     #include "trs/Quaternion.h"
 
+    #include <cvar/SID.h>
+
     #include "deng/Api.h"
-    #include "deng/SID.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
     #include "deng/Components.h"
@@ -54,7 +55,7 @@ namespace DENG {
                 Vulkan::TextureData m_framebufferImageHandles;
                 Vulkan::TextureData m_depthImageHandles;
 
-                std::unordered_map<hash_t, Vulkan::PipelineCreator, NoHash> m_pipelineCreators;
+                std::unordered_map<cvar::hash_t, Vulkan::PipelineCreator, cvar::NoHash> m_pipelineCreators;
 
                 VkCommandPool m_hCommandPool;
                 std::vector<VkCommandBuffer> m_commandBuffers;
@@ -92,8 +93,8 @@ namespace DENG {
 
                 virtual void BeginCommandBufferRecording(TRS::Vector4<float> _vClearColor) override;
                 void Draw(
-                    hash_t _hshMesh, 
-                    hash_t _hshShader, 
+                    cvar::hash_t _hshMesh, 
+                    cvar::hash_t _hshShader, 
                     uint32_t _uInstanceCount,
                     uint32_t _uFirstInstance,
                     VkDescriptorSet _hShaderDescriptorSet, 
@@ -103,7 +104,7 @@ namespace DENG {
                 virtual void EndCommandBufferRecording() override;
                 virtual void RenderToFramebuffer() override;
 
-                inline void UpdatePipelineCreator(hash_t _hshShader, VkDescriptorSetLayout _hShaderDescriptorSetLayout, VkDescriptorSetLayout _hMaterialDescriptorSetLayout) {
+                inline void UpdatePipelineCreator(cvar::hash_t _hshShader, VkDescriptorSetLayout _hShaderDescriptorSetLayout, VkDescriptorSetLayout _hMaterialDescriptorSetLayout) {
                     if (m_pipelineCreators.find(_hshShader) == m_pipelineCreators.end()) {
                         ResourceManager& resourceManager = ResourceManager::GetInstance();
                         auto pShader = resourceManager.GetShader(_hshShader);

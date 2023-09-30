@@ -1,7 +1,7 @@
 #ifndef PBR_TABLE_H
 #define PBR_TABLE_H
 
-#include "deng/SID.h"
+#include <cvar/SID.h>
 #include "deng/ResourceIdTable.h"
 
 namespace DENG {

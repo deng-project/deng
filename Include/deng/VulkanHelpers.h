@@ -12,7 +12,6 @@
 #endif
 
 #include <vulkan/vulkan.h>
-#include "deng/SID.h"
 #include "deng/IRenderer.h"
 #define VK_FORMAT_DEFAULT_IMAGE VK_FORMAT_R8G8B8A8_UNORM
 

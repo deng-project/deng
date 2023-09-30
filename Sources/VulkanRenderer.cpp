@@ -46,7 +46,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_CreateApiImageHandles(hash_t _hshImage) {
+    void VulkanRenderer::_CreateApiImageHandles(cvar::hash_t _hshImage) {
         ResourceManager& resourceManager = ResourceManager::GetInstance();
         auto pImage = resourceManager.GetTexture(_hshImage);
         DENG_ASSERT(pImage);
@@ -322,7 +322,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, hash_t _hshShader) {
+    void VulkanRenderer::_CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, cvar::hash_t _hshShader) {
         ResourceManager& resourceManager = ResourceManager::GetInstance();
         auto pShader = resourceManager.GetShader(_hshShader);
         DENG_ASSERT(pShader);
@@ -372,7 +372,7 @@ namespace DENG {
     }
 
 
-    void VulkanRenderer::_AllocateShaderDescriptors(hash_t _hshShader) {
+    void VulkanRenderer::_AllocateShaderDescriptors(cvar::hash_t _hshShader) {
         m_shaderDescriptors.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(_hshShader),
@@ -562,7 +562,7 @@ namespace DENG {
     }
 
     
-    void VulkanRenderer::DestroyPipeline(hash_t _hshShader) {
+    void VulkanRenderer::DestroyPipeline(cvar::hash_t _hshShader) {
         m_pipelineCreators.erase(_hshShader);
     }
 
@@ -736,12 +736,12 @@ namespace DENG {
 
 
     void VulkanRenderer::DrawInstance(
-        hash_t _hshMesh, 
-        hash_t _hshShader,
+        cvar::hash_t _hshMesh, 
+        cvar::hash_t _hshShader,
         IFramebuffer* _pFramebuffer, 
         uint32_t _uInstanceCount,
         uint32_t _uFirstInstance,
-        hash_t _hshMaterial) 
+        cvar::hash_t _hshMaterial) 
     {
         DENG_ASSERT(_pFramebuffer);
         ResourceManager& resourceManager = ResourceManager::GetInstance();

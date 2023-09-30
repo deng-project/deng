@@ -40,14 +40,13 @@
 #define RESIZE_DEBOUNCE_TIMESTEP 100.f // ms
 #endif
 
-#include "deng/SID.h"
+#include <cvar/SID.h>
 #include "deng/ErrorDefinitions.h"
 #include "deng/IRenderer.h"
 #include "deng/VulkanHelpers.h"
 #include "deng/VulkanInstanceCreator.h"
 #include "deng/VulkanSwapchainCreator.h"
 #include "deng/VulkanPipelineCreator.h"
-#include "deng/VulkanDescriptorAllocator.h"
 #include "deng/VulkanFramebuffer.h"
 #include "deng/ResourceEvents.h"
 
@@ -59,8 +58,8 @@ namespace DENG {
             const VkSampleCountFlagBits m_uSampleCountBits = VK_SAMPLE_COUNT_1_BIT;
 
             Vulkan::InstanceCreator* m_pInstanceCreator = nullptr;
-            std::unordered_map<hash_t, Vulkan::PipelineCreator, NoHash> m_pipelineCreators;
-            std::unordered_map<hash_t, Vulkan::TextureData, NoHash> m_textureHandles;
+            std::unordered_map<cvar::hash_t, Vulkan::PipelineCreator, cvar::NoHash> m_pipelineCreators;
+            std::unordered_map<cvar::hash_t, Vulkan::TextureData, cvar::NoHash> m_textureHandles;
 
             Vulkan::BufferData m_mainBuffer;
             Vulkan::BufferData m_stagingBuffer;
@@ -69,11 +68,11 @@ namespace DENG {
             uint32_t m_uDescriptorPoolUsage = 0;
             uint32_t m_uDescriptorPoolCapacity = 100 * MAX_FRAMES_IN_FLIGHT;   // arbitrary number rn
             
-            std::unordered_map<hash_t, Vulkan::ShaderDescriptorData, NoHash> m_shaderDescriptors;
+            std::unordered_map<cvar::hash_t, Vulkan::ShaderDescriptorData, cvar::NoHash> m_shaderDescriptors;
 
             std::unordered_map<size_t, VkDescriptorSetLayout> m_materialDescriptorSetLayouts;
-            std::unordered_map<hash_t, std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT>, NoHash> m_materialDescriptors;
-            std::unordered_map<hash_t, bool, NoHash> m_shaderDescriptorUpdateTable;
+            std::unordered_map<cvar::hash_t, std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT>, cvar::NoHash> m_materialDescriptors;
+            std::unordered_map<cvar::hash_t, bool, cvar::NoHash> m_shaderDescriptorUpdateTable;
 
             std::vector<VkDescriptorPool> m_fullDescriptorPools;
             std::vector<Vulkan::BufferData> m_deletedBuffers;
@@ -88,14 +87,14 @@ namespace DENG {
                 std::chrono::high_resolution_clock::now();
 
         private:
-            void _CreateApiImageHandles(hash_t _id);
+            void _CreateApiImageHandles(cvar::hash_t _id);
             void _CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset);
             void _CreateMaterialDescriptorSetLayout(size_t _uCount);
-            void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, hash_t _hshShader);
-            void _AllocateShaderDescriptors(hash_t _hshShader);
+            void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, cvar::hash_t _hshShader);
+            void _AllocateShaderDescriptors(cvar::hash_t _hshShader);
 
             template<typename T, size_t N>
-            void _AllocateMaterialDescriptors(hash_t _hshMaterial, const Material<T, N>& _material) {
+            void _AllocateMaterialDescriptors(cvar::hash_t _hshMaterial, const Material<T, N>& _material) {
                 m_materialDescriptors.emplace(
                     std::piecewise_construct,
                     std::forward_as_tuple(_hshMaterial),
@@ -164,7 +163,7 @@ namespace DENG {
 
             virtual void DeleteTextureHandles() override;
             virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) override;
-            virtual void DestroyPipeline(hash_t _hshShader) override;
+            virtual void DestroyPipeline(cvar::hash_t _hshShader) override;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
             virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
@@ -172,12 +171,12 @@ namespace DENG {
             virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
             virtual bool SetupFrame() override;
             virtual void DrawInstance(
-                hash_t _hshMesh,
-                hash_t _hshShader,
+                cvar::hash_t _hshMesh,
+                cvar::hash_t _hshShader,
                 IFramebuffer* _pFramebuffer,
                 uint32_t _uInstanceCount,
                 uint32_t _uFirstInstance,
-                hash_t _hshMaterialDescriptor = 0) override;
+                cvar::hash_t _hshMaterialDescriptor = 0) override;
     };
 }
 

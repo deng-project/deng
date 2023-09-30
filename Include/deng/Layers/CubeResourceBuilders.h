@@ -6,7 +6,7 @@
 #ifndef CUBE_RESOURCE_BUILDERS_H
 #define CUBE_RESOURCE_BUILDERS_H
 
-#include "deng/SID.h"
+#include <cvar/SID.h>
 #include "deng/IRenderer.h"
 #include "deng/RenderResources.h"
 
@@ -33,11 +33,11 @@ namespace DENG {
 
 	class CubeMaterialBuilder {
 		private:
-			hash_t m_hshDiffuse;
-			hash_t m_hshSpecular;
+			cvar::hash_t m_hshDiffuse;
+			cvar::hash_t m_hshSpecular;
 
 		public:
-			CubeMaterialBuilder(hash_t _hshDiffuse, hash_t _hshSpecular) :
+			CubeMaterialBuilder(cvar::hash_t _hshDiffuse, cvar::hash_t _hshSpecular) :
 				m_hshDiffuse(_hshDiffuse),
 				m_hshSpecular(_hshSpecular) {}
 
