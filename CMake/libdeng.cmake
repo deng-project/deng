@@ -69,6 +69,7 @@ set(DENG_MINIMAL_SOURCES
 	Sources/GPUMemoryAllocator.cpp
 	Sources/ImGuiLayer.cpp
 	Sources/ImGuiResourceBuilders.cpp
+	Sources/IShader.cpp
 	Sources/Missing.cpp
 	Sources/MissingTextureBuilder.cpp
 	Sources/ProgramFilesManager.cpp

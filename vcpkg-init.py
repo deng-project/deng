@@ -15,6 +15,7 @@ elif sys.platform.startswith("darwin"):
 VCPKG_PACKAGES = [
     f"zstd:x64-{PLATFORM}",
     f"boost-iostreams:x64-{PLATFORM}",
+    f"boost-multiprecision:x64-{PLATFORM}",
     f"entt:x64-{PLATFORM}",
     f"shaderc:x64-{PLATFORM}",
     f"sdl2[vulkan]:x64-{PLATFORM}",

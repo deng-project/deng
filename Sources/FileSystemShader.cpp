@@ -4,6 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define FILE_SYSTEM_SHADER_CPP
+#include <cvar/SID.h>
 #include "deng/FileSystemShader.h"
 
 using namespace std;
@@ -12,16 +13,36 @@ namespace fs = filesystem;
 
 namespace DENG {
 
-	FileSystemShader::FileSystemShader(const string& _sSourceIdentifier, const string& _sBinaryIdentifier) :
-		m_csSourceIdentifier(_sSourceIdentifier),
-		m_sBinaryIdentifier(_sBinaryIdentifier)
+	FileSystemShader::FileSystemShader(
+		const string& _sVertexShaderSourceName,
+		const string& _sGeometryShaderSourceName,
+		const string& _sFragmentShaderSourceName,
+		const string& _sVertexShaderSpirvName,
+		const string& _sGeometryShaderSpirvName,
+		const string& _sFragmentShaderSpirvName
+	) :
+		m_csVertexShaderSourceName(_sVertexShaderSourceName),
+		m_csGeometryShaderSourceName(_sGeometryShaderSourceName),
+		m_csFragmentShaderSourceName(_sFragmentShaderSourceName),
+		m_csVertexShaderSpirvName((_sVertexShaderSpirvName == "" ? _sVertexShaderSourceName : _sVertexShaderSpirvName)),
+		m_csGeometryShaderSpirvName((_sGeometryShaderSpirvName == "" ? _sGeometryShaderSourceName : _sGeometryShaderSpirvName)),
+		m_csFragmentShaderSpirvName((_sFragmentShaderSpirvName == "" ? _sFragmentShaderSourceName : _sFragmentShaderSpirvName))
 	{
-		if (m_sBinaryIdentifier.empty())
-			m_sBinaryIdentifier = m_csSourceIdentifier;
+		const string sVertexShaderModuleCrc32Src = m_csVertexShaderSourceName + '|' + m_csVertexShaderSpirvName;
+		const string sGeometryShaderModuleCrc32Src = m_csGeometryShaderSourceName + '|' + m_csGeometryShaderSpirvName;
+		const string sFragmentShaderModuleCrc32Src = m_csFragmentShaderSourceName + '|' + m_csFragmentShaderSpirvName;
+	
+		const uint32_t uVertexModuleHash = cvar::RuntimeCrc32(sVertexShaderModuleCrc32Src);
+		const uint32_t uGeometryModuleHash = cvar::RuntimeCrc32(sGeometryShaderModuleCrc32Src);
+		const uint32_t uFragmentModuleHash = cvar::RuntimeCrc32(sFragmentShaderModuleCrc32Src);
+
+		m_bProperties |= (bitset<256>{static_cast<uint64_t>(uVertexModuleHash)} << VertexShaderNameCrc32PropertyOffset);
+		m_bProperties |= (bitset<256>{static_cast<uint64_t>(uGeometryModuleHash)} << GeometryShaderNameCrc32PropertyOffset);
+		m_bProperties |= (bitset<256>{static_cast<uint64_t>(uFragmentModuleHash)} << FragmentShaderNameCrc32PropertyOffset);
 	}
 
 
-	vector<uint32_t> FileSystemShader::_CompileVertexShaderToSpirv() const {
+	vector<uint32_t>&& FileSystemShader::_CompileVertexShaderToSpirv() const {
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -33,7 +54,7 @@ namespace DENG {
 		}
 
 		const string csVertexShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".vert";
+			string{ m_csVertexShaderSourcePath } + '/' + m_csVertexShaderSourceName + ".vert";
 		
 		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csVertexShaderSourcePath);
 		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
@@ -45,7 +66,7 @@ namespace DENG {
 
 		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
 			throw ShaderException(module.GetErrorMessage());
-			return {};
+			return move(vector<uint32_t>());
 		}
 
 		vector<uint32_t> spirv(module.cbegin(), module.cend());
@@ -54,17 +75,17 @@ namespace DENG {
 			m_programFilesManager.WriteProgramFile(
 				(const char*)spirv.data(),
 				spirv.size() * sizeof(uint32_t),
-				m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".vert.spv");
+				string{ m_csVertexShaderSpirvPath } + '/' + m_csVertexShaderSpirvName + ".vert.spv");
 		}
 		catch (const IOException& e) {
 			DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::WARNING);
 		}
 
-		return spirv;
+		return move(spirv);
 	}
 
 
-	vector<uint32_t> FileSystemShader::_CompileGeometryShaderToSpirv() const {
+	vector<uint32_t>&& FileSystemShader::_CompileGeometryShaderToSpirv() const {
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -76,7 +97,7 @@ namespace DENG {
 		}
 
 		const string csGeometryShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".geom";
+			string{ m_csGeometryShaderSourcePath } + '/' + m_csGeometryShaderSourceName + ".geom";
 
 		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csGeometryShaderSourcePath);
 		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
@@ -88,7 +109,7 @@ namespace DENG {
 
 		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
 			throw ShaderException(module.GetErrorMessage());
-			return {};
+			return move(vector<uint32_t>());
 		}
 
 		vector<uint32_t> spirv(module.cbegin(), module.cend());
@@ -97,17 +118,17 @@ namespace DENG {
 			m_programFilesManager.WriteProgramFile(
 				(const char*)spirv.data(),
 				spirv.size() * sizeof(uint32_t),
-				m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".geom.spv");
+				string{ m_csGeometryShaderSpirvPath } + '/' + m_csGeometryShaderSpirvName + ".geom.spv");
 		}
 		catch (const IOException& e) {
 			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
 		}
 
-		return spirv;
+		return move(spirv);
 	}
 
 
-	vector<uint32_t> FileSystemShader::_CompileFragmentShaderToSpirv() const {
+	vector<uint32_t>&& FileSystemShader::_CompileFragmentShaderToSpirv() const {
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -119,7 +140,7 @@ namespace DENG {
 		}
 
 		const string csFragmentShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".frag";
+			string{ m_csFragmentShaderSourcePath } + '/' + m_csFragmentShaderSourceName + ".frag";
 		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csFragmentShaderSourcePath);
 		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
 			sSourceCode.data(),
@@ -130,7 +151,7 @@ namespace DENG {
 
 		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
 			throw ShaderException(module.GetErrorMessage());
-			return {};
+			return move(vector<uint32_t>());
 		}
 
 		vector<uint32_t> spirv(module.cbegin(), module.cend());
@@ -139,21 +160,21 @@ namespace DENG {
 			m_programFilesManager.WriteProgramFile(
 				(const char*)spirv.data(),
 				spirv.size() * sizeof(uint32_t),
-				m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".frag.spv");
+				string{ m_csFragmentShaderSpirvPath } + '/' + m_csFragmentShaderSpirvName + ".frag.spv");
 		}
 		catch (const IOException& e) {
 			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
 		}
 
-		return spirv;
+		return move(spirv);
 	}
 
 
-	vector<uint32_t> FileSystemShader::GetVertexShaderSpirv() const {
+	vector<uint32_t>&& FileSystemShader::GetVertexShaderSpirv() const {
 		const string csVertexShaderSpirvFilePath = 
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".vert.spv";
+			string{ m_csVertexShaderSpirvPath } + '/' + m_csVertexShaderSpirvName + ".vert.spv";
 		const string csVertexShaderSourceFilePath = 
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".vert";
+			string{ m_csVertexShaderSourcePath } + '/' + m_csVertexShaderSourceName + ".vert";
 		
 		time_t tSpvWriteTimestamp = 0, tSourceWriteTimestamp = 0;
 		tSourceWriteTimestamp = m_programFilesManager.GetFileTimestamp(csVertexShaderSourceFilePath);
@@ -171,7 +192,7 @@ namespace DENG {
 			for (size_t i = 0; i < output.size(); i++)
 				output[i] = reinterpret_cast<uint32_t*>(input.data())[i];
 			
-			return output;
+			return move(output);
 		}
 		else {
 			return _CompileVertexShaderToSpirv();
@@ -179,11 +200,11 @@ namespace DENG {
 	}
 	
 	
-	vector<uint32_t> FileSystemShader::GetGeometryShaderSpirv() const {
+	vector<uint32_t>&& FileSystemShader::GetGeometryShaderSpirv() const {
 		const string csGeometryShaderSpirvFilePath =
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".geom.spv";
+			string{ m_csGeometryShaderSpirvPath } + '/' + m_csGeometryShaderSpirvName + ".geom.spv";
 		const string csGeometryShaderSourceFilePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".geom";
+			string{ m_csGeometryShaderSourcePath } + '/' + m_csGeometryShaderSourceName + ".geom";
 
 		time_t tSpvWriteTimestamp = 0, tSourceWriteTimestamp = 0;
 		tSourceWriteTimestamp = m_programFilesManager.GetFileTimestamp(csGeometryShaderSourceFilePath);
@@ -201,7 +222,7 @@ namespace DENG {
 			for (size_t i = 0; i < output.size(); i++)
 				output[i] = reinterpret_cast<uint32_t*>(input.data())[i];
 	
-			return output;
+			return move(output);
 		}
 		else {
 			return _CompileGeometryShaderToSpirv();
@@ -209,11 +230,11 @@ namespace DENG {
 	}
 	
 	
-	vector<uint32_t> FileSystemShader::GetFragmentShaderSpirv() const {
+	vector<uint32_t>&& FileSystemShader::GetFragmentShaderSpirv() const {
 		const string csFragmentShaderSpirvFilePath =
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".frag.spv";
+			string{ m_csFragmentShaderSpirvPath } + '/' + m_csFragmentShaderSourceName + ".frag.spv";
 		const string csFragmentShaderSourceFilePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".frag";
+			string{ m_csFragmentShaderSourcePath } + '/' + m_csFragmentShaderSourceName + ".frag";
 	
 		time_t tSpvWriteTimestamp = 0, tSourceWriteTimestamp = 0;
 		tSourceWriteTimestamp = m_programFilesManager.GetFileTimestamp(csFragmentShaderSourceFilePath);
@@ -231,7 +252,7 @@ namespace DENG {
 			for (size_t i = 0; i < output.size(); i++)
 				output[i] = reinterpret_cast<uint32_t*>(input.data())[i];
 	
-			return output;
+			return move(output);
 		}
 		else {
 			return _CompileFragmentShaderToSpirv();
@@ -239,31 +260,31 @@ namespace DENG {
 	}
 
 
-	vector<char> FileSystemShader::GetPipelineCache(RendererType _eRendererType) const {
+	vector<char>&& FileSystemShader::GetPipelineCache(RendererType _eRendererType) const {
 		string sPipelineCacheFilePath = m_csPipelineCachePath;
 
 		switch (_eRendererType) {
 			case RendererType::OpenGL:
-				sPipelineCacheFilePath += "\\OpenGL";
+				sPipelineCacheFilePath += "/OpenGL";
 				break;
 
 			case RendererType::Vulkan:
-				sPipelineCacheFilePath += "\\Vulkan";
+				sPipelineCacheFilePath += "/Vulkan";
 				break;
 
 			case RendererType::DirectX:
-				sPipelineCacheFilePath += "\\DirectX";
+				sPipelineCacheFilePath += "/DirectX";
 				break;
 
 			default:
-				return {};
+				return move(vector<char>());
 		}
 
-		sPipelineCacheFilePath += '\\' + m_sBinaryIdentifier + ".cache";
+		sPipelineCacheFilePath += '/' + m_bProperties.to_string() + ".cache";
 
 		if (!m_programFilesManager.ExistsFile(sPipelineCacheFilePath)) {
 			stringstream ss;
-			ss << "Pipeline cache for shader module '" << m_sBinaryIdentifier << "' does not exist";
+			ss << "Pipeline cache for shader module '" << _Props2HexString() << "' does not exist";
 			throw ShaderException(ss.str());
 			return {};
 		}
@@ -290,7 +311,7 @@ namespace DENG {
 				break;
 		}
 
-		sPipelineCacheFilePath += "\\" + m_sBinaryIdentifier + ".cache";
+		sPipelineCacheFilePath += '/' + string{ _Props2HexString() } + ".cache";
 
 		try {
 			m_programFilesManager.WriteProgramFile((const char*)_pData, _uLength, sPipelineCacheFilePath);
@@ -304,9 +325,11 @@ namespace DENG {
 	PipelineCacheStatusBits FileSystemShader::GetPipelineCacheStatus() const {
 		PipelineCacheStatusBits uMask = 0;
 		// check if pipeline cache exists
-		const string sDirectXPipelineCacheFilePath = m_csPipelineCachePath + "\\DirectX\\" + m_sBinaryIdentifier + ".cache";
-		const string sOpenGLPipelineCacheFilePath = m_csPipelineCachePath + "\\OpenGL\\" + m_sBinaryIdentifier + ".cache";
-		const string sVulkanPipelineCacheFilePath = m_csPipelineCachePath + "\\Vulkan\\" + m_sBinaryIdentifier + ".cache";
+		const char* szHexProps = _Props2HexString();
+		
+		const string sDirectXPipelineCacheFilePath = m_csPipelineCachePath + "/DirectX/" + szHexProps + ".cache";
+		const string sOpenGLPipelineCacheFilePath = m_csPipelineCachePath + "/OpenGL/" + szHexProps + ".cache";
+		const string sVulkanPipelineCacheFilePath = m_csPipelineCachePath + "/Vulkan/" + szHexProps + ".cache";
 		
 		if (m_programFilesManager.ExistsFile(sOpenGLPipelineCacheFilePath))
 			uMask |= PipelineCacheStatusBit_OpenGLCache;
@@ -319,13 +342,13 @@ namespace DENG {
 		
 		// check if spirv exists
 		const string sVertexShaderSpirvPath = 
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".vert.spv";
+			string{ m_csVertexShaderSpirvPath } + '/' + m_csVertexShaderSpirvName + ".vert.spv";
 		const string sGeometryShaderSourcePath =
-			m_csShaderSourcePath + '\\' + m_csSourceIdentifier + '\\' + m_csSourceIdentifier + ".geom";
+			string{ m_csGeometryShaderSourcePath } + '/' + m_csGeometryShaderSourceName + ".geom";
 		const string sGeometryShaderSpirvPath = 
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".geom.spv";
+			string{ m_csGeometryShaderSpirvPath } + '/' + m_csGeometryShaderSpirvName + ".geom.spv";
 		const string sFragmentShaderSpirvPath =
-			m_csSpirvBinaryPath + '\\' + m_sBinaryIdentifier + '\\' + m_sBinaryIdentifier + ".frag.spv";
+			string{ m_csFragmentShaderSpirvPath } + '/' + m_csFragmentShaderSpirvName + ".frag.spv";
 		
 		if (m_programFilesManager.ExistsFile(sVertexShaderSpirvPath) &&
 			(!m_programFilesManager.ExistsFile(sGeometryShaderSourcePath) || m_programFilesManager.ExistsFile(sGeometryShaderSpirvPath)) &&
