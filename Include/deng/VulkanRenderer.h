@@ -70,7 +70,9 @@ namespace DENG {
             
             std::unordered_map<cvar::hash_t, Vulkan::ShaderDescriptorData, cvar::NoHash> m_shaderDescriptors;
 
-            std::unordered_map<size_t, VkDescriptorSetLayout> m_materialDescriptorSetLayouts;
+            // [0] - blinn-phong material
+            // [1] - pbr material
+            std::array<VkDescriptorSetLayout, 2> m_materialDescriptorSetLayouts = {};
             std::unordered_map<cvar::hash_t, std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT>, cvar::NoHash> m_materialDescriptors;
             std::unordered_map<cvar::hash_t, bool, cvar::NoHash> m_shaderDescriptorUpdateTable;
 
@@ -101,8 +103,17 @@ namespace DENG {
                     std::forward_as_tuple());
 
                 auto& descriptorSets = m_materialDescriptors[_hshMaterial];
-                if (m_materialDescriptorSetLayouts.find(N) == m_materialDescriptorSetLayouts.end()) {
-                    _CreateMaterialDescriptorSetLayout(N);
+                
+                static_assert(N == PBR_TEXTURE_COUNT || N == PHONG_TEXTURE_COUNT,
+                    "Template parameter N must be either PBR_TEXTURE_COUNT or PHONG_TEXTURE_COUNT");
+
+                if constexpr (N == PBR_TEXTURE_COUNT) {
+                    if (m_materialDescriptorSetLayouts[1] == VK_NULL_HANDLE)
+                        _CreateMaterialDescriptorSetLayout(N);
+                }
+                else {
+                    if (m_materialDescriptorSetLayouts[0] == VK_NULL_HANDLE)
+                        _CreateMaterialDescriptorSetLayout(N);
                 }
 
                 // create api texture handles if necessary

@@ -28,6 +28,7 @@
 #define DEFAULT_BUFFER_SIZE (1 << 24)
 #endif
 
+
 namespace DENG {
 
     enum class BufferDataType { Vertex, Index, Uniform };

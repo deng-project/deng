@@ -70,8 +70,8 @@ namespace DENG {
 
 
     IShader* SkyboxShaderBuilder::Get() {
-        FileSystemShader* pShader = new FileSystemShader("Skybox", "Skybox");
-        pShader->SetProperty(ShaderPropertyBit_NonStandardShader |
+        FileSystemShader* pShader = new FileSystemShader("Skybox", "", "Skybox");
+        pShader->SetProperty(ShaderPropertyBit_IsNonStandardShader |
                              ShaderPropertyBit_Enable3DTextures |
                              ShaderPropertyBit_EnableDepthTesting |
                              ShaderPropertyBit_EnableBlend |

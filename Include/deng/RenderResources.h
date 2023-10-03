@@ -20,8 +20,9 @@
 #include <vector>
 #include <optional>
 
-#define MAX_PBR_SAMPLERS	6
-#define MAX_PHONG_SAMPLERS	2
+#define PBR_TEXTURE_COUNT      6
+#define PHONG_TEXTURE_COUNT    4
+
 namespace DENG {
 
 	template<typename... Attrs>
@@ -160,8 +161,8 @@ namespace DENG {
 			std::mutex m_mutex;
 
 			std::unordered_map<cvar::hash_t, MeshCommands, cvar::NoHash> m_meshes;
-			std::unordered_map<cvar::hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, cvar::NoHash> m_pbrMaterials;
-			std::unordered_map<cvar::hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, cvar::NoHash> m_phongMaterials;
+			std::unordered_map<cvar::hash_t, Material<MaterialPBR, PBR_TEXTURE_COUNT>, cvar::NoHash> m_pbrMaterials;
+			std::unordered_map<cvar::hash_t, Material<MaterialPhong, PHONG_TEXTURE_COUNT>, cvar::NoHash> m_phongMaterials;
 			std::unordered_map<cvar::hash_t, IShader*, cvar::NoHash> m_shaders;
 			std::unordered_map<cvar::hash_t, Texture, cvar::NoHash> m_textures;
 
@@ -220,7 +221,7 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>& AddMaterialPBR(cvar::hash_t _hshMaterial, Args&&... args) {
+			inline const Material<MaterialPBR, PBR_TEXTURE_COUNT>& AddMaterialPBR(cvar::hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
 				m_pbrMaterials.insert(std::make_pair(_hshMaterial, materialBuilder.Get()));
@@ -229,18 +230,18 @@ namespace DENG {
 				return m_pbrMaterials[_hshMaterial];
 			}
 
-			inline const std::unordered_map<cvar::hash_t, Material<MaterialPBR, MAX_PBR_SAMPLERS>, cvar::NoHash>& GetPBRMaterials() const {
+			inline const std::unordered_map<cvar::hash_t, Material<MaterialPBR, PBR_TEXTURE_COUNT>, cvar::NoHash>& GetPBRMaterials() const {
 				return m_pbrMaterials;
 			}
 
-			inline const Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(cvar::hash_t _hshMaterial) const {
+			inline const Material<MaterialPBR, PBR_TEXTURE_COUNT>* GetMaterialPBR(cvar::hash_t _hshMaterial) const {
 				auto it = m_pbrMaterials.find(_hshMaterial);
 				if (it == m_pbrMaterials.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			Material<MaterialPBR, MAX_PBR_SAMPLERS>* GetMaterialPBR(cvar::hash_t _hshMaterial) {
+			Material<MaterialPBR, PBR_TEXTURE_COUNT>* GetMaterialPBR(cvar::hash_t _hshMaterial) {
 				auto it = m_pbrMaterials.find(_hshMaterial);
 				if (it == m_pbrMaterials.end())
 					return nullptr;
@@ -257,7 +258,7 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Material<MaterialPhong, MAX_PHONG_SAMPLERS>& AddMaterialPhong(cvar::hash_t _hshMaterial, Args&&... args) {
+			inline const Material<MaterialPhong, PHONG_TEXTURE_COUNT>& AddMaterialPhong(cvar::hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
 				m_phongMaterials.insert(std::make_pair(_uHash, materialBuilder.Get()));
@@ -266,11 +267,11 @@ namespace DENG {
 				return m_phongMaterials[_uHash];
 			}
 
-			inline const std::unordered_map<cvar::hash_t, Material<MaterialPhong, MAX_PHONG_SAMPLERS>, cvar::NoHash>& GetPhongMaterials() const {
+			inline const std::unordered_map<cvar::hash_t, Material<MaterialPhong, PHONG_TEXTURE_COUNT>, cvar::NoHash>& GetPhongMaterials() const {
 				return m_phongMaterials;
 			}
 
-			Material<MaterialPhong, MAX_PHONG_SAMPLERS>* GetMaterialPhong(cvar::hash_t _hshMaterial) {
+			Material<MaterialPhong, PHONG_TEXTURE_COUNT>* GetMaterialPhong(cvar::hash_t _hshMaterial) {
 				auto it = m_phongMaterials.find(_hshMaterial);
 				if (it == m_phongMaterials.end())
 					return nullptr;

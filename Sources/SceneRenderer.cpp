@@ -96,7 +96,7 @@ namespace DENG {
 
 			auto& uniformDataLayouts = pShader->GetUniformDataLayouts();
 		
-			if (uniformDataLayouts.size() >= 2 && !pShader->IsPropertySet(ShaderPropertyBit_NonStandardShader)) {
+			if (uniformDataLayouts.size() >= 2 && !pShader->IsPropertySet(ShaderPropertyBit_IsNonStandardShader)) {
 				// draw descriptor indices
 				uniformDataLayouts[0].block.uOffset = static_cast<uint32_t>(m_uDrawDescriptorIndicesOffset);
 				uniformDataLayouts[0].block.uSize = static_cast<uint32_t>(_drawDescriptorIndices.size() * sizeof(DrawDescriptorIndices));

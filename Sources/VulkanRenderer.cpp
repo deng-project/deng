@@ -22,8 +22,8 @@ namespace DENG {
             for (VkDescriptorPool hPool : m_fullDescriptorPools)
                 vkDestroyDescriptorPool(m_pInstanceCreator->GetDevice(), hPool, nullptr);
 
-            for (auto pairDescriptorSetLayout : m_materialDescriptorSetLayouts)
-                vkDestroyDescriptorSetLayout(m_pInstanceCreator->GetDevice(), pairDescriptorSetLayout.second, nullptr);
+            for (auto materialDescriptorSetLayout : m_materialDescriptorSetLayouts)
+                vkDestroyDescriptorSetLayout(m_pInstanceCreator->GetDevice(), materialDescriptorSetLayout, nullptr);
 
             for (auto it = m_shaderDescriptors.begin(); it != m_shaderDescriptors.end(); it++) {
                 vkDestroyDescriptorSetLayout(m_pInstanceCreator->GetDevice(), it->second.hDescriptorSetLayout, nullptr);
@@ -300,6 +300,8 @@ namespace DENG {
 
 
     void VulkanRenderer::_CreateMaterialDescriptorSetLayout(size_t _uCount) {
+        DENG_ASSERT(_uCount == PBR_TEXTURE_COUNT || _uCount == PHONG_TEXTURE_COUNT);
+
         std::vector<VkDescriptorSetLayoutBinding> bindings(_uCount);
         for (size_t i = 0; i < _uCount; i++) {
             bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -318,7 +320,9 @@ namespace DENG {
             throw RendererException("vkCreateDescriptorSetLayout() failed to create descriptor set layout for material with " + std::to_string(_uCount) + " samplers");
         LOG("Created material descriptor set layout (" << _uCount << ')');
 
-        m_materialDescriptorSetLayouts[_uCount] = descriptorSetLayout;
+        if (_uCount == PBR_TEXTURE_COUNT)
+            m_materialDescriptorSetLayouts[1] = descriptorSetLayout;
+        else m_materialDescriptorSetLayouts[0] = descriptorSetLayout;
     }
 
 
@@ -780,20 +784,26 @@ namespace DENG {
         // check if material should be added
         if (_hshMaterial && m_materialDescriptors.find(_hshMaterial) == m_materialDescriptors.end()) {
             if (resourceManager.ExistsMaterialPBR(_hshMaterial))
-                _AllocateMaterialDescriptors<MaterialPBR, MAX_PBR_SAMPLERS>(_hshMaterial, *resourceManager.GetMaterialPBR(_hshMaterial));
+                _AllocateMaterialDescriptors<MaterialPBR, PBR_TEXTURE_COUNT>(_hshMaterial, *resourceManager.GetMaterialPBR(_hshMaterial));
             else if (resourceManager.ExistsMaterialPhong(_hshMaterial))
-                _AllocateMaterialDescriptors<MaterialPhong, MAX_PHONG_SAMPLERS>(_hshMaterial, *resourceManager.GetMaterialPhong(_hshMaterial));
+                _AllocateMaterialDescriptors<MaterialPhong, PHONG_TEXTURE_COUNT>(_hshMaterial, *resourceManager.GetMaterialPhong(_hshMaterial));
         }
 
         VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
         
         // check if material descriptor set is required
-        if (pShader->GetMaterialSamplerCount() != 0 && m_materialDescriptorSetLayouts.find(pShader->GetMaterialSamplerCount()) == m_materialDescriptorSetLayouts.end())
-            _CreateMaterialDescriptorSetLayout(pShader->GetMaterialSamplerCount());
-        
-        if (pShader->GetMaterialSamplerCount() != 0)
-            materialDescriptorSetLayout = m_materialDescriptorSetLayouts[pShader->GetMaterialSamplerCount()];
+        if (!pShader->IsPropertySet(ShaderPropertyBit_IsNonStandardShader)) {
+            bool bIsPbr = pShader->IsPbr();
+            if (bIsPbr && m_materialDescriptorSetLayouts[1] == VK_NULL_HANDLE)
+                _CreateMaterialDescriptorSetLayout(6);
+            else if (!bIsPbr && m_materialDescriptorSetLayouts[0] == VK_NULL_HANDLE)
+                _CreateMaterialDescriptorSetLayout(4);
 
+            if (bIsPbr)
+                materialDescriptorSetLayout = m_materialDescriptorSetLayouts[1];
+            else materialDescriptorSetLayout = m_materialDescriptorSetLayouts[0];
+        }
+        
         if (m_shaderDescriptors.find(_hshShader) != m_shaderDescriptors.end() && _hshMaterial) {
             vulkanFramebuffer->Draw(
                 _hshMesh, 

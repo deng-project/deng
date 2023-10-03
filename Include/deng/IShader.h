@@ -10,6 +10,7 @@
 #include <vector>
 #include <cvar/SID.h>
 #include "deng/Api.h"
+#include "deng/ErrorDefinitions.h"
 
 #include <bitset>
 
@@ -98,15 +99,16 @@ namespace DENG {
 #define AttributeTypeCrc32PropertyOffset 210
 #define AttributeStrideCrc32PropertyOffset 178
 #define UniformDataCrc32PropertyOffset 146
+#define CombinedShaderTextureHashOffset 114
 
-#define VertexShaderNameCrc32PropertyOffset 114
-#define GeometryShaderNameCrc32PropertyOffset 82
-#define FragmentShaderNameCrc32PropertyOffset 50
+#define VertexShaderNameCrc32PropertyOffset 82
+#define GeometryShaderNameCrc32PropertyOffset 50
+#define FragmentShaderNameCrc32PropertyOffset 18
 
-#define EnableColorMultiplierPropertyOffset 145
-#define EnabledJointsCountPropertyOffset 142
-#define MorphTargetCountPropertyOffset 134
-#define ShadingPropertyOffset 133
+#define EnableColorMultiplierPropertyOffset 113
+#define EnabledJointsCountPropertyOffset 110
+#define MorphTargetCountPropertyOffset 102
+#define ShadingPropertyOffset 101
 
 	typedef uint32_t ShaderPropertyBits;
 
@@ -162,6 +164,7 @@ namespace DENG {
 				* 32 bits - attribute type crc32 digest
 				* 32 bits - attribute stride crc32 digest
 				* 32 bits - uniform data layout crc32 digest
+				* 32 bits - combined shader specific texture hash
 				* if non_standard_shader:
 				*		32 bits - vertex shader module hash
 				*		32 bits - geometry shader module hash
@@ -171,8 +174,8 @@ namespace DENG {
 				*		3 bits - enabled joints count
 				*		8 bits - morph target count
 				*		1 bit - 0: blinn-phong shading; 1: pbr shading
-			 * Minimum number of bits required: 121
-			 * Maximum number of bits required: 206
+			 * Minimum number of bits required: 153
+			 * Maximum number of bits required: 238
 			 */
 			std::bitset<N_BITS> m_bProperties = 0;
 			std::mutex m_fsMutex;
@@ -227,18 +230,69 @@ namespace DENG {
 				return static_cast<PrimitiveMode>(((m_bProperties & (std::bitset<256>{static_cast<uint64_t>(0b11)} << PrimitiveModePropertyOffset)) >> PrimitiveModePropertyOffset).to_ulong());
 			}
 
+			inline bool IsPropertySet(ShaderPropertyBits _bmPropertyBits) const {
+				return !(m_bProperties & (std::bitset<256>{static_cast<uint64_t>(_bmPropertyBits)} << ShaderPropertyOffset)).none();
+			}
+
 			inline void SetProperty(ShaderPropertyBits _bmPropertyBits, bool _bEnable = true) {
 				if (_bEnable) {
 					m_bProperties |= (std::bitset<256>{static_cast<uint64_t>(_bmPropertyBits)} << ShaderPropertyOffset);
 				}
 				else {
 					_bmPropertyBits = ~_bmPropertyBits;
-					m_bProperties &= (std::bitset<256>{static_cast<uint64_t>(_bmPropertyBits)} << ShaderPropertyOffset);
+					m_bProperties ^= (std::bitset<256>{static_cast<uint64_t>(_bmPropertyBits)} << ShaderPropertyOffset);
 				}
 			}
 
-			inline bool IsPropertySet(ShaderPropertyBits _bmPropertyBits) const { 
-				return !(m_bProperties & (std::bitset<256>{static_cast<uint64_t>(_bmPropertyBits)} << ShaderPropertyOffset)).none();
+			inline void SetEnableColorMultiplier(bool _bEnabled = true) {
+				DENG_ASSERT(!IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				if (_bEnabled)
+					m_bProperties |= (std::bitset<256>{1} << EnableColorMultiplierPropertyOffset);
+				else {
+					m_bProperties ^= (std::bitset<256>{static_cast<uint64_t>(!m_bProperties[EnableColorMultiplierPropertyOffset])} << EnableColorMultiplierPropertyOffset);
+				}
+			}
+
+			inline bool GetEnableColorMultiplier() {
+				DENG_ASSERT(!IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				return !(m_bProperties & (std::bitset<256>{1} << EnableColorMultiplierPropertyOffset)).none();
+			}
+
+			inline void SetEnabledJointsCount(uint32_t _uNJoints) {
+				DENG_ASSERT(_uNJoints < 8 && !IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				std::bitset<256> bNJoints{ _uNJoints };
+				m_bProperties |= (bNJoints << EnabledJointsCountPropertyOffset);
+			}
+
+			inline uint32_t GetEnabledJointsCount() {
+				DENG_ASSERT(!IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				return static_cast<uint32_t>(((m_bProperties >> EnabledJointsCountPropertyOffset) & std::bitset<256>{0b111}).to_ullong());
+			}
+
+			inline void SetMorphTargetCount(uint32_t _uNMorphTargets) {
+				DENG_ASSERT(_uNMorphTargets < 256 && !IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				std::bitset<256> bNMorphTargets{ _uNMorphTargets };
+				m_bProperties |= (bNMorphTargets << MorphTargetCountPropertyOffset);
+			}
+
+			inline uint32_t GetMorphTargetCount() {
+				DENG_ASSERT(!IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				return static_cast<uint32_t>(((m_bProperties >> MorphTargetCountPropertyOffset) & std::bitset<256>{0xff}).to_ullong());
+			}
+
+			inline void SetIsPbr(bool _bEnabled = true) {
+				DENG_ASSERT(!IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				if (_bEnabled) {
+					m_bProperties |= (std::bitset<256>{1} << ShadingPropertyOffset);
+				}
+				else {
+					m_bProperties ^= (std::bitset<256>{!_bEnabled} << ShadingPropertyOffset);
+				}
+			}
+
+			inline bool IsPbr() {
+				DENG_ASSERT(!IsPropertySet(ShaderPropertyBit_IsNonStandardShader));
+				return !(m_bProperties & (std::bitset<256>{1} << ShadingPropertyOffset)).none();
 			}
 			
 			inline std::size_t PushTextureHash(cvar::hash_t _hshTexture) { 
