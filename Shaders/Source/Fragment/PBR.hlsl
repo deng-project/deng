@@ -92,11 +92,12 @@ struct Material
 
 
 /* SSBO objects */
-StructuredBuffer<PointLight> pointLightBuffer : register(t1);
-StructuredBuffer<DirectionalLight> dirLightBuffer : register(t2);
-StructuredBuffer<SpotLight> spotLightBuffer : register(t3);
-StructuredBuffer<DrawDescriptorIndices> drawDescriptorIndices : register(t4);
-StructuredBuffer<Material> materials : register(t5);
+StructuredBuffer<DrawDescriptorIndices> drawDescriptorIndices : register(t1);
+StructuredBuffer<Material> materials : register(t2);
+StructuredBuffer<PointLight> pointLightBuffer : register(t4);
+StructuredBuffer<DirectionalLight> dirLightBuffer : register(t5);
+StructuredBuffer<SpotLight> spotLightBuffer : register(t6);
+
 
 /* Sampler bitmask definitions */
 static const uint g_AlbedoMapMask              = (1 << 0);
@@ -108,47 +109,47 @@ static const uint g_AmbientOcclusionMapMask    = (1 << 5);
 
 
 /* Texture samplers */
-VULKAN_BINDING(6, 1) 
-VULKAN_COMBINED_IMAGE_SAMPLER
-Texture2D smpAlbedo : register(t6);
-VULKAN_BINDING(6, 1)  
-VULKAN_COMBINED_IMAGE_SAMPLER
-SamplerState smpStateAlbedo : register(s6);
-
-VULKAN_BINDING(7, 1)
-VULKAN_COMBINED_IMAGE_SAMPLER
-Texture2D smpEmission : register(t7);
 VULKAN_BINDING(7, 1) 
 VULKAN_COMBINED_IMAGE_SAMPLER
-SamplerState smpStateEmission : register(s7);
+Texture2D smpAlbedo : register(t7);
+VULKAN_BINDING(7, 1)  
+VULKAN_COMBINED_IMAGE_SAMPLER
+SamplerState smpStateAlbedo : register(s7);
 
 VULKAN_BINDING(8, 1)
 VULKAN_COMBINED_IMAGE_SAMPLER
-Texture2D smpNormal : register(t8);
+Texture2D smpEmission : register(t8);
 VULKAN_BINDING(8, 1) 
 VULKAN_COMBINED_IMAGE_SAMPLER
-SamplerState smpStateNormal : register(s8);
+SamplerState smpStateEmission : register(s8);
 
 VULKAN_BINDING(9, 1)
 VULKAN_COMBINED_IMAGE_SAMPLER
-Texture2D smpMetallic : register(t9);
+Texture2D smpNormal : register(t9);
 VULKAN_BINDING(9, 1) 
 VULKAN_COMBINED_IMAGE_SAMPLER
-SamplerState smpStateMetallic : register(s9);
+SamplerState smpStateNormal : register(s9);
 
 VULKAN_BINDING(10, 1)
 VULKAN_COMBINED_IMAGE_SAMPLER
-Texture2D smpRoughness : register(t10);
+Texture2D smpMetallic : register(t10);
 VULKAN_BINDING(10, 1) 
 VULKAN_COMBINED_IMAGE_SAMPLER
-SamplerState smpStateRoughness : register(s10);
+SamplerState smpStateMetallic : register(s10);
 
 VULKAN_BINDING(11, 1)
 VULKAN_COMBINED_IMAGE_SAMPLER
-Texture2D smpAmbientOcclusion : register(t11);
+Texture2D smpRoughness : register(t11);
 VULKAN_BINDING(11, 1) 
 VULKAN_COMBINED_IMAGE_SAMPLER
-SamplerState smpStateAmbientOcclusion : register(s11);
+SamplerState smpStateRoughness : register(s11);
+
+VULKAN_BINDING(12, 1)
+VULKAN_COMBINED_IMAGE_SAMPLER
+Texture2D smpAmbientOcclusion : register(t12);
+VULKAN_BINDING(12, 1) 
+VULKAN_COMBINED_IMAGE_SAMPLER
+SamplerState smpStateAmbientOcclusion : register(s12);
 
 
 /* Some utility macros */
