@@ -83,14 +83,16 @@ namespace DENG {
 
 	
 	IShader* PBRShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("PBR", "PBR");
+		FileSystemShader* pShader = new FileSystemShader("PBR", "", "PBR");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
+		pShader->HashAttributeTypes();
 
 		pShader->PushAttributeStride(8u * sizeof(float));
 		pShader->PushAttributeStride(8u * sizeof(float));
 		pShader->PushAttributeStride(8u * sizeof(float));
+		pShader->HashAttributeStrides();
 
 		pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
 							 ShaderPropertyBit_EnableBlend |
@@ -98,8 +100,6 @@ namespace DENG {
 							 ShaderPropertyBit_EnableIndexing);
 		pShader->SetPushConstant(0, ShaderStageBit_Vertex | ShaderStageBit_Fragment, nullptr);
 		pShader->SetPipelineCullMode(PipelineCullMode::None);
-
-		pShader->SetMaterialSamplerCount(MAX_PBR_SAMPLERS);
 
 		// [DrawDescriptorIndices]
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex | ShaderStageBit_Fragment, 0);
@@ -113,15 +113,16 @@ namespace DENG {
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 4);
 		// [Material]
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 5);
+		pShader->HashUniformDataLayouts();
 
 		return pShader;
 	}
 
 
-	Material<MaterialPBR, MAX_PBR_SAMPLERS> PBRMaterialBuilder::Get() {
-		Material<MaterialPBR, MAX_PBR_SAMPLERS> material;
+	Material<MaterialPBR, PBR_TEXTURE_COUNT> PBRMaterialBuilder::Get() {
+		Material<MaterialPBR, PBR_TEXTURE_COUNT> material;
 
-		for (uint32_t i = 0; i < MAX_PBR_SAMPLERS; i++) {
+		for (uint32_t i = 0; i < PBR_TEXTURE_COUNT; i++) {
 			material.textures[i] = m_textures[i];
 
 			if (m_textures[i] != SID("__MissingTexture2D__")) {

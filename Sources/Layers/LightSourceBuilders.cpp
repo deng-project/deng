@@ -19,10 +19,13 @@ namespace DENG {
 
 
 	IShader* LightSourceShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("WhiteCube", "WhiteCube");
+		FileSystemShader* pShader = new FileSystemShader("WhiteCube", "", "WhiteCube");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
+		pShader->HashAttributeTypes();
+
 		pShader->PushAttributeStride(8u * sizeof(float));
-		
+		pShader->HashAttributeStrides();
+
 		pShader->SetProperty(ShaderPropertyBit_EnableBlend |
 							 ShaderPropertyBit_EnableDepthTesting |
 							 ShaderPropertyBit_EnablePushConstants);
@@ -31,7 +34,8 @@ namespace DENG {
 
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex, 0);
 		pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex, 1);
-	
+		pShader->HashUniformDataLayouts();
+
 		return pShader;
 	}
 }

@@ -13,10 +13,12 @@ namespace DENG {
 		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec4_UnsignedByte);
+		pShader->HashAttributeTypes();
 
 		pShader->PushAttributeStride(sizeof(ImDrawVert));
 		pShader->PushAttributeStride(sizeof(ImDrawVert));
 		pShader->PushAttributeStride(sizeof(ImDrawVert));
+		pShader->HashAttributeStrides();
 
 		pShader->SetProperty(ShaderPropertyBit_EnableBlend | 
 							 ShaderPropertyBit_EnableScissor | 
@@ -33,8 +35,10 @@ namespace DENG {
 			UniformDataType::ImageSampler2D,
 			ShaderStageBit_Fragment,
 			1);
-		pShader->PushTextureHash(m_hshTexture);
+		pShader->HashUniformDataLayouts();
 
+		pShader->PushTextureHash(m_hshTexture);
+		pShader->HashTextures();
 		return pShader;
 	}
 

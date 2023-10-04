@@ -41,7 +41,7 @@ namespace DENG {
 				m_hshDiffuse(_hshDiffuse),
 				m_hshSpecular(_hshSpecular) {}
 
-			Material<MaterialPhong, MAX_PHONG_SAMPLERS> Get();
+			Material<MaterialPhong, PHONG_TEXTURE_COUNT> Get();
 	};
 
 

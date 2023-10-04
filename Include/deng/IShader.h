@@ -185,9 +185,17 @@ namespace DENG {
 
 		public:
 			inline void PushAttributeType(VertexAttributeType _eType) { m_attributeTypes.push_back(_eType); }
+			inline void HashAttributeTypes() {
+				uint32_t uCrc32 = cvar::RuntimeCrc32(reinterpret_cast<const char*>(m_attributeTypes.data()), m_attributeTypes.size() * sizeof(VertexAttributeType));
+				m_bProperties |= (std::bitset<256>(uCrc32) << AttributeTypeCrc32PropertyOffset);
+			}
 			inline const std::vector<VertexAttributeType>& GetAttributeTypes() const { return m_attributeTypes; }
 
 			inline void PushAttributeStride(std::size_t _uStride) { m_attributeStrides.push_back(_uStride); }
+			inline void HashAttributeStrides() {
+				uint32_t uCrc32 = cvar::RuntimeCrc32(reinterpret_cast<const char*>(m_attributeStrides.data()), m_attributeStrides.size() * sizeof(std::size_t));
+				m_bProperties |= (std::bitset<256>(uCrc32) << AttributeStrideCrc32PropertyOffset);
+			}
 			inline const std::vector<std::size_t>& GetAttributeStrides() const { return m_attributeStrides; }
 	
 			inline void PushUniformDataLayout(UniformDataType _eType, ShaderStageBits _bmShaderStage, uint32_t _uBinding = 0, uint32_t _uSize = 0, uint32_t _uOffset = 0) {
@@ -196,6 +204,10 @@ namespace DENG {
 					_eType,
 					_bmShaderStage
 					});
+			}
+			inline void HashUniformDataLayouts() {
+				uint32_t uCrc32 = cvar::RuntimeCrc32(reinterpret_cast<const char*>(m_uniformDataLayouts.data()), m_uniformDataLayouts.size() * sizeof(UniformDataLayout));
+				m_bProperties |= (std::bitset<256>(uCrc32) << UniformDataCrc32PropertyOffset);
 			}
 			inline const std::vector<UniformDataLayout>& GetUniformDataLayouts() const { return m_uniformDataLayouts; }
 			inline std::vector<UniformDataLayout>& GetUniformDataLayouts() { return m_uniformDataLayouts; }
@@ -305,6 +317,11 @@ namespace DENG {
 					return 0;
 				m_textureHashes[_uSamplerId] = _hshTexture;
 				return _hshTexture;
+			}
+
+			inline void HashTextures() {
+				uint32_t uCrc32 = cvar::RuntimeCrc32(reinterpret_cast<const char*>(m_textureHashes.data()), m_textureHashes.size() * sizeof(cvar::hash_t));
+				m_bProperties |= (std::bitset<256>(uCrc32) << CombinedShaderTextureHashOffset);
 			}
 
 			inline cvar::hash_t GetTextureHash(size_t _uSamplerId) const { 

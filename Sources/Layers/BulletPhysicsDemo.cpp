@@ -91,21 +91,21 @@ namespace DENG {
 		public:
 			BulletShaderBuilder() = default;
 			IShader* Get() {
-				FileSystemShader* pShader = new FileSystemShader("Bullet", "Bullet");
+				FileSystemShader* pShader = new FileSystemShader("Bullet", "", "Bullet");
 				pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 				pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
+				pShader->HashAttributeTypes();
 
 				pShader->PushAttributeStride(2 * sizeof(TRS::Vector3<float>));
 				pShader->PushAttributeStride(2 * sizeof(TRS::Vector3<float>));
-				
+				pShader->HashAttributeStrides();
+
 				pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
 									 ShaderPropertyBit_EnableBlend |
 									 ShaderPropertyBit_EnablePushConstants |
 									 ShaderPropertyBit_Enable2DTextures);
 
 				pShader->SetPushConstant(0, ShaderStageBit_Vertex | ShaderStageBit_Fragment, nullptr);
-				pShader->SetPipelineCullMode(PipelineCullMode::None);
-				pShader->SetMaterialSamplerCount(MAX_PBR_SAMPLERS);
 
 				// [DrawDescriptorIndices]
 				pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Vertex | ShaderStageBit_Fragment, 0);
@@ -119,7 +119,7 @@ namespace DENG {
 				pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 4);
 				// [Material]
 				pShader->PushUniformDataLayout(UniformDataType::StorageBuffer, ShaderStageBit_Fragment, 5);
-				
+				pShader->HashUniformDataLayouts();
 
 				return pShader;
 			}
@@ -183,8 +183,8 @@ namespace DENG {
 	class BulletPlaneMaterialBuilder {
 		public:
 			BulletPlaneMaterialBuilder() = default;
-			Material<MaterialPBR, MAX_PBR_SAMPLERS> Get() {
-				Material<MaterialPBR, MAX_PBR_SAMPLERS> material;
+			Material<MaterialPBR, PBR_TEXTURE_COUNT> Get() {
+				Material<MaterialPBR, PBR_TEXTURE_COUNT> material;
 				material.material.fMetallic = 0.4f;
 				material.material.vAlbedoFactor = { 0.988f, 0.98f, 0.455f, 1.0f };
 				material.material.fRoughness = 0.6f;
@@ -201,8 +201,8 @@ namespace DENG {
 	class BulletCubeMaterialBuilder {
 		public:
 			BulletCubeMaterialBuilder() = default;
-			Material<MaterialPBR, MAX_PBR_SAMPLERS> Get() {
-				Material<MaterialPBR, MAX_PBR_SAMPLERS> material;
+			Material<MaterialPBR, PBR_TEXTURE_COUNT> Get() {
+				Material<MaterialPBR, PBR_TEXTURE_COUNT> material;
 				material.material.fMetallic = 0.9f;
 				material.material.vAlbedoFactor = { 0.25f, 0.25f, 0.25f };
 				material.material.fRoughness = 0.1f;

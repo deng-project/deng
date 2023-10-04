@@ -17,13 +17,13 @@ namespace DENG {
 			'4', '5', '6', '7',
 			'8', '9', 'a', 'b',
 			'c', 'd', 'e', 'f'
-		};
+        };
 
 		for (size_t i = 0; i < m_bProperties.size();) {
 			uint64_t uVal = 0;
 			for (size_t j = 0; j < 4; ++j) {
 				if (m_bProperties[i + j])
-					uVal |= (1 << j);
+					uVal |= (static_cast<size_t>(1) << j);
 			}
 			i += 4;
 

@@ -78,10 +78,18 @@ namespace DENG {
                              ShaderPropertyBit_EnablePushConstants);
 
         pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
+        pShader->HashAttributeTypes();
+
         pShader->PushAttributeStride(sizeof(TRS::Vector3<float>));
+        pShader->HashAttributeStrides();
+
         pShader->PushTextureHash(m_hshTexture);
+        pShader->HashTextures();
+
         pShader->PushUniformDataLayout(UniformDataType::Buffer, ShaderStageBit_Vertex, 0);
         pShader->PushUniformDataLayout(UniformDataType::ImageSampler3D, ShaderStageBit_Fragment, 1);
+        pShader->HashUniformDataLayouts();
+
         pShader->SetPushConstant(0, ShaderStageBit_Vertex, nullptr);
     
         return pShader;

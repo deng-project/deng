@@ -31,35 +31,44 @@ namespace DENG {
 	}
 
 	IShader* TerrainShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("Terrain", "Terrain");
+		FileSystemShader* pShader = new FileSystemShader("Terrain", "", "Terrain");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
+		pShader->HashAttributeTypes();
+
 		pShader->PushAttributeStride(sizeof(TRS::Vector3<float>));
+		pShader->HashAttributeStrides();
+
 		pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
 							 ShaderPropertyBit_EnableBlend |
 							 ShaderPropertyBit_EnablePushConstants |
-							 ShaderPropertyBit_NonStandardShader);
+							 ShaderPropertyBit_IsNonStandardShader);
 	
 		pShader->SetPushConstant(0, ShaderStageBit_Geometry, nullptr);
 		pShader->SetPrimitiveMode(PrimitiveMode::Points);
 
 		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Geometry, 0);
 		pShader->PushUniformDataLayout(UniformDataType::ImageSampler2D, ShaderStageBit_Fragment, 1);
+		pShader->HashUniformDataLayouts();
 
 		pShader->PushTextureHash(m_hshTerrainHeightTexture);
 		pShader->PushTextureHash(m_hshTerrainTexture);
+		pShader->HashTextures();
 
 		return pShader;
 	}
 
 	IShader* GrassShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("Grass", "Grass");
+		FileSystemShader* pShader = new FileSystemShader("Grass", "", "Grass");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
+		pShader->HashAttributeTypes();
+
 		pShader->PushAttributeStride(sizeof(TRS::Vector3<float>));
+		pShader->HashAttributeStrides();
 
 		pShader->SetProperty(ShaderPropertyBit_EnableDepthTesting |
 							 ShaderPropertyBit_EnableBlend |
 							 ShaderPropertyBit_EnablePushConstants |
-							 ShaderPropertyBit_NonStandardShader);
+							 ShaderPropertyBit_IsNonStandardShader);
 		pShader->SetPushConstant(0, ShaderStageBit_Geometry, nullptr);
 		pShader->SetPrimitiveMode(PrimitiveMode::Points);
 
@@ -71,10 +80,12 @@ namespace DENG {
 									   3, 
 									   static_cast<uint32_t>(sizeof(float)), 
 									   static_cast<uint32_t>(m_uTimerOffset));
+		pShader->HashUniformDataLayouts();
 
 		pShader->PushTextureHash(m_hshGrassTexture);
 		pShader->PushTextureHash(m_hshWindTexture);
 		pShader->PushTextureHash(m_hshHeightTexture);
+		pShader->HashTextures();
 		return pShader;
 	}
 }
