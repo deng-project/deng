@@ -4,7 +4,6 @@
 // author: Karl-Mihkel Ott
 
 #define FILE_SYSTEM_SHADER_CPP
-#include <cvar/SID.h>
 #include "deng/FileSystemShader.h"
 
 using namespace std;
@@ -43,130 +42,17 @@ namespace DENG {
 
 
 	vector<uint32_t>&& FileSystemShader::_CompileVertexShaderToSpirv() const {
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-		for (auto it = m_vertexShaderMacros.begin(); it != m_vertexShaderMacros.end(); it++) {
-			if (it->second != "")
-				options.AddMacroDefinition(it->first, it->second);
-			else options.AddMacroDefinition(it->first);
-		}
-
-		const string csVertexShaderSourcePath =
-			string{ m_csVertexShaderSourcePath } + '/' + m_csVertexShaderSourceName + ".vert";
-		
-		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csVertexShaderSourcePath);
-		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
-			sSourceCode.data(), 
-			sSourceCode.size(), 
-			shaderc_vertex_shader, 
-			fs::path(csVertexShaderSourcePath).filename().u8string().c_str(),
-			options);
-
-		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-			throw ShaderException(module.GetErrorMessage());
-			return move(vector<uint32_t>());
-		}
-
-		vector<uint32_t> spirv(module.cbegin(), module.cend());
-	
-		try {
-			m_programFilesManager.WriteProgramFile(
-				(const char*)spirv.data(),
-				spirv.size() * sizeof(uint32_t),
-				string{ m_csVertexShaderSpirvPath } + '/' + m_csVertexShaderSpirvName + ".vert.spv");
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::WARNING);
-		}
-
-		return move(spirv);
+		return move(vector<uint32_t>());
 	}
 
 
 	vector<uint32_t>&& FileSystemShader::_CompileGeometryShaderToSpirv() const {
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-		for (auto it = m_geometryShaderMacros.begin(); it != m_geometryShaderMacros.end(); it++) {
-			if (it->second != "")
-				options.AddMacroDefinition(it->first, it->second);
-			else options.AddMacroDefinition(it->first);
-		}
-
-		const string csGeometryShaderSourcePath =
-			string{ m_csGeometryShaderSourcePath } + '/' + m_csGeometryShaderSourceName + ".geom";
-
-		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csGeometryShaderSourcePath);
-		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
-			sSourceCode.data(),
-			sSourceCode.size(),
-			shaderc_geometry_shader,
-			fs::path(csGeometryShaderSourcePath).filename().u8string().c_str(),
-			options);
-
-		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-			throw ShaderException(module.GetErrorMessage());
-			return move(vector<uint32_t>());
-		}
-
-		vector<uint32_t> spirv(module.cbegin(), module.cend());
-
-		try {
-			m_programFilesManager.WriteProgramFile(
-				(const char*)spirv.data(),
-				spirv.size() * sizeof(uint32_t),
-				string{ m_csGeometryShaderSpirvPath } + '/' + m_csGeometryShaderSpirvName + ".geom.spv");
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
-		}
-
-		return move(spirv);
+		return move(vector<uint32_t>());
 	}
 
 
 	vector<uint32_t>&& FileSystemShader::_CompileFragmentShaderToSpirv() const {
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-		for (auto it = m_fragmentShaderMacros.begin(); it != m_fragmentShaderMacros.end(); it++) {
-			if (it->second != "")
-				options.AddMacroDefinition(it->first, it->second);
-			else options.AddMacroDefinition(it->first);
-		}
-
-		const string csFragmentShaderSourcePath =
-			string{ m_csFragmentShaderSourcePath } + '/' + m_csFragmentShaderSourceName + ".frag";
-		vector<char> sSourceCode = m_programFilesManager.GetProgramFileContent(csFragmentShaderSourcePath);
-		shaderc::CompilationResult module = compiler.CompileGlslToSpv(
-			sSourceCode.data(),
-			sSourceCode.size(),
-			shaderc_fragment_shader,
-			fs::path(csFragmentShaderSourcePath).filename().u8string().c_str(),
-			options);
-
-		if (module.GetCompilationStatus() != shaderc_compilation_status_success) {
-			throw ShaderException(module.GetErrorMessage());
-			return move(vector<uint32_t>());
-		}
-
-		vector<uint32_t> spirv(module.cbegin(), module.cend());
-
-		try {
-			m_programFilesManager.WriteProgramFile(
-				(const char*)spirv.data(),
-				spirv.size() * sizeof(uint32_t),
-				string{ m_csFragmentShaderSpirvPath } + '/' + m_csFragmentShaderSpirvName + ".frag.spv");
-		}
-		catch (const IOException& e) {
-			DISPATCH_ERROR_MESSAGE("IOException", e.what(), NON_CRITICAL);
-		}
-
-		return move(spirv);
+		return move(vector<uint32_t>());
 	}
 
 

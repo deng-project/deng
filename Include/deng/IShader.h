@@ -145,7 +145,6 @@ namespace DENG {
 			PushConstant m_pushConstant;
 
 			std::vector<cvar::hash_t> m_textureHashes;
-
 		protected:
 			/* Shader module properties are stored in a 256 bit integer.
 			 * Starting from MSB the layout of this identifier is defined like this:

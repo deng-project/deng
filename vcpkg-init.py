@@ -17,7 +17,7 @@ VCPKG_PACKAGES = [
     f"boost-iostreams:x64-{PLATFORM}",
     f"boost-multiprecision:x64-{PLATFORM}",
     f"entt:x64-{PLATFORM}",
-    f"shaderc:x64-{PLATFORM}",
+    f"directx-dxc:x64-{PLATFORM}",
     f"sdl2[vulkan]:x64-{PLATFORM}",
     f"bullet3:x64-{PLATFORM}"
 ]

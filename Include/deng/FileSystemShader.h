@@ -19,9 +19,7 @@
 	#include <sstream>
 	#include <chrono>
 	#include <filesystem>
-
-	#include "shaderc/shaderc.hpp"
-
+	
 	#include "deng/Api.h"
 	#include "deng/ErrorDefinitions.h"
 	#include "deng/Exceptions.h"

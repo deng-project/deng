@@ -31,6 +31,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/FileTextureBuilder.h
 	Include/deng/FileSystemShader.h
 	Include/deng/GPUMemoryAllocator.h
+	Include/deng/HLSLGraphicsShaderSpirvCompiler.h
 	Include/deng/IFramebuffer.h
 	Include/deng/ILayer.h
 	Include/deng/ImGuiLayer.h
@@ -39,6 +40,7 @@ set(DENG_MINIMAL_HEADERS
 	Include/deng/InputEvents.h
 	Include/deng/IRenderer.h
 	Include/deng/IShader.h
+	Include/deng/IGraphicsShaderSpirvCompiler.h
 	Include/deng/IWindowContext.h
 	Include/deng/MathConstants.h
 	Include/deng/Missing.h
@@ -121,15 +123,7 @@ target_compile_definitions(${DENG_MINIMAL_TARGET}
 find_package(Bullet CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
-
-# shaderc dependency madness
-find_package(glslang CONFIG REQUIRED)
-find_package(SPIRV-Tools CONFIG REQUIRED)
-find_package(SPIRV-Tools-opt CONFIG REQUIRED)
-find_package(SPIRV-Tools-link CONFIG REQUIRED)
-find_package(SPIRV-Tools-lint CONFIG REQUIRED)
-find_package(unofficial-shaderc_util CONFIG REQUIRED)
-find_package(unofficial-shaderc CONFIG REQUIRED)
+find_package(directx-dxc CONFIG REQUIRED)
 
 # Include directories
 target_include_directories(${DENG_MINIMAL_TARGET}
@@ -153,7 +147,7 @@ add_dependencies(${DENG_MINIMAL_TARGET}
 target_link_libraries(${DENG_MINIMAL_TARGET}
 	PUBLIC cvar
 	PRIVATE das2
-	PRIVATE unofficial::shaderc::shaderc
+	PRIVATE Microsoft::DirectXShaderCompiler
 	PUBLIC ${BULLET_LIBRARIES}
 	PRIVATE
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
