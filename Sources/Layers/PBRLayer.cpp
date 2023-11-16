@@ -13,7 +13,9 @@ namespace DENG {
 		m_scene(_pRenderer, _pFramebuffer) {}
 
 
-	void PBRLayer::Attach(IRenderer*, IWindowContext*) {
+	void PBRLayer::Attach(IRenderer*, IWindowContext*, IGraphicsShaderCompiler* _pCompiler) {
+		m_pGraphicsShaderCompiler = _pCompiler;
+
 		EventManager& eventManager = EventManager::GetInstance();
 		eventManager.AddListener<PBRLayer, WindowResizedEvent>(&PBRLayer::OnWindowResizeEvent, this);
 	
@@ -34,13 +36,13 @@ namespace DENG {
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		resourceManager.AddMesh<PBRSphereBuilder>(dRO_SID("SphereMesh", PBRTable), m_pRenderer);
-		resourceManager.AddShader<PBRShaderBuilder>(dRO_SID("PBRShader", PBRTable));
+		resourceManager.AddGraphicsShader<PBRShaderBuilder>(dRO_SID("PBRShader", PBRTable), m_pGraphicsShaderCompiler);
 		resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("RustAlbedo", PBRTable), "Textures/RustPBR/rustediron2_basecolor.png");
 		resourceManager.AddTexture<FileMonochromeTextureBuilder>(dRO_SID("RustMetallic", PBRTable), "Textures/RustPBR/rustediron2_metallic.png");
 		//resourceManager.AddTexture<FileTextureBuilder>(dRO_SID("RustNormal", PBRTable), "Textures/RustPBR/rustediron2_normal.png");
 		resourceManager.AddTexture<FileMonochromeTextureBuilder>(dRO_SID("RustRoughness", PBRTable), "Textures/RustPBR/rustediron2_roughness.png");
 		resourceManager.AddMaterialPBR<PBRMaterialBuilder>(dRO_SID("RedMaterial", PBRTable),
-			std::array<cvar::hash_t, PBR_TEXTURE_COUNT>{ 
+			std::array<cvar::hash_t, MaterialPBR::s_uTextureCount>{ 
 				dRO_SID("RustAlbedo", PBRTable), 
 				SID("__MissingTexture2D__"),
 				SID("__MissingTexture2D__"),

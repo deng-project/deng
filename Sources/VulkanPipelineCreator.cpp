@@ -18,7 +18,7 @@ namespace DENG {
             VkDescriptorSetLayout _hMaterialDescriptorSetLayout,
             VkSampleCountFlagBits _uSampleBits, 
             const Vulkan::PhysicalDeviceInformation& _information, 
-            const IShader* _pShader) :
+            const IGraphicsShader* _pShader) :
             m_hDevice(_hDevice),
             m_hShaderDescriptorSetLayout(_hShaderDescriptorSetLayout),
             m_hMaterialDescriptorSetLayout(_hMaterialDescriptorSetLayout),
@@ -35,8 +35,8 @@ namespace DENG {
             VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
             pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
-            if (_pShader->GetPipelineCacheStatus() & PipelineCacheStatusBit_VulkanCache) {
-                auto cacheBytes = _pShader->GetPipelineCache(RendererType::Vulkan);
+            if (_pShader->GetPipelineCacheStatus() == PipelineCacheStatus_CachedPipeline) {
+                auto cacheBytes = _pShader->GetPipelineCache();
                 
                 VkPipelineCacheHeaderVersionOne header = {};
                 memcpy(&header, cacheBytes.data(), sizeof(VkPipelineCacheHeaderVersionOne));
@@ -76,7 +76,7 @@ namespace DENG {
                 vector<char> cacheData(uCacheSize);
                 vkGetPipelineCacheData(m_hDevice, m_hPipelineCache, &uCacheSize, cacheData.data());
 
-                _pShader->CachePipeline(RendererType::Vulkan, cacheData.data(), cacheData.size());
+                _pShader->CachePipeline(cacheData.data(), cacheData.size());
             }
         }
 
@@ -135,7 +135,7 @@ namespace DENG {
         }
 
         
-        void PipelineCreator::_FindInputBindingDescriptions(const IShader* _pShader) {
+        void PipelineCreator::_FindInputBindingDescriptions(const IGraphicsShader* _pShader) {
             DENG_ASSERT(_pShader->GetAttributeTypes().size() == _pShader->GetAttributeStrides().size());
             m_vertexInputBindingDescriptions.reserve(_pShader->GetAttributeTypes().size());
 
@@ -148,7 +148,7 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_FindVertexInputAttributeDescriptions(const IShader* _pShader) {
+        void PipelineCreator::_FindVertexInputAttributeDescriptions(const IGraphicsShader* _pShader) {
             for(uint32_t i = 0; i < static_cast<uint32_t>(_pShader->GetAttributeTypes().size()); i++) {
                 m_vertexInputAttributeDescriptions.push_back(VkVertexInputAttributeDescription{});
                 m_vertexInputAttributeDescriptions.back().binding = i;
@@ -307,7 +307,7 @@ namespace DENG {
         }
 
 
-        void PipelineCreator::_CreatePipelineLayout(const IShader* _pShader) {
+        void PipelineCreator::_CreatePipelineLayout(const IGraphicsShader* _pShader) {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             
@@ -350,7 +350,7 @@ namespace DENG {
 
 
         // pipelines should be created from skratch only when there is no cache available
-        void PipelineCreator::_GeneratePipelineCreateInfo(const IShader* _pShader, bool _bCreateShaderModules) {
+        void PipelineCreator::_GeneratePipelineCreateInfo(const IGraphicsShader* _pShader, bool _bCreateShaderModules) {
             if(_bCreateShaderModules) {
                 // Create vertex and fragment shader modules
                 m_shaderModules.clear();
@@ -358,8 +358,8 @@ namespace DENG {
                 
                 std::vector<uint32_t> vertexShaderSpirv, geometryShaderSpirv, fragmentShaderSpirv;
                 try {
-                    vertexShaderSpirv = _pShader->GetVertexShaderSpirv();
-                    fragmentShaderSpirv = _pShader->GetFragmentShaderSpirv();
+                    vertexShaderSpirv = _pShader->GetVertexShaderByteCode();
+                    fragmentShaderSpirv = _pShader->GetFragmentShaderByteCode();
                 }
                 catch (const IOException& e) {
                     DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::NON_CRITICAL);
@@ -371,7 +371,7 @@ namespace DENG {
                 }
 
                 try {
-                    geometryShaderSpirv = _pShader->GetGeometryShaderSpirv();
+                    geometryShaderSpirv = _pShader->GetGeometryShaderByteCode();
                 }
                 catch (const IOException& e) {
                     DISPATCH_ERROR_MESSAGE("IOException", e.what(), ErrorSeverity::NON_CRITICAL);

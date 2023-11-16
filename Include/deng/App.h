@@ -37,6 +37,7 @@ namespace DENG {
 			IWindowContext* m_pWindowContext = nullptr;
 			IRenderer* m_pRenderer = nullptr;
 			IFramebuffer* m_pMainFramebuffer = nullptr;
+			IGraphicsShaderCompiler* m_pGraphicsShaderCompiler = nullptr;
 			std::vector<ILayer*> m_layers;
 
 		protected:
@@ -64,6 +65,11 @@ namespace DENG {
 			inline IFramebuffer* SetMainFramebuffer(IFramebuffer* _pFramebuffer) {
 				m_pMainFramebuffer = _pFramebuffer;
 				return m_pMainFramebuffer;
+			}
+
+			inline IGraphicsShaderCompiler* SetGraphicsShaderCompiler(IGraphicsShaderCompiler* _pCompiler) {
+				m_pGraphicsShaderCompiler = _pCompiler;
+				return m_pGraphicsShaderCompiler;
 			}
 
 			virtual void Run();

@@ -91,7 +91,7 @@ namespace DENG {
 		
 		uint32_t uFirstInstance = 0;
 		for (auto it = _instanceInfos.begin(); it != _instanceInfos.end(); it++) {
-			IShader* pShader = resourceManager.GetShader(it->hshShader);
+			IGraphicsShader* pShader = resourceManager.GetGraphicsShader(it->hshShader);
 			DENG_ASSERT(pShader);
 
 			auto& uniformDataLayouts = pShader->GetUniformDataLayouts();
@@ -133,7 +133,14 @@ namespace DENG {
 				pushConstant.pPushConstantData = &_camera;
 			}
 
-			m_pRenderer->DrawInstance(it->hshMesh, it->hshShader, m_pFramebuffer, it->uInstanceCount, uFirstInstance, it->hshMaterial);
+			m_pRenderer->DrawInstance(
+				it->hshMesh, 
+				it->hshShader, 
+				0, 
+				m_pFramebuffer, 
+				it->uInstanceCount, 
+				uFirstInstance, 
+				it->hshMaterial);
 			uFirstInstance += it->uInstanceCount;
 		}
 	}
@@ -248,7 +255,7 @@ namespace DENG {
 
 	void SceneRenderer::RenderSkybox(const CameraComponent& _camera, const SkyboxComponent& _skybox) {
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		auto pShader = resourceManager.GetShader(_skybox.hshShader);
+		auto pShader = resourceManager.GetGraphicsShader(_skybox.hshShader);
 		DENG_ASSERT(pShader);
 		DENG_ASSERT(m_uSkyboxScaleOffset != SIZE_MAX);
 
@@ -257,6 +264,6 @@ namespace DENG {
 		
 		pShader->GetPushConstant().uLength = sizeof(CameraComponent);
 		pShader->GetPushConstant().pPushConstantData = &_camera;
-		m_pRenderer->DrawInstance(_skybox.hshMesh, _skybox.hshShader, m_pFramebuffer, 1);
+		m_pRenderer->DrawInstance(_skybox.hshMesh, _skybox.hshShader, 0, m_pFramebuffer, 1);
 	}
 }

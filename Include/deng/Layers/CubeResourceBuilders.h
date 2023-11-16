@@ -8,18 +8,19 @@
 
 #include <cvar/SID.h>
 #include "deng/IRenderer.h"
+#include "deng/ResourceBuilders.h"
 #include "deng/RenderResources.h"
 
 #ifdef CUBE_RESOURCE_BUILDERS_CPP
 #include "deng/ProgramFilesManager.h"
-#include "deng/FileSystemShader.h"
+#include "deng/FileSystemGraphicsShader.h"
 #include <stb_image.h>
 #include "deng/Layers/CubeVertices.h"
 #endif
 
 namespace DENG {
 
-	class CubeMeshBuilder {
+	class CubeMeshBuilder : public IMeshBuilder {
 		private:
 			std::size_t m_uVertexOffset;
 
@@ -31,7 +32,7 @@ namespace DENG {
 	};
 
 
-	class CubeMaterialBuilder {
+	class CubeMaterialBuilder : public IMaterialBuilder<MaterialPhong> {
 		private:
 			cvar::hash_t m_hshDiffuse;
 			cvar::hash_t m_hshSpecular;
@@ -41,11 +42,11 @@ namespace DENG {
 				m_hshDiffuse(_hshDiffuse),
 				m_hshSpecular(_hshSpecular) {}
 
-			Material<MaterialPhong, PHONG_TEXTURE_COUNT> Get();
+			Material<MaterialPhong> Get();
 	};
 
 
-	class CubeTextureBuilder {
+	class CubeTextureBuilder : public ITextureBuilder {
 		private:
 			const std::string m_sFileName;
 

@@ -26,7 +26,9 @@ namespace DENG {
 		m_pRenderer(_pRenderer) {}
 
 
-	void GrassLayer::Attach(IRenderer*, IWindowContext*) {
+	void GrassLayer::Attach(IRenderer*, IWindowContext*, IGraphicsShaderCompiler* _pCompiler) {
+		m_pGraphicsShaderCompiler = _pCompiler;
+
 		EventManager& eventManager = EventManager::GetInstance();
 		eventManager.AddListener<GrassLayer, WindowResizedEvent>(&GrassLayer::OnWindowResizedEvent, this);
 	
@@ -35,16 +37,18 @@ namespace DENG {
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		// skybox
 		resourceManager.AddMesh<SkyboxMeshBuilder>(dRO_SID("SkyboxMesh", ResourceTable), m_pRenderer);
-		resourceManager.AddShader<SkyboxShaderBuilder>(dRO_SID("SkyboxShader", ResourceTable), dRO_SID("SkyboxTexture", ResourceTable));
+		resourceManager.AddGraphicsShader<SkyboxShaderBuilder>(dRO_SID("SkyboxShader", ResourceTable), m_pGraphicsShaderCompiler, dRO_SID("SkyboxTexture", ResourceTable));
 		
 
 		// grass terrain resources
 		resourceManager.AddMesh<GrassMeshBuilder>(dRO_SID("TerrainMesh", ResourceTable), m_pRenderer);
-		resourceManager.AddShader<TerrainShaderBuilder>(dRO_SID("TerrainShader", ResourceTable),
+		resourceManager.AddGraphicsShader<TerrainShaderBuilder>(dRO_SID("TerrainShader", ResourceTable),
+			m_pGraphicsShaderCompiler,
 			dRO_SID("TerrainHeightTexture", ResourceTable),
 			dRO_SID("TerrainTexture", ResourceTable));
 
-		resourceManager.AddShader<GrassShaderBuilder>(dRO_SID("GrassShader", ResourceTable),
+		resourceManager.AddGraphicsShader<GrassShaderBuilder>(dRO_SID("GrassShader", ResourceTable),
+													  m_pGraphicsShaderCompiler,
 													  m_uTimerOffset,
 													  dRO_SID("GrassTexture", ResourceTable),
 													  dRO_SID("WindTexture", ResourceTable),

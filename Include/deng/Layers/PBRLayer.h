@@ -29,14 +29,14 @@ namespace DENG {
 		private:
 			Entity m_idCamera = entt::null;
 			Entity m_idDirLight = entt::null;
-			Entity m_sphere;
+			Entity m_sphere = entt::null;
 
 			IRenderer* m_pRenderer = nullptr;
 			Scene m_scene;
 
 		public:
 			PBRLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
-			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pCompiler) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;
 	
 			void OnImGuiDraw();

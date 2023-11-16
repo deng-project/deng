@@ -8,15 +8,16 @@
 
 #include "deng/Api.h"
 #include "deng/RenderResources.h"
+#include "deng/ResourceBuilders.h"
 #include "deng/IRenderer.h"
 
 #ifdef SKYBOX_BUILDERS_CPP
-#include "deng/FileSystemShader.h"
+#include "deng/FileSystemGraphicsShader.h"
 #endif
 
 namespace DENG {
 
-	class DENG_API SkyboxMeshBuilder {
+	class DENG_API SkyboxMeshBuilder : public IMeshBuilder {
 		private:
 			IRenderer* m_pRenderer;
 			static size_t s_uVertexOffset;
@@ -30,14 +31,15 @@ namespace DENG {
 	};
 
 
-	class DENG_API SkyboxShaderBuilder {
+	class DENG_API SkyboxShaderBuilder : public IGraphicsShaderBuilder {
 		private:
 			cvar::hash_t m_hshTexture;
 
 		public:
-			SkyboxShaderBuilder(cvar::hash_t _hshTexture) :
+			SkyboxShaderBuilder(IGraphicsShaderCompiler* _pCompiler, cvar::hash_t _hshTexture) :
+				IGraphicsShaderBuilder(_pCompiler),
 				m_hshTexture(_hshTexture) {}
-			IShader* Get();
+			IGraphicsShader* Get();
 	};
 }
 

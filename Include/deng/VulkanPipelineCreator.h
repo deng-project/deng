@@ -15,7 +15,7 @@
     #include <vulkan/vulkan.h>
     #include <shaderc/shaderc.hpp>
 
-    #include "deng/IShader.h"
+    #include "deng/IGraphicsShader.h"
     #include "deng/ErrorDefinitions.h"
     #include "deng/Exceptions.h"
     #include "deng/VulkanHelpers.h"
@@ -57,12 +57,12 @@ namespace DENG {
                 VkPipelineCache m_hPipelineCache = VK_NULL_HANDLE;
 
             private:
-                void _FindInputBindingDescriptions(const IShader* _pShader);
-                void _FindVertexInputAttributeDescriptions(const IShader* _pShader);
+                void _FindInputBindingDescriptions(const IGraphicsShader* _pShader);
+                void _FindVertexInputAttributeDescriptions(const IGraphicsShader* _pShader);
                 VkShaderModule _CreateShaderModule(std::vector<uint32_t>& _bin);
 
-                void _CreatePipelineLayout(const IShader* _pShader);
-                void _GeneratePipelineCreateInfo(const IShader* _pShader, bool _bCreateShaderModules = true);
+                void _CreatePipelineLayout(const IGraphicsShader* _pShader);
+                void _GeneratePipelineCreateInfo(const IGraphicsShader* _pShader, bool _bCreateShaderModules = true);
 
             public:
                 PipelineCreator(
@@ -72,7 +72,7 @@ namespace DENG {
                     VkDescriptorSetLayout _hMeshDescriptorSetLayout,
                     VkSampleCountFlagBits _uSampleBits,
                     const PhysicalDeviceInformation& _info,
-                    const IShader* _pShader);
+                    const IGraphicsShader* _pShader);
                 PipelineCreator(PipelineCreator &&_pc) noexcept;
                 PipelineCreator(const PipelineCreator &_pc) = delete;
                 ~PipelineCreator() noexcept;

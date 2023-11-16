@@ -95,8 +95,8 @@ namespace DENG {
             void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, cvar::hash_t _hshShader);
             void _AllocateShaderDescriptors(cvar::hash_t _hshShader);
 
-            template<typename T, size_t N>
-            void _AllocateMaterialDescriptors(cvar::hash_t _hshMaterial, const Material<T, N>& _material) {
+            template<typename T>
+            void _AllocateMaterialDescriptors(cvar::hash_t _hshMaterial, const Material<T>& _material) {
                 m_materialDescriptors.emplace(
                     std::piecewise_construct,
                     std::forward_as_tuple(_hshMaterial),
@@ -104,16 +104,13 @@ namespace DENG {
 
                 auto& descriptorSets = m_materialDescriptors[_hshMaterial];
                 
-                static_assert(N == PBR_TEXTURE_COUNT || N == PHONG_TEXTURE_COUNT,
-                    "Template parameter N must be either PBR_TEXTURE_COUNT or PHONG_TEXTURE_COUNT");
-
-                if constexpr (N == PBR_TEXTURE_COUNT) {
+                if constexpr (std::is_same<T, MaterialPBR>::value) {
                     if (m_materialDescriptorSetLayouts[1] == VK_NULL_HANDLE)
-                        _CreateMaterialDescriptorSetLayout(N);
+                        _CreateMaterialDescriptorSetLayout(T::s_uTextureCount);
                 }
                 else {
                     if (m_materialDescriptorSetLayouts[0] == VK_NULL_HANDLE)
-                        _CreateMaterialDescriptorSetLayout(N);
+                        _CreateMaterialDescriptorSetLayout(T::s_uTextureCount);
                 }
 
                 // create api texture handles if necessary
@@ -123,8 +120,12 @@ namespace DENG {
                 }
 
                 std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> descriptorSetLayouts = {};
-                for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-                    descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[N];
+                for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                    if constexpr (std::is_same<T, MaterialPBR>::value)
+                        descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[1];
+                    else
+                        descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[0];
+                }
 
                 VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
                 descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -135,8 +136,8 @@ namespace DENG {
                 if (vkAllocateDescriptorSets(m_pInstanceCreator->GetDevice(), &descriptorSetAllocateInfo, descriptorSets.data()))
                     throw RendererException("vkAllocateDescriptorSets() failed to allocate material descriptor sets");
             
-                std::array<VkDescriptorImageInfo, N> descriptorImageInfos = {};
-                for (size_t i = 0; i < N; i++) {
+                std::array<VkDescriptorImageInfo, T::s_uTextureCount> descriptorImageInfos = {};
+                for (size_t i = 0; i < T::s_uTextureCount; i++) {
                     Vulkan::TextureData& texture = m_textureHandles[_material.textures[i]];
 
                     descriptorImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -144,15 +145,15 @@ namespace DENG {
                     descriptorImageInfos[i].sampler = texture.hSampler;
                 }
 
-                std::array<VkWriteDescriptorSet, N* MAX_FRAMES_IN_FLIGHT> writeDescriptors = {};
+                std::array<VkWriteDescriptorSet, T::s_uTextureCount * MAX_FRAMES_IN_FLIGHT> writeDescriptors = {};
                 for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                    for (size_t j = 0; j < N; j++) {
-                        writeDescriptors[i * N + j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        writeDescriptors[i * N + j].dstSet = descriptorSets[i];
-                        writeDescriptors[i * N + j].dstBinding = static_cast<uint32_t>(j);
-                        writeDescriptors[i * N + j].descriptorCount = 1;
-                        writeDescriptors[i * N + j].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        writeDescriptors[i * N + j].pImageInfo = &descriptorImageInfos[j];
+                    for (size_t j = 0; j < T::s_uTextureCount; j++) {
+                        writeDescriptors[i * T::s_uTextureCount + j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        writeDescriptors[i * T::s_uTextureCount + j].dstSet = descriptorSets[i];
+                        writeDescriptors[i * T::s_uTextureCount + j].dstBinding = static_cast<uint32_t>(j);
+                        writeDescriptors[i * T::s_uTextureCount + j].descriptorCount = 1;
+                        writeDescriptors[i * T::s_uTextureCount + j].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        writeDescriptors[i * T::s_uTextureCount + j].pImageInfo = &descriptorImageInfos[j];
                     }
                 }
 
@@ -163,7 +164,7 @@ namespace DENG {
                     0, nullptr);
             }
             
-            void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const IShader* _pShader);
+            void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const IGraphicsShader* _pShader);
             void _AllocateDescriptorPool();
             void _CheckAndAllocateDescriptorPool(size_t _uRequest);
 
@@ -183,7 +184,8 @@ namespace DENG {
             virtual bool SetupFrame() override;
             virtual void DrawInstance(
                 cvar::hash_t _hshMesh,
-                cvar::hash_t _hshShader,
+                cvar::hash_t _hshGraphicsShader,
+                cvar::hash_t _hshComputeShader,
                 IFramebuffer* _pFramebuffer,
                 uint32_t _uInstanceCount,
                 uint32_t _uFirstInstance,

@@ -18,8 +18,8 @@ namespace DENG {
 	}
 
 
-	IShader* LightSourceShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("WhiteCube", "", "WhiteCube");
+	IGraphicsShader* LightSourceShaderBuilder::Get() {
+		FileSystemGraphicsShader* pShader = new FileSystemGraphicsShader(m_pCompiler, "WhiteCube", "", "WhiteCube");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->HashAttributeTypes();
 

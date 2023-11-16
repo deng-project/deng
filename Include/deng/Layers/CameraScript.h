@@ -13,9 +13,9 @@
 #endif
 
 namespace DENG {
-	class CameraScript : public DENG::ScriptBehaviour {
+	class CameraScript : public ScriptBehaviour {
 		private:
-			DENG::CameraTransformer m_cameraTransformer;
+			CameraTransformer m_cameraTransformer;
 			const float m_fRotationSpeed = (float)MF_PI_2;
 			const float m_fMovementSpeed = 1.f;
 

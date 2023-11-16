@@ -40,7 +40,7 @@ namespace DENG {
 
 		public:
 			GrassLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
-			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pCompiler) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;
 
 			bool OnWindowResizedEvent(WindowResizedEvent& _event);

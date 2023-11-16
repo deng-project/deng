@@ -8,9 +8,10 @@
 
 #include "deng/IRenderer.h"
 #include "deng/RenderResources.h"
+#include "deng/ResourceBuilders.h"
 
 #ifdef PBR_RESOURCE_BUILDERS_CPP
-#include "deng/FileSystemShader.h"
+#include "deng/FileSystemGraphicsShader.h"
 #include "deng/MathConstants.h"
 #include "deng/Layers/PBRTable.h"
 #define SPHERE_SEGMENTS 64
@@ -18,7 +19,7 @@
 
 namespace DENG {
 
-	class PBRSphereBuilder {
+	class PBRSphereBuilder : public IMeshBuilder {
 		private:
 			static size_t m_uVertexOffset;
 			static size_t m_uIndicesOffset;
@@ -36,20 +37,21 @@ namespace DENG {
 	};
 
 
-	class PBRShaderBuilder {
+	class PBRShaderBuilder : public IGraphicsShaderBuilder {
 		public:
-			PBRShaderBuilder() = default;
-			IShader* Get();
+			PBRShaderBuilder(IGraphicsShaderCompiler* _pCompiler) :
+				IGraphicsShaderBuilder(_pCompiler) {}
+			IGraphicsShader* Get();
 	};
 
-	class PBRMaterialBuilder {
+	class PBRMaterialBuilder : public IMaterialBuilder<MaterialPBR> {
 		private:
-			std::array<cvar::hash_t, PBR_TEXTURE_COUNT> m_textures;
+			std::array<cvar::hash_t, MaterialPBR::s_uTextureCount> m_textures;
 
 		public:
-			PBRMaterialBuilder(const std::array<cvar::hash_t, PBR_TEXTURE_COUNT>& _textures) :
+			PBRMaterialBuilder(const std::array<cvar::hash_t, MaterialPBR::s_uTextureCount>& _textures) :
 				m_textures(_textures) {}
-			Material<MaterialPBR, PBR_TEXTURE_COUNT> Get();
+			Material<MaterialPBR> Get();
 	};
 }
 

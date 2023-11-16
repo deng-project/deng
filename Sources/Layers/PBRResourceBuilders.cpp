@@ -82,8 +82,8 @@ namespace DENG {
 	}
 
 	
-	IShader* PBRShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("PBR", "", "PBR");
+	IGraphicsShader* PBRShaderBuilder::Get() {
+		FileSystemGraphicsShader* pShader = new FileSystemGraphicsShader(m_pCompiler, "PBR", "", "PBR");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
@@ -119,10 +119,10 @@ namespace DENG {
 	}
 
 
-	Material<MaterialPBR, PBR_TEXTURE_COUNT> PBRMaterialBuilder::Get() {
-		Material<MaterialPBR, PBR_TEXTURE_COUNT> material;
+	Material<MaterialPBR> PBRMaterialBuilder::Get() {
+		Material<MaterialPBR> material;
 
-		for (uint32_t i = 0; i < PBR_TEXTURE_COUNT; i++) {
+		for (uint32_t i = 0; i < MaterialPBR::s_uTextureCount; i++) {
 			material.textures[i] = m_textures[i];
 
 			if (m_textures[i] != SID("__MissingTexture2D__")) {

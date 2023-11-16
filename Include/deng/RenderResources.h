@@ -12,16 +12,13 @@
 #include <cvar/SID.h>
 
 #include "deng/Api.h"
-#include "deng/IShader.h"
+#include "deng/IGraphicsShader.h"
 #include "deng/ResourceEvents.h"
 
 #include <mutex>
 #include <unordered_map>
 #include <vector>
 #include <optional>
-
-#define PBR_TEXTURE_COUNT      6
-#define PHONG_TEXTURE_COUNT    4
 
 namespace DENG {
 
@@ -96,6 +93,8 @@ namespace DENG {
 		float fMetallic = 0.0f;
 		float fAmbientOcclusion = 1.f;
 		PBRSamplerBits uSamplerBits = PBRSamplerBit_None;
+
+		static constexpr size_t s_uTextureCount = 6;
 	};
 
 	enum PhongSamplerBits_T : uint32_t {
@@ -114,6 +113,8 @@ namespace DENG {
 		TRS::Vector4<float> vDiffuse = { 1.0f, 0.f, 0.f, 1.f };
 		TRS::Vector4<float> vSpecular = { 1.0f, 0.f, 0.f, 1.f };
 		PhongSamplerBits uSamplerBits = PhongSamplerBit_None;
+		
+		static constexpr size_t s_uTextureCount = 4;
 	};
 
 	enum class TextureType {
@@ -150,10 +151,10 @@ namespace DENG {
 		bool bHeapAllocationFlag = false;
 	};
 
-	template<typename T, size_t N>
+	template<typename T>
 	struct Material {
 		T material;
-		std::array<cvar::hash_t, N> textures {};
+		std::array<cvar::hash_t, T::s_uTextureCount> textures {};
 	};
 
 	class DENG_API ResourceManager {
@@ -161,9 +162,9 @@ namespace DENG {
 			std::mutex m_mutex;
 
 			std::unordered_map<cvar::hash_t, MeshCommands, cvar::NoHash> m_meshes;
-			std::unordered_map<cvar::hash_t, Material<MaterialPBR, PBR_TEXTURE_COUNT>, cvar::NoHash> m_pbrMaterials;
-			std::unordered_map<cvar::hash_t, Material<MaterialPhong, PHONG_TEXTURE_COUNT>, cvar::NoHash> m_phongMaterials;
-			std::unordered_map<cvar::hash_t, IShader*, cvar::NoHash> m_shaders;
+			std::unordered_map<cvar::hash_t, Material<MaterialPBR>, cvar::NoHash> m_pbrMaterials;
+			std::unordered_map<cvar::hash_t, Material<MaterialPhong>, cvar::NoHash> m_phongMaterials;
+			std::unordered_map<cvar::hash_t, IGraphicsShader*, cvar::NoHash> m_graphicsShaders;
 			std::unordered_map<cvar::hash_t, Texture, cvar::NoHash> m_textures;
 
 			EventManager& m_eventManager;
@@ -174,7 +175,7 @@ namespace DENG {
 
 		public:
 			~ResourceManager() {
-				for (auto it = m_shaders.begin(); it != m_shaders.end(); it++) {
+				for (auto it = m_graphicsShaders.begin(); it != m_graphicsShaders.end(); it++) {
 					delete it->second;
 				}
 			}
@@ -221,7 +222,7 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Material<MaterialPBR, PBR_TEXTURE_COUNT>& AddMaterialPBR(cvar::hash_t _hshMaterial, Args&&... args) {
+			inline const Material<MaterialPBR>& AddMaterialPBR(cvar::hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
 				m_pbrMaterials.insert(std::make_pair(_hshMaterial, materialBuilder.Get()));
@@ -230,18 +231,18 @@ namespace DENG {
 				return m_pbrMaterials[_hshMaterial];
 			}
 
-			inline const std::unordered_map<cvar::hash_t, Material<MaterialPBR, PBR_TEXTURE_COUNT>, cvar::NoHash>& GetPBRMaterials() const {
+			inline const std::unordered_map<cvar::hash_t, Material<MaterialPBR>, cvar::NoHash>& GetPBRMaterials() const {
 				return m_pbrMaterials;
 			}
 
-			inline const Material<MaterialPBR, PBR_TEXTURE_COUNT>* GetMaterialPBR(cvar::hash_t _hshMaterial) const {
+			inline const Material<MaterialPBR>* GetMaterialPBR(cvar::hash_t _hshMaterial) const {
 				auto it = m_pbrMaterials.find(_hshMaterial);
 				if (it == m_pbrMaterials.end())
 					return nullptr;
 				return &it->second;
 			}
 
-			Material<MaterialPBR, PBR_TEXTURE_COUNT>* GetMaterialPBR(cvar::hash_t _hshMaterial) {
+			Material<MaterialPBR>* GetMaterialPBR(cvar::hash_t _hshMaterial) {
 				auto it = m_pbrMaterials.find(_hshMaterial);
 				if (it == m_pbrMaterials.end())
 					return nullptr;
@@ -258,7 +259,7 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const Material<MaterialPhong, PHONG_TEXTURE_COUNT>& AddMaterialPhong(cvar::hash_t _hshMaterial, Args&&... args) {
+			inline const Material<MaterialPhong>& AddMaterialPhong(cvar::hash_t _hshMaterial, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder materialBuilder(std::forward<Args>(args)...);
 				m_phongMaterials.insert(std::make_pair(_uHash, materialBuilder.Get()));
@@ -267,11 +268,11 @@ namespace DENG {
 				return m_phongMaterials[_uHash];
 			}
 
-			inline const std::unordered_map<cvar::hash_t, Material<MaterialPhong, PHONG_TEXTURE_COUNT>, cvar::NoHash>& GetPhongMaterials() const {
+			inline const std::unordered_map<cvar::hash_t, Material<MaterialPhong>, cvar::NoHash>& GetPhongMaterials() const {
 				return m_phongMaterials;
 			}
 
-			Material<MaterialPhong, PHONG_TEXTURE_COUNT>* GetMaterialPhong(cvar::hash_t _hshMaterial) {
+			Material<MaterialPhong>* GetMaterialPhong(cvar::hash_t _hshMaterial) {
 				auto it = m_phongMaterials.find(_hshMaterial);
 				if (it == m_phongMaterials.end())
 					return nullptr;
@@ -288,41 +289,41 @@ namespace DENG {
 			}
 
 			template<typename Builder, typename... Args>
-			inline const IShader* AddShader(cvar::hash_t _hshShader, Args&&... args) {
+			inline const IGraphicsShader* AddGraphicsShader(cvar::hash_t _hshShader, Args&&... args) {
 				std::scoped_lock lock(m_mutex);
 				Builder shaderBuilder(std::forward<Args>(args)...);
-				m_shaders.insert(std::make_pair(_hshShader, shaderBuilder.Get()));
-				return m_shaders[_hshShader];
+				m_graphicsShaders.insert(std::make_pair(_hshShader, shaderBuilder.Get()));
+				return m_graphicsShaders[_hshShader];
 			}
 
-			inline const IShader* GetShader(cvar::hash_t _hshShader) const {
-				auto it = m_shaders.find(_hshShader);
-				if (it == m_shaders.end())
+			inline const IGraphicsShader* GetGraphicsShader(cvar::hash_t _hshShader) const {
+				auto it = m_graphicsShaders.find(_hshShader);
+				if (it == m_graphicsShaders.end())
 					return nullptr;
 				return it->second;
 			}
 
-			inline IShader* GetShader(cvar::hash_t _hshShader) {
-				auto it = m_shaders.find(_hshShader);
-				if (it == m_shaders.end())
+			inline IGraphicsShader* GetGraphicsShader(cvar::hash_t _hshShader) {
+				auto it = m_graphicsShaders.find(_hshShader);
+				if (it == m_graphicsShaders.end())
 					return nullptr;
 				return it->second;
 			}
 
-			inline const std::unordered_map<std::size_t, IShader*, cvar::NoHash>& GetShaders() const {
-				return m_shaders;
+			inline const std::unordered_map<std::size_t, IGraphicsShader*, cvar::NoHash>& GetGraphicsShaders() const {
+				return m_graphicsShaders;
 			}
 
-			inline bool ExistsShader(cvar::hash_t _hshShader) {
-				return m_shaders.find(_hshShader) != m_shaders.end();
+			inline bool ExistsGraphicsShader(cvar::hash_t _hshShader) {
+				return m_graphicsShaders.find(_hshShader) != m_graphicsShaders.end();
 			}
 
-			inline void RemoveShader(cvar::hash_t _hshShader) {
+			inline void RemoveGraphicsShader(cvar::hash_t _hshShader) {
 				m_eventManager.Dispatch<ResourceRemoveEvent>(_hshShader, ResourceType::Shader);
 				
-				if (m_shaders.find(_hshShader) != m_shaders.end())
-					delete m_shaders[_hshShader];
-				m_shaders.erase(_hshShader);
+				if (m_graphicsShaders.find(_hshShader) != m_graphicsShaders.end())
+					delete m_graphicsShaders[_hshShader];
+				m_graphicsShaders.erase(_hshShader);
 			}
 
 			template<typename Builder, typename... Args>

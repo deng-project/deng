@@ -42,7 +42,7 @@ namespace DENG {
 		public:
 			BulletFallingCubeLayer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
 			~BulletFallingCubeLayer();
-			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pGraphicsShaderCompiler) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;
 
 			bool OnWindowResizedEvent(WindowResizedEvent& _event);

@@ -7,14 +7,15 @@
 #define LIGHT_SOURCE_BUILDERS_H
 
 #include "deng/RenderResources.h"
+#include "deng/ResourceBuilders.h"
 
 #ifdef LIGHT_SOURCE_BUILDERS_CPP
-#include "deng/FileSystemShader.h"
+#include "deng/FileSystemGraphicsShader.h"
 #endif
 
 namespace DENG {
 
-	class LightSourceMeshBuilder {
+	class LightSourceMeshBuilder : public IMeshBuilder {
 		private:
 			size_t m_uVertexOffset;
 
@@ -26,10 +27,11 @@ namespace DENG {
 	};
 
 
-	class LightSourceShaderBuilder {
+	class LightSourceShaderBuilder : public IGraphicsShaderBuilder {
 		public:
-			LightSourceShaderBuilder() = default;
-			IShader* Get();
+			LightSourceShaderBuilder(IGraphicsShaderCompiler* _pCompiler) :
+				IGraphicsShaderBuilder(_pCompiler) {}
+			IGraphicsShader* Get();
 	};
 
 }

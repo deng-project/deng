@@ -9,14 +9,15 @@
 #include "deng/IRenderer.h"
 #include "deng/RenderResources.h"
 #include <cvar/SID.h>
+#include "deng/ResourceBuilders.h"
 
 #ifdef GRASS_RESOURCE_BUILDERS_CPP
-#include "deng/FileSystemShader.h"
+#include "deng/FileSystemGraphicsShader.h"
 #endif
 
 namespace DENG {
 
-	class GrassMeshBuilder {
+	class GrassMeshBuilder : public IMeshBuilder {
 		private:
 			IRenderer* m_pRenderer;
 
@@ -28,21 +29,22 @@ namespace DENG {
 	};
 
 
-	class TerrainShaderBuilder {
+	class TerrainShaderBuilder : public IGraphicsShaderBuilder {
 		private:
 			cvar::hash_t m_hshTerrainHeightTexture;
 			cvar::hash_t m_hshTerrainTexture;
 
 		public:
-			TerrainShaderBuilder(cvar::hash_t _hshTerrainHeightTexture, cvar::hash_t _hshTerrainTexture) :
+			TerrainShaderBuilder(IGraphicsShaderCompiler* _pCompiler, cvar::hash_t _hshTerrainHeightTexture, cvar::hash_t _hshTerrainTexture) :
+				IGraphicsShaderBuilder(_pCompiler),
 				m_hshTerrainHeightTexture(_hshTerrainHeightTexture),
 				m_hshTerrainTexture(_hshTerrainTexture) {}
 
-			IShader* Get();
+			IGraphicsShader* Get();
 	};
 
 
-	class GrassShaderBuilder {
+	class GrassShaderBuilder : public IGraphicsShaderBuilder {
 		private:
 			std::size_t m_uTimerOffset;
 			cvar::hash_t m_hshGrassTexture;
@@ -50,13 +52,14 @@ namespace DENG {
 			cvar::hash_t m_hshHeightTexture;
 
 		public:
-			GrassShaderBuilder(size_t _uTimerOffset, cvar::hash_t _hshGrassTexture, cvar::hash_t _hshWindTexture, cvar::hash_t _hshHeightTexture) :
+			GrassShaderBuilder(IGraphicsShaderCompiler* _pCompiler, size_t _uTimerOffset, cvar::hash_t _hshGrassTexture, cvar::hash_t _hshWindTexture, cvar::hash_t _hshHeightTexture) :
+				IGraphicsShaderBuilder(_pCompiler),
 				m_uTimerOffset(_uTimerOffset),
 				m_hshGrassTexture(_hshGrassTexture),
 				m_hshWindTexture(_hshWindTexture),
 				m_hshHeightTexture(_hshHeightTexture) {}
 
-			IShader* Get();
+			IGraphicsShader* Get();
 	};
 }
 

@@ -107,7 +107,7 @@ namespace DENG {
                 inline void UpdatePipelineCreator(cvar::hash_t _hshShader, VkDescriptorSetLayout _hShaderDescriptorSetLayout, VkDescriptorSetLayout _hMaterialDescriptorSetLayout) {
                     if (m_pipelineCreators.find(_hshShader) == m_pipelineCreators.end()) {
                         ResourceManager& resourceManager = ResourceManager::GetInstance();
-                        auto pShader = resourceManager.GetShader(_hshShader);
+                        auto pShader = resourceManager.GetGraphicsShader(_hshShader);
                         DENG_ASSERT(pShader);
 
                         m_pipelineCreators.emplace(

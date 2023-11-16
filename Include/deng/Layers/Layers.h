@@ -6,10 +6,8 @@
 #ifndef LAYERS_H
 #define LAYERS_H
 
-#include "deng/Layers/BasicLightingLayer.h"
 #include "deng/Layers/BulletPhysicsDemo.h"
 #include "deng/Layers/GrassLayer.h"
-#include "deng/Layers/InstancedCubeLayer.h"
 #include "deng/Layers/PBRLayer.h"
 
 #endif

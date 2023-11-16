@@ -7,6 +7,7 @@
 #define EXCEPTIONS_H
 
 #include <exception>
+#include <string>
 
 namespace DENG {
 
@@ -156,6 +157,23 @@ namespace DENG {
 		public:
 			SyscallException(const std::string& _sWhat) {
 				if (_sWhat == "")
+					m_szWhatMessage = "Unknown exception";
+				else m_szWhatMessage = _sWhat;
+			}
+
+			const char* what() const override {
+				return m_szWhatMessage.c_str();
+			}
+	};
+
+
+	class STDException : public std::exception {
+		private:
+			std::string m_szWhatMessage;
+		
+		public:
+			STDException(const std::string& _sWhat) {
+				if (_sWhat.empty())
 					m_szWhatMessage = "Unknown exception";
 				else m_szWhatMessage = _sWhat;
 			}

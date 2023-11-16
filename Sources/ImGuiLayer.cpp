@@ -207,7 +207,8 @@ namespace DENG {
 	}
 
 
-	void ImGuiLayer::Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) {
+	void ImGuiLayer::Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pGraphicsShaderCompiler) {
+		m_pGraphicsShaderCompiler = _pGraphicsShaderCompiler;
 		m_uUniformRegionOffset = _pRenderer->AllocateMemory(sizeof(TRS::Point2D<float>), BufferDataType::Uniform);
 		
 		m_pImguiContext = ImGui::CreateContext();
@@ -220,7 +221,7 @@ namespace DENG {
 		m_pIO->Fonts->GetTexDataAsRGBA32(&pPixels, &iWidth, &iHeight);
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		resourceManager.AddShader<ImGuiShaderBuilder>(SID("__ImGui__"), m_uUniformRegionOffset, SID("__ImGui__"));
+		resourceManager.AddGraphicsShader<ImGuiShaderBuilder>(SID("__ImGui__"), m_pGraphicsShaderCompiler, m_uUniformRegionOffset, SID("__ImGui__"));
 		resourceManager.AddMesh<ImGuiMeshBuilder>(SID("__ImGui__"));
 		resourceManager.AddTexture<ImGuiTextureBuilder>(SID("__ImGui__"), iWidth, iHeight, pPixels);
 
@@ -260,6 +261,7 @@ namespace DENG {
 		m_pRenderer->DrawInstance(
 			SID("__ImGui__"),
 			SID("__ImGui__"),
+			0,
 			_pFramebuffer, 1, 0, 0);
 	}
 

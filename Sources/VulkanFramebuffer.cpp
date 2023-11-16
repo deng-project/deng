@@ -362,14 +362,14 @@ namespace DENG {
             VkDescriptorSetLayout _hMaterialDescriptorSetLayout) 
         {
             ResourceManager& resourceManager = ResourceManager::GetInstance();
-            const IShader* pShader = resourceManager.GetShader(_hshShader);
+            const IGraphicsShader* pShader = resourceManager.GetGraphicsShader(_hshShader);
             const MeshCommands* pMesh = resourceManager.GetMesh(_hshMesh);
 
             // check if pipeline creator needs to be created
-            if (m_pipelineCreators.find(_hshShader) == m_pipelineCreators.end()) {
+            if (m_pipelineCreators.find(pShader->GetDigestedProperties()) == m_pipelineCreators.end()) {
                 m_pipelineCreators.emplace(
                     std::piecewise_construct,
-                    std::forward_as_tuple(_hshShader),
+                    std::forward_as_tuple(pShader->GetDigestedProperties()),
                     std::forward_as_tuple(
                         m_pInstanceCreator->GetDevice(),
                         m_hRenderpass,

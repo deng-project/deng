@@ -57,7 +57,8 @@ namespace DENG {
 			virtual bool SetupFrame() = 0;
 			virtual void DrawInstance(
                 cvar::hash_t _hshMesh,
-                cvar::hash_t _hshShader,
+                cvar::hash_t _hshGraphicsShader,
+                cvar::hash_t _hshComputeShader,
                 IFramebuffer* _pFramebuffer,
                 uint32_t _uInstanceCount,
                 uint32_t _uFirstInstance = 0,

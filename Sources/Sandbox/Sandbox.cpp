@@ -12,6 +12,7 @@ namespace DENG {
 		SandboxApp::SandboxApp() {
 			IWindowContext* pWindowContext = SetWindowContext(new SDLWindowContext);
 			IRenderer* pRenderer = SetRenderer(new VulkanRenderer);
+			IGraphicsShaderCompiler* pCompiler = SetGraphicsShaderCompiler(new HLSLGraphicsShaderSpirvCompiler);
 			IFramebuffer* pMainFramebuffer = nullptr;
 			pWindowContext->SetHints(WindowHint_Shown | WindowHint_Vulkan | WindowHint_Resizeable);
 		

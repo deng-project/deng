@@ -20,8 +20,8 @@ namespace DENG {
 		return meshCommands;
 	}
 
-	Material<MaterialPhong, PHONG_TEXTURE_COUNT> CubeMaterialBuilder::Get() {
-		return Material<MaterialPhong, PHONG_TEXTURE_COUNT>();
+	Material<MaterialPhong> CubeMaterialBuilder::Get() {
+		return Material<MaterialPhong>();
 	}
 
 

@@ -30,8 +30,8 @@ namespace DENG {
 		return meshCommands;
 	}
 
-	IShader* TerrainShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("Terrain", "", "Terrain");
+	IGraphicsShader* TerrainShaderBuilder::Get() {
+		FileSystemGraphicsShader* pShader = new FileSystemGraphicsShader(m_pCompiler, "Terrain", "", "Terrain");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->HashAttributeTypes();
 
@@ -57,8 +57,8 @@ namespace DENG {
 		return pShader;
 	}
 
-	IShader* GrassShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("Grass", "", "Grass");
+	IGraphicsShader* GrassShaderBuilder::Get() {
+		FileSystemGraphicsShader* pShader = new FileSystemGraphicsShader(m_pCompiler, "Grass", "", "Grass");
 		pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 		pShader->HashAttributeTypes();
 

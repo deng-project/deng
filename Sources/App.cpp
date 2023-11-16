@@ -18,7 +18,7 @@ namespace DENG {
 
 	void App::AttachLayers() {
 		for (ILayer* pLayer : m_layers)
-			pLayer->Attach(m_pRenderer, m_pWindowContext);
+			pLayer->Attach(m_pRenderer, m_pWindowContext, m_pGraphicsShaderCompiler);
 	}
 
 

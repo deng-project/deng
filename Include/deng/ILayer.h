@@ -10,6 +10,7 @@
 #include "deng/IFramebuffer.h"
 #include "deng/IRenderer.h"
 #include "deng/IWindowContext.h"
+#include "deng/IGraphicsShaderCompiler.h"
 #include "deng/Event.h"
 
 namespace DENG {
@@ -18,10 +19,11 @@ namespace DENG {
 		protected:
 			IRenderer* m_pRenderer = nullptr;
 			IWindowContext* m_pWindowContext = nullptr;
+			IGraphicsShaderCompiler* m_pGraphicsShaderCompiler = nullptr;
 
 		public:
 			virtual ~ILayer() {}
-			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) = 0;
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pGraphicsShaderCompiler) = 0;
 			virtual void Update(IFramebuffer* _pFramebuffer) = 0;
 	};
 }

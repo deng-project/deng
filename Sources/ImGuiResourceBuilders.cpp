@@ -8,8 +8,8 @@
 
 namespace DENG {
 
-	IShader* ImGuiShaderBuilder::Get() {
-		FileSystemShader* pShader = new FileSystemShader("ImGui", "", "ImGui");
+	IGraphicsShader* ImGuiShaderBuilder::Get() {
+		FileSystemGraphicsShader* pShader = new FileSystemGraphicsShader(m_pCompiler, "ImGui", "", "ImGui");
 		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec2_Float);
 		pShader->PushAttributeType(VertexAttributeType::Vec4_UnsignedByte);

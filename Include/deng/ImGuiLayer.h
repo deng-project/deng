@@ -61,7 +61,7 @@ namespace DENG {
 		public:
 			ImGuiLayer();
 			~ImGuiLayer();
-			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) override;
+			virtual void Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pGraphicsShaderCompiler) override;
 			virtual void Update(IFramebuffer* _pFramebuffer) override;
 
 			template<typename T>

@@ -13,6 +13,7 @@
 #include "deng/VulkanRenderer.h"
 #include "deng/Exceptions.h"
 #include "deng/ImGuiLayer.h"
+#include "deng/HLSLGraphicsShaderSpirvCompiler.h"
 #endif
 
 #include "deng/Layers/Layers.h"

@@ -13,7 +13,9 @@
 namespace DENG {
 	static ProgramFilesManager g_programFilesManager;
 
-	HLSLGraphicsShaderSpirvCompiler::HLSLGraphicsShaderSpirvCompiler() {
+	HLSLGraphicsShaderSpirvCompiler::HLSLGraphicsShaderSpirvCompiler() :
+		IGraphicsShaderCompiler("hlsl", "spv")
+	{
 		HRESULT hres = 0;
 		
 		// Initialize DXC Library
@@ -35,7 +37,7 @@ namespace DENG {
 		}
 	}
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::_Compile(const char* _szSource, size_t _uLen, const wchar_t* _lszProfile, const wchar_t* _lszFileName) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::_Compile(const char* _szSource, size_t _uLen, const wchar_t* _lszProfile, const wchar_t* _lszFileName) const {
 		LPCWSTR arguments[] = {
 			// name of the shader file to be displayed e.g. in an error message
 			_lszFileName,
@@ -43,6 +45,8 @@ namespace DENG {
 			L"-E", L"main",
 			// shader target profile
 			L"-T", _lszProfile,
+			// optimization
+			L"-O3",
 			// compile to SPIRV
 			L"-spirv"
 		};
@@ -91,42 +95,42 @@ namespace DENG {
 		return std::move(spirvBlob);
 	}
 
-	std::wstring&& HLSLGraphicsShaderSpirvCompiler::_UTF8_Decode(const std::string& _str) const {
-		if (_str.empty()) return std::move(std::wstring());
+	std::wstring HLSLGraphicsShaderSpirvCompiler::_UTF8_Decode(const std::string& _str) const {
+		if (_str.empty()) return std::wstring();
 		int iSizeRequired = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), (int)_str.size(), nullptr, 0);
 		std::wstring wstr(iSizeRequired, 0);
 		MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), (int)_str.size(), wstr.data(), (int)wstr.size());
-		return std::move(wstr);
+		return wstr;
 	}
 
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::CompileVertexShaderFile(const std::string& _sFileName) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileVertexShaderFile(const std::string& _sFileName) const {
 		auto vertexSource = g_programFilesManager.GetProgramFileContent(_sFileName);
-		auto wsFileName = _UTF8_Decode(_sFileName);
+		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
 		return _Compile(vertexSource.data(), vertexSource.size(), L"vs_6_1", wsFileName.c_str());
 	}
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::CompileGeometryShaderFile(const std::string& _sFileName) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileGeometryShaderFile(const std::string& _sFileName) const {
 		auto geomSource = g_programFilesManager.GetProgramFileContent(_sFileName);
-		auto wsFileName = _UTF8_Decode(_sFileName);
+		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
 		return _Compile(geomSource.data(), geomSource.size(), L"gs_6_1", wsFileName.c_str());
 	}
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::CompileFragmentShaderFile(const std::string& _sFileName) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileFragmentShaderFile(const std::string& _sFileName) const {
 		auto fragSource = g_programFilesManager.GetProgramFileContent(_sFileName);
-		auto wsFileName = _UTF8_Decode(_sFileName);
+		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
 		return _Compile(fragSource.data(), fragSource.size(), L"ps_6_1", wsFileName.c_str());
 	}
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::CompileVertexShader(const char* _szSource, size_t _uLen) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileVertexShader(const char* _szSource, size_t _uLen) const {
 		return _Compile(_szSource, _uLen, L"vs_6_1", L"Unknown_VS_Source");
 	}
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::CompileGeometryShader(const char* _szSource, size_t _uLen) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileGeometryShader(const char* _szSource, size_t _uLen) const {
 		return _Compile(_szSource, _uLen, L"gs_6_1", L"Unknown_GS_Source");
 	}
 
-	std::vector<uint32_t>&& HLSLGraphicsShaderSpirvCompiler::CompileFragmentShader(const char* _szSource, size_t _uLen) const {
+	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileFragmentShader(const char* _szSource, size_t _uLen) const {
 		return _Compile(_szSource, _uLen, L"ps_6_1", L"Unknown_FS_Source");
 	}
 }

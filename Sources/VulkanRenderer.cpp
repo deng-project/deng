@@ -300,7 +300,7 @@ namespace DENG {
 
 
     void VulkanRenderer::_CreateMaterialDescriptorSetLayout(size_t _uCount) {
-        DENG_ASSERT(_uCount == PBR_TEXTURE_COUNT || _uCount == PHONG_TEXTURE_COUNT);
+        DENG_ASSERT(_uCount == MaterialPBR::s_uTextureCount || _uCount == MaterialPhong::s_uTextureCount);
 
         std::vector<VkDescriptorSetLayoutBinding> bindings(_uCount);
         for (size_t i = 0; i < _uCount; i++) {
@@ -320,7 +320,7 @@ namespace DENG {
             throw RendererException("vkCreateDescriptorSetLayout() failed to create descriptor set layout for material with " + std::to_string(_uCount) + " samplers");
         LOG("Created material descriptor set layout (" << _uCount << ')');
 
-        if (_uCount == PBR_TEXTURE_COUNT)
+        if (_uCount == MaterialPBR::s_uTextureCount)
             m_materialDescriptorSetLayouts[1] = descriptorSetLayout;
         else m_materialDescriptorSetLayouts[0] = descriptorSetLayout;
     }
@@ -328,7 +328,7 @@ namespace DENG {
 
     void VulkanRenderer::_CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, cvar::hash_t _hshShader) {
         ResourceManager& resourceManager = ResourceManager::GetInstance();
-        auto pShader = resourceManager.GetShader(_hshShader);
+        auto pShader = resourceManager.GetGraphicsShader(_hshShader);
         DENG_ASSERT(pShader);
 
         std::vector<VkDescriptorSetLayoutBinding> bindings;
@@ -404,7 +404,7 @@ namespace DENG {
 
     void VulkanRenderer::_UpdateShaderDescriptorSet(
         VkDescriptorSet _hDescriptorSet, 
-        const IShader* _pShader) 
+        const IGraphicsShader* _pShader) 
     {
         std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
         std::vector<VkDescriptorImageInfo> descriptorImageInfos;
@@ -741,7 +741,8 @@ namespace DENG {
 
     void VulkanRenderer::DrawInstance(
         cvar::hash_t _hshMesh, 
-        cvar::hash_t _hshShader,
+        cvar::hash_t _hshGraphicsShader,
+        cvar::hash_t _hshComputeShader,
         IFramebuffer* _pFramebuffer, 
         uint32_t _uInstanceCount,
         uint32_t _uFirstInstance,
@@ -749,7 +750,7 @@ namespace DENG {
     {
         DENG_ASSERT(_pFramebuffer);
         ResourceManager& resourceManager = ResourceManager::GetInstance();
-        auto pShader = resourceManager.GetShader(_hshShader);
+        auto pShader = resourceManager.GetGraphicsShader(_hshGraphicsShader);
         DENG_ASSERT(pShader);
 
         // check if any requested textures are not handles
@@ -770,23 +771,23 @@ namespace DENG {
         Vulkan::Framebuffer* vulkanFramebuffer = static_cast<Vulkan::Framebuffer*>(_pFramebuffer);
 
         // shader descriptor sets are required but do not exist
-        if (pShader->GetUniformDataLayouts().size() && m_shaderDescriptors.find(_hshShader) == m_shaderDescriptors.end()) {
-            _CreateShaderDescriptorSetLayout(&m_shaderDescriptors[_hshShader].hDescriptorSetLayout, _hshShader);
-            _AllocateShaderDescriptors(_hshShader);
-            m_shaderDescriptorUpdateTable[_hshShader] = false;
+        if (pShader->GetUniformDataLayouts().size() && m_shaderDescriptors.find(_hshGraphicsShader) == m_shaderDescriptors.end()) {
+            _CreateShaderDescriptorSetLayout(&m_shaderDescriptors[_hshGraphicsShader].hDescriptorSetLayout, _hshGraphicsShader);
+            _AllocateShaderDescriptors(_hshGraphicsShader);
+            m_shaderDescriptorUpdateTable[_hshGraphicsShader] = false;
         }
 
-        if (pShader->GetUniformDataLayouts().size() && !m_shaderDescriptorUpdateTable[_hshShader]) {
-            _UpdateShaderDescriptorSet(m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], pShader);
-            m_shaderDescriptorUpdateTable[_hshShader] = true;
+        if (pShader->GetUniformDataLayouts().size() && !m_shaderDescriptorUpdateTable[_hshGraphicsShader]) {
+            _UpdateShaderDescriptorSet(m_shaderDescriptors[_hshGraphicsShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], pShader);
+            m_shaderDescriptorUpdateTable[_hshGraphicsShader] = true;
         }
 
         // check if material should be added
         if (_hshMaterial && m_materialDescriptors.find(_hshMaterial) == m_materialDescriptors.end()) {
             if (resourceManager.ExistsMaterialPBR(_hshMaterial))
-                _AllocateMaterialDescriptors<MaterialPBR, PBR_TEXTURE_COUNT>(_hshMaterial, *resourceManager.GetMaterialPBR(_hshMaterial));
+                _AllocateMaterialDescriptors<MaterialPBR>(_hshMaterial, *resourceManager.GetMaterialPBR(_hshMaterial));
             else if (resourceManager.ExistsMaterialPhong(_hshMaterial))
-                _AllocateMaterialDescriptors<MaterialPhong, PHONG_TEXTURE_COUNT>(_hshMaterial, *resourceManager.GetMaterialPhong(_hshMaterial));
+                _AllocateMaterialDescriptors<MaterialPhong>(_hshMaterial, *resourceManager.GetMaterialPhong(_hshMaterial));
         }
 
         VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
@@ -804,48 +805,48 @@ namespace DENG {
             else materialDescriptorSetLayout = m_materialDescriptorSetLayouts[0];
         }
         
-        if (m_shaderDescriptors.find(_hshShader) != m_shaderDescriptors.end() && _hshMaterial) {
+        if (m_shaderDescriptors.find(_hshGraphicsShader) != m_shaderDescriptors.end() && _hshMaterial) {
             vulkanFramebuffer->Draw(
                 _hshMesh, 
-                _hshShader, 
+                _hshGraphicsShader, 
                 _uInstanceCount,
                 _uFirstInstance,
-                m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], 
+                m_shaderDescriptors[_hshGraphicsShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()], 
                 m_materialDescriptors[_hshMaterial][vulkanFramebuffer->GetCurrentFrameIndex()],
-                m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
+                m_shaderDescriptors[_hshGraphicsShader].hDescriptorSetLayout,
                 materialDescriptorSetLayout);
         }
-        else if (m_shaderDescriptors.find(_hshShader) != m_shaderDescriptors.end()) {
+        else if (m_shaderDescriptors.find(_hshGraphicsShader) != m_shaderDescriptors.end()) {
             vulkanFramebuffer->Draw(
                 _hshMesh, 
-                _hshShader, 
+                _hshGraphicsShader, 
                 _uInstanceCount,
                 _uFirstInstance,
-                m_shaderDescriptors[_hshShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()],
+                m_shaderDescriptors[_hshGraphicsShader].descriptorSets[vulkanFramebuffer->GetCurrentFrameIndex()],
                 VK_NULL_HANDLE,
-                m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
+                m_shaderDescriptors[_hshGraphicsShader].hDescriptorSetLayout,
                 materialDescriptorSetLayout);
         }
-        else if (m_shaderDescriptors.find(_hshShader) == m_shaderDescriptors.end() && _hshMaterial) {
+        else if (m_shaderDescriptors.find(_hshGraphicsShader) == m_shaderDescriptors.end() && _hshMaterial) {
             vulkanFramebuffer->Draw(
                 _hshMesh,
-                _hshShader,
+                _hshGraphicsShader,
                 _uInstanceCount,
                 _uFirstInstance,
                 VK_NULL_HANDLE,
                 m_materialDescriptors[_hshMaterial][vulkanFramebuffer->GetCurrentFrameIndex()],
-                m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
+                m_shaderDescriptors[_hshGraphicsShader].hDescriptorSetLayout,
                 materialDescriptorSetLayout);
         }
         else {
             vulkanFramebuffer->Draw(
                 _hshMesh,
-                _hshShader,
+                _hshGraphicsShader,
                 _uInstanceCount,
                 _uFirstInstance,
                 VK_NULL_HANDLE,
                 VK_NULL_HANDLE,
-                m_shaderDescriptors[_hshShader].hDescriptorSetLayout,
+                m_shaderDescriptors[_hshGraphicsShader].hDescriptorSetLayout,
                 materialDescriptorSetLayout);
         }
     }

@@ -10,11 +10,12 @@
 #include <trs/Matrix.h>
 #include <trs/Quaternion.h>
 
+#include <deng/ResourceBuilders.h>
 #include <deng/MathConstants.h>
 #include <deng/Layers/BulletPhysicsDemo.h>
 #include <deng/Layers/CubeVertices.h>
 #include <deng/RenderResources.h>
-#include <deng/FileSystemShader.h>
+#include <deng/FileSystemGraphicsShader.h>
 #include <deng/ResourceIdTable.h>
 #include <deng/Layers/CameraScript.h>
 
@@ -87,11 +88,13 @@ namespace DENG {
 	dEND_RESOURCE_ID_TABLE(BulletTable)
 
 
-	class BulletShaderBuilder {
+	class BulletShaderBuilder : public IGraphicsShaderBuilder {
 		public:
-			BulletShaderBuilder() = default;
-			IShader* Get() {
-				FileSystemShader* pShader = new FileSystemShader("Bullet", "", "Bullet");
+			BulletShaderBuilder(IGraphicsShaderCompiler* _pCompiler) :
+				IGraphicsShaderBuilder(_pCompiler) {}
+
+			IGraphicsShader* Get() {
+				FileSystemGraphicsShader* pShader = new FileSystemGraphicsShader(m_pCompiler, "Bullet", "", "Bullet");
 				pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 				pShader->PushAttributeType(VertexAttributeType::Vec3_Float);
 				pShader->HashAttributeTypes();
@@ -125,7 +128,7 @@ namespace DENG {
 			}
 	};
 
-	class BulletPlaneMeshBuilder {
+	class BulletPlaneMeshBuilder : public IMeshBuilder {
 		private:
 			size_t m_uVertexOffset = SIZE_MAX;
 			IRenderer* m_pRenderer = nullptr;
@@ -153,7 +156,7 @@ namespace DENG {
 	};
 
 	
-	class BulletCubeMeshBuilder {
+	class BulletCubeMeshBuilder : public IMeshBuilder {
 		private:
 			size_t m_uVertexOffset = SIZE_MAX;
 			IRenderer* m_pRenderer = nullptr;
@@ -180,11 +183,11 @@ namespace DENG {
 
 
 
-	class BulletPlaneMaterialBuilder {
+	class BulletPlaneMaterialBuilder : public IMaterialBuilder<MaterialPBR> {
 		public:
 			BulletPlaneMaterialBuilder() = default;
-			Material<MaterialPBR, PBR_TEXTURE_COUNT> Get() {
-				Material<MaterialPBR, PBR_TEXTURE_COUNT> material;
+			Material<MaterialPBR> Get() {
+				Material<MaterialPBR> material;
 				material.material.fMetallic = 0.4f;
 				material.material.vAlbedoFactor = { 0.988f, 0.98f, 0.455f, 1.0f };
 				material.material.fRoughness = 0.6f;
@@ -198,11 +201,11 @@ namespace DENG {
 	};
 
 
-	class BulletCubeMaterialBuilder {
+	class BulletCubeMaterialBuilder : public IMaterialBuilder<MaterialPBR> {
 		public:
 			BulletCubeMaterialBuilder() = default;
-			Material<MaterialPBR, PBR_TEXTURE_COUNT> Get() {
-				Material<MaterialPBR, PBR_TEXTURE_COUNT> material;
+			Material<MaterialPBR> Get() {
+				Material<MaterialPBR> material;
 				material.material.fMetallic = 0.9f;
 				material.material.vAlbedoFactor = { 0.25f, 0.25f, 0.25f };
 				material.material.fRoughness = 0.1f;
@@ -301,9 +304,10 @@ namespace DENG {
 		}
 	}
 
-	void BulletFallingCubeLayer::Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext) {
+	void BulletFallingCubeLayer::Attach(IRenderer* _pRenderer, IWindowContext* _pWindowContext, IGraphicsShaderCompiler* _pCompiler) {
 		m_pRenderer = _pRenderer;
 		m_pWindowContext = _pWindowContext;
+		m_pGraphicsShaderCompiler = _pCompiler;
 
 		EventManager& eventManager = EventManager::GetInstance();
 		eventManager.AddListener<BulletFallingCubeLayer, WindowResizedEvent>(&BulletFallingCubeLayer::OnWindowResizedEvent, this);
@@ -311,7 +315,7 @@ namespace DENG {
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		resourceManager.AddMesh<BulletPlaneMeshBuilder>(dRO_SID("PlaneMesh", BulletTable), m_pRenderer);
 		resourceManager.AddMaterialPBR<BulletPlaneMaterialBuilder>(dRO_SID("PlaneMaterial", BulletTable));
-		resourceManager.AddShader<BulletShaderBuilder>(dRO_SID("BulletShader", BulletTable));
+		resourceManager.AddGraphicsShader<BulletShaderBuilder>(dRO_SID("BulletShader", BulletTable), m_pGraphicsShaderCompiler);
 
 		resourceManager.AddMesh<BulletCubeMeshBuilder>(dRO_SID("CubeMesh", BulletTable), m_pRenderer);
 		resourceManager.AddMaterialPBR<BulletCubeMaterialBuilder>(dRO_SID("CubeMaterial", BulletTable));
