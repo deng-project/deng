@@ -33,6 +33,8 @@
     #include "deng/RenderResources.h"
     #include "deng/MissingTextureBuilder.h"
 
+    #include "cvar/CVarSystem.h"
+
     #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
 #endif
 

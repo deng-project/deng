@@ -583,6 +583,9 @@ namespace DENG {
 
     IFramebuffer* VulkanRenderer::CreateContext(IWindowContext* _pWindow) {
         DENG_ASSERT(_pWindow);
+        cvar::CVarSystem& cvarSystem = cvar::CVarSystem::GetInstance();
+        cvarSystem.Set<cvar::String>("renderer.graphics.activeBackend", "Vulkan");
+        cvarSystem.Set<cvar::List>("renderer.graphics.clearColor", cvar::List{ 0.9f, 0.9f, 0.9f, 0.9f });
 
         m_pInstanceCreator = new Vulkan::InstanceCreator(*_pWindow);
 
