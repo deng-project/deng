@@ -19,6 +19,7 @@
 #include "deng/RenderResources.h"
 #include "deng/SceneEvents.h"
 #include "deng/ResourceEvents.h"
+#include "deng/AssetManager.h"
 
 #ifdef SCENE_CPP
 	#include "deng/ErrorDefinitions.h"
@@ -55,6 +56,7 @@ namespace DENG {
 	class DENG_API Scene {
 		private:
 			SceneRenderer m_sceneRenderer;
+			AssetCollection m_assetCollection;
 
 			entt::registry m_registry;
 			Entity m_idMainCamera = entt::null;
@@ -133,6 +135,22 @@ namespace DENG {
 
 			inline Entity CreateEntity() {
 				return m_registry.create();
+			}
+
+			template <typename T>
+			Entity LoadAssetFromFile(const char* _szFileName, AssetPool _eAssetPool, Entity _idParent = entt::null) {
+				static_assert(std::is_base_of<IAssetComponentizer, T>::value);
+				T loader(this, _eAssetPool, _idParent);
+				loader.DeserializeFile(_szFileName);
+				return loader.Componentize(this, m_sceneRenderer);
+			}
+
+			template<typename T>
+			Entity LoadFromMemory(const char* _pData, size_t _uLength, AssetPool _eAssetPool, Entity _idParent = entt::null) {
+				static_assert(std::is_base_of<IAssetComponentizer, T>::value);
+				T loader(this, _eAssetPool, _idParent);
+				loader.DeserializeFromMemory(_pData, _uLength);
+				return loader.Componentize(this, m_sceneRenderer)
 			}
 
 			template<typename T, typename ...Args>

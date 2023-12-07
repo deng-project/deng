@@ -178,17 +178,21 @@ namespace DENG {
 	struct MeshComponent {
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
-		MeshComponent(cvar::hash_t _hshMesh) :
-			hshMesh(_hshMesh) {}
 
-		cvar::hash_t hshMesh = 0;
+		size_t uBatchId = SIZE_MAX;
+		AssetPool ePool;
+		uint32_t uRelativeVertexOffset = 0;
+		uint32_t uRelativeIndexOffset = 0;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_Mesh;
 		}
 
 		inline bool operator==(const MeshComponent& _mesh) const {
-			return hshMesh == _mesh.hshMesh;
+			return uBatchId == _mesh.uBatchId && 
+				   ePool == _mesh.ePool &&
+				   uRelativeVertexOffset == _mesh.uRelativeVertexOffset &&
+				   uRelativeIndexOffset == _mesh.uRelativeIndexOffset;
 		}
 	};
 
