@@ -11,13 +11,12 @@
 #include <variant>
 #include <vector>
 #include <entt/entt.hpp>
+#include <deng/FastTrigo.h>
 
 #include <cvar/SID.h>
 
-#include "trs/Points.h"
-#include "trs/Vector.h"
-#include "trs/Matrix.h"
-#include "trs/Quaternion.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "deng/Api.h"
 #include "deng/MathConstants.h"
@@ -41,7 +40,8 @@ namespace DENG {
 		ComponentType_SpotLight = (1 << 7),
 		ComponentType_Light = 224,
 		ComponentType_Camera = (1 << 8),
-		ComponentType_Skybox = (1 << 9)
+		ComponentType_Skybox = (1 << 9),
+		ComponentType_Hierarchy = (1 << 10)
 	};
 
 	typedef uint16_t ComponentType;
@@ -145,12 +145,12 @@ namespace DENG {
 	struct SkyboxComponent {
 		SkyboxComponent() = default;
 		SkyboxComponent(const SkyboxComponent&) = default;
-		SkyboxComponent(const TRS::Vector4<float>& _vScale, cvar::hash_t _hshMesh, cvar::hash_t _hshShader) :
+		SkyboxComponent(const glm::vec4& _vScale, cvar::hash_t _hshMesh, cvar::hash_t _hshShader) :
 			vScale(_vScale),
 			hshMesh(_hshMesh),
 			hshShader(_hshShader) {}
 
-		TRS::Vector4<float> vScale;
+		glm::vec4 vScale;
 		cvar::hash_t hshMesh;
 		cvar::hash_t hshShader;
 	};
@@ -160,57 +160,53 @@ namespace DENG {
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
 
-		TRS::Matrix4<float> mCustomTransform;
-		TRS::Matrix4<float> mNormal;
-		TRS::Vector4<float> vTranslation = { 0.f, 0.f, 0.f, 1.f };
-		TRS::Vector4<float> vScale = { 1.f, 1.f, 1.f, 0.f };
-		TRS::Vector4<float> vRotation = { 0.f, 0.f, 0.f, 0.f }; // in radians
+		glm::mat4 mCustomTransform = glm::mat4(1.f);
+		glm::mat4 mNormal = glm::mat4(1.f);
+		glm::vec4 vTranslation = { 0.f, 0.f, 0.f, 1.f };
+		glm::vec4 vScale = { 1.f, 1.f, 1.f, 0.f };
+		glm::vec4 vRotation = { 0.f, 0.f, 0.f, 0.f }; // in radians
+		glm::quat q = glm::quat(1, 2, 3, 4);
 
 		void CalculateNormalMatrix() {
-			TRS::Quaternion qX = { std::sinf(vRotation.first / 2.f), 0.f, 0.f, std::cosf(vRotation.first / 2.f) };
-			TRS::Quaternion qY = { 0.f, std::sinf(vRotation.second / 2.f), 0.f, std::cosf(vRotation.second / 2.f) };
-			TRS::Quaternion qZ = { 0.f, 0.f, std::sinf(vRotation.third / 2.f), std::cosf(vRotation.third / 2.f) };
-			mNormal = (qX * qY * qZ).ExpandToMatrix4().Inverse();
+			glm::quat qX = { FT::cos(vRotation.x / 2.f), FT::sin(vRotation.x / 2.f), 0.f, 0.f };
+			glm::quat qY = { FT::cos(vRotation.y / 2.f), 0.f, FT::sin(vRotation.y / 2.f), 0.f };
+			glm::quat qZ = { FT::cos(vRotation.z / 2.f), 0.f, 0.f, FT::sin(vRotation.z / 2.f) };
+			mNormal = glm::inverse(mCustomTransform * static_cast<glm::mat4>(qX * qY * qZ));
 		}
 	};
 
 
-	struct MeshComponent {
-		MeshComponent() = default;
-		MeshComponent(const MeshComponent&) = default;
+	enum MeshPassUsageBits_T : uint32_t {
+		MeshPassUsageBit_UseAxisAlignedBoundingBox = (1 << 0),
+		MeshPassUsageBit_UseBoundingSphere = (1 << 1),
+		MeshPassUsageBit_UseBoundingCapsule = (1 << 2),
+		MeshPassUsageBit_UseOrientedBoundingBox = (1 << 3),
+		MeshPassUsageBit_UseInstancing = (1 << 4),
+		MeshPassUsageBit_UseBatching = (1 << 5),
+		MeshPassUsageBit_FrustumCullingEnabled = (1 << 6),
+		MeshPassUsageBit_OcclusionCullingEnabled = (1 << 7)
+	};
 
-		size_t uBatchId = SIZE_MAX;
-		AssetPool ePool;
-		uint32_t uRelativeVertexOffset = 0;
-		uint32_t uRelativeIndexOffset = 0;
+	typedef uint32_t MeshPassUsageBits;
+
+	struct MeshPassComponent {
+		MeshPassComponent() = default;
+		MeshPassComponent(const MeshPassComponent&) = default;
+
+		TRS::Vector4<float> vMassCenter;
+		std::array<TRS::Vector4<float>, 3> vBoundingBox;
+		uint64_t hshGraphicsShader;
+		uint32_t uBatchId;
+		uint32_t uRelativeDrawOffset;
+		uint32_t uMaterialId;
+		uint32_t uTransformId;
+		float fBoundingSphereRadius;
+		float fBoundingSegmentHeight;
+		float fLODRegion;
+		MeshPassUsageBits uUsageBits;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_Mesh;
-		}
-
-		inline bool operator==(const MeshComponent& _mesh) const {
-			return uBatchId == _mesh.uBatchId && 
-				   ePool == _mesh.ePool &&
-				   uRelativeVertexOffset == _mesh.uRelativeVertexOffset &&
-				   uRelativeIndexOffset == _mesh.uRelativeIndexOffset;
-		}
-	};
-
-
-	struct ShaderComponent {
-		ShaderComponent() = default;
-		ShaderComponent(const ShaderComponent&) = default;
-		ShaderComponent(cvar::hash_t _hshShader) :
-			hshShader(_hshShader) {}
-
-		cvar::hash_t hshShader = 0;
-
-		static constexpr ComponentType GetComponentType() {
-			return ComponentType_Shader;
-		}
-
-		inline bool operator==(const ShaderComponent& _shader) const {
-			return hshShader == _shader.hshShader;
 		}
 	};
 
@@ -237,14 +233,12 @@ namespace DENG {
 		PointLightComponent() = default;
 		PointLightComponent(const PointLightComponent&) = default;
 
-		using Vec4 = TRS::Vector4<float>;
-		using Vec3 = TRS::Vector3<float>;
-		PointLightComponent(const Vec4& _vPosition, const Vec4& _vColor) :
+		PointLightComponent(const glm::vec4& _vPosition, const glm::vec4& _vColor) :
 			vPosition(_vPosition),
 			vColor(_vColor) {}
 		
-		Vec4 vPosition = { 0.f, 0.f, 0.f, 1.f };
-		Vec4 vColor = { 1.f, 1.f, 1.f, 1.f };
+		glm::vec4 vPosition = { 0.f, 0.f, 0.f, 1.f };
+		glm::vec4 vColor = { 1.f, 1.f, 1.f, 1.f };
 
 
 		static constexpr ComponentType GetComponentType() {
@@ -275,17 +269,16 @@ namespace DENG {
 		SpotlightComponent() = default;
 		SpotlightComponent(const SpotlightComponent&) = default;
 
-		using Vec4 = TRS::Vector4<float>;
-		SpotlightComponent(const Vec4& _vPosition, const Vec4& _vDirection, const Vec4& _vColor, float _fInnerCutoff, float _fOuterCutoff) :
+		SpotlightComponent(const glm::vec4& _vPosition, const glm::vec4& _vDirection, const glm::vec4& _vColor, float _fInnerCutoff, float _fOuterCutoff) :
 			vPosition(_vPosition),
 			vDirection(_vDirection),
 			vColor(_vColor),
 			fInnerCutoff(_fInnerCutoff),
 			fOuterCutoff(_fOuterCutoff) {}
 
-		Vec4 vPosition;
-		Vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
-		Vec4 vColor = { 1.f, 0.f, 0.f, 1.f };
+		glm::vec4 vPosition;
+		glm::vec4 vDirection = { 1.f, 0.f, 0.f, 0.f };
+		glm::vec4 vColor = { 1.f, 0.f, 0.f, 1.f };
 		float fInnerCutoff = MF_SQRT3 / 2.f; // 30 degrees
 		float fOuterCutoff = 0.819152f;		 // 35 degrees
 		float _pad[2] = {};
@@ -384,11 +377,11 @@ namespace DENG {
 		CameraComponent() = default;
 		CameraComponent(const CameraComponent&) = default;
 
-		TRS::Matrix4<float> mProjection;
-		TRS::Vector4<float> vCameraRight;
-		TRS::Vector4<float> vCameraUp;
-		TRS::Vector4<float> vCameraDirection;
-		TRS::Vector4<float> vPosition;
+		glm::mat4 mProjection;
+		glm::vec4 vCameraRight;
+		glm::vec4 vCameraUp;
+		glm::vec4 vCameraDirection;
+		glm::vec4 vPosition;
 
 		static constexpr ComponentType GetComponentType() {
 			return ComponentType_Camera;

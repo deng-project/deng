@@ -75,6 +75,7 @@ set(DENG_UTIL_HEADERS
 	Include/deng/CameraTransformer.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Exceptions.h
+	Include/deng/FastTrigo.h
 	Include/deng/FileTextureBuilder.h
 	Include/deng/InitializerListBuilder.h
 	Include/deng/MathConstants.h
@@ -87,6 +88,7 @@ set(DENG_UTIL_HEADERS
 set(DENG_UTIL_SOURCES
 	Sources/CameraTransformer.cpp
 	Sources/ErrorDefinitions.cpp
+	Sources/FastTrigo.cpp
 	Sources/FileTextureBuilder.cpp
 	Sources/Missing.cpp
 	Sources/MissingTextureBuilder.cpp
@@ -96,6 +98,7 @@ set(DENG_UTIL_SOURCES
 
 set(DENG_CORE_HEADERS
 	Include/deng/Api.h
+	Include/deng/AssetManager.h
 	Include/deng/App.h
 	Include/deng/ILayer.h
 	Include/deng/RenderResources.h
@@ -199,6 +202,7 @@ find_package(Bullet CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_package(directx-dxc CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 # Include directories
 target_include_directories(${DENG_MINIMAL_TARGET}
@@ -227,7 +231,8 @@ target_link_libraries(${DENG_MINIMAL_TARGET}
 	PRIVATE
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
 	$<IF:$<TARGET_EXISTS:SDL2::SDL2-static>,SDL2::SDL2-static,SDL2::SDL2>
-	PRIVATE vulkan-1)
+	PRIVATE vulkan-1
+	PRIVATE glm::glm)
 			
 
 source_group(ImGui FILES 

@@ -4,6 +4,7 @@
 // author: Karl-Mihkel Ott
 
 #define SCENE_CPP
+#include <queue>
 #include "deng/Scene.h"
 
 namespace DENG {
@@ -13,7 +14,7 @@ namespace DENG {
 	{
 		EventManager& eventManager = EventManager::GetInstance();
 		eventManager.AddListener<Scene, ComponentModifiedEvent>(&Scene::OnComponentModifiedEvent, this);
-		eventManager.AddListener<Scene, ResourceModifiedEvent>(&Scene::OnResourceModifiedEvent, this);
+		// eventManager.AddListener<Scene, ResourceModifiedEvent>(&Scene::OnResourceModifiedEvent, this);
 	}
 
 	Scene::~Scene() {
@@ -40,25 +41,6 @@ namespace DENG {
 		return memoryRegions;
 	}
 
-	void Scene::_CorrectMeshResources() {
-		// check if meshes have to be reinstanced
-		if (m_bmCopyFlags & RendererCopyFlagBit_Reinstance) {
-			_InstanceRenderablesMSM();
-		}
-		else if (m_modifiedTransforms.size()) {
-			std::vector<std::pair<std::size_t, std::size_t>> transformUpdateAreas =
-				_MakeMemoryRegions(m_modifiedTransforms);
-
-			for (auto it = transformUpdateAreas.begin(); it != transformUpdateAreas.end(); it++) {
-				m_sceneRenderer.UpdateTransformRegion(
-					m_instances.transforms.data() + it->first,
-					it->first,
-					it->second - it->first + 1);
-			}
-
-			m_modifiedTransforms.clear();
-		}
-	}
 
 	void Scene::_CorrectLightResources() {
 		// check if light sources need to be recopied
@@ -108,103 +90,21 @@ namespace DENG {
 		}
 	}
 
-	void Scene::_InstanceRenderablesMSM() {
-		m_instances.instanceInfos.clear();
-		m_instances.transforms.clear();
-		m_instances.pbrMaterials.clear();
-		m_instances.phongMaterials.clear();
-		m_instances.drawDescriptorIndices.clear();
-		m_renderableInstanceLookup.clear();
-		
-		std::unordered_map<cvar::hash_t, size_t, cvar::NoHash> materialIndexLookup;
-		ResourceManager& resourceManager = ResourceManager::GetInstance();
-		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
-		
-		for (auto it = group.begin(); it != group.end(); it++) {
-			auto& [mesh, shader, material] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*it);
-			const bool bHasTransform = m_registry.any_of<TransformComponent>(*it);
-
-			if (it != group.begin()) {
-				auto itPrev = it - 1;
-				auto& [prevMesh, prevShader, prevMaterial] = group.get<MeshComponent, ShaderComponent, MaterialComponent>(*itPrev);
-
-				if (mesh == prevMesh && shader == prevShader && material == prevMaterial) {
-					m_renderableInstanceLookup[*it] = std::make_pair(
-						m_instances.instanceInfos.size() - 1,
-						static_cast<size_t>(m_instances.instanceInfos.back().uInstanceCount));
-					m_instances.instanceInfos.back().uInstanceCount++;
-				}
-				else {
-					m_instances.instanceInfos.emplace_back();
-					m_instances.instanceInfos.back().hshMesh = mesh.hshMesh;
-					m_instances.instanceInfos.back().hshShader = shader.hshShader;
-					m_instances.instanceInfos.back().hshMaterial = material.hshMaterial;
-				
-					m_renderableInstanceLookup[*it] = std::make_pair(
-						m_instances.instanceInfos.size() - 1, 0);
-				}
-			}
-			else {
-				m_instances.instanceInfos.emplace_back();
-				m_instances.instanceInfos.back().hshMesh = mesh.hshMesh;
-				m_instances.instanceInfos.back().hshShader = shader.hshShader;
-				m_instances.instanceInfos.back().hshMaterial = material.hshMaterial;
-
-				m_renderableInstanceLookup[*it] = std::make_pair(
-					m_instances.instanceInfos.size() - 1, 0);
-			}
-
-			// material indexing
-			if (material.hshMaterial && materialIndexLookup.find(material.hshMaterial) == materialIndexLookup.end()) {
-				if (resourceManager.ExistsMaterialPBR(material.hshMaterial)) {
-					auto pMaterial = resourceManager.GetMaterialPBR(material.hshMaterial);
-					m_instances.pbrMaterials.emplace_back(pMaterial->material);
-					materialIndexLookup[material.hshMaterial] = m_instances.pbrMaterials.size() - 1;
-				}
-				else if (resourceManager.ExistsMaterialPhong(material.hshMaterial)) {
-					auto pMaterial = resourceManager.GetMaterialPhong(material.hshMaterial);
-					m_instances.phongMaterials.emplace_back(pMaterial->material);
-					materialIndexLookup[material.hshMaterial] = m_instances.phongMaterials.size() - 1;
-				}
-			}
-
-			if (bHasTransform) {
-				auto& transform = m_registry.get<TransformComponent>(*it);
-				transform.CalculateNormalMatrix();
-				m_instances.transforms.emplace_back(transform);
-				m_instances.drawDescriptorIndices.emplace_back(
-					static_cast<int32_t>(m_instances.transforms.size() - 1),
-					static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
-			}
-			else {
-				m_instances.drawDescriptorIndices.emplace_back(-1, static_cast<int32_t>(materialIndexLookup[material.hshMaterial]));
-			}
-		}
-
-		m_sceneRenderer.UpdateStorageBuffers(
-			m_instances.transforms, 
-			m_instances.pbrMaterials,
-			m_instances.phongMaterials,
-			m_instances.drawDescriptorIndices);
-	}
-
 	void Scene::_SortRenderableGroup() {
-		auto group = m_registry.group<MeshComponent, ShaderComponent, MaterialComponent>();
+		auto group = m_registry.group<MeshPassComponent, MaterialComponent>();
 
 		// assets
-		using _Tuple = std::tuple<MeshComponent, ShaderComponent, MaterialComponent>;
-		group.sort<MeshComponent, ShaderComponent, MaterialComponent>(
+		using _Tuple = std::tuple<MeshPassComponent, MaterialComponent>;
+		group.sort<MeshPassComponent, MaterialComponent>(
 			[](const _Tuple& _t1, const _Tuple& _t2) {
-				auto& [mesh1, shader1, material1] = _t1;
-				auto& [mesh2, shader2, material2] = _t2;
+				auto& [mesh1, material1] = _t1;
+				auto& [mesh2, material2] = _t2;
 
 				// mesh verification
-				if (mesh1.hshMesh != mesh2.hshMesh)
-					return mesh1.hshMesh < mesh2.hshMesh;
-
-				// shader verification
-				if (shader1.hshShader != shader2.hshShader)
-					return shader1.hshShader < shader2.hshShader;
+				if (mesh1.uBatchId != mesh2.uBatchId)
+					return mesh1.uBatchId < mesh2.uBatchId;
+				else if (mesh1.uRelativeDrawOffset != mesh2.uRelativeDrawOffset)
+					return mesh1.uRelativeDrawOffset < mesh2.uRelativeDrawOffset;
 
 				// material verification
 				if (material1.hshMaterial != material2.hshMaterial)
@@ -212,6 +112,31 @@ namespace DENG {
 
 				return false;
 			});
+	}
+
+	glm::mat4 Scene::_CalculateTransformMatrix(Entity _ent)
+	{
+		TransformComponent& transform = m_registry.get<TransformComponent>(_ent);
+		glm::mat4 mCustom(1.f);
+		mCustom = glm::translate(mCustom, glm::vec3(transform.vTranslation));
+		glm::quat qX = { FT::cos(transform.vRotation.x / 2.f), FT::sin(transform.vRotation.x / 2.f), 0.f, 0.f };
+		glm::quat qY = { FT::cos(transform.vRotation.y / 2.f), 0.f, FT::sin(transform.vRotation.y / 2.f), 0.f };
+		glm::quat qZ = { FT::cos(transform.vRotation.z / 2.f), 0.f, 0.f, FT::sin(transform.vRotation.z / 2.f) };
+		mCustom *= (qX * qY * qZ);
+		mCustom = glm::scale(mCustom, glm::vec3(transform.vScale));
+		return mCustom;
+	}
+
+	void Scene::_SortHierarchies() {
+		auto group = m_registry.group<HierarchyComponent, TransformComponent>();
+		
+		using _Tuple = std::tuple<HierarchyComponent>;
+		group.sort<HierarchyComponent>(
+			[](const HierarchyComponent& _t1, const HierarchyComponent& _t2) {
+				// sort by parent such that entities with no parents would be 
+				return _t1.idParent < _t2.idParent;
+			}
+		);
 	}
 
 
@@ -243,24 +168,6 @@ namespace DENG {
 		m_sceneRenderer.RenderLights(pointLights, dirLights, spotLights, m_vAmbient);
 	}
 
-	void Scene::_DrawMeshes() {
-		if (m_idMainCamera != entt::null) {
-			CameraComponent& camera = m_registry.get<CameraComponent>(m_idMainCamera);
-			m_sceneRenderer.RenderInstances(
-				m_instances.instanceInfos, 
-				m_instances.transforms, 
-				m_instances.pbrMaterials, 
-				m_instances.phongMaterials,
-				m_instances.drawDescriptorIndices, 
-				camera);
-			
-			if (m_idSkybox != entt::null) {
-				auto& skybox = m_registry.get<SkyboxComponent>(m_idSkybox);
-				m_sceneRenderer.RenderSkybox(camera, skybox);
-			}
-		}
-	}
-
 	void Scene::AttachComponents() {
 		{
 			// initialise all ScriptComponents
@@ -273,8 +180,8 @@ namespace DENG {
 		}
 
 		_SortRenderableGroup();
+		_SortHierarchies();
 		_RenderLights();
-		_InstanceRenderablesMSM();
 
 		if (m_idSkybox != entt::null) {
 			auto& skybox = m_registry.get<SkyboxComponent>(m_idSkybox);
@@ -285,9 +192,7 @@ namespace DENG {
 
 	void Scene::RenderScene() {
 		_UpdateScripts();
-		_CorrectMeshResources();
 		_CorrectLightResources();
-		_DrawMeshes();
 		m_bmCopyFlags = RendererCopyFlagBit_None;
 	}
 
@@ -303,50 +208,44 @@ namespace DENG {
 	}
 
 	bool Scene::OnComponentModifiedEvent(ComponentModifiedEvent& _event) {
-		// renderable transform modified
-		if ((_event.GetComponentType() & ComponentType_Transform) && 
-			!m_registry.any_of<DirectionalLightComponent, PointLightComponent, SpotlightComponent>(_event.GetEntity())) 
-		{
-			DENG_ASSERT(m_renderableInstanceLookup.find(_event.GetEntity()) != m_renderableInstanceLookup.end());
-		
-			const std::size_t uDrawCallId = m_renderableInstanceLookup[_event.GetEntity()].first;
-			std::size_t uInstanceId = m_renderableInstanceLookup[_event.GetEntity()].second;
-		
-			for (std::size_t i = 0; i < uDrawCallId; i++) {
-				uInstanceId += static_cast<std::size_t>(m_instances.instanceInfos[i].uInstanceCount);
+		if (_event.GetComponentType() & ComponentType_Hierarchy) {
+			_SortHierarchies();
+		}
+
+		if ((_event.GetComponentType() & ComponentType_Transform) && m_registry.any_of<HierarchyComponent>(_event.GetEntity())) {
+			// traverse hierarchy tree
+			std::queue<std::pair<Entity, glm::mat4>> treeQue;
+			treeQue.push(std::make_pair(_event.GetEntity(), glm::mat4(1.0f)));
+
+			while (!treeQue.empty()) {
+				auto& pair = treeQue.front();
+				HierarchyComponent& hier = m_registry.get<HierarchyComponent>(pair.first);
+
+				// check if entity has transform component
+				if (m_registry.any_of<TransformComponent>(pair.first)) {
+					TransformComponent& transform = m_registry.get<TransformComponent>(pair.first);
+					transform.mCustomTransform = pair.second;
+					pair.second *= _CalculateTransformMatrix(pair.first);
+				}
+
+				// check children
+				if (hier.idFirst != entt::null) {
+					std::queue<Entity> neighbours;
+					neighbours.push(hier.idFirst);
+					while (!neighbours.empty()) {
+						Entity neighbour = neighbours.front();
+						if (m_registry.any_of<HierarchyComponent>(neighbour)) {
+							HierarchyComponent& neighbourHier = m_registry.get<HierarchyComponent>(neighbour);
+							if (neighbourHier.idNext != entt::null)
+								neighbours.push(neighbourHier.idNext);
+							treeQue.push(std::make_pair(neighbour, pair.second));
+						}
+						neighbours.pop();
+					}
+				}
+
+				treeQue.pop();
 			}
-
-			auto& transform = m_registry.get<TransformComponent>(_event.GetEntity());
-			transform.CalculateNormalMatrix();
-			m_instances.transforms[uInstanceId] = transform;
-			m_modifiedTransforms.insert(uInstanceId);
 		}
-		// other renderable component modified
-		else if (_event.GetComponentType() & ComponentType_Renderable) {
-			m_bmCopyFlags |= RendererCopyFlagBit_Reinstance;
-		}
-		// light modified
-		else if (_event.GetComponentType() & ComponentType_Light) {
-			DENG_ASSERT(m_lightLookup.find(_event.GetEntity()) != m_lightLookup.end());
-			
-			if (_event.GetComponentType() & ComponentType_DirectionalLight)
-				m_modifiedDirLights.insert(m_lightLookup[_event.GetEntity()]);
-			if (_event.GetComponentType() & ComponentType_PointLight)
-				m_modifiedPointLights.insert(m_lightLookup[_event.GetEntity()]);
-			if (_event.GetComponentType() & ComponentType_SpotLight)
-				m_modifiedSpotLights.insert(m_lightLookup[_event.GetEntity()]);
-		}
-		// skybox modified
-		else if (_event.GetComponentType() & ComponentType_Skybox) {
-			auto& skybox = m_registry.get<SkyboxComponent>(_event.GetEntity());
-			m_sceneRenderer.UpdateSkyboxScale(skybox.vScale);
-		}
-
-		return true;
-	}
-
-	bool Scene::OnResourceModifiedEvent(ResourceModifiedEvent& _event) {
-		m_bmCopyFlags |= RendererCopyFlagBit_Reinstance;
-		return true;
 	}
 }

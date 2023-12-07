@@ -94,19 +94,19 @@ namespace DENG {
 			template <typename T>
 			void _ApplyLightSourceTransform(Entity _idEntity) {
 				auto& [light, transform] = m_registry.get<T, TransformComponent>(_idEntity);
-				const TRS::Matrix4<float> cmTranslation = {
-						{ 1.f, 0.f, 0.f, transform.vTranslation.first },
-						{ 0.f, 1.f, 0.f, transform.vTranslation.second },
-						{ 0.f, 0.f, 1.f, transform.vTranslation.third },
+				const glm::mat4 cmTranslation = {
+						{ 1.f, 0.f, 0.f, transform.vTranslation.x },
+						{ 0.f, 1.f, 0.f, transform.vTranslation.y },
+						{ 0.f, 0.f, 1.f, transform.vTranslation.z },
 						{ 0.f, 0.f, 0.f, 1.f }
 				};
 
-				const TRS::Quaternion qX(std::sinf(transform.vRotation.first / 2.f), 0.f, 0.f, std::cosf(transform.vRotation.first / 2.f));
-				const TRS::Quaternion qY(0.f, std::sinf(transform.vRotation.second / 2.f), 0.f, std::cosf(transform.vRotation.second / 2.f));
-				const TRS::Quaternion qZ(0.f, 0.f, std::sinf(transform.vRotation.third / 2.f), std::cosf(transform.vRotation.third / 2.f));
-				const TRS::Matrix4<float> cmRotation = (qX * qY * qZ).ExpandToMatrix4();
+				const glm::quat qX(FT::sin(transform.vRotation.x / 2.f), 0.f, 0.f, FT::cos(transform.vRotation.x / 2.f));
+				const glm::quat qY(0.f, FT::sin(transform.vRotation.y / 2.f), 0.f, FT::cos(transform.vRotation.y / 2.f));
+				const glm::quat qZ(0.f, 0.f, FT::sin(transform.vRotation.z / 2.f), FT::cos(transform.vRotation.z / 2.f));
+				const glm::mat4 cmRotation = (qX * qY * qZ);
 
-				light.vPosition = cmRotation * cmTranslation * TRS::Vector4<float>(0.f, 0.f, 0.f, 1.f);
+				light.vPosition = cmRotation * cmTranslation * glm::vec4(0.f, 0.f, 0.f, 1.f);
 			}
 
 			template <typename T>
@@ -121,13 +121,12 @@ namespace DENG {
 			}
 
 			std::vector<std::pair<std::size_t, std::size_t>> _MakeMemoryRegions(const std::set<std::size_t>& _updateSet);
-			void _CorrectMeshResources();
 			void _CorrectLightResources();
-			void _InstanceRenderablesMSM();
 			void _SortRenderableGroup();
+			void _SortHierarchies();
+			glm::mat4 _CalculateTransformMatrix(Entity _ent);
 			void _UpdateScripts();
 			void _RenderLights();
-			void _DrawMeshes();
 
 		public:
 			Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
@@ -192,7 +191,7 @@ namespace DENG {
 			void DestroyComponents();
 
 			bool OnComponentModifiedEvent(ComponentModifiedEvent& _event);
-			bool OnResourceModifiedEvent(ResourceModifiedEvent& _event);
+			// bool OnResourceModifiedEvent(ResourceModifiedEvent& _event);
 	};
 }
 
