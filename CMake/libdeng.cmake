@@ -43,7 +43,9 @@ set(DENG_RENDERER_BACKEND_SOURCES
 set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 	Include/deng/VulkanFramebuffer.h
 	Include/deng/VulkanHelpers.h
+	Include/deng/VulkanImage.h
 	Include/deng/VulkanInstanceCreator.h
+	Include/deng/VulkanManagedBuffer.h
 	Include/deng/VulkanPipelineCreator.h
 	Include/deng/VulkanRenderer.h
 	Include/deng/VulkanSwapchainCreator.h)
@@ -51,7 +53,9 @@ set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 set(DENG_RENDERER_BACKEND_VULKAN_SOURCES
 	Sources/VulkanFramebuffer.cpp
 	Sources/VulkanHelpers.cpp
+	Sources/VulkanImage.cpp
 	Sources/VulkanInstanceCreator.cpp
+	Sources/VulkanManagedBuffer.cpp
 	Sources/VulkanPipelineCreator.cpp
 	Sources/VulkanRenderer.cpp
 	Sources/VulkanSwapchainCreator.cpp)
