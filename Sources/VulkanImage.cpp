@@ -42,6 +42,7 @@ namespace DENG
 				vkDestroySampler(m_hDevice, m_hSampler, nullptr);
 				vkDestroyImageView(m_hDevice, m_hImageView, nullptr);
 				vkDestroyImage(m_hDevice, m_hImage, nullptr);
+				vkFreeMemory(m_hDevice, m_hMemory, nullptr);
 			}
 		}
 

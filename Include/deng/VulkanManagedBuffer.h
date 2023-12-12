@@ -23,10 +23,6 @@ namespace DENG {
 				uint32_t m_uMinimalBufferAlignment = 0;
 				bool m_bIsMapped = false;
 
-			private:
-				VkCommandBuffer _BeginCommandBufferRecording();
-				void _EndCommandBufferRecording(VkCommandBuffer _hCommandBuffer);
-
 			protected:
 				virtual void Allocate(size_t _uLength) override;
 				virtual void Free() override;
@@ -40,6 +36,7 @@ namespace DENG {
 					uint32_t _uMinimalBufferAlignment,
 					MemoryPropertyFlags _ePropertyFlags,
 					BufferUsageFlagBits _bBufferUsage);
+				~ManagedBuffer();
 
 				virtual void* MapMemory(size_t _uOffset, size_t _uSize) override;
 				virtual void UnmapMemory() override;

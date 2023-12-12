@@ -12,7 +12,8 @@
 
 namespace DENG {
 
-	void IGPUImage::LoadTexture1DFromFile(const char* _szFileName) {
+	void IGPUImage::LoadTexture1DFromFile(const char* _szFileName) 
+	{
 		ProgramFilesManager programFilesManager;
 		auto imageData = programFilesManager.GetProgramFileContent(_szFileName);
 		
@@ -25,11 +26,12 @@ namespace DENG {
 			static_cast<int>(imageData.size()),
 			&x, &y, &depth, 0);
 
-		this->LoadTexture1DFromMemory(pTexels, static_cast<size_t>(x * y * depth));
+		this->LoadTexture1DFromMemory(pTexels, static_cast<size_t>(x * y * depth), depth);
 		
 		// free the memory
 		stbi_image_free(pTexels);
 	}
+
 
 	void IGPUImage::LoadTexture2DFromFile(const char* _szFileName, bool _bCreateMipmaps) {
 		ProgramFilesManager programFilesManager;
@@ -50,13 +52,15 @@ namespace DENG {
 		stbi_image_free(pTexels);
 	}
 
+
 	void IGPUImage::LoadTexture3DFromFiles(
 		const char* _szPosXFileName,
 		const char* _szNegXFileName,
 		const char* _szPosYFileName,
 		const char* _szNegYFileName,
 		const char* _szPosZFileName,
-		const char* _szNegZFileName)
+		const char* _szNegZFileName,
+		bool _bCreateMipMaps)
 	{
 		std::array<stbi_uc*, 6> dataPointers = {};
 		std::array<const char*, 6> filenames = {
@@ -93,7 +97,8 @@ namespace DENG {
 			dataPointers[2],
 			dataPointers[3],
 			dataPointers[4],
-			dataPointers[5]);
+			dataPointers[5],
+			_bCreateMipMaps);
 
 		// free the allocated memory
 		for (size_t i = 0; i < 6; i++) {

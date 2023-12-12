@@ -7,6 +7,7 @@
 
 #include "deng/ErrorDefinitions.h"
 #include "deng/Exceptions.h"
+#include "deng/VulkanHelpers.h"
 #include "deng/VulkanManagedBuffer.h"
 
 namespace DENG {
@@ -27,55 +28,19 @@ namespace DENG {
 			m_hCommandPool(_hCommandPool),
 			m_uMinimalBufferAlignment(_uMinimalBufferAlignment) 
 		{
+
 		}
 
-		
-		VkCommandBuffer ManagedBuffer::_BeginCommandBufferRecording()
+
+		ManagedBuffer::~ManagedBuffer()
 		{
-			/// Begin temporary command buffer
-			VkCommandBuffer tmpCommandBuffer = VK_NULL_HANDLE;
-
-			VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
-			commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			commandBufferAllocateInfo.commandPool = m_hCommandPool;
-			commandBufferAllocateInfo.commandBufferCount = 1;
-
-			// allocate command buffers
-			if (vkAllocateCommandBuffers(m_hDevice, &commandBufferAllocateInfo, &tmpCommandBuffer) != VK_SUCCESS)
-				throw RendererException("Failed to allocate command buffer (vkAllocateCommandBuffers)!");
-
-			// setup command buffer begin info
-			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-			// begin command buffers
-			if (vkBeginCommandBuffer(tmpCommandBuffer, &commandBufferBeginInfo) != VK_SUCCESS)
-				throw RendererException("Failed to start command buffer recording!");
-
-			return tmpCommandBuffer;
+			if (m_uLength)
+			{
+				vkDestroyBuffer(m_hDevice, m_hBuffer, nullptr);
+				vkFreeMemory(m_hDevice, m_hDeviceMemory, nullptr);
+			}
 		}
 
-
-		void ManagedBuffer::_EndCommandBufferRecording(VkCommandBuffer _hCommandBuffer)
-		{
-			if (vkEndCommandBuffer(_hCommandBuffer) != VK_SUCCESS)
-				throw RendererException("Failed to end command buffer recording (vkEndCommandBuffer)!");
-
-			// setup submit info
-			VkSubmitInfo submitInfo = {};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &_hCommandBuffer;
-
-			if (vkQueueSubmit(m_hGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
-				throw RendererException("Failed to submit graphics queue with single usage command buffer (vkQueueSubmit)!");
-			vkQueueWaitIdle(m_hGraphicsQueue);
-
-			// Cleanup
-			vkFreeCommandBuffers(m_hDevice, m_hCommandPool, 1, &_hCommandBuffer);
-		}
 
 		void ManagedBuffer::Allocate(size_t _uLength)
 		{
@@ -157,7 +122,8 @@ namespace DENG {
 
 		void ManagedBuffer::Copy(IGPUManagedBuffer* _pOther, size_t _uDstOffset, size_t _uSrcOffset, size_t _uSize)
 		{
-			VkCommandBuffer commandBuffer = _BeginCommandBufferRecording();
+			VkCommandBuffer hCommandBuffer;
+			_BeginCommandBufferSingleCommand(m_hDevice, m_hCommandPool, hCommandBuffer);
 
 			// setup buffer copy region
 			VkBufferCopy bufferCopy = {};
@@ -168,9 +134,9 @@ namespace DENG {
 			// call vulkan buffer copy command
 			ManagedBuffer* pOtherVulkan = dynamic_cast<ManagedBuffer*>(_pOther);
 			DENG_ASSERT(pOtherVulkan);
-			vkCmdCopyBuffer(commandBuffer, m_hBuffer, pOtherVulkan->m_hBuffer, 1, &bufferCopy);
+			vkCmdCopyBuffer(hCommandBuffer, m_hBuffer, pOtherVulkan->m_hBuffer, 1, &bufferCopy);
 
-			_EndCommandBufferRecording(commandBuffer);
+			_EndCommandBufferSingleCommand(m_hDevice, m_hGraphicsQueue, m_hCommandPool, hCommandBuffer);
 		}
 
 
