@@ -29,20 +29,6 @@ namespace DENG {
 
 	typedef entt::entity Entity;
 
-	struct Instances {
-		std::vector<InstanceInfo> instanceInfos;
-		std::vector<TransformComponent> transforms;
-		std::vector<MaterialPBR> pbrMaterials;
-		std::vector<MaterialPhong> phongMaterials;
-		std::vector<DrawDescriptorIndices> drawDescriptorIndices;
-	};
-
-	struct Lights {
-		std::vector<DirectionalLightComponent> dirLights;
-		std::vector<PointLightComponent> pointLights;
-		std::vector<SpotlightComponent> spotLights;
-	};
-
 	enum RendererCopyFlagBits_T : uint8_t {
 		RendererCopyFlagBit_None = 0,
 		RendererCopyFlagBit_Reinstance = (1 << 0),
@@ -55,23 +41,11 @@ namespace DENG {
 
 	class DENG_API Scene {
 		private:
-			SceneRenderer m_sceneRenderer;
-			AssetCollection m_assetCollection;
-
 			entt::registry m_registry;
+			SceneRenderer m_sceneRenderer;
+
 			Entity m_idMainCamera = entt::null;
 			Entity m_idSkybox = entt::null;
-
-			Instances m_instances;
-			Lights m_lights;
-
-			std::unordered_map<Entity, std::pair<std::size_t, std::size_t>> m_renderableInstanceLookup;
-			std::set<std::size_t> m_modifiedTransforms;
-
-			std::unordered_map<Entity, std::size_t> m_lightLookup;
-			std::set<std::size_t> m_modifiedDirLights;
-			std::set<std::size_t> m_modifiedSpotLights;
-			std::set<std::size_t> m_modifiedPointLights;
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_tpBegin =
 				std::chrono::high_resolution_clock::now();
@@ -80,53 +54,11 @@ namespace DENG {
 
 			TRS::Vector3<float> m_vAmbient = { 0.01f, 0.01f, 0.01f };
 
-			RendererCopyFlagBits m_bmCopyFlags = RendererCopyFlagBit_None;
-
 		private:
-			template <typename T>
-			void _ApplyLightSourceTransforms() {
-				auto view = m_registry.view<T, TransformComponent>();
-				for (Entity idLight : view) {
-					_ApplyLightSourceTransform<T>(idLight);
-				}
-			}
-
-			template <typename T>
-			void _ApplyLightSourceTransform(Entity _idEntity) {
-				auto& [light, transform] = m_registry.get<T, TransformComponent>(_idEntity);
-				const glm::mat4 cmTranslation = {
-						{ 1.f, 0.f, 0.f, transform.vTranslation.x },
-						{ 0.f, 1.f, 0.f, transform.vTranslation.y },
-						{ 0.f, 0.f, 1.f, transform.vTranslation.z },
-						{ 0.f, 0.f, 0.f, 1.f }
-				};
-
-				const glm::quat qX(FT::sin(transform.vRotation.x / 2.f), 0.f, 0.f, FT::cos(transform.vRotation.x / 2.f));
-				const glm::quat qY(0.f, FT::sin(transform.vRotation.y / 2.f), 0.f, FT::cos(transform.vRotation.y / 2.f));
-				const glm::quat qZ(0.f, 0.f, FT::sin(transform.vRotation.z / 2.f), FT::cos(transform.vRotation.z / 2.f));
-				const glm::mat4 cmRotation = (qX * qY * qZ);
-
-				light.vPosition = cmRotation * cmTranslation * glm::vec4(0.f, 0.f, 0.f, 1.f);
-			}
-
-			template <typename T>
-			void _ReadLightsToVector(std::vector<T>& _vec) {
-				auto view = m_registry.view<T>();
-				_vec.reserve(view.size());
-
-				for (Entity idLight : view) {
-					auto& light = m_registry.get<T>(idLight);
-					_vec.push_back(light);
-				}
-			}
-
-			std::vector<std::pair<std::size_t, std::size_t>> _MakeMemoryRegions(const std::set<std::size_t>& _updateSet);
-			void _CorrectLightResources();
 			void _SortRenderableGroup();
 			void _SortHierarchies();
 			glm::mat4 _CalculateTransformMatrix(Entity _ent);
 			void _UpdateScripts();
-			void _RenderLights();
 
 		public:
 			Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
@@ -145,7 +77,7 @@ namespace DENG {
 			}
 
 			template<typename T>
-			Entity LoadFromMemory(const char* _pData, size_t _uLength, AssetPool _eAssetPool, Entity _idParent = entt::null) {
+			Entity LoadAssetFromMemory(const char* _pData, size_t _uLength, AssetPool _eAssetPool, Entity _idParent = entt::null) {
 				static_assert(std::is_base_of<IAssetComponentizer, T>::value);
 				T loader(this, _eAssetPool, _idParent);
 				loader.DeserializeFromMemory(_pData, _uLength);

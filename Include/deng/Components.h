@@ -47,15 +47,13 @@ namespace DENG {
 	typedef uint16_t ComponentType;
 
 	struct DrawDescriptorIndices {
-		int32_t iTransformIndex = -1;
-		int32_t iMaterialIndex = -1;
-		int32_t iPadding0 = 0;
-		int32_t iPadding1 = 0;
+		uint32_t uTransformIndex = UINT32_MAX;
+		uint32_t uPhongMaterialIndex = UINT32_MAX;
+		uint32_t uPbrMaterialIndex = UINT32_MAX;
+		uint32_t uPadding0 = 0;
 
 		DrawDescriptorIndices() = default;
-		DrawDescriptorIndices(int32_t _iTransformIndex, int32_t _iMaterialIndex) :
-			iTransformIndex(_iTransformIndex),
-			iMaterialIndex(_iMaterialIndex) {}
+		DrawDescriptorIndices(const DrawDescriptorIndices&) = default;
 	};
 
 	struct InstanceInfo {

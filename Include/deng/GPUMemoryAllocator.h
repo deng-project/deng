@@ -20,7 +20,8 @@
 #endif
 
 namespace DENG {
-	struct MemoryRegion {
+	struct MemoryRegion 
+	{
 		MemoryRegion() = default;
 		MemoryRegion(const MemoryRegion&) = default;
 
@@ -32,17 +33,21 @@ namespace DENG {
 		size_t uSize;
 	};
 
-	class DENG_API GPUMemoryAllocator {
+	class DENG_API GPUMemoryAllocator 
+	{
 		private:
-			struct UnusedMemoryFragment {
+			struct UnusedMemoryFragment 
+			{
 				std::list<MemoryRegion>::iterator region1;
 				std::list<MemoryRegion>::iterator region2;
 
 				size_t uOffset = 0;
 				size_t uSize = 0;
 
-				struct Compare {
-					bool operator()(const UnusedMemoryFragment& _frag1, const UnusedMemoryFragment& _frag2) const {
+				struct Compare 
+				{
+					bool operator()(const UnusedMemoryFragment& _frag1, const UnusedMemoryFragment& _frag2) const 
+					{
 						return _frag1.uSize > _frag2.uSize;
 					}
 				};

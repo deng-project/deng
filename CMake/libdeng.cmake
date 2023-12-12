@@ -30,13 +30,15 @@ set(DENG_IMGUI_SOURCES
 
 # Graphics backend sources
 set(DENG_RENDERER_BACKEND_HEADERS 
-	Include/deng/IRenderer.h
-	Include/deng/IFramebuffer.h
 	Include/deng/GPUMemoryAllocator.h
+	Include/deng/IFramebuffer.h
+	Include/deng/IGraphicsMemory.h
+	Include/deng/IRenderer.h
 )
 
 set(DENG_RENDERER_BACKEND_SOURCES
-	Sources/GPUMemoryAllocator.cpp)
+	Sources/GPUMemoryAllocator.cpp
+	Sources/IGraphicsMemory.cpp)
 	
 set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 	Include/deng/VulkanFramebuffer.h

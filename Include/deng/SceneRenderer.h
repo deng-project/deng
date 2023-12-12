@@ -10,6 +10,8 @@
 #include "deng/IRenderer.h"
 #include "deng/RenderResources.h"
 #include "deng/Components.h"
+#include "deng/AssetManager.h"
+#include "deng/IGraphicsMemoryAllcator.h"
 
 #ifdef SCENE_RENDERER_CPP
 	#include "trs/Vector.h"
@@ -19,6 +21,8 @@ namespace DENG {
 
 	class DENG_API SceneRenderer {
 		private:
+			AssetCollection m_assetCollection;
+
 			IRenderer* m_pRenderer = nullptr;
 			IFramebuffer* m_pFramebuffer = nullptr;
 
@@ -46,31 +50,11 @@ namespace DENG {
 			size_t m_uIntermediateStorageBufferSize = 0;
 
 		public:
-			SceneRenderer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer);
+			SceneRenderer(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer, entt::registry& _registry);
 			~SceneRenderer();
 
-			void RenderLights(
-				const std::vector<PointLightComponent>& _pointLights, 
-				const std::vector<DirectionalLightComponent>& _dirLights, 
-				const std::vector<SpotlightComponent>& _spotLights,
-				const TRS::Vector3<float>& _vAmbient);
-
-			void RenderInstances(const std::vector<InstanceInfo>& _instanceInfos, 
-								 const std::vector<TransformComponent>& _transforms,
-								 const std::vector<MaterialPBR>& _pbrMaterials,
-								 const std::vector<MaterialPhong>& _phongMaterials,
-								 const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices,
-								 const CameraComponent& _camera);
-
-			void UpdateTransformRegion(const TransformComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
-			void UpdateDirLightRegion(const DirectionalLightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
-			void UpdatePointLightRegion(const PointLightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
-			void UpdateSpotLightRegion(const SpotlightComponent* _pData, std::size_t _uDstOffset, std::size_t _uCount);
-
-			void UpdateStorageBuffers(const std::vector<TransformComponent>& _transforms,
-									  const std::vector<MaterialPBR>& _pbrMaterials,
-									  const std::vector<MaterialPhong>& _phongMaterials,
-									  const std::vector<DrawDescriptorIndices>& _drawDescriptorIndices);
+			void UpdateLight(Entity _ent);
+			void SubmitWorkGroups();
 			void UpdateSkyboxScale(const TRS::Vector4<float>& _vScale);
 			void RenderSkybox(const CameraComponent& _camera, const SkyboxComponent& _skybox);
 

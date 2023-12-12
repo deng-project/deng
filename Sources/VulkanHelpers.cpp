@@ -4,23 +4,25 @@
 // author: Karl-Mihkel Ott
 
 #define VULKAN_HELPERS_CPP
+#include "deng/Exceptions.h"
 #include "deng/VulkanHelpers.h"
+#include "deng/FastTrigo.h"
 
 namespace DENG {
 
     namespace Vulkan {
 
         
-        uint32_t _FindMemoryType(VkPhysicalDevice _gpu, uint32_t _filter, VkMemoryPropertyFlags _props) {
-            VkPhysicalDeviceMemoryProperties mem_props;
-            vkGetPhysicalDeviceMemoryProperties(_gpu, &mem_props);
-
-            for(uint32_t i = 0; i < mem_props.memoryTypeCount; i++) {
-                if((_filter & (1 << i)) && (mem_props.memoryTypes[i].propertyFlags & _props))
+        uint32_t _FindMemoryTypeIndex(const VkMemoryType* _pMemoryTypes, uint32_t _uMemoryTypeCount, uint32_t _uMemoryTypeBits, VkMemoryPropertyFlags _memoryPropertyFlags) {
+            for(uint32_t i = 0; i < _uMemoryTypeCount; i++) 
+            {
+                if ((_uMemoryTypeBits & (1 << i)) && (_pMemoryTypes[i].propertyFlags & _memoryPropertyFlags))
+                {
                     return i;
+                }
             }
 
-            VK_BUFFER_ERR("failed to find suitable memory type");
+            throw RendererException("Failed to find suitable memory type (Vulkan)!");
         }
 
 

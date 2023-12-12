@@ -11,7 +11,8 @@ using namespace std;
 namespace DENG {
 
 #ifdef _DEBUG
-	void GPUMemoryAllocator::DbPrintMemoryRegions() {
+	void GPUMemoryAllocator::DbPrintMemoryRegions()
+	{
 		for (auto it = m_memoryRegions.begin(); it != m_memoryRegions.end(); it++) {
 			if (it != m_memoryRegions.begin()) {
 				auto itPrevious = it;
@@ -36,47 +37,55 @@ namespace DENG {
 		cout << '\n';
 	}
 #endif
-	
-	MemoryRegion GPUMemoryAllocator::RequestMemory(size_t _uSize, size_t _uMinimalAlignmentOffset) {
+
+	MemoryRegion GPUMemoryAllocator::RequestMemory(size_t _uSize, size_t _uMinimalAlignmentOffset)
+	{
 		if (_uMinimalAlignmentOffset) {
 			_uSize = (_uSize + _uMinimalAlignmentOffset - 1) & ~(_uMinimalAlignmentOffset - 1);
 		}
 
 		// check if there are any fragmented regions available
 		size_t uOffset = 0;
-		if (m_storageFragments.size()) {
+		if (m_storageFragments.size()) 
+		{
 			pop_heap(m_storageFragments.begin(), m_storageFragments.end(), UnusedMemoryFragment::Compare());
-			
+
 			// assuming that the heap has already been constructed
 			uOffset = m_storageFragments.back().uOffset;
 			size_t uAvailableSize = m_storageFragments.back().uSize;
 
-			if (_uMinimalAlignmentOffset > 0) {
+			if (_uMinimalAlignmentOffset > 0) 
+			{
 				uOffset = (uOffset + _uMinimalAlignmentOffset - 1) & ~(_uMinimalAlignmentOffset - 1);
 				uAvailableSize -= uOffset - m_storageFragments.back().uOffset;
 			}
 
-			if (uAvailableSize >= _uSize) {
+			if (uAvailableSize >= _uSize) 
+			{
 				auto itRegion1 = m_storageFragments.back().region1;
 				auto itRegion2 = m_storageFragments.back().region2;
 				std::list<MemoryRegion>::iterator itEmplacedArea;
 
-				if (itRegion1 != itRegion2) {
+				if (itRegion1 != itRegion2) 
+				{
 					itEmplacedArea = m_memoryRegions.emplace(itRegion2, uOffset, _uSize);
 				}
-				else {
+				else 
+				{
 					itEmplacedArea = m_memoryRegions.emplace(m_memoryRegions.begin(), uOffset, _uSize);
 				}
 
 				// check if there is a fragment before emplaced region
-				if (uOffset > m_storageFragments.back().uOffset) {
+				if (uOffset > m_storageFragments.back().uOffset) 
+				{
 					m_storageFragments.back().region1 = itRegion1;
 					m_storageFragments.back().region2 = itEmplacedArea;
 					m_storageFragments.back().uSize =
 						itEmplacedArea->uOffset - itRegion1->uOffset - itRegion1->uSize;
 
 					// and after
-					if (uOffset + _uSize < itRegion2->uOffset) {
+					if (uOffset + _uSize < itRegion2->uOffset) 
+					{
 						m_storageFragments.push_back({
 							itEmplacedArea,
 							itRegion2,
@@ -85,7 +94,8 @@ namespace DENG {
 					}
 				}
 				// after
-				else if (uOffset + _uSize < itRegion2->uOffset) {
+				else if (uOffset + _uSize < itRegion2->uOffset) 
+				{
 					m_storageFragments.back().region1 = itEmplacedArea;
 					m_storageFragments.back().region2 = itRegion2;
 					m_storageFragments.back().uSize =
@@ -93,7 +103,8 @@ namespace DENG {
 					m_storageFragments.back().uOffset = itEmplacedArea->uOffset + itEmplacedArea->uSize;
 				}
 				// continuous
-				else {
+				else 
+				{
 					m_storageFragments.pop_back();
 				}
 
@@ -103,7 +114,8 @@ namespace DENG {
 		}
 
 		// memory region exists before
-		if (m_memoryRegions.size()) {
+		if (m_memoryRegions.size()) 
+		{
 			uOffset = m_memoryRegions.back().uOffset + m_memoryRegions.back().uSize;
 
 			if (uOffset > 0)
@@ -115,7 +127,8 @@ namespace DENG {
 			auto itPushedRegion = m_memoryRegions.end();
 			--itPushedRegion;
 
-			if (uOffset > itPreviousRegion->uOffset + itPreviousRegion->uSize) {
+			if (uOffset > itPreviousRegion->uOffset + itPreviousRegion->uSize) 
+			{
 				m_storageFragments.push_back({
 					itPreviousRegion,
 					itPushedRegion,
@@ -124,7 +137,8 @@ namespace DENG {
 				make_heap(m_storageFragments.begin(), m_storageFragments.end(), UnusedMemoryFragment::Compare());
 			}
 		}
-		else {
+		else 
+		{
 			m_memoryRegions.push_back({ uOffset, _uSize });
 		}
 
@@ -133,25 +147,32 @@ namespace DENG {
 
 
 	// O(n)
-	bool GPUMemoryAllocator::FreeMemory(size_t _uOffset) {
+	bool GPUMemoryAllocator::FreeMemory(size_t _uOffset) 
+	{
 		bool bIsRemoved = false;
 		std::list<MemoryRegion>::iterator it = m_memoryRegions.begin();
-		for (; it != m_memoryRegions.end(); it++) {
+		for (; it != m_memoryRegions.end(); it++) 
+		{
 			if (it->uOffset == _uOffset) {
 				bIsRemoved = true;
 				break;
 			}
 		}
 
-		if (bIsRemoved) {
-			for (size_t i = 0; i < m_storageFragments.size(); i++) {
-				if (m_storageFragments[i].region1 == it) {
-					if (it == m_memoryRegions.begin()) {
+		if (bIsRemoved) 
+		{
+			for (size_t i = 0; i < m_storageFragments.size(); i++) 
+			{
+				if (m_storageFragments[i].region1 == it) 
+				{
+					if (it == m_memoryRegions.begin()) 
+					{
 						m_storageFragments[i].region1 = m_storageFragments[i].region2;
 						m_storageFragments[i].uSize = m_storageFragments[i].region2->uOffset;
 						m_storageFragments[i].uOffset = 0;
 					}
-					else {
+					else 
+					{
 						m_storageFragments[i].region1 = it;
 						m_storageFragments[i].region1--;
 						m_storageFragments[i].uSize = m_storageFragments[i].region2->uOffset -
@@ -159,12 +180,15 @@ namespace DENG {
 						m_storageFragments[i].uOffset = m_storageFragments[i].region1->uSize + m_storageFragments[i].region1->uOffset;
 					}
 				}
-				else if (m_storageFragments[i].region2 == it) {
-					if (it == --m_memoryRegions.end()) {
+				else if (m_storageFragments[i].region2 == it) 
+				{
+					if (it == --m_memoryRegions.end()) 
+					{
 						m_storageFragments.erase(m_storageFragments.begin() + i);
 						i--;
 					}
-					else {
+					else 
+					{
 						m_storageFragments[i].region2 = it;
 						m_storageFragments[i].region2++;
 						m_storageFragments[i].uSize = m_storageFragments[i].region2->uOffset -
@@ -178,7 +202,7 @@ namespace DENG {
 			itNext++;
 			auto itPrevious = it;
 
-			if (itNext != m_memoryRegions.end() && 
+			if (itNext != m_memoryRegions.end() &&
 				it != m_memoryRegions.begin() &&
 				it->uOffset + it->uSize == itNext->uOffset &&
 				(--itPrevious)->uOffset + itPrevious->uSize == it->uOffset)
@@ -196,7 +220,7 @@ namespace DENG {
 				m_storageFragments.push_back({
 					itNext,
 					itNext,
-					0, 
+					0,
 					it->uSize + it->uOffset });
 			}
 		}

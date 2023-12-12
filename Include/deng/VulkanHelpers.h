@@ -18,90 +18,25 @@
 namespace DENG {
     namespace Vulkan {
 
-        enum PhysicalDeviceType { OTHER, INTEGRATED_GPU, DISCREATE_GPU, VIRTUAL_GPU, CPU };
-
-        struct PhysicalDeviceInformation {
-            uint8_t pipelineCacheUUID[VK_UUID_SIZE] = {};
-
-            std::string sPhysicalDeviceName;
-            std::string sDriverVersion;
-
-            uint32_t uApiVersionMajor = 0;
-            uint32_t uApiVersionMinor = 0;
-            uint32_t uApiVersionPatch = 0;
-            uint32_t uApiVersionVariant = 0;
-
-            uint32_t uVendorId = 0;
-            uint32_t uDeviceId = 0;
-
-            uint32_t uMinimalUniformBufferAlignment = 0;
-            float fMaxSamplerAnisotropy = 0.f;
-
-            PhysicalDeviceType eDeviceType = PhysicalDeviceType::OTHER;
-        };
-
-        struct BufferData {
-            VkBuffer hBuffer = VK_NULL_HANDLE;
-            VkDeviceMemory hMemory = VK_NULL_HANDLE;
-            VkDeviceSize uSize = 0;
-        };
-
-
-        struct ShaderDescriptorData {
-            VkDescriptorSetLayout hDescriptorSetLayout = VK_NULL_HANDLE;
-            std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptorSets;
-        };
-
-        struct TextureData {
-            VkImage hImage = VK_NULL_HANDLE;
-            VkImageView hImageView = VK_NULL_HANDLE;
-            VkSampler hSampler = VK_NULL_HANDLE;
-            VkDeviceMemory hMemory = VK_NULL_HANDLE;
-        };
-        
-
-        uint32_t _FindMemoryType(VkPhysicalDevice _gpu, uint32_t _filter, VkMemoryPropertyFlags _props);
+        uint32_t _FindMemoryTypeIndex(const VkMemoryType* pMemoryTypes, uint32_t _uMemoryTypeCount, uint32_t _uMemoryTypeBits, VkMemoryPropertyFlags _memoryPropertyFlags);
 
 
         //////////////////////////////////////////////
         // ***** Allocators and buffer helper ***** //
         //////////////////////////////////////////////
         
-
-        void _AllocateMemory(VkDevice _device, VkPhysicalDevice _gpu, VkDeviceSize _size, VkDeviceMemory &_mem, uint32_t _type, VkMemoryPropertyFlags _props);
-        VkImageViewCreateInfo _GetImageViewInfo(
-            VkImage _img, 
-            VkFormat _format,
-            VkImageViewType _type,
-            VkImageAspectFlags _flags, 
-            uint32_t _mip_l, 
-            uint32_t _array_count);
-        VkMemoryRequirements _CreateBuffer(VkDevice _dev, VkDeviceSize _size, VkBufferUsageFlags _flags, VkBuffer &_buffer);
-        VkMemoryRequirements _CreateImage(
-            VkDevice _dev, 
-            VkImage &_img, 
-            uint32_t _width, 
-            uint32_t _height, 
-            uint32_t _mip_l,
-            uint32_t _array_layers,
-            VkFormat _format, 
-            VkImageTiling _tiling, 
-            VkImageUsageFlags _usage,
-            VkSampleCountFlagBits _sample_c,
-            VkImageCreateFlags _flags);
-
         void _TransitionImageLayout(
-            VkDevice _dev, 
-            VkImage _img, 
-            VkCommandPool _cmd_pool, 
-            VkQueue _graphics_q, 
-            VkImageLayout _old, 
-            VkImageLayout _new, 
-            uint32_t _mip_l,
-            uint32_t _array_count);
+            VkDevice _hDevice, 
+            VkImage _hImage, 
+            VkCommandPool _hCommandPool, 
+            VkQueue _hGraphicsQueue, 
+            VkImageLayout _oldLayout, 
+            VkImageLayout _newLayout, 
+            uint32_t _uMipLevels,
+            uint32_t _uArrayCount);
 
         void _CopyBufferToImage(
-            VkDevice _dev,
+            VkDevice _hDevice,
             VkCommandPool _cmd_pool, 
             VkQueue _graphics_queue, 
             VkBuffer _src, 

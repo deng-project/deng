@@ -15,6 +15,7 @@
 #include "deng/IWindowContext.h"
 #include "deng/IFramebuffer.h"
 #include "deng/GPUMemoryAllocator.h"
+#include "deng/IGraphicsMemory.h"
 
 #ifndef MAX_FRAMES_IN_FLIGHT
 #define MAX_FRAMES_IN_FLIGHT 2
@@ -51,9 +52,8 @@ namespace DENG {
             virtual void DestroyPipeline(cvar::hash_t _hshShader) = 0;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) = 0;
-            virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) = 0;
-			virtual void DeallocateMemory(size_t _uOffset) = 0;
-            virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) = 0;
+            virtual IGPUManagedBuffer* CreateManagedBuffer() = 0;
+            virtual IGPUImage* CreateImage() = 0;
 			virtual bool SetupFrame() = 0;
 			virtual void DrawInstance(
                 cvar::hash_t _hshMesh,

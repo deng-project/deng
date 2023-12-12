@@ -71,17 +71,6 @@ namespace DENG {
 	};
 
 
-	enum class TextureType {
-		None,
-		Image_1D,
-		Image_2D,
-		Image_3D_Array,
-		Image_3D,
-		InternalFramebufferImage_2D,
-		InternalFramebufferImage_3D,
-		SwapchainImage
-	};
-
 	enum TextureLoadType {
 		None,
 		Embedded,

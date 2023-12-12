@@ -10,7 +10,7 @@
 namespace DENG {
 
 	Scene::Scene(IRenderer* _pRenderer, IFramebuffer* _pFramebuffer) :
-		m_sceneRenderer(_pRenderer, _pFramebuffer) 
+		m_sceneRenderer(_pRenderer, _pFramebuffer, m_registry) 
 	{
 		EventManager& eventManager = EventManager::GetInstance();
 		eventManager.AddListener<Scene, ComponentModifiedEvent>(&Scene::OnComponentModifiedEvent, this);
@@ -24,71 +24,53 @@ namespace DENG {
 	}
 
 
-	std::vector<std::pair<std::size_t, std::size_t>> Scene::_MakeMemoryRegions(const std::set<std::size_t>& _updateSet) {
-		std::vector<std::pair<std::size_t, std::size_t>> memoryRegions;
-		std::size_t uPrevTransformId = 0;
-		for (auto it = _updateSet.begin(); it != _updateSet.end(); it++) {
-			if (it == _updateSet.begin())
-				memoryRegions.emplace_back(std::make_pair(*it, *it));
-			else if (*it - uPrevTransformId < 3)
-				memoryRegions.back().second = *it;
-			else
-				memoryRegions.emplace_back(std::make_pair(*it, *it));
-
-			uPrevTransformId = *it;
-		}
-
-		return memoryRegions;
-	}
-
-
-	void Scene::_CorrectLightResources() {
-		// check if light sources need to be recopied
-		if (m_bmCopyFlags & (RendererCopyFlagBit_CopyDirectionalLights | RendererCopyFlagBit_CopySpotLights | RendererCopyFlagBit_CopyPointLights)) {
-			_RenderLights();
-		}
-		else {
-			if (m_modifiedDirLights.size()) {
-				std::vector<std::pair<std::size_t, std::size_t>> dirLightUpdateAreas =
-					_MakeMemoryRegions(m_modifiedDirLights);
-
-				for (auto it = dirLightUpdateAreas.begin(); it != dirLightUpdateAreas.end(); it++) {
-					m_sceneRenderer.UpdateDirLightRegion(
-						m_lights.dirLights.data() + it->first,
-						it->first,
-						it->second - it->first + 1);
-				}
-			}
-
-			if (m_modifiedPointLights.size()) {
-				std::vector<std::pair<std::size_t, std::size_t>> ptLightUpdateAreas =
-					_MakeMemoryRegions(m_modifiedPointLights);
-
-				for (auto it = ptLightUpdateAreas.begin(); it != ptLightUpdateAreas.end(); it++) {
-					m_sceneRenderer.UpdatePointLightRegion(
-						m_lights.pointLights.data() + it->first,
-						it->first,
-						it->second - it->first + 1);
-				}
-			}
-
-			if (m_modifiedSpotLights.size()) {
-				std::vector<std::pair<std::size_t, std::size_t>> spotLightUpdateAreas =
-					_MakeMemoryRegions(m_modifiedSpotLights);
-
-				for (auto it = spotLightUpdateAreas.begin(); it != spotLightUpdateAreas.end(); it++) {
-					m_sceneRenderer.UpdateSpotLightRegion(
-						m_lights.spotLights.data() + it->first,
-						it->first,
-						it->second - it->first + 1);
-				}
-			}
-
-			m_modifiedDirLights.clear();
-			m_modifiedSpotLights.clear();
-			m_modifiedPointLights.clear();
-		}
-	}
+	// void Scene::_CorrectLightResources() {
+	// 	// check if light sources need to be recopied
+	// 	if (m_bmCopyFlags & (RendererCopyFlagBit_CopyDirectionalLights | RendererCopyFlagBit_CopySpotLights | RendererCopyFlagBit_CopyPointLights)) {
+	// 		_RenderLights();
+	// 	}
+	// 	else {
+	// 		if (m_modifiedDirLights.size()) {
+	// 			std::vector<std::pair<std::size_t, std::size_t>> dirLightUpdateAreas =
+	// 				_MakeMemoryRegions(m_modifiedDirLights);
+	// 
+	// 			for (auto it = dirLightUpdateAreas.begin(); it != dirLightUpdateAreas.end(); it++) {
+	// 				m_sceneRenderer.UpdateDirLightRegion(
+	// 					m_lights.dirLights.data() + it->first,
+	// 					it->first,
+	// 					it->second - it->first + 1);
+	// 			}
+	// 		}
+	// 
+	// 		if (m_modifiedPointLights.size()) {
+	// 			std::vector<std::pair<std::size_t, std::size_t>> ptLightUpdateAreas =
+	// 				_MakeMemoryRegions(m_modifiedPointLights);
+	// 
+	// 			for (auto it = ptLightUpdateAreas.begin(); it != ptLightUpdateAreas.end(); it++) {
+	// 				m_sceneRenderer.UpdatePointLightRegion(
+	// 					m_lights.pointLights.data() + it->first,
+	// 					it->first,
+	// 					it->second - it->first + 1);
+	// 			}
+	// 		}
+	// 
+	// 		if (m_modifiedSpotLights.size()) {
+	// 			std::vector<std::pair<std::size_t, std::size_t>> spotLightUpdateAreas =
+	// 				_MakeMemoryRegions(m_modifiedSpotLights);
+	// 
+	// 			for (auto it = spotLightUpdateAreas.begin(); it != spotLightUpdateAreas.end(); it++) {
+	// 				m_sceneRenderer.UpdateSpotLightRegion(
+	// 					m_lights.spotLights.data() + it->first,
+	// 					it->first,
+	// 					it->second - it->first + 1);
+	// 			}
+	// 		}
+	// 
+	// 		m_modifiedDirLights.clear();
+	// 		m_modifiedSpotLights.clear();
+	// 		m_modifiedPointLights.clear();
+	// 	}
+	// }
 
 	void Scene::_SortRenderableGroup() {
 		auto group = m_registry.group<MeshPassComponent, MaterialComponent>();
@@ -127,6 +109,7 @@ namespace DENG {
 		return mCustom;
 	}
 
+
 	void Scene::_SortHierarchies() {
 		auto group = m_registry.group<HierarchyComponent, TransformComponent>();
 		
@@ -156,17 +139,6 @@ namespace DENG {
 		m_tpBegin = std::chrono::high_resolution_clock::now();
 	}
 
-	void Scene::_RenderLights() {
-		std::vector<PointLightComponent> pointLights;
-		std::vector<DirectionalLightComponent> dirLights;
-		std::vector<SpotlightComponent> spotLights;
-
-		_ReadLightsToVector(pointLights);
-		_ReadLightsToVector(dirLights);
-		_ReadLightsToVector(spotLights);
-
-		m_sceneRenderer.RenderLights(pointLights, dirLights, spotLights, m_vAmbient);
-	}
 
 	void Scene::AttachComponents() {
 		{
@@ -181,7 +153,6 @@ namespace DENG {
 
 		_SortRenderableGroup();
 		_SortHierarchies();
-		_RenderLights();
 
 		if (m_idSkybox != entt::null) {
 			auto& skybox = m_registry.get<SkyboxComponent>(m_idSkybox);
@@ -192,8 +163,6 @@ namespace DENG {
 
 	void Scene::RenderScene() {
 		_UpdateScripts();
-		_CorrectLightResources();
-		m_bmCopyFlags = RendererCopyFlagBit_None;
 	}
 
 
@@ -208,10 +177,12 @@ namespace DENG {
 	}
 
 	bool Scene::OnComponentModifiedEvent(ComponentModifiedEvent& _event) {
+		// if hierarchies were changed, sort them again
 		if (_event.GetComponentType() & ComponentType_Hierarchy) {
 			_SortHierarchies();
 		}
 
+		// traverse transforms hierarchically
 		if ((_event.GetComponentType() & ComponentType_Transform) && m_registry.any_of<HierarchyComponent>(_event.GetEntity())) {
 			// traverse hierarchy tree
 			std::queue<std::pair<Entity, glm::mat4>> treeQue;
@@ -247,5 +218,9 @@ namespace DENG {
 				treeQue.pop();
 			}
 		}
+
+		// update light sources
+		if (_event.GetComponentType() & ComponentType_Light)
+			m_sceneRenderer.UpdateLight(_event.GetEntity());
 	}
 }

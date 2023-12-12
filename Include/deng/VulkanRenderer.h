@@ -180,9 +180,8 @@ namespace DENG {
             virtual void DestroyPipeline(cvar::hash_t _hshShader) override;
             virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
             virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
-            virtual size_t AllocateMemory(size_t _uSize, BufferDataType _eType) override;
-            virtual void DeallocateMemory(size_t _uOffset) override;
-            virtual void UpdateBuffer(const void* _pData, size_t _uSize, size_t _uOffset) override;
+            virtual IGPUManagedBuffer* CreateManagedBuffer() override;
+            virtual IGPUImage* CreateImage() override;
             virtual bool SetupFrame() override;
             virtual void DrawInstance(
                 cvar::hash_t _hshMesh,
