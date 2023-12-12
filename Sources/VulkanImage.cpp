@@ -34,6 +34,32 @@ namespace DENG
 
 		}
 
+
+		void Image::CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uArrayCount)
+		{
+			DENG_ASSERT(dynamic_cast<ManagedBuffer*>(_pBuffer));
+			ManagedBuffer* pVulkanManagedBuffer = static_cast<ManagedBuffer*>(_pBuffer);
+
+			VkCommandBuffer hCommandBuffer;
+			_BeginCommandBufferSingleCommand(m_hDevice, m_hCommandPool, hCommandBuffer);
+
+			// setup buffer image copy structure
+			VkBufferImageCopy bufferImageCopy = {};
+			bufferImageCopy.bufferOffset = static_cast<VkDeviceSize>(_uOffset);
+			bufferImageCopy.bufferRowLength = 0;
+			bufferImageCopy.bufferImageHeight = 0;
+			bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			bufferImageCopy.imageSubresource.mipLevel = 0;
+			bufferImageCopy.imageSubresource.baseArrayLayer = 0;
+			bufferImageCopy.imageSubresource.layerCount = _uArrayCount;
+			bufferImageCopy.imageOffset = { 0, 0, 0 };
+			bufferImageCopy.imageExtent = { _uWidth, _uHeight, 1 };
+
+			vkCmdCopyBufferToImage(hCommandBuffer, pVulkanManagedBuffer->GetBuffer(), m_hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferImageCopy);
+			
+			_EndCommandBufferSingleCommand(m_hDevice, m_hGraphicsQueue, m_hCommandPool, hCommandBuffer);
+		}
+
 		void Image::_CreateImageHandle(
 			uint32_t _uWidth,
 			uint32_t _uHeight,
@@ -339,7 +365,7 @@ namespace DENG
 
 			// copy from staging buffer to image
 			_TransitionImageLayout(m_hDevice, m_hImage, m_hCommandPool, m_hGraphicsQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, uMipLevels, uArrayCount);
-			this->CopyFrom(&stagingBuffer, static_cast<size_t>(uStagingBufferOffset));
+			this->CopyFrom(&stagingBuffer, static_cast<size_t>(uStagingBufferOffset), _uWidth, _uHeight, uArrayCount);
 
 			if (_bCreateMipMaps)
 			{
@@ -393,7 +419,7 @@ namespace DENG
 
 			// transition image layout and copy data from staging to image memory
 			_TransitionImageLayout(m_hDevice, m_hImage, m_hCommandPool, m_hGraphicsQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 1);
-			this->CopyFrom(&stagingBuffer, 0);
+			this->CopyFrom(&stagingBuffer, 0, static_cast<uint32_t>(_uLength), 1, 1);
 			_TransitionImageLayout(m_hDevice, m_hImage, m_hCommandPool, m_hGraphicsQueue, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 1);
 			
 			// create image view handle
@@ -438,7 +464,7 @@ namespace DENG
 
 			// transition image layout and perform 
 			_TransitionImageLayout(m_hDevice, m_hImage, m_hCommandPool, m_hGraphicsQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, uMipLevels, 1);
-			this->CopyFrom(&stagingBuffer, static_cast<size_t>(uStagingBufferOffset));
+			this->CopyFrom(&stagingBuffer, static_cast<size_t>(uStagingBufferOffset), _uWidth, _uHeight, 1);
 
 			if (_bCreateMipMaps)
 			{
@@ -525,7 +551,7 @@ namespace DENG
 
 			// transition image layouts
 			_TransitionImageLayout(m_hDevice, m_hImage, m_hCommandPool, m_hGraphicsQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, uMipLevels, uArrayCount);
-			this->CopyFrom(&stagingBuffer, static_cast<size_t>(uStagingBufferOffset));
+			this->CopyFrom(&stagingBuffer, static_cast<size_t>(uStagingBufferOffset), _uWidth, _uHeight, uArrayCount);
 
 			if (_bCreateMipMaps)
 			{

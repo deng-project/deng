@@ -116,7 +116,7 @@ namespace DENG
 				const void* _pNegData,
 				bool _bCreateMipMaps = false
 			) = 0;
-			virtual void CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset) = 0;
+			virtual void CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uArrayCount) = 0;
 
 			void LoadTexture1DFromFile(const char* _szFileName);
 			void LoadTexture2DFromFile(const char* _szFileName, bool _bCreateMipmaps = false);

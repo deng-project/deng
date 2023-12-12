@@ -49,7 +49,7 @@ namespace DENG
 					VkFormatFeatureFlags _optimalTilingFeatures,
 					float _fMaxSamplerAnisotropy);
 
-				virtual void CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset) override;
+				virtual void CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uArrayCount) override;
 
 				virtual void CreateDummy(uint32_t _uWidth, uint32_t _uHeight, uint32_t _uBitDepth, TextureType _eTextureType, uint32_t _uColor = 0, bool _bCreateMipmaps = 0) override;
 				virtual void LoadTexture1DFromMemory(const void* _pData, size_t _uLength, uint32_t _uBitDepth) override;
