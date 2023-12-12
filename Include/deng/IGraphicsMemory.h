@@ -104,7 +104,7 @@ namespace DENG
 		public:
 			IGPUImage() = default;
 			virtual void CreateDummy(uint32_t _uWidth, uint32_t _uHeight, uint32_t _uBitDepth, TextureType _eTextureType, uint32_t _uColor = 0, bool _bCreateMipmaps = 0) = 0;
-			virtual void LoadTexture1DFromMemory(const void* _pData, size_t _uLength, bool _bCreateMipmaps = false) = 0;
+			virtual void LoadTexture1DFromMemory(const void* _pData, size_t _uLength, uint32_t _uBitDepth) = 0;
 			virtual void LoadTexture2DFromMemory(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uBitDepth, bool _bCreateMipmaps = false) = 0;
 			virtual void LoadTexture3DFromMemory(
 				uint32_t _uWidth, uint32_t _uHeight, uint32_t _uBitDepth,
@@ -113,11 +113,12 @@ namespace DENG
 				const void* _pPosYData,
 				const void* _pNegYData,
 				const void* _pPosZData,
-				const void* _pNegData
+				const void* _pNegData,
+				bool _bCreateMipMaps = false
 			) = 0;
 			virtual void CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset) = 0;
 
-			void LoadTexture1DFromFile(const char* _szFileName, bool _bCreateMipmaps = false);
+			void LoadTexture1DFromFile(const char* _szFileName);
 			void LoadTexture2DFromFile(const char* _szFileName, bool _bCreateMipmaps = false);
 			void LoadTexture3DFromFiles(
 				const char* _szPosXFileName,
@@ -125,7 +126,8 @@ namespace DENG
 				const char* _szPosYFileName,
 				const char* _szNegYFileName,
 				const char* _szPosZFileName,
-				const char* _szNegZFileName);
+				const char* _szNegZFileName,
+				bool _bCreateMipMaps);
 
 			inline uint32_t GetWidth() { return m_uWidth; }
 			inline uint32_t GetHeight() { return m_uHeight; }

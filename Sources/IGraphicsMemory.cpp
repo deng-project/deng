@@ -12,7 +12,7 @@
 
 namespace DENG {
 
-	void IGPUImage::LoadTexture1DFromFile(const char* _szFileName, bool _bCreateMipmaps) {
+	void IGPUImage::LoadTexture1DFromFile(const char* _szFileName) {
 		ProgramFilesManager programFilesManager;
 		auto imageData = programFilesManager.GetProgramFileContent(_szFileName);
 		
@@ -25,7 +25,7 @@ namespace DENG {
 			static_cast<int>(imageData.size()),
 			&x, &y, &depth, 0);
 
-		this->LoadTexture1DFromMemory(pTexels, static_cast<size_t>(x * y * depth), _bCreateMipmaps);
+		this->LoadTexture1DFromMemory(pTexels, static_cast<size_t>(x * y * depth));
 		
 		// free the memory
 		stbi_image_free(pTexels);
