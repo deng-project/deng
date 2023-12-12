@@ -16,20 +16,20 @@ namespace DENG
 		class DENG_API Image : public IGPUImage
 		{
 			private:
-				VkDevice m_hDevice;
-				VkPhysicalDevice m_hPhysicalDevice;
-				VkQueue m_hGraphicsQueue;
-				VkCommandPool m_hCommandPool;
+				VkDevice m_hDevice = VK_NULL_HANDLE;
+				VkPhysicalDevice m_hPhysicalDevice = VK_NULL_HANDLE;
+				VkQueue m_hGraphicsQueue = VK_NULL_HANDLE;
+				VkCommandPool m_hCommandPool = VK_NULL_HANDLE;
 
-				VkImage m_hImage;
-				VkImageView m_hImageView;
-				VkSampler m_hSampler;
-				VkDeviceMemory m_hMemory;
+				VkImage m_hImage = VK_NULL_HANDLE;
+				VkImageView m_hImageView = VK_NULL_HANDLE;
+				VkSampler m_hSampler = VK_NULL_HANDLE;
+				VkDeviceMemory m_hMemory = VK_NULL_HANDLE;
 
-				const VkMemoryType* m_pMemoryTypes;
-				uint32_t m_uMemoryTypeCount;
-				VkFormatFeatureFlags m_optimalTilingFeatures;
-				float m_fMaxSamplerAnisotropy;
+				const VkMemoryType* m_pMemoryTypes = nullptr;
+				uint32_t m_uMemoryTypeCount = 0;
+				VkFormatFeatureFlags m_optimalTilingFeatures = (VkFormatFeatureFlagBits)0;
+				float m_fMaxSamplerAnisotropy = 0.f;
 
 			private:
 				void _CreateImageHandle(uint32_t _uWidth, uint32_t _uHeight, uint32_t _uMipLevels, uint32_t _uArrayCount, VkFormat _eFormat, VkImageCreateFlagBits _bImageBits = (VkImageCreateFlagBits)0);
@@ -48,6 +48,7 @@ namespace DENG
 					uint32_t uMemoryTypeCount,
 					VkFormatFeatureFlags _optimalTilingFeatures,
 					float _fMaxSamplerAnisotropy);
+				~Image();
 
 				virtual void CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uArrayCount) override;
 

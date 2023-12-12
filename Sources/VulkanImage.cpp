@@ -35,6 +35,17 @@ namespace DENG
 		}
 
 
+		Image::~Image() 
+		{
+			if (m_hImage)
+			{
+				vkDestroySampler(m_hDevice, m_hSampler, nullptr);
+				vkDestroyImageView(m_hDevice, m_hImageView, nullptr);
+				vkDestroyImage(m_hDevice, m_hImage, nullptr);
+			}
+		}
+
+
 		void Image::CopyFrom(IGPUManagedBuffer* _pBuffer, size_t _uOffset, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uArrayCount)
 		{
 			DENG_ASSERT(dynamic_cast<ManagedBuffer*>(_pBuffer));
