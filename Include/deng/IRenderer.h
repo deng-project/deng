@@ -59,7 +59,7 @@ namespace DENG
 			// virtual Handle<IComputePipeline> CreateComputePipelineHandle() = 0;
 			virtual bool SetupFrame() = 0;
 			virtual void DirectDraw(
-				const MeshPass& _meshPass,
+				const Mesh& _mesh,
 				Handle<IFramebuffer> _hFramebuffer,
 				Handle<IGraphicsPipeline> _hPipeline,
 				Handle<IGPUManagedBuffer> _hVertexBuffer,
