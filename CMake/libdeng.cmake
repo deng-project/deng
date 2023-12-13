@@ -83,6 +83,7 @@ set(DENG_UTIL_HEADERS
 	Include/deng/Exceptions.h
 	Include/deng/FastTrigo.h
 	Include/deng/FileTextureBuilder.h
+	Include/deng/Handle.h
 	Include/deng/InitializerListBuilder.h
 	Include/deng/MathConstants.h
 	Include/deng/Missing.h

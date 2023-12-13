@@ -8,34 +8,34 @@
 
 
 #ifdef VULKAN_RENDERER_CPP
-    #include <string>
-    #include <vector>
-    #include <array>
-    #include <cstring>
-    #include <queue>
-    #include <list>
-    #include <unordered_map>
+#include <string>
+#include <vector>
+#include <array>
+#include <cstring>
+#include <queue>
+#include <list>
+#include <unordered_map>
 
-    #include <algorithm>
-    #include <iostream>
-    #include <iomanip>
-    #include <vulkan/vulkan.h>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <vulkan/vulkan.h>
 
-    #include "trs/Vector.h"
-    #include "trs/Matrix.h"
-    #include "trs/Points.h"
-    #include "trs/Quaternion.h"
+#include "trs/Vector.h"
+#include "trs/Matrix.h"
+#include "trs/Points.h"
+#include "trs/Quaternion.h"
 
-    #include "deng/Api.h"
-    #include "deng/Exceptions.h"
-    #include "deng/ErrorDefinitions.h"
-    #include "deng/Missing.h"
-    #include "deng/RenderResources.h"
-    #include "deng/MissingTextureBuilder.h"
+#include "deng/Api.h"
+#include "deng/Exceptions.h"
+#include "deng/ErrorDefinitions.h"
+#include "deng/Missing.h"
+#include "deng/RenderResources.h"
+#include "deng/MissingTextureBuilder.h"
 
-    #include "cvar/CVarSystem.h"
+#include "cvar/CVarSystem.h"
 
-    #define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
+#define CALC_MIPLVL(_x, _y) (static_cast<uint32_t>(std::floor(std::log2(std::max(static_cast<double>(_x), static_cast<double>(_y))))))
 #endif
 
 #ifndef RESIZE_DEBOUNCE_TIMESTEP
@@ -53,145 +53,155 @@
 #include "deng/ResourceEvents.h"
 
 
-namespace DENG {
+namespace DENG
+{
 
-    class DENG_API VulkanRenderer : public IRenderer {
-        private:
-            const VkSampleCountFlagBits m_uSampleCountBits = VK_SAMPLE_COUNT_1_BIT;
+	class DENG_API VulkanRenderer : public IRenderer
+	{
+		private:
+			const VkSampleCountFlagBits m_uSampleCountBits = VK_SAMPLE_COUNT_1_BIT;
 
-            Vulkan::InstanceCreator* m_pInstanceCreator = nullptr;
-            std::unordered_map<cvar::hash_t, Vulkan::PipelineCreator, cvar::NoHash> m_pipelineCreators;
-            std::unordered_map<cvar::hash_t, Vulkan::TextureData, cvar::NoHash> m_textureHandles;
+			Vulkan::InstanceCreator* m_pInstanceCreator = nullptr;
+			std::unordered_map<cvar::hash_t, Vulkan::PipelineCreator, cvar::NoHash> m_pipelineCreators;
+			std::unordered_map<cvar::hash_t, Vulkan::TextureData, cvar::NoHash> m_textureHandles;
 
-            Vulkan::BufferData m_mainBuffer;
-            Vulkan::BufferData m_stagingBuffer;
+			Vulkan::BufferData m_mainBuffer;
+			Vulkan::BufferData m_stagingBuffer;
 
-            VkDescriptorPool m_hMainDescriptorPool = VK_NULL_HANDLE;
-            uint32_t m_uDescriptorPoolUsage = 0;
-            uint32_t m_uDescriptorPoolCapacity = 100 * MAX_FRAMES_IN_FLIGHT;   // arbitrary number rn
-            
-            std::unordered_map<cvar::hash_t, Vulkan::ShaderDescriptorData, cvar::NoHash> m_shaderDescriptors;
+			VkDescriptorPool m_hMainDescriptorPool = VK_NULL_HANDLE;
+			uint32_t m_uDescriptorPoolUsage = 0;
+			uint32_t m_uDescriptorPoolCapacity = 100 * MAX_FRAMES_IN_FLIGHT;   // arbitrary number rn
 
-            // [0] - blinn-phong material
-            // [1] - pbr material
-            std::array<VkDescriptorSetLayout, 2> m_materialDescriptorSetLayouts = {};
-            std::unordered_map<cvar::hash_t, std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT>, cvar::NoHash> m_materialDescriptors;
-            std::unordered_map<cvar::hash_t, bool, cvar::NoHash> m_shaderDescriptorUpdateTable;
+			std::unordered_map<cvar::hash_t, Vulkan::ShaderDescriptorData, cvar::NoHash> m_shaderDescriptors;
 
-            std::vector<VkDescriptorPool> m_fullDescriptorPools;
-            std::vector<Vulkan::BufferData> m_deletedBuffers;
+			// [0] - blinn-phong material
+			// [1] - pbr material
+			std::array<VkDescriptorSetLayout, 2> m_materialDescriptorSetLayouts = {};
+			std::unordered_map<cvar::hash_t, std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT>, cvar::NoHash> m_materialDescriptors;
+			std::unordered_map<cvar::hash_t, bool, cvar::NoHash> m_shaderDescriptorUpdateTable;
 
-            uint32_t m_uResizedViewportWidth = 0;
-            uint32_t m_uResizedViewportHeight = 0;
-            bool m_bResizeModeTriggered = false;
+			std::vector<VkDescriptorPool> m_fullDescriptorPools;
+			std::vector<Vulkan::BufferData> m_deletedBuffers;
 
-            std::chrono::time_point<std::chrono::high_resolution_clock> m_resizeBeginTimestamp =
-                std::chrono::high_resolution_clock::now();
-            std::chrono::time_point<std::chrono::high_resolution_clock> m_resizeEndTimestamp =
-                std::chrono::high_resolution_clock::now();
+			uint32_t m_uResizedViewportWidth = 0;
+			uint32_t m_uResizedViewportHeight = 0;
+			bool m_bResizeModeTriggered = false;
 
-        private:
-            void _CreateApiImageHandles(cvar::hash_t _id);
-            void _CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset);
-            void _CreateMaterialDescriptorSetLayout(size_t _uCount);
-            void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, cvar::hash_t _hshShader);
-            void _AllocateShaderDescriptors(cvar::hash_t _hshShader);
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_resizeBeginTimestamp =
+				std::chrono::high_resolution_clock::now();
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_resizeEndTimestamp =
+				std::chrono::high_resolution_clock::now();
 
-            template<typename T>
-            void _AllocateMaterialDescriptors(cvar::hash_t _hshMaterial, const Material<T>& _material) {
-                m_materialDescriptors.emplace(
-                    std::piecewise_construct,
-                    std::forward_as_tuple(_hshMaterial),
-                    std::forward_as_tuple());
+		private:
+			void _CreateApiImageHandles(cvar::hash_t _id);
+			void _CheckAndReallocateBufferResources(size_t _uSize, size_t _uOffset);
+			void _CreateMaterialDescriptorSetLayout(size_t _uCount);
+			void _CreateShaderDescriptorSetLayout(VkDescriptorSetLayout* _pDescriptorSetLayout, cvar::hash_t _hshShader);
+			void _AllocateShaderDescriptors(cvar::hash_t _hshShader);
 
-                auto& descriptorSets = m_materialDescriptors[_hshMaterial];
-                
-                if constexpr (std::is_same<T, MaterialPBR>::value) {
-                    if (m_materialDescriptorSetLayouts[1] == VK_NULL_HANDLE)
-                        _CreateMaterialDescriptorSetLayout(T::s_uTextureCount);
-                }
-                else {
-                    if (m_materialDescriptorSetLayouts[0] == VK_NULL_HANDLE)
-                        _CreateMaterialDescriptorSetLayout(T::s_uTextureCount);
-                }
+			template<typename T>
+			void _AllocateMaterialDescriptors(cvar::hash_t _hshMaterial, const Material<T>& _material)
+			{
+				m_materialDescriptors.emplace(
+					std::piecewise_construct,
+					std::forward_as_tuple(_hshMaterial),
+					std::forward_as_tuple());
 
-                // create api texture handles if necessary
-                for (auto it = _material.textures.begin(); it != _material.textures.end(); it++) {
-                    if (m_textureHandles.find(*it) == m_textureHandles.end())
-                        _CreateApiImageHandles(*it);
-                }
+				auto& descriptorSets = m_materialDescriptors[_hshMaterial];
 
-                std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> descriptorSetLayouts = {};
-                for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                    if constexpr (std::is_same<T, MaterialPBR>::value)
-                        descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[1];
-                    else
-                        descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[0];
-                }
+				if constexpr (std::is_same<T, MaterialPBR>::value)
+				{
+					if (m_materialDescriptorSetLayouts[1] == VK_NULL_HANDLE)
+						_CreateMaterialDescriptorSetLayout(T::s_uTextureCount);
+				}
+				else
+				{
+					if (m_materialDescriptorSetLayouts[0] == VK_NULL_HANDLE)
+						_CreateMaterialDescriptorSetLayout(T::s_uTextureCount);
+				}
 
-                VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
-                descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                descriptorSetAllocateInfo.descriptorPool = m_hMainDescriptorPool;
-                descriptorSetAllocateInfo.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
-                descriptorSetAllocateInfo.pSetLayouts = descriptorSetLayouts.data();
+				// create api texture handles if necessary
+				for (auto it = _material.textures.begin(); it != _material.textures.end(); it++)
+				{
+					if (m_textureHandles.find(*it) == m_textureHandles.end())
+						_CreateApiImageHandles(*it);
+				}
 
-                if (vkAllocateDescriptorSets(m_pInstanceCreator->GetDevice(), &descriptorSetAllocateInfo, descriptorSets.data()))
-                    throw RendererException("vkAllocateDescriptorSets() failed to allocate material descriptor sets");
-            
-                std::array<VkDescriptorImageInfo, T::s_uTextureCount> descriptorImageInfos = {};
-                for (size_t i = 0; i < T::s_uTextureCount; i++) {
-                    Vulkan::TextureData& texture = m_textureHandles[_material.textures[i]];
+				std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> descriptorSetLayouts = {};
+				for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+				{
+					if constexpr (std::is_same<T, MaterialPBR>::value)
+						descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[1];
+					else
+						descriptorSetLayouts[i] = m_materialDescriptorSetLayouts[0];
+				}
 
-                    descriptorImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    descriptorImageInfos[i].imageView = texture.hImageView;
-                    descriptorImageInfos[i].sampler = texture.hSampler;
-                }
+				VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
+				descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				descriptorSetAllocateInfo.descriptorPool = m_hMainDescriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
+				descriptorSetAllocateInfo.pSetLayouts = descriptorSetLayouts.data();
 
-                std::array<VkWriteDescriptorSet, T::s_uTextureCount * MAX_FRAMES_IN_FLIGHT> writeDescriptors = {};
-                for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                    for (size_t j = 0; j < T::s_uTextureCount; j++) {
-                        writeDescriptors[i * T::s_uTextureCount + j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        writeDescriptors[i * T::s_uTextureCount + j].dstSet = descriptorSets[i];
-                        writeDescriptors[i * T::s_uTextureCount + j].dstBinding = static_cast<uint32_t>(j);
-                        writeDescriptors[i * T::s_uTextureCount + j].descriptorCount = 1;
-                        writeDescriptors[i * T::s_uTextureCount + j].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        writeDescriptors[i * T::s_uTextureCount + j].pImageInfo = &descriptorImageInfos[j];
-                    }
-                }
+				if (vkAllocateDescriptorSets(m_pInstanceCreator->GetDevice(), &descriptorSetAllocateInfo, descriptorSets.data()))
+					throw RendererException("vkAllocateDescriptorSets() failed to allocate material descriptor sets");
 
-                vkUpdateDescriptorSets(
-                    m_pInstanceCreator->GetDevice(),
-                    static_cast<uint32_t>(writeDescriptors.size()),
-                    writeDescriptors.data(),
-                    0, nullptr);
-            }
-            
-            void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const IGraphicsShader* _pShader);
-            void _AllocateDescriptorPool();
-            void _CheckAndAllocateDescriptorPool(size_t _uRequest);
+				std::array<VkDescriptorImageInfo, T::s_uTextureCount> descriptorImageInfos = {};
+				for (size_t i = 0; i < T::s_uTextureCount; i++)
+				{
+					Vulkan::TextureData& texture = m_textureHandles[_material.textures[i]];
 
-        public:
-            VulkanRenderer() = default;
-            VulkanRenderer(VulkanRenderer&&) noexcept = default;
-            ~VulkanRenderer();
+					descriptorImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					descriptorImageInfos[i].imageView = texture.hImageView;
+					descriptorImageInfos[i].sampler = texture.hSampler;
+				}
 
-            virtual void DeleteTextureHandles() override;
-            virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) override;
-            virtual void DestroyPipeline(cvar::hash_t _hshShader) override;
-            virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
-            virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
-            virtual IGPUManagedBuffer* CreateManagedBuffer() override;
-            virtual IGPUImage* CreateImage() override;
-            virtual bool SetupFrame() override;
-            virtual void DrawInstance(
-                cvar::hash_t _hshMesh,
-                cvar::hash_t _hshGraphicsShader,
-                cvar::hash_t _hshComputeShader,
-                IFramebuffer* _pFramebuffer,
-                uint32_t _uInstanceCount,
-                uint32_t _uFirstInstance,
-                cvar::hash_t _hshMaterialDescriptor = 0) override;
-    };
+				std::array<VkWriteDescriptorSet, T::s_uTextureCount* MAX_FRAMES_IN_FLIGHT> writeDescriptors = {};
+				for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+				{
+					for (size_t j = 0; j < T::s_uTextureCount; j++)
+					{
+						writeDescriptors[i * T::s_uTextureCount + j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						writeDescriptors[i * T::s_uTextureCount + j].dstSet = descriptorSets[i];
+						writeDescriptors[i * T::s_uTextureCount + j].dstBinding = static_cast<uint32_t>(j);
+						writeDescriptors[i * T::s_uTextureCount + j].descriptorCount = 1;
+						writeDescriptors[i * T::s_uTextureCount + j].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						writeDescriptors[i * T::s_uTextureCount + j].pImageInfo = &descriptorImageInfos[j];
+					}
+				}
+
+				vkUpdateDescriptorSets(
+					m_pInstanceCreator->GetDevice(),
+					static_cast<uint32_t>(writeDescriptors.size()),
+					writeDescriptors.data(),
+					0, nullptr);
+			}
+
+			void _UpdateShaderDescriptorSet(VkDescriptorSet _hDescriptorSet, const IGraphicsShader* _pShader);
+			void _AllocateDescriptorPool();
+			void _CheckAndAllocateDescriptorPool(size_t _uRequest);
+
+			public:
+			VulkanRenderer() = default;
+			VulkanRenderer(VulkanRenderer&&) noexcept = default;
+			~VulkanRenderer();
+
+			virtual void DeleteTextureHandles() override;
+			virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) override;
+			virtual void DestroyPipeline(cvar::hash_t _hshShader) override;
+			virtual IFramebuffer* CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) override;
+			virtual IFramebuffer* CreateContext(IWindowContext* _pWindow) override;
+			virtual IGPUManagedBuffer* CreateManagedBuffer() override;
+			virtual IGPUImage* CreateImage() override;
+			virtual bool SetupFrame() override;
+			virtual void DrawInstance(
+				cvar::hash_t _hshMesh,
+				cvar::hash_t _hshGraphicsShader,
+				cvar::hash_t _hshComputeShader,
+				IFramebuffer* _pFramebuffer,
+				uint32_t _uInstanceCount,
+				uint32_t _uFirstInstance,
+				cvar::hash_t _hshMaterialDescriptor = 0) override;
+	};
 }
 
 #endif
