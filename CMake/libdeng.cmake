@@ -33,12 +33,14 @@ set(DENG_RENDERER_BACKEND_HEADERS
 	Include/deng/GPUMemoryAllocator.h
 	Include/deng/IFramebuffer.h
 	Include/deng/IGraphicsMemory.h
+	Include/deng/IGraphicsPipeline.h
 	Include/deng/IRenderer.h
 )
 
 set(DENG_RENDERER_BACKEND_SOURCES
 	Sources/GPUMemoryAllocator.cpp
-	Sources/IGraphicsMemory.cpp)
+	Sources/IGraphicsMemory.cpp
+	Sources/IGraphicsPipeline.cpp)
 	
 set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 	Include/deng/VulkanFramebuffer.h
@@ -61,12 +63,9 @@ set(DENG_RENDERER_BACKEND_VULKAN_SOURCES
 	Sources/VulkanSwapchainCreator.cpp)
 
 set(DENG_SHADER_HEADERS
-	Include/deng/FileSystemGraphicsShader.h
-	Include/deng/IGraphicsShader.h
-	Include/deng/IShader.h)
+	Include/deng/IGraphicsShader.h)
 
-set(DENG_SHADER_SOURCES
-	Sources/FileSystemGraphicsShader.cpp)
+set(DENG_SHADER_SOURCES)
 
 set(DENG_SHADER_COMPILER_HEADERS
 	Include/deng/IGraphicsShaderCompiler.h)

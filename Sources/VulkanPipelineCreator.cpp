@@ -17,7 +17,7 @@ namespace DENG {
             VkDescriptorSetLayout _hShaderDescriptorSetLayout,
             VkDescriptorSetLayout _hMaterialDescriptorSetLayout,
             VkSampleCountFlagBits _uSampleBits, 
-            const Vulkan::PhysicalDeviceInformation& _information, 
+            const Vulkan::PhysicalDeviceInformation& _information,
             const IGraphicsShader* _pShader) :
             m_hDevice(_hDevice),
             m_hShaderDescriptorSetLayout(_hShaderDescriptorSetLayout),

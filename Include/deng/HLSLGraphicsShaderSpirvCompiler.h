@@ -9,9 +9,10 @@
 #include <directx-dxc/dxcapi.h>
 #include "deng/IGraphicsShaderCompiler.h"
 
-namespace DENG {
-
-	class DENG_API HLSLGraphicsShaderSpirvCompiler : public IGraphicsShaderCompiler {
+namespace DENG
+{
+	class DENG_API HLSLGraphicsShaderSpirvCompiler : public IGraphicsShaderCompiler
+	{
 		private:
 			CComPtr<IDxcLibrary> m_library;
 			CComPtr<IDxcCompiler3> m_compiler;

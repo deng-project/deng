@@ -16,6 +16,7 @@
 #include "deng/IFramebuffer.h"
 #include "deng/GPUMemoryAllocator.h"
 #include "deng/IGraphicsMemory.h"
+#include "deng/IGraphicsPipeline.h"
 #include "deng/Handle.h"
 
 #ifndef MAX_FRAMES_IN_FLIGHT
@@ -33,7 +34,6 @@
 
 namespace DENG
 {
-
 	enum class BufferDataType { Vertex, Index, Uniform };
 
 	class DENG_API IRenderer
@@ -51,25 +51,19 @@ namespace DENG
 			virtual ~IRenderer() {};
 
 			virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
-			virtual void DestroyPipeline(cvar::hash_t _hshShader) = 0;
-			virtual Handle<IFramebuffer> CreateFramebuffer(uint32_t _uWidth, uint32_t _uHeight) = 0;
-			virtual Handle<IFramebuffer> CreateContext(Handle<IWindowContext> _pWindow) = 0;
-			virtual Handle<IGPUManagedBuffer> CreateManagedBuffer() = 0;
-			virtual Handle<IGPUImage> CreateImage() = 0;
-			virtual Handle<IGraphicsPipeline> CreateGraphicsPipeline() = 0;
-			// virtual Handle<IComputePipeline> CreateComputePipeline() = 0;
+			virtual Handle<IFramebuffer> CreateFramebufferHandle (uint32_t _uWidth, uint32_t _uHeight) = 0;
+			virtual Handle<IFramebuffer> CreateContextHandle (Handle<IWindowContext> _pWindow) = 0;
+			virtual Handle<IGPUManagedBuffer> CreateManagedBufferHandle() = 0;
+			virtual Handle<IGPUImage> CreateImageHandle() = 0;
+			virtual Handle<IGraphicsPipeline> CreateGraphicsPipelineHandle(const char* _szVertexShaderFileName, const char* _szGeometryShaderFileName, const char* _szFragmentShaderFileName) = 0;
+			// virtual Handle<IComputePipeline> CreateComputePipelineHandle() = 0;
 			virtual bool SetupFrame() = 0;
-			virtual void DrawInstance(
+			virtual void DirectDraw(
+				const MeshPass& _meshPass,
 				Handle<IFramebuffer> _hFramebuffer,
-
-
-				cvar::hash_t _hshMesh,
-				cvar::hash_t _hshGraphicsShader,
-				cvar::hash_t _hshComputeShader,
-				Handle<IFramebuffer> _pFramebuffer,
-				uint32_t _uInstanceCount,
-				uint32_t _uFirstInstance = 0,
-				cvar::hash_t _hshMaterial = 0) = 0;
+				Handle<IGraphicsPipeline> _hPipeline,
+				Handle<IGPUManagedBuffer> _hVertexBuffer,
+				Handle<IGPUManagedBuffer> _hUniformBuffer) = 0;
 	};
 }
 

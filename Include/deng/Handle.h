@@ -65,12 +65,12 @@ namespace DENG
 
 			T& operator*()
 			{
-				return *m_pData;
+				return *m_pData->Get();
 			}
 
-			T& operator->()
+			T* operator->()
 			{
-				return m_pData;
+				return m_pData->Get();
 			}
 
 			Handle<T>& operator=(const Handle<T>& _handle)
@@ -89,5 +89,7 @@ namespace DENG
 
 				return *this;
 			}
+
+
 	};
 }
