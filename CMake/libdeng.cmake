@@ -107,6 +107,7 @@ set(DENG_CORE_HEADERS
 	Include/deng/AssetManager.h
 	Include/deng/App.h
 	Include/deng/ILayer.h
+	Include/deng/Mesh.h
 	Include/deng/RenderResources.h
 	Include/deng/ResourceBuilders.h)
 

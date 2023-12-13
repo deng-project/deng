@@ -18,6 +18,7 @@
 #include "deng/IGraphicsMemory.h"
 #include "deng/IGraphicsPipeline.h"
 #include "deng/Handle.h"
+#include "deng/Mesh.h"
 
 #ifndef MAX_FRAMES_IN_FLIGHT
 #define MAX_FRAMES_IN_FLIGHT 2
@@ -34,15 +35,11 @@
 
 namespace DENG
 {
-	enum class BufferDataType { Vertex, Index, Uniform };
-
 	class DENG_API IRenderer
 	{
 		protected:
 			IWindowContext* m_pWindowContext = nullptr;
-			GPUMemoryAllocator m_gpuMemoryAllocator;
-			std::vector<IFramebuffer*> m_framebuffers;
-
+			
 			Handle<IGPUImage> m_hMissingTexture2D;
 			Handle<IGPUImage> m_hMissingTexture3D;
 
@@ -59,7 +56,7 @@ namespace DENG
 			// virtual Handle<IComputePipeline> CreateComputePipelineHandle() = 0;
 			virtual bool SetupFrame() = 0;
 			virtual void DirectDraw(
-				const Mesh& _mesh,
+				const Batch& _mesh,
 				Handle<IFramebuffer> _hFramebuffer,
 				Handle<IGraphicsPipeline> _hPipeline,
 				Handle<IGPUManagedBuffer> _hVertexBuffer,
