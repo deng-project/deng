@@ -21,19 +21,13 @@ namespace DENG
 		protected:
 			const std::string_view m_svSourceType;
 			const std::string_view m_svByteCodeType;
-
-			const std::string_view m_svVertexShaderSourcePath = "Shaders/Source/Vertex";
-			const std::string_view m_svGeometryShaderSourcePath = "Shaders/Source/Geometry";
-			const std::string_view m_svFragmentShaderSourcePath = "Shaders/Source/Fragment";
-
-			const std::string_view m_svVertexShaderBinaryPath = "Shaders/Binary/Vertex";
-			const std::string_view m_svGeometryShaderBinaryPath = "Shaders/Binary/Geometry";
-			const std::string_view m_svFragmentShaderBinaryPath = "Shaders/Binary/Fragment";
+			const std::string_view m_svBinarySourceDirectory;
 
 		public:
-			IGraphicsShaderCompiler(const std::string_view& _svSourceType, const std::string_view& _svByteCodeType) :
+			IGraphicsShaderCompiler(const std::string_view& _svSourceType, const std::string_view& _svByteCodeType, const std::string_view& _svBinarySourceDirectory) :
 				m_svSourceType(_svSourceType),
-				m_svByteCodeType(_svByteCodeType)
+				m_svByteCodeType(_svByteCodeType),
+				m_svBinarySourceDirectory(_svBinarySourceDirectory)
 			{
 			}
 

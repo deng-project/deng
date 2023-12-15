@@ -8,6 +8,14 @@
 
 namespace DENG
 {
+	const char* IGraphicsPipeline::m_szVertexShaderSourcePath = "Shaders/Source/Vertex/%s.%s";
+	const char* IGraphicsPipeline::m_szGeometryShaderSourcePath = "Shaders/Source/Geometry/%s.%s";
+	const char* IGraphicsPipeline::m_szFragmentShaderSourcePath = "Shaders/Source/Fragment/%s.%s";
+
+	const char* IGraphicsPipeline::m_szVertexShaderBinaryPath = "Shaders/Binary/%s/Vertex/%s.%s";
+	const char* IGraphicsPipeline::m_szGeometryShaderBinaryPath = "Shaders/Binary/%s/Geometry/%s.%s";
+	const char* IGraphicsPipeline::m_szFragmentShaderBinaryPath = "Shader/Binary/%s/Fragment/%s.%s";
+
 	IGraphicsPipeline::IGraphicsPipeline(const char* _szVertexShaderName, const char* _szFragmentShaderName, const char* _szGeometryShaderName) :
 		m_sVertexShaderName(_szVertexShaderName),
 		m_sGeometryShaderName(_szGeometryShaderName),

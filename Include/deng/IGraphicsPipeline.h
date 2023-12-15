@@ -10,8 +10,15 @@
 #include <cvar/SID.h>
 #include "deng/Api.h"
 #include "deng/ErrorDefinitions.h"
+#include "deng/Exceptions.h"
+#include "deng/ProgramFilesManager.h"
+#include "deng/HLSLGraphicsShaderSpirvCompiler.h"
 
 #include <bitset>
+
+#ifdef GetBinaryType
+#undef GetBinaryType
+#endif
 
 namespace DENG
 {
@@ -60,13 +67,23 @@ namespace DENG
 
 	class DENG_API IGraphicsPipeline
 	{
-		protected:
+		private:
+			static const char* m_szVertexShaderSourcePath;
+			static const char* m_szGeometryShaderSourcePath;
+			static const char* m_szFragmentShaderSourcePath;
+
+			static const char* m_szVertexShaderBinaryPath;
+			static const char* m_szGeometryShaderBinaryPath;
+			static const char* m_szFragmentShaderBinaryPath;
+
+			ProgramFilesManager m_programFilesManager;
 			std::string m_sVertexShaderName;
 			std::string m_sGeometryShaderName;
 			std::string m_sFragmentShaderName;
 
 			/* Shader modules are identified with 64 bit crc hash */
 			uint64_t m_uCrcHash = 0;
+			uint64_t m_uXXHash64 = 0;
 
 			 /* Properties are described by certain bits starting from LSB:
 				  * 1 bit - enable push constants
@@ -80,9 +97,108 @@ namespace DENG
 			  */
 			uint64_t m_uProperties = 0;
 
+		private:
+			template <typename Compiler>
+			void _CompileVertexShader(Compiler compiler)
+			{
+				// full source path
+				std::string sSourcePath;
+				int iSize = std::snprintf(nullptr, 0, m_szVertexShaderSourcePath, m_sVertexShaderName.c_str(), compiler.GetSourceType().data());
+				sSourcePath.resize(static_cast<size_t>(iSize));
+				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szVertexShaderSourcePath, m_sVertexShaderName.c_str(), compiler.GetSourceType().data());
+
+				// throw an exception if source file does not exist
+				if (!m_programFilesManager.ExistsFile(sSourcePath))
+				{
+					throw IOException("Vertex shader source file '" + sSourcePath + "' does not exist");
+				}
+
+				// full binary path
+				std::string sBinaryPath;
+				iSize = std::snprintf(nullptr, 0, m_szVertexShaderBinaryPath, m_sVertexShaderName.c_str(), compiler.GetByteCodeType().data());
+				sBinaryPath.resize(static_cast<size_t>(iSize));
+				std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szVertexShaderBinaryPath, m_sVertexShaderName.c_str(), compiler.GetByteCodeType().data());
+
+				// check if the binary file should be compiled
+				if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
+				{
+					auto bin = std::move(compiler.CompileVertexShaderFile(sSourcePath));
+					m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
+				}
+			}
+
+			template <typename Compiler>
+			void _CompileGeometryShader(Compiler compiler)
+			{
+				// full source path
+				std::string sSourcePath;
+				int iSize = std::snprintf(nullptr, 0, m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), compiler.GetSourceType().data());
+				sSourcePath.resize(static_cast<size_t>(iSize));
+				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szGeometryShaderSourcePath, m_sGeometryShaderName.c_str(), compiler.GetSourceType().data());
+				
+				// if source exists then continue
+				if (!m_programFilesManager.ExistsFile(sSourcePath))
+				{
+					// full binary path
+					std::string sBinaryPath;
+					iSize = std::snprintf(nullptr, 0, m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), compiler.GetByteCodeType().data());
+					sBinaryPath.resize(static_cast<size_t>(iSize));
+					std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), compiler.GetByteCodeType().data());
+
+					// check if the binary file should be compiled
+					if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
+					{
+						auto bin = std::move(compiler.CompileGeometryShaderFile(sSourcePath));
+						m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
+					}
+				}
+			}
+
+			template <typename Compiler>
+			void _CompileFragmentShader(Compiler compiler)
+			{
+				// full source path
+				std::string sSourcePath;
+				int iSize = std::snprintf(nullptr, 0, m_szFragmentShaderSourcePath, m_sFragmentShaderName.c_str(), compiler.GetSourceType().data());
+				sSourcePath.resize(static_cast<size_t>(iSize));
+				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szFragmentShaderSourcePath, m_sFragmentShaderName.c_str(), compiler.GetSourceType().data());
+
+				// throw an exception if source file does not exist
+				if (!m_programFilesManager.ExistsFile(sSourcePath))
+				{
+					throw IOException("Fragment shader source file '" + sSourcePath + "' does not exist");
+				}
+
+				// full binary path
+				std::string sBinaryPath;
+				iSize = std::snprintf(nullptr, 0, m_szFragmentShaderBinaryPath, m_sFragmentShaderName.c_str(), compiler.GetByteCodeType().data());
+				sBinaryPath.resize(static_cast<size_t>(iSize));
+				std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szFragmentShaderBinaryPath, m_sFragmentShaderName.c_str(), compiler.GetByteCodeType().data());
+
+				// check if the binary file should be compiled
+				if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
+				{
+					auto bin = std::move(compiler.CompileFragmentShaderFile(sSourcePath));
+					m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
+				}
+			}
+
 		public:
 			IGraphicsPipeline(const char* _szVertexShaderName, const char* _szFragmentShaderName, const char* _szGeometryShaderName = "");
 			void CalculatePipelineKeyHash();
+			virtual void TryCreatePipelineCache() = 0;
+
+			template<typename Compiler>
+			void Compile()
+			{
+				static_assert(std::is_base_of<IGraphicsShaderCompiler, Compiler>::value,
+							  "Compiler template must be derived from IGraphicsShaderCompiler");
+				
+				Compiler compiler;
+				_CompileVertexShader(compiler);
+				_CompileGeometryShader(compiler);
+				_CompileFragmentShader(compiler);
+			}
 
 			inline uint64_t GetPipelineCacheKey() 
 			{ 

@@ -63,7 +63,7 @@ set(DENG_RENDERER_BACKEND_VULKAN_SOURCES
 	Sources/VulkanSwapchainCreator.cpp)
 
 set(DENG_SHADER_HEADERS
-	Include/deng/IGraphicsShader.h)
+	Include/deng/IGraphicsShaderCompiler.h)
 
 set(DENG_SHADER_SOURCES)
 
@@ -89,7 +89,8 @@ set(DENG_UTIL_HEADERS
 	Include/deng/MissingTextureBuilder.h
 	Include/deng/ProgramFilesManager.h
 	Include/deng/SkyboxBuilders.h
-	Include/deng/Strings.h)
+	Include/deng/Strings.h
+	Include/deng/xxhash64.h)
 
 set(DENG_UTIL_SOURCES
 	Sources/CameraTransformer.cpp
@@ -108,7 +109,6 @@ set(DENG_CORE_HEADERS
 	Include/deng/App.h
 	Include/deng/ILayer.h
 	Include/deng/Mesh.h
-	Include/deng/RenderResources.h
 	Include/deng/ResourceBuilders.h)
 
 set(DENG_CORE_SOURCES

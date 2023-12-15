@@ -15,7 +15,7 @@ namespace DENG
 	static ProgramFilesManager g_programFilesManager;
 
 	HLSLGraphicsShaderSpirvCompiler::HLSLGraphicsShaderSpirvCompiler() :
-		IGraphicsShaderCompiler("hlsl", "spv")
+		IGraphicsShaderCompiler("hlsl", "spv", "Spirv")
 	{
 		HRESULT hres = 0;
 
@@ -101,7 +101,7 @@ namespace DENG
 			spirvBlob.push_back(uSymbol);
 		}
 
-		return std::move(spirvBlob);
+		return spirvBlob;
 	}
 
 	std::wstring HLSLGraphicsShaderSpirvCompiler::_UTF8_Decode(const std::string& _str) const
@@ -117,6 +117,12 @@ namespace DENG
 	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileVertexShaderFile(const std::string& _sFileName) const
 	{
 		auto vertexSource = g_programFilesManager.GetProgramFileContent(_sFileName);
+		
+		if (vertexSource.empty())
+		{
+			throw IOException("Could not find vertex shader source for module " + _sFileName);
+		}
+
 		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
 		return _Compile(vertexSource.data(), vertexSource.size(), L"vs_6_1", wsFileName.c_str());
 	}
@@ -124,6 +130,12 @@ namespace DENG
 	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileGeometryShaderFile(const std::string& _sFileName) const
 	{
 		auto geomSource = g_programFilesManager.GetProgramFileContent(_sFileName);
+
+		if (geomSource.empty())
+		{
+			throw IOException("Could not find geometry shader source for module " + _sFileName);
+		}
+
 		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
 		return _Compile(geomSource.data(), geomSource.size(), L"gs_6_1", wsFileName.c_str());
 	}
@@ -131,6 +143,12 @@ namespace DENG
 	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileFragmentShaderFile(const std::string& _sFileName) const
 	{
 		auto fragSource = g_programFilesManager.GetProgramFileContent(_sFileName);
+
+		if (fragSource.empty())
+		{
+			throw IOException("Could not find fragment shader source for module " + _sFileName);
+		}
+
 		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
 		return _Compile(fragSource.data(), fragSource.size(), L"ps_6_1", wsFileName.c_str());
 	}
