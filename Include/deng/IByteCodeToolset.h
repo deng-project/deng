@@ -7,6 +7,7 @@
 
 #include "deng/Api.h"
 #include <vector>
+#include <unordered_map>
 
 namespace DENG
 {
@@ -32,9 +33,49 @@ namespace DENG
 
 	struct BoundResource
 	{
-		uint32_t uBinding;
-		BoundResourceType type;
-		ShaderStageBits uShaderStage;
+		BoundResourceType type = BoundResourceType::None;
+		ShaderStageBits uShaderStage = 0;
+	};
+
+	enum class ShaderInputFormat
+	{
+		UNDEFINED = 0,
+		R16_UINT = 74, // = VK_FORMAT_R16_UINT
+		R16_SINT = 75, // = VK_FORMAT_R16_SINT
+		R16_SFLOAT = 76, // = VK_FORMAT_R16_SFLOAT
+		R16G16_UINT = 81, // = VK_FORMAT_R16G16_UINT
+		R16G16_SINT = 82, // = VK_FORMAT_R16G16_SINT
+		R16G16_SFLOAT = 83, // = VK_FORMAT_R16G16_SFLOAT
+		R16G16B16_UINT = 88, // = VK_FORMAT_R16G16B16_UINT
+		R16G16B16_SINT = 89, // = VK_FORMAT_R16G16B16_SINT
+		R16G16B16_SFLOAT = 90, // = VK_FORMAT_R16G16B16_SFLOAT
+		R16G16B16A16_UINT = 95, // = VK_FORMAT_R16G16B16A16_UINT
+		R16G16B16A16_SINT = 96, // = VK_FORMAT_R16G16B16A16_SINT
+		R16G16B16A16_SFLOAT = 97, // = VK_FORMAT_R16G16B16A16_SFLOAT
+		R32_UINT = 98, // = VK_FORMAT_R32_UINT
+		R32_SINT = 99, // = VK_FORMAT_R32_SINT
+		R32_SFLOAT = 100, // = VK_FORMAT_R32_SFLOAT
+		R32G32_UINT = 101, // = VK_FORMAT_R32G32_UINT
+		R32G32_SINT = 102, // = VK_FORMAT_R32G32_SINT
+		R32G32_SFLOAT = 103, // = VK_FORMAT_R32G32_SFLOAT
+		R32G32B32_UINT = 104, // = VK_FORMAT_R32G32B32_UINT
+		R32G32B32_SINT = 105, // = VK_FORMAT_R32G32B32_SINT
+		R32G32B32_SFLOAT = 106, // = VK_FORMAT_R32G32B32_SFLOAT
+		R32G32B32A32_UINT = 107, // = VK_FORMAT_R32G32B32A32_UINT
+		R32G32B32A32_SINT = 108, // = VK_FORMAT_R32G32B32A32_SINT
+		R32G32B32A32_SFLOAT = 109, // = VK_FORMAT_R32G32B32A32_SFLOAT
+		R64_UINT = 110, // = VK_FORMAT_R64_UINT
+		R64_SINT = 111, // = VK_FORMAT_R64_SINT
+		R64_SFLOAT = 112, // = VK_FORMAT_R64_SFLOAT
+		R64G64_UINT = 113, // = VK_FORMAT_R64G64_UINT
+		R64G64_SINT = 114, // = VK_FORMAT_R64G64_SINT
+		R64G64_SFLOAT = 115, // = VK_FORMAT_R64G64_SFLOAT
+		R64G64B64_UINT = 116, // = VK_FORMAT_R64G64B64_UINT
+		R64G64B64_SINT = 117, // = VK_FORMAT_R64G64B64_SINT
+		R64G64B64_SFLOAT = 118, // = VK_FORMAT_R64G64B64_SFLOAT
+		R64G64B64A64_UINT = 119, // = VK_FORMAT_R64G64B64A64_UINT
+		R64G64B64A64_SINT = 120, // = VK_FORMAT_R64G64B64A64_SINT
+		R64G64B64A64_SFLOAT = 121, // = VK_FORMAT_R64G64B64A64_SFLOAT
 	};
 
 	class DENG_API IByteCodeToolset
@@ -43,8 +84,9 @@ namespace DENG
 			const std::vector<uint32_t>& m_vertexShaderBytes;
 			const std::vector<uint32_t>& m_geometryShaderBytes;
 			const std::vector<uint32_t>& m_fragmentShaderBytes;
-
+			std::vector<ShaderInputFormat> m_inputFormats;
 			std::vector<BoundResource> m_boundResources;
+			
 			bool m_bHasPushConstants = false;
 			uint32_t m_uPushConstantLength = 0;
 			ShaderStageBits m_uPushConstantStageBits = 0;

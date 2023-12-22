@@ -21,7 +21,8 @@ VCPKG_PACKAGES = [
     f"sdl2[vulkan]:x64-{PLATFORM}",
     f"bullet3:x64-{PLATFORM}",
     f"glm:x64-{PLATFORM}",
-    f"spirv-tools:x64-{PLATFORM}"
+    f"spirv-reflect:x64-{PLATFORM}",
+    f"gtest:x64-{PLATFORM}"
 ]
 
 def check_and_install_vcpkg():

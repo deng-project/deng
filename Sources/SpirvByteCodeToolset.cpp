@@ -3,12 +3,13 @@
 // file: SpirvByteCodeToolset.h - ByteCodeToolset implementation class for Spirv bytecode format implementation
 // author: Karl-Mihkel Ott
 
+#include <vector>
 #include <ostream>
 #include <sstream>
 #include "deng/ErrorDefinitions.h"
 #include "deng/Exceptions.h"
-#include <spirv/unified1/spirv.hpp>
 #include "deng/SpirvByteCodeToolset.h"
+#include "deng/spirv_reflect.h"
 
 #define SPV_MAGIC 0x07230203
 #define SPV_ENDIANNESS_CONFLICT_MAGIC 0x03022307
@@ -22,41 +23,42 @@ namespace DENG
 	SpirvByteCodeToolset::SpirvByteCodeToolset(const std::vector<uint32_t>& _vertexBytes, const std::vector<uint32_t>& _geometryBytes, const std::vector<uint32_t>& _fragmentBytes) :
 		IByteCodeToolset(_vertexBytes, _geometryBytes, _fragmentBytes)
 	{
-		// check vertex shader inputs
-		bool _bEndiannessMatch = _VerifyHeader(_vertexBytes);
-
-		for (size_t i = SPV_FIRST_WORD_INDEX; i < _vertexBytes.size(); i++)
+		SpvReflectShaderModule module = {};
+		SpvReflectResult result = spvReflectCreateShaderModule(_vertexBytes.size() * sizeof(uint32_t), _vertexBytes.data(), &module);
+		if (result != SPV_REFLECT_RESULT_SUCCESS)
 		{
-			// TODO: perform input location extraction
-		}
-	}
-
-	bool SpirvByteCodeToolset::_VerifyHeader(const std::vector<uint32_t>& _bytes)
-	{
-		uint32_t uMagic = FixWordEndianness(_bytes[0]);
-
-		// check if the magic number is correct
-		bool bConflictingEndianness = uMagic == SPV_ENDIANNESS_CONFLICT_MAGIC;
-
-		if (uMagic != SPV_MAGIC && uMagic != SPV_ENDIANNESS_CONFLICT_MAGIC)
-		{
-			throw ShaderException("Invalid SPIR-V bytecode - wrong magic number");
+			throw ShaderException("Failed to create spvReflectShaderModule object");
 		}
 
-		uint32_t uVersion = FixWordEndianness(_bytes[1]);
-
-		if (uVersion > SPV_VERSION(1, 3))
+		// enumerate and extract shader's input variables
+		uint32_t uVariableCount = 0;
+		result = spvReflectEnumerateInputVariables(&module, &uVariableCount, nullptr);
+		if (result != SPV_REFLECT_RESULT_SUCCESS)
 		{
-			std::stringstream ss;
-			ss << "Unsupported SPIR-V version " << SPV_VERSION_MAJOR(uVersion) << '.' << SPV_VERSION_MINOR(uVersion);
+			throw ShaderException("Failed to enumerate SPIR-V input variables");
 		}
-		LOG("SPIR-V version: " << SPV_VERSION_MAJOR(uVersion) << '.' << SPV_VERSION_MINOR(uVersion));
+		std::vector<SpvReflectInterfaceVariable*> inputVariables(uVariableCount);
+		result = spvReflectEnumerateInputVariables(&module, &uVariableCount, inputVariables.data());
+		if (result != SPV_REFLECT_RESULT_SUCCESS)
+		{
+			throw ShaderException("Failed to enumerate SPIR-V input variables");
+		}
 
-#ifdef _DEBUG
-		uint32_t uGenerator = FixWordEndianness(_bytes[2]);
-		LOG("SPIR-V generator: " << uGenerator);
-		uint32_t uBound = FixWordEndianness(_bytes[3]);
-		LOG("SPIR-V bound: 0 < id < " << uBound);
-#endif
+		for (SpvReflectInterfaceVariable* pVar : inputVariables)
+		{
+			// check if the variable is input
+			if (pVar->storage_class == SpvStorageClassInput)
+			{
+				// check if the location is the size of m_inputFormats
+				if (pVar->location != m_inputFormats.size())
+				{
+					throw ShaderException("SPIR-V Reflect error: vertex shader input locations must be continuous");
+				}
+
+				m_inputFormats.push_back(static_cast<ShaderInputFormat>(pVar->format));
+			}
+		}
+
+		spvReflectDestroyShaderModule(&module);
 	}
 }

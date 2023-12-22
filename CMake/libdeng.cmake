@@ -78,11 +78,14 @@ set(DENG_SHADER_COMPILER_HLSL_SOURCES
 	Sources/HLSLGraphicsShaderSpirvCompiler.cpp)
 
 set(DENG_SHADER_TOOLING_HEADERS
-	Include/deng/IByteCodeToolset.h)
+	Include/deng/IByteCodeToolset.h
+	Include/deng/SpirvByteCodeToolset.h)
 
-set(DENG_SHADER_TOOLING_SOURCES)
+set(DENG_SHADER_TOOLING_SOURCES
+	Sources/SpirvByteCodeToolset.cpp)
 
 set(DENG_UTIL_HEADERS
+	Include/deng/spirv_reflect.h
 	Include/deng/CameraTransformer.h
 	Include/deng/ErrorDefinitions.h
 	Include/deng/Exceptions.h
@@ -99,6 +102,7 @@ set(DENG_UTIL_HEADERS
 	Include/deng/xxhash64.h)
 
 set(DENG_UTIL_SOURCES
+	Sources/spirv_reflect.c
 	Sources/CameraTransformer.cpp
 	Sources/ErrorDefinitions.cpp
 	Sources/FastTrigo.cpp
