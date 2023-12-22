@@ -44,6 +44,7 @@ set(DENG_RENDERER_BACKEND_SOURCES
 	
 set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 	Include/deng/VulkanFramebuffer.h
+	Include/deng/VulkanGraphicsPipeline.h
 	Include/deng/VulkanHelpers.h
 	Include/deng/VulkanImage.h
 	Include/deng/VulkanInstanceCreator.h
@@ -54,6 +55,7 @@ set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 
 set(DENG_RENDERER_BACKEND_VULKAN_SOURCES
 	Sources/VulkanFramebuffer.cpp
+	Sources/VulkanGraphicsPipeline.cpp
 	Sources/VulkanHelpers.cpp
 	Sources/VulkanImage.cpp
 	Sources/VulkanInstanceCreator.cpp
@@ -62,8 +64,7 @@ set(DENG_RENDERER_BACKEND_VULKAN_SOURCES
 	Sources/VulkanRenderer.cpp
 	Sources/VulkanSwapchainCreator.cpp)
 
-set(DENG_SHADER_HEADERS
-	Include/deng/IGraphicsShaderCompiler.h)
+set(DENG_SHADER_HEADERS)
 
 set(DENG_SHADER_SOURCES)
 
@@ -75,6 +76,11 @@ set(DENG_SHADER_COMPILER_HLSL_HEADERS
 
 set(DENG_SHADER_COMPILER_HLSL_SOURCES
 	Sources/HLSLGraphicsShaderSpirvCompiler.cpp)
+
+set(DENG_SHADER_TOOLING_HEADERS
+	Include/deng/IByteCodeToolset.h)
+
+set(DENG_SHADER_TOOLING_SOURCES)
 
 set(DENG_UTIL_HEADERS
 	Include/deng/CameraTransformer.h
@@ -155,6 +161,9 @@ set(DENG_MINIMAL_SOURCES
 	# Shader
 	${DENG_SHADER_HEADERS}
 	${DENG_SHADER_SOURCES}
+	# Shader/Tooling
+	${DENG_SHADER_TOOLING_HEADERS}
+	${DENG_SHADER_TOOLING_SOURCES}
 	# Shader/Compiler
 	${DENG_SHADER_COMPILER_HEADERS}
 	# Shader/Compiler/HLSL
@@ -211,6 +220,12 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(directx-dxc CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
+# SPIRV-Tools dependency hell
+find_package(SPIRV-Tools CONFIG REQUIRED)
+find_package(SPIRV-Tools-link CONFIG REQUIRED)
+find_package(SPIRV-Tools-lint CONFIG REQUIRED)
+find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+
 # Include directories
 target_include_directories(${DENG_MINIMAL_TARGET}
 	PUBLIC ${VULKAN_SDK_PATH}/Include
@@ -239,6 +254,10 @@ target_link_libraries(${DENG_MINIMAL_TARGET}
 	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
 	$<IF:$<TARGET_EXISTS:SDL2::SDL2-static>,SDL2::SDL2-static,SDL2::SDL2>
 	PRIVATE vulkan-1
+	PRIVATE SPIRV-Tools-static
+	PRIVATE SPIRV-Tools-link
+	PRIVATE SPIRV-Tools-lint
+	PRIVATE SPIRV-Tools-opt
 	PRIVATE glm::glm)
 			
 
@@ -257,6 +276,10 @@ source_group(RendererBackend/Vulkan FILES
 source_group(Shader FILES
 	${DENG_SHADER_HEADERS}
 	${DENG_SHADER_SOURCES})
+
+source_group(Shader/Tooling FILES
+	${DENG_SHADER_TOOLING_HEADERS}
+	${DENG_SHADER_TOOLING_SOURCES})
 
 source_group(Shader/Compiler FILES
 	${DENG_SHADER_COMPILER_HEADERS})

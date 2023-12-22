@@ -16,11 +16,24 @@ namespace DENG
 	const char* IGraphicsPipeline::m_szGeometryShaderBinaryPath = "Shaders/Binary/%s/Geometry/%s.%s";
 	const char* IGraphicsPipeline::m_szFragmentShaderBinaryPath = "Shader/Binary/%s/Fragment/%s.%s";
 
+	const char* IGraphicsPipeline::m_szPipelineCachePath = "Shader/PipelineCache/%s/%s.CACHE";
+
 	IGraphicsPipeline::IGraphicsPipeline(const char* _szVertexShaderName, const char* _szFragmentShaderName, const char* _szGeometryShaderName) :
 		m_sVertexShaderName(_szVertexShaderName),
 		m_sGeometryShaderName(_szGeometryShaderName),
 		m_sFragmentShaderName(_szFragmentShaderName)
 	{
+	}
+
+
+	const char* IGraphicsPipeline::_CreateUUID()
+	{
+		static char szUUID[38] = {};
+		std::snprintf(szUUID, 38, "%08llX-%04llX-%04llX-%04llX-%12llX",
+					  m_uCrcHash >> 32, (m_uCrcHash >> 16) & 0xffff, m_uCrcHash & 0xffff,
+					  m_uXXHash64 >> 48, m_uXXHash64 & 0xffffffffffff);
+
+		return szUUID;
 	}
 
 

@@ -13,35 +13,18 @@
 #include <cstring>
 #include <iterator>
 
+#define DECLARE_GRAPHICS_SHADER_COMPILER(sourceExt, byteCodeExt, byteCodeDir) \
+		static constexpr const char* GetSourceCodeExt() { return sourceExt; } \
+		static constexpr const char* GetByteCodeExt() { return byteCodeExt; } \
+		static constexpr const char* GetByteCodeDirectoryName() { return byteCodeDir;  }
+
 namespace DENG
 {
 
 	class DENG_API IGraphicsShaderCompiler
 	{
-		protected:
-			const std::string_view m_svSourceType;
-			const std::string_view m_svByteCodeType;
-			const std::string_view m_svBinarySourceDirectory;
-
 		public:
-			IGraphicsShaderCompiler(const std::string_view& _svSourceType, const std::string_view& _svByteCodeType, const std::string_view& _svBinarySourceDirectory) :
-				m_svSourceType(_svSourceType),
-				m_svByteCodeType(_svByteCodeType),
-				m_svBinarySourceDirectory(_svBinarySourceDirectory)
-			{
-			}
-
-			// Return the shader source type
-			// for instance HLSL shaders would be "hlsl" and GLSL shaders would be "glsl"
-			inline const std::string_view& GetSourceType()
-			{
-				return m_svSourceType;
-			}
-
-			inline const std::string_view& GetByteCodeType()
-			{
-				return m_svByteCodeType;
-			}
+			IGraphicsShaderCompiler() = default;
 
 			// Shader file compilation methods
 			virtual std::vector<uint32_t> CompileVertexShaderFile(const std::string& _sFileName) const = 0;

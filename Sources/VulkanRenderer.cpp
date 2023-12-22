@@ -353,22 +353,22 @@ namespace DENG
 			bindings.emplace_back();
 			switch (_uniformDataLayout.eType)
 			{
-			case UniformDataType::Buffer:
-				bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				break;
+				case UniformDataType::Buffer:
+					bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					break;
 
-			case UniformDataType::StorageBuffer:
-				bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-				break;
+				case UniformDataType::StorageBuffer:
+					bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					break;
 
-			case UniformDataType::ImageSampler2D:
-			case UniformDataType::ImageSampler3D:
-				bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				break;
+				case UniformDataType::ImageSampler2D:
+				case UniformDataType::ImageSampler3D:
+					bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					break;
 
-			default:
-				DENG_ASSERT(false);
-				break;
+				default:
+					DENG_ASSERT(false);
+					break;
 			}
 			bindings.back().binding = _uniformDataLayout.block.uBinding;
 			bindings.back().descriptorCount = 1;

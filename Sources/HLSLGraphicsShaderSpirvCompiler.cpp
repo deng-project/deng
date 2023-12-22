@@ -14,8 +14,7 @@ namespace DENG
 {
 	static ProgramFilesManager g_programFilesManager;
 
-	HLSLGraphicsShaderSpirvCompiler::HLSLGraphicsShaderSpirvCompiler() :
-		IGraphicsShaderCompiler("hlsl", "spv", "Spirv")
+	HLSLGraphicsShaderSpirvCompiler::HLSLGraphicsShaderSpirvCompiler()
 	{
 		HRESULT hres = 0;
 

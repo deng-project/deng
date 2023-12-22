@@ -24,6 +24,7 @@ namespace DENG
 
 		public:
 			HLSLGraphicsShaderSpirvCompiler();
+			DECLARE_GRAPHICS_SHADER_COMPILER("hlsl", "spv", "Spirv");
 
 			virtual std::vector<uint32_t> CompileVertexShaderFile(const std::string& _sFileName) const override;
 			virtual std::vector<uint32_t> CompileGeometryShaderFile(const std::string& _sFileName) const override;

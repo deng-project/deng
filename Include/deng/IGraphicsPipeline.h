@@ -6,13 +6,13 @@
 #pragma once
 
 #include <mutex>
+#include <array>
 #include <vector>
 #include <cvar/SID.h>
 #include "deng/Api.h"
 #include "deng/ErrorDefinitions.h"
 #include "deng/Exceptions.h"
 #include "deng/ProgramFilesManager.h"
-#include "deng/HLSLGraphicsShaderSpirvCompiler.h"
 
 #include <bitset>
 
@@ -38,12 +38,11 @@ namespace DENG
 	
 	enum GraphicsShaderFlags_T : uint64_t
 	{
-		GraphicsShaderFlag_EnablePushConstants			=	(1 << 0),
-		GraphicsShaderFlag_EnableCustomViewport			=	(1 << 1),
-		GraphicsShaderFlag_EnableDepthTesting			=	(1 << 2),
-		GraphicsShaderFlag_EnableStencilTesting			=	(1 << 3),
-		GraphicsShaderFlag_EnableBlend					=   (1 << 4),
-		GraphicsShaderFlag_UseSeparateAttributeStriding =	(1 << 5)
+		GraphicsShaderFlag_EnableCustomViewport			=	(1 << 0),
+		GraphicsShaderFlag_EnableDepthTesting			=	(1 << 1),
+		GraphicsShaderFlag_EnableStencilTesting			=	(1 << 2),
+		GraphicsShaderFlag_EnableBlend					=   (1 << 3),
+		GraphicsShaderFlag_UseSeparateAttributeStriding =	(1 << 4)
 	};
 
 	typedef uint64_t GraphicsShaderFlags;
@@ -67,7 +66,7 @@ namespace DENG
 
 	class DENG_API IGraphicsPipeline
 	{
-		private:
+		protected:
 			static const char* m_szVertexShaderSourcePath;
 			static const char* m_szGeometryShaderSourcePath;
 			static const char* m_szFragmentShaderSourcePath;
@@ -75,6 +74,8 @@ namespace DENG
 			static const char* m_szVertexShaderBinaryPath;
 			static const char* m_szGeometryShaderBinaryPath;
 			static const char* m_szFragmentShaderBinaryPath;
+
+			static const char* m_szPipelineCachePath;
 
 			ProgramFilesManager m_programFilesManager;
 			std::string m_sVertexShaderName;
@@ -86,7 +87,6 @@ namespace DENG
 			uint64_t m_uXXHash64 = 0;
 
 			 /* Properties are described by certain bits starting from LSB:
-				  * 1 bit - enable push constants
 				  * 1 bit - enable custom viewport
 				  * 1 bit - enable depth testing
 				  * 1 bit - enable stencil testing
@@ -97,15 +97,15 @@ namespace DENG
 			  */
 			uint64_t m_uProperties = 0;
 
-		private:
+		protected:
 			template <typename Compiler>
-			void _CompileVertexShader(Compiler compiler)
+			std::vector<uint32_t> _CompileVertexShader(Compiler compiler)
 			{
 				// full source path
 				std::string sSourcePath;
-				int iSize = std::snprintf(nullptr, 0, m_szVertexShaderSourcePath, m_sVertexShaderName.c_str(), compiler.GetSourceType().data());
+				int iSize = std::snprintf(nullptr, 0, m_szVertexShaderSourcePath, m_sVertexShaderName.c_str(), Compiler::GetSourceCodeExt());
 				sSourcePath.resize(static_cast<size_t>(iSize));
-				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szVertexShaderSourcePath, m_sVertexShaderName.c_str(), compiler.GetSourceType().data());
+				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szVertexShaderSourcePath, m_sVertexShaderName.c_str(), Compiler::GetSourceCodeExt());
 
 				// throw an exception if source file does not exist
 				if (!m_programFilesManager.ExistsFile(sSourcePath))
@@ -115,53 +115,59 @@ namespace DENG
 
 				// full binary path
 				std::string sBinaryPath;
-				iSize = std::snprintf(nullptr, 0, m_szVertexShaderBinaryPath, m_sVertexShaderName.c_str(), compiler.GetByteCodeType().data());
+				iSize = std::snprintf(nullptr, 0, m_szVertexShaderBinaryPath, Compiler::GetByteCodeDirectoryName(), m_sVertexShaderName.c_str(), Compiler::GetByteCodeExt());
 				sBinaryPath.resize(static_cast<size_t>(iSize));
-				std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szVertexShaderBinaryPath, m_sVertexShaderName.c_str(), compiler.GetByteCodeType().data());
+				std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szVertexShaderBinaryPath, Compiler::GetByteCodeDirectoryName(), m_sVertexShaderName.c_str(), Compiler::GetByteCodeExt());
 
 				// check if the binary file should be compiled
 				if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
 				{
 					auto bin = std::move(compiler.CompileVertexShaderFile(sSourcePath));
 					m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
+					return bin;
 				}
+
+				return std::vector<uint32_t>();
 			}
 
 			template <typename Compiler>
-			void _CompileGeometryShader(Compiler compiler)
+			std::vector<uint32_t> _CompileGeometryShader(Compiler compiler)
 			{
 				// full source path
 				std::string sSourcePath;
-				int iSize = std::snprintf(nullptr, 0, m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), compiler.GetSourceType().data());
+				int iSize = std::snprintf(nullptr, 0, m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), Compiler::GetSourceCodeExt());
 				sSourcePath.resize(static_cast<size_t>(iSize));
-				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szGeometryShaderSourcePath, m_sGeometryShaderName.c_str(), compiler.GetSourceType().data());
+				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szGeometryShaderSourcePath, m_sGeometryShaderName.c_str(), Compiler::GetSourceCodeExt());
 				
 				// if source exists then continue
 				if (!m_programFilesManager.ExistsFile(sSourcePath))
 				{
 					// full binary path
 					std::string sBinaryPath;
-					iSize = std::snprintf(nullptr, 0, m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), compiler.GetByteCodeType().data());
+					iSize = std::snprintf(nullptr, 0, m_szGeometryShaderBinaryPath, Compiler::GetByteCodeDirectoryName(), m_sGeometryShaderName.c_str(), Compiler::GetByteCodeExt());
 					sBinaryPath.resize(static_cast<size_t>(iSize));
-					std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szGeometryShaderBinaryPath, m_sGeometryShaderName.c_str(), compiler.GetByteCodeType().data());
+					std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szGeometryShaderBinaryPath, Compiler::GetByteCodeDirectoryName(), m_sGeometryShaderName.c_str(), Compiler::GetByteCodeExt());
 
 					// check if the binary file should be compiled
 					if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
 					{
 						auto bin = std::move(compiler.CompileGeometryShaderFile(sSourcePath));
 						m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
+						return bin;
 					}
 				}
+
+				return std::vector<uint32_t>();
 			}
 
 			template <typename Compiler>
-			void _CompileFragmentShader(Compiler compiler)
+			std::vector<uint32_t> _CompileFragmentShader(Compiler compiler)
 			{
 				// full source path
 				std::string sSourcePath;
-				int iSize = std::snprintf(nullptr, 0, m_szFragmentShaderSourcePath, m_sFragmentShaderName.c_str(), compiler.GetSourceType().data());
+				int iSize = std::snprintf(nullptr, 0, m_szFragmentShaderSourcePath, m_sFragmentShaderName.c_str(), Compiler::GetSourceCodeExt());
 				sSourcePath.resize(static_cast<size_t>(iSize));
-				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szFragmentShaderSourcePath, m_sFragmentShaderName.c_str(), compiler.GetSourceType().data());
+				std::snprintf(sSourcePath.data(), sSourcePath.size(), m_szFragmentShaderSourcePath, m_sFragmentShaderName.c_str(), Compiler::GetSourceCodeExt());
 
 				// throw an exception if source file does not exist
 				if (!m_programFilesManager.ExistsFile(sSourcePath))
@@ -171,34 +177,41 @@ namespace DENG
 
 				// full binary path
 				std::string sBinaryPath;
-				iSize = std::snprintf(nullptr, 0, m_szFragmentShaderBinaryPath, m_sFragmentShaderName.c_str(), compiler.GetByteCodeType().data());
+				iSize = std::snprintf(nullptr, 0, m_szFragmentShaderBinaryPath, Compiler::GetByteCodeDirectoryName(), m_sFragmentShaderName.c_str(), Compiler::GetByteCodeExt());
 				sBinaryPath.resize(static_cast<size_t>(iSize));
-				std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szFragmentShaderBinaryPath, m_sFragmentShaderName.c_str(), compiler.GetByteCodeType().data());
+				std::snprintf(sBinaryPath.data(), sBinaryPath.size(), m_szFragmentShaderBinaryPath, Compiler::GetByteCodeDirectoryName(), m_sFragmentShaderName.c_str(), Compiler::GetByteCodeExt());
 
 				// check if the binary file should be compiled
 				if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
 				{
 					auto bin = std::move(compiler.CompileFragmentShaderFile(sSourcePath));
 					m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
+					return bin;
 				}
+
+				return std::vector<uint32_t>();
 			}
+
+			template<typename Compiler>
+			std::array<std::vector<uint32_t>, 3> _CompileByteCode()
+			{
+				static_assert(std::is_base_of<IGraphicsShaderCompiler, Compiler>::value,
+							  "Compiler template must be derived from IGraphicsShaderCompiler");
+
+				Compiler compiler;
+				return std::array<std::vector<uint32_t>, 3>{
+					std::move(_CompileVertexShader(compiler)),
+					std::move(_CompileGeometryShader(compiler)),
+					std::move(_CompileFragmentShader(compiler))
+				};
+			}
+
+			const char* _CreateUUID();
 
 		public:
 			IGraphicsPipeline(const char* _szVertexShaderName, const char* _szFragmentShaderName, const char* _szGeometryShaderName = "");
 			void CalculatePipelineKeyHash();
-			virtual void TryCreatePipelineCache() = 0;
-
-			template<typename Compiler>
-			void Compile()
-			{
-				static_assert(std::is_base_of<IGraphicsShaderCompiler, Compiler>::value,
-							  "Compiler template must be derived from IGraphicsShaderCompiler");
-				
-				Compiler compiler;
-				_CompileVertexShader(compiler);
-				_CompileGeometryShader(compiler);
-				_CompileFragmentShader(compiler);
-			}
+			virtual void CreatePipeline() = 0;
 
 			inline uint64_t GetPipelineCacheKey() 
 			{ 
@@ -241,7 +254,7 @@ namespace DENG
 			
 			inline GraphicsPipelineCullMode GetPipelineCullMode()
 			{
-				uint64_t uCullMode = (m_uCrcHash >> 6 & 0xff);
+				uint64_t uCullMode = (m_uCrcHash >> 5 & 0xff);
 				return static_cast<GraphicsPipelineCullMode>(uCullMode);
 			}
 
@@ -249,22 +262,22 @@ namespace DENG
 			inline void SetPipelineCullMode(GraphicsPipelineCullMode _pipelineCullMode)
 			{
 				// disable previous pipeline cull mode
-				m_uCrcHash &= ~(static_cast<uint64_t>(_pipelineCullMode) << 6);
-				m_uCrcHash |= (static_cast<uint64_t>(_pipelineCullMode) << 6);
+				m_uCrcHash &= ~(static_cast<uint64_t>(_pipelineCullMode) << 5);
+				m_uCrcHash |= (static_cast<uint64_t>(_pipelineCullMode) << 5);
 			}
 
 			
 			inline GraphicsPipelinePrimitiveMode GetPipelinePrimitiveMode()
 			{
-				uint64_t uPrimitiveMode = (m_uCrcHash >> 8 & 0xff);
+				uint64_t uPrimitiveMode = (m_uCrcHash >> 7 & 0xff);
 				return static_cast<GraphicsPipelinePrimitiveMode>(uPrimitiveMode);
 			}
 
 
 			inline void SetPipelinePrimitiveMode(GraphicsPipelinePrimitiveMode _pipelinePrimitiveMode)
 			{
-				m_uCrcHash &= ~(static_cast<uint64_t>(_pipelinePrimitiveMode) << 8);
-				m_uCrcHash |= (static_cast<uint64_t>(_pipelinePrimitiveMode) << 8);
+				m_uCrcHash &= ~(static_cast<uint64_t>(_pipelinePrimitiveMode) << 7);
+				m_uCrcHash |= (static_cast<uint64_t>(_pipelinePrimitiveMode) << 7);
 			}
 	};
 }
