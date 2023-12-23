@@ -1,6 +1,6 @@
 # DENG
 
-![logo](logo/logo_full.png)  
+![logo](Logo/logo_full.png)  
 DENG (deadly game engine) is an early-stage game engine for Windows. The primary goal of this project, is to create a 
 suitable environment for 3D game development with many features such as C# scripting, game editor, physics support, 
 audio support and networking.
