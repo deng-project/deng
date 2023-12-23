@@ -27,9 +27,9 @@ namespace DENG
 			IGraphicsShaderCompiler() = default;
 
 			// Shader file compilation methods
-			virtual std::vector<uint32_t> CompileVertexShaderFile(const std::string& _sFileName) const = 0;
-			virtual std::vector<uint32_t> CompileGeometryShaderFile(const std::string& _sFileName) const = 0;
-			virtual std::vector<uint32_t> CompileFragmentShaderFile(const std::string& _sFileName) const = 0;
+			virtual std::vector<uint32_t> CompileVertexShaderFile(const char* _szFileName) const = 0;
+			virtual std::vector<uint32_t> CompileGeometryShaderFile(const char* _szFileName) const = 0;
+			virtual std::vector<uint32_t> CompileFragmentShaderFile(const char* _szFileName) const = 0;
 
 			// Shader source compilation methods
 			// Using const char* as string type
@@ -52,22 +52,6 @@ namespace DENG
 			virtual std::vector<uint32_t> CompileGeometryShader(const char* _szSource, size_t _uLen) const = 0;
 			virtual std::vector<uint32_t> CompileFragmentShader(const char* _szSource, size_t _uLen) const = 0;
 
-			// Using std::string as string type
-			inline std::vector<uint32_t> CompileVertexShader(const std::string& _sSource) const
-			{
-				return CompileVertexShader(_sSource.c_str(), _sSource.size());
-			}
-
-			inline std::vector<uint32_t> CompileGeometryShader(const std::string& _sSource) const
-			{
-				return CompileGeometryShader(_sSource.c_str(), _sSource.size());
-			}
-
-			inline std::vector<uint32_t> CompileFragmentShader(const std::string& _sSource) const
-			{
-				return CompileFragmentShader(_sSource.c_str(), _sSource.size());
-			}
-
 			// Using string iterators
 			template<class InputIterator>
 			std::vector<uint32_t> CompileVertexShader(InputIterator _itBegin, InputIterator _itEnd) const
@@ -82,7 +66,7 @@ namespace DENG
 					std::string _sSource;
 					for (auto it = _itBegin; it != _itEnd; it++)
 						_sSource += *it;
-					return std::move(CompileVertexShader(_sSource));
+					return std::move(CompileVertexShader(_sSource.c_str()));
 				}
 			}
 	};

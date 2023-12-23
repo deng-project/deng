@@ -51,21 +51,21 @@ namespace DENG
 				{
 					switch (_iShaderStage)
 					{
-					case 1:
-						throw ShaderException("SPIR-V Reflect error: failed to enumerate input variables for vertex shader");
-						break;
+						case 1:
+							throw ShaderException("SPIR-V Reflect error: failed to enumerate input variables for vertex shader");
+							break;
 
-					case 2:
-						throw ShaderException("SPIR-V Reflect error: failed to enumerate input variables for geometry shader");
-						break;
+						case 2:
+							throw ShaderException("SPIR-V Reflect error: failed to enumerate input variables for geometry shader");
+							break;
 
-					case 3:
-						throw ShaderException("SPIR-V Reflect error: failed to enumerate input variables for fragment shader");
-						break;
+						case 3:
+							throw ShaderException("SPIR-V Reflect error: failed to enumerate input variables for fragment shader");
+							break;
 
-					default:
-						DENG_ASSERT(false);
-						break;
+						default:
+							DENG_ASSERT(false);
+							break;
 					}
 				}
 			}
@@ -76,21 +76,21 @@ namespace DENG
 				{
 					switch (_iShaderStage)
 					{
-					case 1:
-						throw ShaderException("SPIR-V Reflect error: failed to enumerate descriptor bindings for vertex shader");
-						break;
+						case 1:
+							throw ShaderException("SPIR-V Reflect error: failed to enumerate descriptor bindings for vertex shader");
+							break;
 
-					case 2:
-						throw ShaderException("SPIR-V Reflect error: failed to enumerate descriptor bindings for geometry shader");
-						break;
+						case 2:
+							throw ShaderException("SPIR-V Reflect error: failed to enumerate descriptor bindings for geometry shader");
+							break;
 
-					case 3:
-						throw ShaderException("SPIR-V Reflect error: failed to enumerate descriptor bindings for fragment shader");
-						break;
+						case 3:
+							throw ShaderException("SPIR-V Reflect error: failed to enumerate descriptor bindings for fragment shader");
+							break;
 
-					default:
-						DENG_ASSERT(false);
-						break;
+						default:
+							DENG_ASSERT(false);
+							break;
 					}
 				}
 			}

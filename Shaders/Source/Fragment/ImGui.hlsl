@@ -2,9 +2,11 @@
 #ifdef VULKAN
     #define VULKAN_LOCATION(x) [[vk::location(x)]]
     #define VULKAN_COMBINED_IMAGE_SAMPLER [[vk::combinedImageSampler]]
+    #define VULKAN_PUSH_CONSTANT [[vk::push_constant]]
 #else
     #define VULKAN_LOCATION(x)
     #define VULKAN_COMBINED_IMAGE_SAMPLER
+    #define VULKAN_PUSH_CONSTANT
 #endif
 
 struct VSInput

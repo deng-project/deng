@@ -122,9 +122,13 @@ namespace DENG
 				// check if the binary file should be compiled
 				if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
 				{
-					auto bin = std::move(compiler.CompileVertexShaderFile(sSourcePath));
+					auto bin = std::move(compiler.CompileVertexShaderFile(sSourcePath.c_str()));
 					m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
 					return bin;
+				}
+				else if (m_programFilesManager.ExistsFile(sBinaryPath))
+				{
+					return m_programFilesManager.GetProgramFileContentAs<uint32_t>(sBinaryPath);
 				}
 
 				return std::vector<uint32_t>();
@@ -151,9 +155,13 @@ namespace DENG
 					// check if the binary file should be compiled
 					if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
 					{
-						auto bin = std::move(compiler.CompileGeometryShaderFile(sSourcePath));
+						auto bin = std::move(compiler.CompileGeometryShaderFile(sSourcePath.c_str()));
 						m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
 						return bin;
+					}
+					else if (m_programFilesManager.ExistsFile(sBinaryPath))
+					{
+						return m_programFilesManager.GetProgramFileContentAs<uint32_t>(sBinaryPath);
 					}
 				}
 
@@ -184,9 +192,13 @@ namespace DENG
 				// check if the binary file should be compiled
 				if (!m_programFilesManager.ExistsFile(sBinaryPath) || m_programFilesManager.GetFileTimestamp(sSourcePath) > m_programFilesManager.GetFileTimestamp(sBinaryPath))
 				{
-					auto bin = std::move(compiler.CompileFragmentShaderFile(sSourcePath));
+					auto bin = std::move(compiler.CompileFragmentShaderFile(sSourcePath.c_str()));
 					m_programFilesManager.WriteProgramFile(reinterpret_cast<const char*>(bin.data()), bin.size() * sizeof(uint32_t), sBinaryPath);
 					return bin;
+				}
+				else if (m_programFilesManager.ExistsFile(sBinaryPath))
+				{
+					return m_programFilesManager.GetProgramFileContentAs<uint32_t>(sBinaryPath);
 				}
 
 				return std::vector<uint32_t>();

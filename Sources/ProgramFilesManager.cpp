@@ -67,7 +67,7 @@ namespace DENG {
 	}
 
 
-	vector<char>&& ProgramFilesManager::GetProgramFileContent(const string& _sPath) const {
+	vector<char> ProgramFilesManager::GetProgramFileContent(const string& _sPath) const {
 		vector<char> output;
 		const std::string sAbsolutePath = m_sParentDirectory + '\\' + _sPath;
 
@@ -83,7 +83,7 @@ namespace DENG {
 			stream.close();
 		}
 
-		return std::move(output);
+		return output;
 	}
 
 

@@ -15,7 +15,9 @@ namespace DENG
 		class DENG_API GraphicsPipeline : public IGraphicsPipeline
 		{
 			private:
-				VkDevice m_hDevice;
+				VkDevice m_hDevice = VK_NULL_HANDLE;
+				VkRenderPass m_hRenderPass = VK_NULL_HANDLE;
+				VkSampleCountFlagBits m_uSampleCountFlagBits = (VkSampleCountFlagBits)0;
 				VkPipeline m_hPipeline = VK_NULL_HANDLE;
 				VkPipelineLayout m_hPipelineLayout = VK_NULL_HANDLE;
 				VkDescriptorSetLayout m_hDescriptorSetLayout = VK_NULL_HANDLE;
@@ -28,6 +30,66 @@ namespace DENG
 				std::string _GetCacheFileName();
 				void _CreateDummyPipelineCacheHandle();
 				void _SerializePipelineCache();
+				
+				template <typename ByteCodeToolset>
+				std::vector<VkVertexInputBindingDescription> _FindInputBindingDescriptions(const std::array<std::vector<uint32_t>, 3>& _spv)
+				{
+					static_assert(std::is_base_of<IByteCodeToolset, ByteCodeToolset>::value);
+					ByteCodeToolset toolset(_spv[0], _spv[1], _spv[2]);
+					
+					auto& shaderInputFormats = toolset.GetShaderInputFormats();
+					auto& shaderInputStrides = toolset.GetShaderInputStrides();
+
+					DENG_ASSERT(shaderInputFormats.size() == shaderInputStrides.size());
+					uint32_t uCombinedStride = 0;
+					for (uint32_t uStride : shaderInputStrides)
+					{
+						uCombinedStride += uStride;
+					}
+
+					std::vector<VkVertexInputBindingDescription> vertexInputBindingDescriptions;
+					vertexInputBindingDescriptions.reserve(shaderInputFormats.size());
+				
+					for (size_t i = 0; i < shaderInputFormats.size(); i++)
+					{
+						vertexInputBindingDescriptions.emplace_back();
+						vertexInputBindingDescriptions.back().binding = static_cast<uint32_t>(i);
+						vertexInputBindingDescriptions.back().inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+						if (this->IsFlagSet(GraphicsShaderFlag_UseSeparateAttributeStriding))
+						{
+							vertexInputBindingDescriptions.back().stride = shaderInputStrides[i];
+						}
+						else
+						{
+							vertexInputBindingDescriptions.back().stride = uCombinedStride;
+						}
+					}
+
+					return vertexInputBindingDescriptions;
+				}
+
+				template <typename ByteCodeToolset>
+				std::vector<VkVertexInputAttributeDescription> _FindInputAttributeDescriptions(const std::array<std::vector<uint32_t>, 3>& _spv)
+				{
+					static_assert(std::is_base_of<IByteCodeToolset, ByteCodeToolset>::value);
+					ByteCodeToolset toolset(_spv[0], _spv[1], _spv[2]);
+
+					auto& shaderInputFormats = toolset.GetShaderInputFormats();
+					std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions = {};
+					vertexInputAttributeDescriptions.reserve(shaderInputFormats.size());
+
+					for (size_t i = 0; i < shaderInputFormats.size(); i++)
+					{
+						vertexInputAttributeDescriptions.emplace_back();
+						vertexInputAttributeDescriptions.back().binding = static_cast<uint32_t>(i);
+						vertexInputAttributeDescriptions.back().location = static_cast<uint32_t>(i);
+						vertexInputAttributeDescriptions.back().format = static_cast<VkFormat>(shaderInputFormats[i]);
+					}
+
+					return vertexInputAttributeDescriptions;
+				}
+				
 				template <typename ByteCodeToolset>
 				void _CreatePipelineLayout(const std::array<std::vector<uint32_t>, 3>& _spv)
 				{
@@ -37,11 +99,15 @@ namespace DENG
 					// create descriptor set layout
 					std::vector<VkDescriptorSetLayoutBinding> bindings;
 					bindings.reserve(toolset.GetBoundResources().size());
+					auto& boundResources = toolset.GetBoundResources();
 
-					for (auto& boundResource : toolset.GetBoundResources())
+					for (size_t i = 0; i < boundResources.size(); i++)
 					{
+						if (boundResources[i].type == BoundResourceType::None)
+							break;
+
 						bindings.emplace_back();
-						switch (boundResource.type)
+						switch (boundResources[i].type)
 						{
 							case BoundResourceType::Buffer:
 								bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -51,8 +117,7 @@ namespace DENG
 								bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 								break;
 
-							case BoundResourceType::ImageSampler2D:
-							case BoundResourceType::ImageSampler3D:
+							case BoundResourceType::ImageSampler:
 								bindings.back().descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 								break;
 
@@ -61,14 +126,14 @@ namespace DENG
 								break;
 						}
 
-						bindings.back().binding = boundResource.uBinding;
+						bindings.back().binding = static_cast<uint32_t>(i);
 						bindings.back().descriptorCount = 1;
 
-						if (boundResource.uShaderStage & ShaderStageBit_Vertex)
+						if (boundResources[i].uShaderStage & ShaderStageBit_Vertex)
 							bindings.back().stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-						if (boundResource.uShaderStage & ShaderStageBit_Geometry)
+						if (boundResources[i].uShaderStage & ShaderStageBit_Geometry)
 							bindings.back().stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-						if (boundResource.uShaderStage & ShaderStageBit_Fragment)
+						if (boundResources[i].uShaderStage & ShaderStageBit_Fragment)
 							bindings.back().stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
 					}
 
@@ -77,29 +142,13 @@ namespace DENG
 					descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 					descriptorSetLayoutCreateInfo.pBindings = bindings.data();
 					if (vkCreateDescriptorSetLayout(m_hDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_hDescriptorSetLayout) != VK_SUCCESS)
-						throw RendererException("Failed to create a descriptor set layout for pipeline " << _CreateUUID());
+						throw RendererException("Failed to create a descriptor set layout for pipeline " + std::string(_CreateUUID()));
 				
 					// create pipeline layout
 					VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 					pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 					pipelineLayoutCreateInfo.setLayoutCount = 1;
-					pipelineLayoutCreateInfo.pSetLayouts = &m_hPipelineLayout;
-
-					// check push constants
-					if (toolset.HasPushConstants())
-					{
-						VkPushConstantRange pushConstantRange = {};
-						pushConstantRange.size = toolset.GetEffectivePushConstantLength();
-						if (toolset.GetPushConstantStageBits() & ShaderStageBit_Vertex)
-							pushConstantRange.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-						if (toolset.GetPushConstantStageBits() & ShaderStageBit_Geometry)
-							pushConstantRange.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-						if (toolset.GetPushConstantStageBits() & ShaderStageBit_Fragment)
-							pushConstantRange.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-
-						pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-						pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-					}
+					pipelineLayoutCreateInfo.pSetLayouts = &m_hDescriptorSetLayout;
 
 					if (vkCreatePipelineLayout(m_hDevice, &pipelineLayoutCreateInfo, nullptr, &m_hPipelineLayout) != VK_SUCCESS)
 						throw RendererException("Failed to create a pipeline layout (vkCreatePipelineLayout)");
@@ -111,6 +160,8 @@ namespace DENG
 			public:
 				GraphicsPipeline(
 					VkDevice _hDevice,
+					VkRenderPass _hRenderPass,
+					VkSampleCountFlagBits _uSampleCountFlagBits,
 					uint32_t _uDeviceId,
 					uint32_t _uVendorId,
 					const char* _szVertexShader, 
@@ -118,6 +169,8 @@ namespace DENG
 					const char* _szGeometryShader = "") :
 					IGraphicsPipeline(_szVertexShader, _szFragmentShader, _szGeometryShader),
 					m_hDevice(_hDevice),
+					m_hRenderPass(_hRenderPass),
+					m_uSampleCountFlagBits(_uSampleCountFlagBits),
 					m_uDeviceId(_uDeviceId),
 					m_uVendorId(_uVendorId)
 				{ 
@@ -125,19 +178,9 @@ namespace DENG
 
 				virtual void CreatePipeline() override;
 
-				inline void SetPipeline(VkPipeline _hPipeline)
-				{
-					m_hPipeline = _hPipeline;
-				}
-
 				inline VkPipeline GetPipeline()
 				{
 					return m_hPipeline;
-				}
-
-				inline void SetPipelineLayout(VkPipelineLayout _hPipelineLayout)
-				{
-					m_hPipelineLayout = _hPipelineLayout;
 				}
 
 				inline VkPipelineLayout GetPipelineLayout()

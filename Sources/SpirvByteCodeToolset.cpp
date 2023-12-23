@@ -34,6 +34,8 @@ namespace DENG
 
 		spvReflectDestroyShaderModule(&m_vertexModule);
 		spvReflectDestroyShaderModule(&m_fragmentModule);
+
+		_CalculateInputStrides();
 	}
 
 	

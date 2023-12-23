@@ -55,8 +55,8 @@ namespace DENG
 		MaterialPhong(const MaterialPhong&) = default;
 		MaterialPhong(MaterialPhong&&) = default;
 
-		TRS::Vector4<float> vDiffuse = { 1.0f, 0.f, 0.f, 1.f };
-		TRS::Vector4<float> vSpecular = { 1.0f, 0.f, 0.f, 1.f };
+		glm::vec4 vDiffuse = { 1.0f, 0.f, 0.f, 1.f };
+		glm::vec4 vSpecular = { 1.0f, 0.f, 0.f, 1.f };
 		PhongSamplerBits uSamplerBits = PhongSamplerBit_None;
 	};
 

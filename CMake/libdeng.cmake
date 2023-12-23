@@ -82,6 +82,7 @@ set(DENG_SHADER_TOOLING_HEADERS
 	Include/deng/SpirvByteCodeToolset.h)
 
 set(DENG_SHADER_TOOLING_SOURCES
+	Sources/IByteCodeToolset.cpp
 	Sources/SpirvByteCodeToolset.cpp)
 
 set(DENG_UTIL_HEADERS

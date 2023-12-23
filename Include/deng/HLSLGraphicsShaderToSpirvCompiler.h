@@ -11,7 +11,7 @@
 
 namespace DENG
 {
-	class DENG_API HLSLGraphicsShaderSpirvCompiler : public IGraphicsShaderCompiler
+	class DENG_API HLSLGraphicsShaderToSpirvCompiler : public IGraphicsShaderCompiler
 	{
 		private:
 			CComPtr<IDxcLibrary> m_library;
@@ -23,12 +23,12 @@ namespace DENG
 			std::wstring _UTF8_Decode(const std::string& _str) const;
 
 		public:
-			HLSLGraphicsShaderSpirvCompiler();
+			HLSLGraphicsShaderToSpirvCompiler();
 			DECLARE_GRAPHICS_SHADER_COMPILER("hlsl", "spv", "Spirv");
 
-			virtual std::vector<uint32_t> CompileVertexShaderFile(const std::string& _sFileName) const override;
-			virtual std::vector<uint32_t> CompileGeometryShaderFile(const std::string& _sFileName) const override;
-			virtual std::vector<uint32_t> CompileFragmentShaderFile(const std::string& _sFileName) const override;
+			virtual std::vector<uint32_t> CompileVertexShaderFile(const char* _szFileName) const override;
+			virtual std::vector<uint32_t> CompileGeometryShaderFile(const char* _szFileName) const override;
+			virtual std::vector<uint32_t> CompileFragmentShaderFile(const char* _szFileName) const override;
 
 			virtual std::vector<uint32_t> CompileVertexShader(const char* _szSource, size_t _uLen) const override;
 			virtual std::vector<uint32_t> CompileGeometryShader(const char* _szSource, size_t _uLen) const override;

@@ -90,11 +90,8 @@ namespace DENG
 			const std::vector<uint32_t>& m_geometryShaderBytes;
 			const std::vector<uint32_t>& m_fragmentShaderBytes;
 			std::vector<ShaderInputFormat> m_inputFormats;
+			std::vector<uint32_t> m_inputStrides;
 			std::vector<BoundResource> m_boundResources;
-			
-			bool m_bHasPushConstants = false;
-			uint32_t m_uPushConstantLength = 0;
-			ShaderStageBits m_uPushConstantStageBits = 0;
 
 		protected:
 			inline bool _IsLittleEndian()
@@ -104,6 +101,8 @@ namespace DENG
 					return true;
 				return false;
 			}
+
+			void _CalculateInputStrides();
 
 		public:
 			IByteCodeToolset(const std::vector<uint32_t>& _vertexBytes, const std::vector<uint32_t>& _geometryBytes, const std::vector<uint32_t>& _fragmentBytes) :
@@ -118,6 +117,11 @@ namespace DENG
 				return m_inputFormats;
 			}
 
+			inline std::vector<uint32_t>& GetShaderInputStrides()
+			{
+				return m_inputStrides;
+			}
+
 			inline std::vector<BoundResource>& GetBoundResources()
 			{
 				return m_boundResources;
@@ -126,21 +130,6 @@ namespace DENG
 			inline const std::vector<BoundResource>& GetBoundResources() const
 			{
 				return m_boundResources;
-			}
-
-			inline bool HasPushConstants() const
-			{
-				return m_bHasPushConstants;
-			}
-
-			inline uint32_t GetEffectivePushConstantLength() const
-			{
-				return m_uPushConstantLength;
-			}
-
-			inline ShaderStageBits GetPushConstantStageBits() const
-			{
-				return m_uPushConstantStageBits;
 			}
 	};
 }

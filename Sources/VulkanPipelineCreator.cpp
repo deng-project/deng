@@ -171,7 +171,7 @@ namespace DENG
 				m_vertexInputAttributeDescriptions.push_back(VkVertexInputAttributeDescription{});
 				m_vertexInputAttributeDescriptions.back().binding = i;
 				m_vertexInputAttributeDescriptions.back().location = i;
-
+				
 				switch (_pShader->GetAttributeTypes()[i])
 				{
 					// single element attributes

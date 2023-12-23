@@ -1,10 +1,10 @@
 // DENG: dynamic engine - small but powerful 3D game engine
 // licence: Apache, see LICENCE file
-// file: HLSLGraphicsShaderSpirvCompiler.cpp - HLSL graphics shader compiler class implementation
+// file: HLSLGraphicsShaderToSpirvCompiler.cpp - HLSL graphics shader compiler class implementation
 // author: Karl-Mihkel Ott
 
 #include "deng/ProgramFilesManager.h"
-#include "deng/HLSLGraphicsShaderSpirvCompiler.h"
+#include "deng/HLSLGraphicsShaderToSpirvCompiler.h"
 #include "deng/Exceptions.h"
 
 #include <stringapiset.h>
@@ -14,7 +14,7 @@ namespace DENG
 {
 	static ProgramFilesManager g_programFilesManager;
 
-	HLSLGraphicsShaderSpirvCompiler::HLSLGraphicsShaderSpirvCompiler()
+	HLSLGraphicsShaderToSpirvCompiler::HLSLGraphicsShaderToSpirvCompiler()
 	{
 		HRESULT hres = 0;
 
@@ -40,7 +40,7 @@ namespace DENG
 		}
 	}
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::_Compile(const char* _szSource, size_t _uLen, const wchar_t* _lszProfile, const wchar_t* _lszFileName) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::_Compile(const char* _szSource, size_t _uLen, const wchar_t* _lszProfile, const wchar_t* _lszFileName) const
 	{
 		LPCWSTR arguments[] = {
 			// name of the shader file to be displayed e.g. in an error message
@@ -103,7 +103,7 @@ namespace DENG
 		return spirvBlob;
 	}
 
-	std::wstring HLSLGraphicsShaderSpirvCompiler::_UTF8_Decode(const std::string& _str) const
+	std::wstring HLSLGraphicsShaderToSpirvCompiler::_UTF8_Decode(const std::string& _str) const
 	{
 		if (_str.empty()) return std::wstring();
 		int iSizeRequired = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), (int)_str.size(), nullptr, 0);
@@ -113,56 +113,56 @@ namespace DENG
 	}
 
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileVertexShaderFile(const std::string& _sFileName) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::CompileVertexShaderFile(const char* _szFileName) const
 	{
-		auto vertexSource = g_programFilesManager.GetProgramFileContent(_sFileName);
+		auto vertexSource = g_programFilesManager.GetProgramFileContent(_szFileName);
 		
 		if (vertexSource.empty())
 		{
-			throw IOException("Could not find vertex shader source for module " + _sFileName);
+			throw IOException("Could not find vertex shader source for module " + std::string(_szFileName));
 		}
 
-		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
+		auto wsFileName = std::move(_UTF8_Decode(_szFileName));
 		return _Compile(vertexSource.data(), vertexSource.size(), L"vs_6_1", wsFileName.c_str());
 	}
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileGeometryShaderFile(const std::string& _sFileName) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::CompileGeometryShaderFile(const char* _szFileName) const
 	{
-		auto geomSource = g_programFilesManager.GetProgramFileContent(_sFileName);
+		auto geomSource = g_programFilesManager.GetProgramFileContent(_szFileName);
 
 		if (geomSource.empty())
 		{
-			throw IOException("Could not find geometry shader source for module " + _sFileName);
+			throw IOException("Could not find geometry shader source for module " + std::string(_szFileName));
 		}
 
-		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
+		auto wsFileName = std::move(_UTF8_Decode(_szFileName));
 		return _Compile(geomSource.data(), geomSource.size(), L"gs_6_1", wsFileName.c_str());
 	}
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileFragmentShaderFile(const std::string& _sFileName) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::CompileFragmentShaderFile(const char* _szFileName) const
 	{
-		auto fragSource = g_programFilesManager.GetProgramFileContent(_sFileName);
+		auto fragSource = g_programFilesManager.GetProgramFileContent(_szFileName);
 
 		if (fragSource.empty())
 		{
-			throw IOException("Could not find fragment shader source for module " + _sFileName);
+			throw IOException("Could not find fragment shader source for module " + std::string(_szFileName));
 		}
 
-		auto wsFileName = std::move(_UTF8_Decode(_sFileName));
+		auto wsFileName = std::move(_UTF8_Decode(_szFileName));
 		return _Compile(fragSource.data(), fragSource.size(), L"ps_6_1", wsFileName.c_str());
 	}
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileVertexShader(const char* _szSource, size_t _uLen) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::CompileVertexShader(const char* _szSource, size_t _uLen) const
 	{
 		return _Compile(_szSource, _uLen, L"vs_6_1", L"Unknown_VS_Source");
 	}
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileGeometryShader(const char* _szSource, size_t _uLen) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::CompileGeometryShader(const char* _szSource, size_t _uLen) const
 	{
 		return _Compile(_szSource, _uLen, L"gs_6_1", L"Unknown_GS_Source");
 	}
 
-	std::vector<uint32_t> HLSLGraphicsShaderSpirvCompiler::CompileFragmentShader(const char* _szSource, size_t _uLen) const
+	std::vector<uint32_t> HLSLGraphicsShaderToSpirvCompiler::CompileFragmentShader(const char* _szSource, size_t _uLen) const
 	{
 		return _Compile(_szSource, _uLen, L"ps_6_1", L"Unknown_FS_Source");
 	}
