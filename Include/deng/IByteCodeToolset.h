@@ -16,8 +16,7 @@ namespace DENG
 		None,
 		Buffer,
 		StorageBuffer,
-		ImageSampler2D,
-		ImageSampler3D
+		ImageSampler,
 	};
 
 
@@ -35,6 +34,12 @@ namespace DENG
 	{
 		BoundResourceType type = BoundResourceType::None;
 		ShaderStageBits uShaderStage = 0;
+		uint32_t uSize = 0;
+
+		inline bool operator==(const BoundResource& _other) const
+		{
+			return this->type == _other.type && this->uShaderStage == _other.uShaderStage && this->uSize == _other.uSize;
+		}
 	};
 
 	enum class ShaderInputFormat
@@ -106,6 +111,11 @@ namespace DENG
 				m_geometryShaderBytes(_geometryBytes),
 				m_fragmentShaderBytes(_fragmentBytes)
 			{
+			}
+
+			inline std::vector<ShaderInputFormat>& GetShaderInputFormats()
+			{
+				return m_inputFormats;
 			}
 
 			inline std::vector<BoundResource>& GetBoundResources()

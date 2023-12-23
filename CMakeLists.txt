@@ -68,7 +68,7 @@ include(CMake/layers.cmake)
 include(CMake/Sandbox.cmake)
 
 # Non-experimental tests
-if(DENG_BUILD_TESTS)
+if(DENG_BUILD_DEMOS)
     message(STATUS "Adding demo build configurations")
 	set(DEMO_APPS_DIR DemoApps)
 	
@@ -77,4 +77,11 @@ if(DENG_BUILD_TESTS)
 	include(CMake/Demos/CompileTimeMapTest.cmake)
 	include(CMake/Demos/TriangleApp.cmake)
 	include(CMake/Demos/ImGuiApp.cmake)
+endif()
+
+# Unit tests
+if(DENG_BUILD_UNIT_TESTS)
+	message(STATUS "Adding unit tests' build configurations")
+
+	include(CMake/Tests/SpirvByteCodeToolsetTest.cmake)
 endif()
