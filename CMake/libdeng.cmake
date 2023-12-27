@@ -32,6 +32,7 @@ set(DENG_IMGUI_SOURCES
 set(DENG_RENDERER_BACKEND_HEADERS 
 	Include/deng/GPUMemoryAllocator.h
 	Include/deng/IFramebuffer.h
+	Include/deng/IGraphicsInstantiator.h
 	Include/deng/IGraphicsMemory.h
 	Include/deng/IGraphicsPipeline.h
 	Include/deng/IRenderer.h
@@ -44,6 +45,7 @@ set(DENG_RENDERER_BACKEND_SOURCES
 	
 set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 	Include/deng/VulkanFramebuffer.h
+	Include/deng/VulkanGraphicsInstantiator.h
 	Include/deng/VulkanGraphicsPipeline.h
 	Include/deng/VulkanHelpers.h
 	Include/deng/VulkanImage.h
@@ -55,6 +57,7 @@ set(DENG_RENDERER_BACKEND_VULKAN_HEADERS
 
 set(DENG_RENDERER_BACKEND_VULKAN_SOURCES
 	Sources/VulkanFramebuffer.cpp
+	Sources/VulkanGraphicsInstantiator.cpp
 	Sources/VulkanGraphicsPipeline.cpp
 	Sources/VulkanHelpers.cpp
 	Sources/VulkanImage.cpp

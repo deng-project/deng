@@ -9,6 +9,7 @@ namespace DENG {
 
 		switch (_eSeverity) {
 			case CRITICAL:
+			case CRITICAL_NON_FATAL:
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
 				cerr << '[' << _sExceptionType << "] " << _sWhat << '\n';
 				break;
@@ -21,6 +22,10 @@ namespace DENG {
 			case WARNING:
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
 				cerr << '[' << _sExceptionType << "] " << _sWhat << '\n';
+				break;
+
+			case INFO:
+				cerr << '[' << _sExceptionType << ']' << _sWhat << '\n';
 				break;
 		}
 

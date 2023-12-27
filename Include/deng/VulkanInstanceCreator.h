@@ -110,6 +110,10 @@ namespace DENG {
                 inline const VkSurfaceCapabilitiesKHR& GetSurfaceCapabilities() const { return m_surfaceCapabilities; }
                 inline const PhysicalDeviceInformation& GetPhysicalDeviceInformation() const { return m_physicalDeviceInformation; }
         };
+
+        enum class {
+
+        };
     }
 }
 #endif

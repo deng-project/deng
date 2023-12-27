@@ -20,47 +20,51 @@
 #include "deng/Handle.h"
 #include "deng/Mesh.h"
 
-#ifndef MAX_FRAMES_IN_FLIGHT
-#define MAX_FRAMES_IN_FLIGHT 2
-#endif
-
-#ifndef DEFAULT_STAGING_BUFFER_SIZE
-#define DEFAULT_STAGING_BUFFER_SIZE (1 << 22)
-#endif
-
-#ifndef DEFAULT_BUFFER_SIZE
-#define DEFAULT_BUFFER_SIZE (1 << 24)
-#endif
-
-
 namespace DENG
 {
+	class IGraphicsInstantiator;
 	class DENG_API IRenderer
 	{
 		protected:
-			IWindowContext* m_pWindowContext = nullptr;
-			
-			Handle<IGPUImage> m_hMissingTexture2D;
-			Handle<IGPUImage> m_hMissingTexture3D;
+			Handle<IWindowContext> m_hWindowContext = nullptr;
+			Handle<IGraphicsInstantiator> m_hGraphicsInstantiator = nullptr;
 
 		public:
-			IRenderer() = default;
+			IRenderer(Handle<IWindowContext> _hWindowContext, Handle<IGraphicsInstantiator> _hGraphicsInstantiator) :
+				m_hWindowContext(_hWindowContext),
+				m_hGraphicsInstantiator(_hGraphicsInstantiator)
+			{
+			}
 			virtual ~IRenderer() {};
 
-			virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
-			virtual Handle<IFramebuffer> CreateFramebufferHandle (uint32_t _uWidth, uint32_t _uHeight) = 0;
-			virtual Handle<IFramebuffer> CreateContextHandle (Handle<IWindowContext> _pWindow) = 0;
-			virtual Handle<IGPUManagedBuffer> CreateManagedBufferHandle() = 0;
-			virtual Handle<IGPUImage> CreateImageHandle() = 0;
-			virtual Handle<IGraphicsPipeline> CreateGraphicsPipelineHandle(const char* _szVertexShaderFileName, const char* _szGeometryShaderFileName, const char* _szFragmentShaderFileName) = 0;
+			// virtual void UpdateViewport(uint32_t _uWidth, uint32_t _uHeight) = 0;
+			// virtual Handle<IFramebuffer> CreateFramebufferHandle (uint32_t _uWidth, uint32_t _uHeight) = 0;
+			// virtual Handle<IFramebuffer> CreateContextHandle (Handle<IWindowContext> _pWindow) = 0;
+			// virtual Handle<IGPUManagedBuffer> CreateManagedBufferHandle() = 0;
+			// virtual Handle<IGPUImage> CreateImageHandle() = 0;
+			// virtual Handle<IGraphicsPipeline> CreateGraphicsPipelineHandle(const char* _szVertexShaderFileName, const char* _szGeometryShaderFileName, const char* _szFragmentShaderFileName) = 0;
 			// virtual Handle<IComputePipeline> CreateComputePipelineHandle() = 0;
 			virtual bool SetupFrame() = 0;
-			virtual void DirectDraw(
-				const Batch& _mesh,
+			virtual void DrawDirect(
+				const Batch& _batch,
 				Handle<IFramebuffer> _hFramebuffer,
-				Handle<IGraphicsPipeline> _hPipeline,
+				Handle<IGraphicsPipeline> _hGraphicsPipeline,
 				Handle<IGPUManagedBuffer> _hVertexBuffer,
 				Handle<IGPUManagedBuffer> _hUniformBuffer) = 0;
+
+			virtual void DrawDirectInstanced(
+				const Batch& _batch,
+				Handle<IFramebuffer> _hFramebuffer,
+				Handle<IGraphicsPipeline> _hGraphicsPipeline,
+				Handle<IGPUManagedBuffer> _hVertexBuffer,
+				Handle<IGPUManagedBuffer> _hUniformBuffer,
+				uint32_t _uInstanceCount
+			) = 0;
+
+			// virtual void DrawIndirect(
+			// 	const Batch* _pBatches,
+			// 	size_t _uBatchCount
+			// ) = 0;
 	};
 }
 
