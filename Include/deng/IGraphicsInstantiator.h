@@ -19,8 +19,10 @@ namespace DENG
 		VkPhysicalDevice,
 		VkSurfaceKHR,
 		VkGraphicsQueueFamilyIndex,
+		VkComputeQueueFamilyIndex,
 		VkPresentationQueueFamilyIndex,
 		VkGraphicsQueue,
+		VkComputeQueue,
 		VkPresentationQueue,
 		MaxValue
 	};
@@ -60,6 +62,16 @@ namespace DENG
 		MaxVertexInputBindings, // vulkan
 	};
 
+	enum class BoolQueryType
+	{
+		GeometryShader,
+		TesselationShader,
+		MultiDrawIndirect,
+		DrawIndirectFirstInstance,
+		SamplerAnisotropy,
+		MultiViewport
+	};
+
 	enum class SizeQueryType
 	{
 		MinTexelBufferOffsetAlignment,
@@ -92,7 +104,14 @@ namespace DENG
 			template <typename T>
 			inline void _SetResource(QueryResource _queryResource, T _val)
 			{
-				m_apiHandles[static_cast<size_t>(_queryResource)] = reinterpret_cast<std::uintptr_t>(_val);
+				if constexpr (std::is_pointer<T>::value)
+				{
+					m_apiHandles[static_cast<size_t>(_queryResource)] = reinterpret_cast<std::uintptr_t>(_val);
+				}
+				else
+				{
+					m_apiHandles[static_cast<size_t>(_queryResource)] = static_cast<std::uintptr_t>(_val);
+				}
 			}
 
 		public:
@@ -106,10 +125,18 @@ namespace DENG
 			template <typename ApiHandle_T>
 			inline ApiHandle_T GetResource(QueryResource _queryResource)
 			{
-				return reinterpret_cast<ApiHandle_T>(m_apiHandles[static_cast<size_t>(_queryResource)]);
+				if constexpr (std::is_pointer<ApiHandle_T>::value)
+				{
+					return reinterpret_cast<ApiHandle_T>(m_apiHandles[static_cast<size_t>(_queryResource)]);
+				}
+				else
+				{
+					return static_cast<ApiHandle_T>(m_apiHandles[static_cast<size_t>(_queryResource)]);
+				}
 			}
 
 			virtual const char* GetGraphicsCardName() = 0;
+			virtual bool BoolQuery(BoolQueryType _queryType) = 0;
 			virtual uint32_t UintQuery(UintQueryType _queryType) = 0;
 			virtual size_t SizeQuery(SizeQueryType _queryType) = 0;
 			virtual float FloatQuery(FloatQueryType _queryType) = 0;

@@ -11,12 +11,18 @@ namespace DENG
 	class ObjectReference
 	{
 		private:
-			T m_object;
+			T* m_pObject = nullptr;
 			size_t m_uReferences = 0;
 		
 		public:
-			ObjectReference(Args... args) : m_object(std::forward<Args>(args)...)
+			ObjectReference(T* _pObject) :
+				m_pObject(_pObject)
 			{
+			}
+
+			~ObjectReference()
+			{
+				delete m_pObject;
 			}
 
 			void AddReference()
@@ -31,7 +37,12 @@ namespace DENG
 
 			T& Get()
 			{
-				return m_object;
+				return *m_pObject;
+			}
+
+			T* GetPtr()
+			{
+				return m_pObject;
 			}
 	};
 
@@ -46,7 +57,7 @@ namespace DENG
 			{
 			}
 
-			Handle(T* pValue) : m_pData(pValue)
+			Handle(T* pValue) : m_pData(new ObjectReference<T>(pValue))
 			{
 			}
 
@@ -57,7 +68,7 @@ namespace DENG
 
 			~Handle()
 			{
-				if (m_pData and m_pData->Release() == 0)
+				if (m_pData && m_pData->Release() == 0)
 				{
 					delete m_pData;
 				}
@@ -70,7 +81,7 @@ namespace DENG
 
 			T* operator->()
 			{
-				return m_pData->Get();
+				return m_pData->GetPtr();
 			}
 
 			Handle<T>& operator=(const Handle<T>& _handle)

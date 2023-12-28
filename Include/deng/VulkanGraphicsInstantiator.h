@@ -18,8 +18,14 @@ namespace DENG
 			private:
 				VkInstance m_hInstance = VK_NULL_HANDLE;
 				VkSurfaceKHR m_hSurface = VK_NULL_HANDLE;
+				VkPhysicalDeviceProperties m_physicalDeviceProperties = {};
+				VkPhysicalDeviceFeatures m_physicalDeviceFeatures = {};
 
-				const char* m_requiredExtensions[3] = {
+				VkSurfaceCapabilitiesKHR m_surfaceCapabilities = {};
+				std::vector<VkSurfaceFormatKHR> m_surfaceFormats = {};
+				std::vector<VkPresentModeKHR> m_presentModes = {};
+
+				const char* m_requiredExtensions[2] = {
 					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 					"VK_KHR_maintenance1",
 				};
@@ -42,17 +48,22 @@ namespace DENG
 				static VKAPI_ATTR VkBool32 VKAPI_CALL _DebugCallback(SeverityFlags, MessageTypeFlags, const CallbackData*, void*);
 #endif
 				void _FindPhysicalDeviceSurfaceProperties(VkPhysicalDevice _hPhysicalDevice);
+				bool _CheckExtensionSupport(VkPhysicalDevice, const char* _pExt);
 				uint32_t _ScoreDevice(VkPhysicalDevice _hPhysicalDevice);
 				void _PickPhysicalDeviceStratBestScoring();
-				void _PickPhysicalDeviceStratFirstDiscreate();
+				void _PickPhysicalDeviceStratFirstDiscrete();
 				void _PickPhysicalDeviceStratFirstIntegrated();
 				void _PickPhysicalDevice();
+				/* returns a bitmask of supported queue families */
+				uint32_t _FindQueueFamilies(VkPhysicalDevice _hPhysicalDevice);
+				void _CreateLogicalDeviceHandle();
 
 			public:
 				GraphicsInstantiator(Handle<IWindowContext> _hWindow, GPUPickStrategy _eStrategy = GPUPickStrategy::BestScoring);
 				virtual ~GraphicsInstantiator() override;
 
 				virtual const char* GetGraphicsCardName() override;
+				virtual bool BoolQuery(BoolQueryType _queryType) override;
 				virtual uint32_t UintQuery(UintQueryType _queryType) override;
 				virtual size_t SizeQuery(SizeQueryType _queryType) override;
 				virtual float FloatQuery(FloatQueryType _queryType) override;
