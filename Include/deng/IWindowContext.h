@@ -52,7 +52,7 @@ namespace DENG {
 			bool m_bIsAlive = false;
 
 		public:
-			virtual void Create(const std::string& _sTitle, uint32_t _uWidth, uint32_t _uHeight) = 0;
+			virtual void Create(const char* _szTitle, uint32_t _uWidth, uint32_t _uHeight) = 0;
 			virtual void* CreateVulkanSurface(void* _pInstance) = 0;
 			
 			inline bool IsAlive() {

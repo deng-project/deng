@@ -503,11 +503,19 @@ namespace DENG {
 
 
 	std::vector<const char*> SDLWindowContext::QueryRequiredVulkanExtensions() {
-		unsigned int uCount;
-		SDL_Vulkan_GetInstanceExtensions(m_pWindow, &uCount, nullptr);
-		std::vector<const char*> extensions(uCount);
-		SDL_Vulkan_GetInstanceExtensions(m_pWindow, &uCount, extensions.data());
-		return extensions;
+		if (m_uHints & WindowHint_Vulkan)
+		{
+			unsigned int uCount = 0;
+			SDL_Vulkan_GetInstanceExtensions(m_pWindow, &uCount, nullptr);
+			std::vector<const char*> extensions(uCount);
+			SDL_Vulkan_GetInstanceExtensions(m_pWindow, &uCount, extensions.data());
+
+			return extensions;
+		}
+		else
+		{
+			throw WindowContextException("Cannot query required Vulkan extensions when Vulkan hint is not set");
+		}
 	}
 
 
@@ -521,7 +529,7 @@ namespace DENG {
 	}
 
 
-	void SDLWindowContext::Create(const std::string& _sTitle, uint32_t _uWidth, uint32_t _uHeight) {
+	void SDLWindowContext::Create(const char* _sTitle, uint32_t _uWidth, uint32_t _uHeight) {
 		m_sTitle = _sTitle;
 		m_uWidth = _uWidth;
 		m_uHeight = _uHeight;

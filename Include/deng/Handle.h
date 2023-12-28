@@ -7,81 +7,49 @@
 
 namespace DENG
 {
-	template <typename T, typename... Args>
-	class ObjectReference
-	{
-		private:
-			T* m_pObject = nullptr;
-			size_t m_uReferences = 0;
-		
-		public:
-			ObjectReference(T* _pObject) :
-				m_pObject(_pObject)
-			{
-			}
-
-			~ObjectReference()
-			{
-				delete m_pObject;
-			}
-
-			void AddReference()
-			{
-				m_uReferences++;
-			}
-
-			size_t Release()
-			{
-				return --m_uReferences;
-			}
-
-			T& Get()
-			{
-				return *m_pObject;
-			}
-
-			T* GetPtr()
-			{
-				return m_pObject;
-			}
-	};
-
 	template <typename T>
 	class Handle
 	{
 		private:
-			ObjectReference<T>* m_pData;
+			T* m_pData = nullptr;
+			size_t* m_pReference = nullptr;
 
 		public:
-			Handle() : m_pData(nullptr)
+			Handle() = default;
+			Handle(T* pValue) : m_pData(pValue)
 			{
+				m_pReference = new size_t;
+				*m_pReference = 1;
 			}
 
-			Handle(T* pValue) : m_pData(new ObjectReference<T>(pValue))
+			Handle(const Handle<T>& _handle) : 
+				m_pData(_handle.m_pData),
+				m_pReference(_handle.m_pReference)
 			{
-			}
-
-			Handle(const Handle<T>& _handle) : m_pData(_handle.m_pData)
-			{
-				m_pData->AddReference();
+				if (m_pReference)
+				{
+					++(*m_pReference);
+				}
 			}
 
 			~Handle()
 			{
-				if (m_pData && m_pData->Release() == 0)
+				--(*m_pReference);
+				if (m_pData && *m_pReference == 0)
 				{
 					delete m_pData;
+					delete m_pReference;
 				}
 			}
 
 			T& operator*()
 			{
-				return *m_pData->Get();
+				return *m_pDatas;
 			}
 
 			T* operator->()
 			{
-				return m_pData->GetPtr();
+				return m_pData;
 			}
 
 			Handle<T>& operator=(const Handle<T>& _handle)
@@ -89,13 +57,17 @@ namespace DENG
 				if (this != &_handle)
 				{
 					// decrement old reference count
-					if (m_pData and m_pData->Release() == 0)
+					if (m_pReference)
+						--(*m_pReference);
+					if (m_pData && *m_pReference == 1)
 					{
 						delete m_pData;
+						delete m_pReference;
 					}
 
 					m_pData = _handle.m_pData;
-					m_pData->AddReference();
+					m_pReference = _handle.m_pReference;
+					(*m_pReference)++;
 				}
 
 				return *this;

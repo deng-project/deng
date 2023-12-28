@@ -5,12 +5,14 @@
 
 set(SPIRV_BYTE_CODE_TOOLSET_TEST_TARGET SpirvByteCodeToolsetTest)
 set(SPIRV_BYTE_CODE_TOOLSET_TEST_HEADERS
+    Include/deng/IByteCodeToolset.h
     Include/deng/ErrorDefinitions.h
     Include/deng/Exceptions.h
     Include/deng/SpirvByteCodeToolset.h
     Include/deng/spirv_reflect.h)
 
 set(SPIRV_BYTE_CODE_TOOLSET_TEST_SOURCES
+    Sources/IByteCodeToolset.cpp
     Sources/spirv_reflect.c
     Sources/ErrorDefinitions.cpp
     Sources/SpirvByteCodeToolset.cpp

@@ -75,10 +75,10 @@ set(DENG_SHADER_COMPILER_HEADERS
 	Include/deng/IGraphicsShaderCompiler.h)
 
 set(DENG_SHADER_COMPILER_HLSL_HEADERS
-	Include/deng/HLSLGraphicsShaderSpirvCompiler.h)
+	Include/deng/HLSLGraphicsShaderToSpirvCompiler.h)
 
 set(DENG_SHADER_COMPILER_HLSL_SOURCES
-	Sources/HLSLGraphicsShaderSpirvCompiler.cpp)
+	Sources/HLSLGraphicsShaderToSpirvCompiler.cpp)
 
 set(DENG_SHADER_TOOLING_HEADERS
 	Include/deng/IByteCodeToolset.h

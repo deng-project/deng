@@ -6,6 +6,7 @@
 #include "deng/ErrorDefinitions.h"
 #include "deng/Exceptions.h"
 #include "deng/VulkanGraphicsInstantiator.h"
+
 #include <sstream>
 #include <iomanip>
 #include <map>
@@ -26,6 +27,9 @@ namespace DENG
 #endif
 			_PickPhysicalDevice();
 			_CreateLogicalDeviceHandle();
+			_ConfigureSwapchainSettings();
+			_CreateSwapchain();
+			_CreateSwapchainImageViews();
 		}
 
 
@@ -52,7 +56,7 @@ namespace DENG
 			VkApplicationInfo appinfo = {};
 			appinfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 			appinfo.pApplicationName = m_hWindow->GetTitle().c_str();
-			appinfo.applicationVersion = VK_MAKE_API_VERSION(1, 0, 0, 0);
+			appinfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
 			appinfo.pEngineName = "DENG";
 			appinfo.engineVersion = VK_MAKE_VERSION(0, 1, 0);
 
@@ -483,12 +487,12 @@ namespace DENG
 				if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 				{
 					uGraphicsQueueIndex = i;
-					uQueueFamilyCount |= (1 << 0);
+					uQueueFamilySupportMask |= (1 << 0);
 				}
 				if (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
 				{
 					uComputeQueueIndex = i;
-					uQueueFamilyCount |= (1 << 1);
+					uQueueFamilySupportMask |= (1 << 2);
 				}
 
 				VkBool32 bPresentationSupported = VK_FALSE;
@@ -496,7 +500,7 @@ namespace DENG
 				if (bPresentationSupported)
 				{
 					uPresentationQueueIndex = i;
-					uQueueFamilyCount |= (1 << 2);
+					uQueueFamilySupportMask |= (1 << 1);
 				}
 			}
 
@@ -535,21 +539,21 @@ namespace DENG
 			std::vector<uint32_t> uniqueQueueFamilyIndices;
 			uniqueQueueFamilyIndices.reserve(queueFamilyIndices.size());
 
-			uint32_t uUniqueQueueCount = static_cast<uint32_t>(queueFamilyIndices.size());
+			uint32_t uUniqueQueueCount = 0;
 			for (size_t i = 0; i < queueFamilyIndices.size(); i++)
 			{
-				bool bIsUnique = true;
-				for (size_t j = i + 1; j < queueFamilyIndices.size(); j++)
+				size_t j;
+				for (j = 0; j < i; j++)
 				{
 					if (queueFamilyIndices[i] == queueFamilyIndices[j])
 					{
-						uUniqueQueueCount--;
-						bIsUnique = true;
+						break;
 					}
 				}
 
-				if (bIsUnique)
+				if (i == j)
 				{
+					uUniqueQueueCount++;
 					uniqueQueueFamilyIndices.push_back(queueFamilyIndices[i]);
 				}
 			}
@@ -588,7 +592,7 @@ namespace DENG
 			if (m_hDebugUtilsMessenger)
 			{
 				deviceCreateInfo.enabledLayerCount = 1;
-				deviceCreateInfo.ppEnabledExtensionNames = &m_szValidationLayerName;
+				deviceCreateInfo.ppEnabledLayerNames = &m_szValidationLayerName;
 			}
 #endif
 
@@ -658,67 +662,67 @@ namespace DENG
 		{
 			switch (_queryType)
 			{
-				case DENG::UintQueryType::APIVersion:
+				case UintQueryType::APIVersion:
 					return m_physicalDeviceProperties.apiVersion;
 				
-				case DENG::UintQueryType::DriverVersion:
+				case UintQueryType::DriverVersion:
 					return m_physicalDeviceProperties.driverVersion;
 				
-				case DENG::UintQueryType::VendorID:
+				case UintQueryType::VendorID:
 					return m_physicalDeviceProperties.vendorID;
 
-				case DENG::UintQueryType::DeviceID:
+				case UintQueryType::DeviceID:
 					return m_physicalDeviceProperties.deviceID;
 
-				case DENG::UintQueryType::MaxImageDimension1D:
+				case UintQueryType::MaxImageDimension1D:
 					return m_physicalDeviceProperties.limits.maxImageDimension1D;
 
-				case DENG::UintQueryType::MaxImageDimension2D:
+				case UintQueryType::MaxImageDimension2D:
 					return m_physicalDeviceProperties.limits.maxImageDimension2D;
 
-				case DENG::UintQueryType::MaxImageDimension3D:
+				case UintQueryType::MaxImageDimension3D:
 					return m_physicalDeviceProperties.limits.maxImageDimension3D;
 
-				case DENG::UintQueryType::MaxImageDimensionCube:
+				case UintQueryType::MaxImageDimensionCube:
 					return m_physicalDeviceProperties.limits.maxImageDimensionCube;
 
-				case DENG::UintQueryType::MaxUniformBufferSize:
+				case UintQueryType::MaxUniformBufferSize:
 					return m_physicalDeviceProperties.limits.maxUniformBufferRange;
 
-				case DENG::UintQueryType::MaxStorageBufferSize:
+				case UintQueryType::MaxStorageBufferSize:
 					return m_physicalDeviceProperties.limits.maxStorageBufferRange;
 
-				case DENG::UintQueryType::MaxMemoryAllocationCount:
+				case UintQueryType::MaxMemoryAllocationCount:
 					return m_physicalDeviceProperties.limits.maxMemoryAllocationCount;
 
-				case DENG::UintQueryType::MaxVertexInputAttributes:
+				case UintQueryType::MaxVertexInputAttributes:
 					return m_physicalDeviceProperties.limits.maxVertexInputAttributes;
 
-				case DENG::UintQueryType::MaxVertexInputAttributeOffset:
+				case UintQueryType::MaxVertexInputAttributeOffset:
 					return m_physicalDeviceProperties.limits.maxVertexInputAttributeOffset;
 
-				case DENG::UintQueryType::MaxVertexInputBindingStride:
+				case UintQueryType::MaxVertexInputBindingStride:
 					return m_physicalDeviceProperties.limits.maxVertexInputBindingStride;
 
-				case DENG::UintQueryType::MaxFramebufferWidth:
+				case UintQueryType::MaxFramebufferWidth:
 					return m_physicalDeviceProperties.limits.maxFramebufferWidth;
 
-				case DENG::UintQueryType::MaxFramebufferHeight:
+				case UintQueryType::MaxFramebufferHeight:
 					return m_physicalDeviceProperties.limits.maxFramebufferHeight;
 
-				case DENG::UintQueryType::MaxViewports:
+				case UintQueryType::MaxViewports:
 					return m_physicalDeviceProperties.limits.maxViewports;
 
-				case DENG::UintQueryType::MaxDescriptorSetSamplers:
+				case UintQueryType::MaxDescriptorSetSamplers:
 					return m_physicalDeviceProperties.limits.maxDescriptorSetSamplers;
 
-				case DENG::UintQueryType::MaxBoundDescriptorSets:
+				case UintQueryType::MaxBoundDescriptorSets:
 					return m_physicalDeviceProperties.limits.maxBoundDescriptorSets;
 
-				case DENG::UintQueryType::MaxSamplerAllocationCount:
+				case UintQueryType::MaxSamplerAllocationCount:
 					return m_physicalDeviceProperties.limits.maxSamplerAllocationCount;
 
-				case DENG::UintQueryType::MaxVertexInputBindings:
+				case UintQueryType::MaxVertexInputBindings:
 					return m_physicalDeviceProperties.limits.maxVertexInputBindings;
 
 				default:
@@ -734,13 +738,13 @@ namespace DENG
 		{
 			switch (_queryType)
 			{
-				case DENG::SizeQueryType::MinTexelBufferOffsetAlignment:
+				case SizeQueryType::MinTexelBufferOffsetAlignment:
 					return static_cast<size_t>(m_physicalDeviceProperties.limits.minTexelBufferOffsetAlignment);
 
-				case DENG::SizeQueryType::MinUniformBufferOffsetAlignment:
+				case SizeQueryType::MinUniformBufferOffsetAlignment:
 					return static_cast<size_t>(m_physicalDeviceProperties.limits.minUniformBufferOffsetAlignment);
 				
-				case DENG::SizeQueryType::MinStorageBufferOffsetAlignment:
+				case SizeQueryType::MinStorageBufferOffsetAlignment:
 					return static_cast<size_t>(m_physicalDeviceProperties.limits.minStorageBufferOffsetAlignment);
 				
 				default:
@@ -756,28 +760,28 @@ namespace DENG
 		{
 			switch (_queryType)
 			{
-				case DENG::FloatQueryType::MaxSamplerLodBias:
+				case FloatQueryType::MaxSamplerLodBias:
 					return m_physicalDeviceProperties.limits.maxSamplerLodBias;
 
-				case DENG::FloatQueryType::MaxSamplerAnisotropy:
+				case FloatQueryType::MaxSamplerAnisotropy:
 					return m_physicalDeviceProperties.limits.maxSamplerAnisotropy;
 
-				case DENG::FloatQueryType::MinInterpolationOffset:
+				case FloatQueryType::MinInterpolationOffset:
 					return m_physicalDeviceProperties.limits.minInterpolationOffset;
 
-				case DENG::FloatQueryType::MaxInterpolationOffset:
+				case FloatQueryType::MaxInterpolationOffset:
 					return m_physicalDeviceProperties.limits.maxInterpolationOffset;
 
-				case DENG::FloatQueryType::MinPointWidth:
+				case FloatQueryType::MinPointWidth:
 					return m_physicalDeviceProperties.limits.pointSizeRange[0];
 
-				case DENG::FloatQueryType::MaxPointWidth:
+				case FloatQueryType::MaxPointWidth:
 					return m_physicalDeviceProperties.limits.pointSizeRange[1];
 
-				case DENG::FloatQueryType::MinLineWidth:
+				case FloatQueryType::MinLineWidth:
 					return m_physicalDeviceProperties.limits.lineWidthRange[0];
 				
-				case DENG::FloatQueryType::MaxLineWidth:
+				case FloatQueryType::MaxLineWidth:
 					return m_physicalDeviceProperties.limits.lineWidthRange[1];
 				
 				default:

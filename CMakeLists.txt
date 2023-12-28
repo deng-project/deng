@@ -84,4 +84,5 @@ if(DENG_BUILD_UNIT_TESTS)
 	message(STATUS "Adding unit tests' build configurations")
 
 	include(CMake/Tests/SpirvByteCodeToolsetTest.cmake)
+	include(CMake/Tests/VulkanGraphicsInstantiatorTest.cmake)
 endif()
